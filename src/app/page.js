@@ -102,7 +102,7 @@ export default function ComingSoon() {
           {/* Logo */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
             <img
-              src="/logo.png"
+              src="/purrfectlove/logo.png"
               alt="Purrfect Love Logo"
               style={{ width: '200px', height: 'auto', maxWidth: '100%' }}
             />
