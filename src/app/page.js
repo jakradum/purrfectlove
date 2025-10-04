@@ -43,11 +43,20 @@ export default function ComingSoon() {
       <div style={{ maxWidth: '64rem', width: '100%', position: 'relative', zIndex: 10 }}>
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           {/* Logo */}
-          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+          {/* <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
             <img 
               src="/logo.png" 
               alt="Purrfect Love Logo" 
               style={{ width: '200px', height: 'auto', maxWidth: '100%' }}
+            />
+          </div> */}
+
+          {/* Sleeping Cat */}
+          <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
+            <img 
+              src="/sleeping cat.png" 
+              alt="Sleeping cat" 
+              style={{ width: '300px', height: 'auto', maxWidth: '90%' }}
             />
           </div>
           
