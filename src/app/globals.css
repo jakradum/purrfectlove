@@ -40,3 +40,7 @@ a {
     color-scheme: dark;
   }
 }
+
+.instagram-link:hover {
+  color: #ffffff !important;
+}
