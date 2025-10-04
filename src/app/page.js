@@ -1,12 +1,9 @@
 'use client';
 import React, { useState, useEffect } from 'react';
 import { Heart, Instagram, Facebook } from 'lucide-react';
-import { Lato } from 'next/font/google';
 
-const lato = Lato({ 
-  weight: ['400', '700'],
-  subsets: ['latin'] 
-});
+
+
 
 // Function to get headline based on time of day
 const getTimeBasedMessage = () => {
@@ -68,19 +65,19 @@ export default function ComingSoon() {
   }, []);
 
   return (
-    <div 
-      className={lato.className}
-      style={{ 
-        backgroundColor: '#2a4674', 
-        minHeight: '100vh', 
+    <div
+      style={{
+        backgroundColor: '#2a4674',
+        minHeight: '100vh',
         width: '100vw',
-        display: 'flex', 
-        alignItems: 'center', 
-        justifyContent: 'center', 
-        padding: '2rem', 
-        overflow: 'hidden', 
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        padding: '2rem',
+        overflow: 'hidden',
         position: 'relative',
-        margin: 0
+        margin: 0,
+        fontFamily: '-apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif',
       }}
     >
       {/* Animated paw prints in background */}
@@ -104,31 +101,31 @@ export default function ComingSoon() {
         <div style={{ textAlign: 'center', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
           {/* Logo */}
           <div style={{ display: 'flex', justifyContent: 'center', marginBottom: '1rem' }}>
-            <img 
-              src="/logo.png" 
-              alt="Purrfect Love Logo" 
+            <img
+              src="/logo.png"
+              alt="Purrfect Love Logo"
               style={{ width: '200px', height: 'auto', maxWidth: '100%' }}
             />
           </div>
-          
+
           {/* Logo/Title Area */}
           <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-            <h1 
-              style={{ 
-                color: '#ffc544', 
+            <h1
+              style={{
+                color: '#ffc544',
                 fontSize: 'clamp(2.5rem, 8vw, 4.5rem)',
                 fontWeight: 'bold',
-                margin: 0
+                margin: 0,
               }}
             >
               {message.headline}
             </h1>
-            <p 
-              style={{ 
+            <p
+              style={{
                 color: '#ffc544',
                 fontSize: 'clamp(1.5rem, 5vw, 3rem)',
                 fontWeight: 'bold',
-                margin: 0
+                margin: 0,
               }}
             >
               {message.subtext}
@@ -142,9 +139,9 @@ export default function ComingSoon() {
               target="_blank"
               rel="noopener noreferrer"
               className="instagram-link"
-              style={{ 
+              style={{
                 color: '#9ca3af',
-                transition: 'color 0.2s'
+                transition: 'color 0.2s',
               }}
               aria-label="Follow us on Instagram"
             >
@@ -155,9 +152,9 @@ export default function ComingSoon() {
               target="_blank"
               rel="noopener noreferrer"
               className="instagram-link"
-              style={{ 
+              style={{
                 color: '#9ca3af',
-                transition: 'color 0.2s'
+                transition: 'color 0.2s',
               }}
               aria-label="Follow us on Facebook"
             >
@@ -167,18 +164,19 @@ export default function ComingSoon() {
 
           {/* Footer */}
           <div style={{ paddingTop: '3rem' }}>
-            <p 
-              style={{ 
+            <p
+              style={{
                 color: '#9ca3af',
                 fontSize: '0.875rem',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 gap: '0.25rem',
-                margin: 0
+                margin: 0,
               }}
             >
-              Made with <Heart style={{ width: '1rem', height: '1rem', color: '#ffc544' }} fill="#ffc544" /> for cats and cat lovers
+              Made with <Heart style={{ width: '1rem', height: '1rem', color: '#ffc544' }} fill="#ffc544" /> for cats
+              and cat lovers
             </p>
           </div>
         </div>
