@@ -8,9 +8,15 @@
 
 ## 📊 Overall Progress
 
-- [ ] **v0 Launch** (End of November 2025) - 0% complete
-- [ ] **v0.5** (December 2025) - Not started
+- [ ] **v0 Launch** (End of November 2025) - 5% complete
+- [ ] **v0.5** (December 2025) - 10% started (schema ready)
 - [ ] **v1 Launch** (January 2026) - Not started
+
+## PRODUCTION LIVE
+- **Main site**: https://purrfectlove.org ✓
+- **Studio**: https://purrfectlove.org/studio ✓
+- **Domain**: Connected and SSL active ✓
+- **Deployment**: Vercel Pro (30-day trial - considering downgrade to free)
 
 ---
 
@@ -19,6 +25,11 @@
 ### ✅ Done This Week
 - [x] Created GitHub repository
 - [x] Coming soon page deployed
+- [x] Production domain connected (purrfectlove.org)
+- [x] Fixed Sanity CORS for production URLs
+- [x] Studio accessible at production URL
+- [x] Created adoption application schema in Sanity
+- [x] Resolved Vercel deployment queue issues (upgraded to Pro trial)
 - [x] PRD finalized with Claude
 - [x] Tech stack decided (Vercel + GitHub + GoDaddy + Sanity)
 - [x] Sanity CMS project created
@@ -126,17 +137,28 @@
 
 ### Phase 5: Adoption System (December 2025)
 
-- [ ] Create application schema in Sanity
-- [ ] Build custom application form
-- [ ] Set up Sanity Studio views
-- [ ] Configure email notifications
-- [ ] Team training
+- [x] Create application schema in Sanity
+- [ ] Update Studio structure for application views
+- [ ] Build custom application form on website
+- [ ] Set up Cloudflare Turnstile (spam protection)
+- [ ] Configure email notifications (webhooks)
+- [ ] Team training on Sanity Studio
+- [ ] Optional: Google Sheets backup sync
 - [ ] **LAUNCH v0.5** 🚀
 
 ---
 
-### Week of Oct 5, 2025
-- **Decision**: Using Vercel instead of GitHub Pages for better Next.js support and image optimization
+### Week of Oct 5, 2025 (Afternoon Update)
+- **MAJOR**: Production site live at purrfectlove.org
+- **MAJOR**: Studio live at purrfectlove.org/studio
+- **Fixed**: Added production domains to Sanity CORS settings
+- **Fixed**: Vercel deployment queue issues (upgraded to Pro - 30 day trial)
+- **Decision**: Considering downgrade back to Vercel free tier after testing
+- **Progress**: Created adoption application schema (Phase 5 started early)
+- **Next**: Custom Studio views for application pipeline management
+
+### Week of Oct 5, 2025 (Morning)
+- **Decision**: Using Vercel instead of GitHub Pages
 - **Decision**: All backend/CMS in Sanity (no Notion) - keeps stack to just 4 platforms
 - **Decision**: Removed static export from next.config.mjs to support Sanity Studio
 - **Completed**: Full Sanity setup - Studio accessible at staging-url/studio
