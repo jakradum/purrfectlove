@@ -3,7 +3,7 @@ export default {
   title: 'Adoption Application',
   type: 'document',
   fields: [
-    // Applicant Information
+    // === APPLICANT INFORMATION ===
     {
       name: 'applicantName',
       title: 'Applicant Name',
@@ -27,8 +27,6 @@ export default {
       title: 'Address',
       type: 'text'
     },
-    
-    // Cat Reference
     {
       name: 'cat',
       title: 'Interested in Cat',
@@ -36,8 +34,6 @@ export default {
       to: [{type: 'cat'}],
       validation: Rule => Rule.required()
     },
-    
-    // Application Details
     {
       name: 'housingType',
       title: 'Housing Type',
@@ -72,18 +68,27 @@ export default {
       title: 'Experience with Cats',
       type: 'text'
     },
-    
-    // Pipeline Status
+    {
+      name: 'submittedAt',
+      title: 'Submitted At',
+      type: 'datetime',
+      initialValue: () => new Date().toISOString(),
+      readOnly: true
+    },
+
+    // === FOR OFFICIAL USE ONLY ===
     {
       name: 'status',
-      title: 'Status',
+      title: '📌 Current Status',
       type: 'string',
       options: {
         list: [
           {title: '🆕 New', value: 'new'},
           {title: '👀 Under Review', value: 'review'},
-          {title: '📞 Interview Scheduled', value: 'interview'},
-          {title: '🏠 Home Visit Pending', value: 'homeVisit'},
+          {title: '📞 Interview Scheduled', value: 'interviewScheduled'},
+          {title: '✅ Interview Complete', value: 'interviewComplete'},
+          {title: '🏠 Home Visit Scheduled', value: 'homeVisitScheduled'},
+          {title: '✅ Home Visit Complete', value: 'homeVisitComplete'},
           {title: '✅ Approved', value: 'approved'},
           {title: '❌ Rejected', value: 'rejected'},
           {title: '🎉 Adopted', value: 'adopted'}
@@ -91,8 +96,6 @@ export default {
       },
       initialValue: 'new'
     },
-    
-    // Team Collaboration
     {
       name: 'assignedTo',
       title: 'Assigned To',
@@ -105,68 +108,56 @@ export default {
         ]
       }
     },
+
+    // INTERVIEW SECTION
     {
-      name: 'teamNotes',
-      title: 'Team Notes',
-      type: 'array',
-      of: [{
-        type: 'object',
-        fields: [
-          {name: 'author', type: 'string', title: 'Team Member'},
-          {name: 'note', type: 'text', title: 'Note'},
-          {name: 'timestamp', type: 'datetime', title: 'Date'},
-          {
-            name: 'vote',
-            type: 'string',
-            title: 'Vote',
-            options: {
-              list: ['Approve', 'Reject', 'Needs Discussion']
-            }
-          }
-        ]
-      }]
+      name: 'interviewCompleted',
+      title: 'Interview Completed?',
+      type: 'boolean',
+      initialValue: false
     },
-    
-    // Scheduling
+    {
+      name: 'interviewedBy',
+      title: 'Interviewed By',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Lucia', value: 'lucia'},
+          {title: 'Besly', value: 'besly'},
+          {title: 'Devraj', value: 'devraj'}
+        ]
+      },
+      hidden: ({parent}) => !parent?.interviewCompleted
+    },
     {
       name: 'interviewDate',
       title: 'Interview Date',
-      type: 'datetime'
-    },
-    {
-      name: 'homeVisitDate',
-      title: 'Home Visit Date',
-      type: 'datetime'
-    },
-    
-    // Decision
-    {
-      name: 'decision',
-      title: 'Final Decision',
-      type: 'text'
-    },
-    
-    // Metadata
-    {
-      name: 'submittedAt',
-      title: 'Submitted At',
       type: 'datetime',
-      initialValue: () => new Date().toISOString()
-    }
-  ],
-  
-  preview: {
-    select: {
-      name: 'applicantName',
-      cat: 'cat.name',
-      status: 'status',
-      date: 'submittedAt'
+      hidden: ({parent}) => !parent?.interviewCompleted
     },
-    prepare({name, cat, status, date}) {
-      return {
-        title: name,
-        subtitle: `${cat} - ${status} - ${new Date(date).toLocaleDateString()}`
-      }
-    }
-  }
-}
+    {
+      name: 'interviewNotes',
+      title: 'Interview Notes',
+      type: 'text',
+      hidden: ({parent}) => !parent?.interviewCompleted
+    },
+
+    // HOME VISIT SECTION
+    {
+      name: 'homeVisitCompleted',
+      title: 'Home Visit Completed?',
+      type: 'boolean',
+      initialValue: false
+    },
+    {
+      name: 'homeVisitBy',
+      title: 'Home Visit Conducted By',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Lucia', value: 'lucia'},
+          {title: 'Besly', value: 'besly'},
+          {title: 'Devraj', value: 'devraj'}
+        ]
+      },
+      hidden: ({parent}) => !parent?.homeVisitComple
