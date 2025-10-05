@@ -3,6 +3,13 @@ export const structure = (S) =>
     .title('Content')
     .items([
       S.listItem()
+        .title('📋 Applications')
+        .child(
+          S.documentTypeList('application')
+            .title('Adoption Applications')
+        ),
+      S.divider(),
+      S.listItem()
         .title('🐱 Cats')
         .child(
           S.documentTypeList('cat')
