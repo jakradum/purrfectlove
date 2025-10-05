@@ -4,4 +4,6 @@ import successStory from './successStory'
 import teamMember from './teamMember'
 import application from './application'
 
-export const schemaTypes = [cat, faq, successStory, teamMember, application]
+export const schema = {
+  types: [cat, faq, successStory, teamMember, application]
+}
