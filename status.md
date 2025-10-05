@@ -30,10 +30,12 @@
 - [x] Added first test cat (Falooda)
 - [x] Tested integration end-to-end on staging
 - [x] Updated next.config.mjs for dynamic routes
+- [x] Pointed GoDaddy DNS to Vercel (A: 216.198.79.1, CNAME: 00ace12d444b56a0.vercel-dns-017.com)
+- [x] Deleted old GitHub Pages DNS records
 
 ### 🔄 In Progress
 - [x] Vercel account setup - COMPLETE
-- [ ] Domain DNS configuration - WAITING ON GODADDY 2FA CODES
+- [x] Domain DNS configuration - COMPLETE (Waiting for propagation)
 - [x] Sanity setup - COMPLETE
 
 ### 🚫 Blocked / Waiting On
@@ -55,8 +57,8 @@
 ### Phase 1: Foundation (Early-Mid November 2025)
 
 **Backend/Infrastructure (Pranav):**
-- [ ] Connect GitHub repo to Vercel
-- [ ] Configure purrfectlove.org domain on Vercel
+- [x] Connect GitHub repo to Vercel
+- [x] Configure purrfectlove.org domain on Vercel
 - [ ] Set up Google Analytics 4
 - [ ] Configure email addresses (adoption@, info@, germany@)
 - [ ] Set up EmailJS or Formspree
@@ -133,18 +135,18 @@
 
 ---
 
-## 📝 Notes & Decisions
-
 ### Week of Oct 5, 2025
 - **Decision**: Using Vercel instead of GitHub Pages for better Next.js support and image optimization
 - **Decision**: All backend/CMS in Sanity (no Notion) - keeps stack to just 4 platforms
 - **Decision**: Removed static export from next.config.mjs to support Sanity Studio
 - **Completed**: Full Sanity setup - Studio accessible at staging-url/studio
 - **Completed**: First cat (Falooda) added with AI-generated test image
+- **Completed**: GoDaddy DNS configured - deleted 5 GitHub records, added 2 Vercel records
+- **Completed**: Domain purrfectlove.org now points to Vercel (DNS propagating, 1-48 hours)
 - **Note**: Anandhi needs brand colors finalized for logo
 - **Note**: Need to confirm with team which 3 people get Sanity access
-- **Note**: Domain connection blocked - waiting for GoDaddy 2FA codes from colleague
 - **Note**: Test page created at /test-cats - can delete later
+- **Note**: SSL certificate will auto-provision once DNS propagation completes (expected 4-24 hours)
 
 ### Previous Decisions
 - Tech Stack: Vercel + GitHub + GoDaddy + Sanity
@@ -164,6 +166,7 @@
 - Waiting on site design from Chithra (needed by mid-November)
 
 ### Low Priority
+- Waiting for DNS propagation (1-48 hours) and SSL certificate provisioning
 - Need to gather cat content from team
 
 ---
