@@ -160,4 +160,116 @@ export default {
           {title: 'Devraj', value: 'devraj'}
         ]
       },
-      hidden: ({parent}) => !parent?.homeVisitComple
+      hidden: ({parent}) => !parent?.homeVisitCompleted
+    },
+    {
+      name: 'homeVisitDate',
+      title: 'Home Visit Date',
+      type: 'datetime',
+      hidden: ({parent}) => !parent?.homeVisitCompleted
+    },
+    {
+      name: 'homeVisitNotes',
+      title: 'Home Visit Notes',
+      type: 'text',
+      hidden: ({parent}) => !parent?.homeVisitCompleted
+    },
+
+    // TEAM FEEDBACK
+    {
+      name: 'teamFeedback',
+      title: 'Team Decision',
+      type: 'string',
+      options: {
+        list: [
+          {title: '✅ Approve', value: 'approve'},
+          {title: '💬 Needs Discussion', value: 'discuss'},
+          {title: '❌ Reject', value: 'reject'}
+        ]
+      }
+    },
+    {
+      name: 'feedbackNotes',
+      title: 'Detailed Feedback',
+      type: 'text',
+      rows: 5
+    },
+
+    // FINAL DECISION
+    {
+      name: 'finalDecision',
+      title: 'Final Decision',
+      type: 'string',
+      options: {
+        list: [
+          {title: 'Approved', value: 'approved'},
+          {title: 'Rejected', value: 'rejected'},
+          {title: 'Pending', value: 'pending'}
+        ]
+      },
+      initialValue: 'pending'
+    },
+    {
+      name: 'rejectionReason',
+      title: 'Rejection Reason',
+      type: 'text',
+      hidden: ({parent}) => parent?.finalDecision !== 'rejected'
+    },
+    {
+      name: 'decisionDate',
+      title: 'Decision Date',
+      type: 'datetime'
+    },
+    {
+      name: 'adoptionDate',
+      title: 'Adoption Date',
+      type: 'datetime',
+      hidden: ({parent}) => parent?.status !== 'adopted'
+    },
+
+    // FOLLOW UP
+    {
+      name: 'followUpRequired',
+      title: 'Follow-up Required?',
+      type: 'boolean'
+    },
+    {
+      name: 'followUpDate',
+      title: 'Follow-up Date',
+      type: 'datetime',
+      hidden: ({parent}) => !parent?.followUpRequired
+    },
+    {
+      name: 'followUpNotes',
+      title: 'Follow-up Notes',
+      type: 'text',
+      hidden: ({parent}) => !parent?.followUpRequired
+    }
+  ],
+
+  preview: {
+    select: {
+      name: 'applicantName',
+      cat: 'cat.name',
+      status: 'status',
+      date: 'submittedAt'
+    },
+    prepare({name, cat, status, date}) {
+      const statusEmoji = {
+        new: '🆕',
+        review: '👀',
+        interviewScheduled: '📞',
+        interviewComplete: '✅',
+        homeVisitScheduled: '🏠',
+        homeVisitComplete: '✅',
+        approved: '✅',
+        rejected: '❌',
+        adopted: '🎉'
+      }
+      return {
+        title: `${statusEmoji[status]} ${name}`,
+        subtitle: `${cat} - ${new Date(date).toLocaleDateString()}`
+      }
+    }
+  }
+}
