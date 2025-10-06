@@ -47,33 +47,40 @@ export default function ApplyPage({ params }) {
     }))
   }
 
-  const handleSubmit = async (e) => {
-    e.preventDefault()
-    setSubmitting(true)
+ const handleSubmit = async (e) => {
+  e.preventDefault()
+  setSubmitting(true)
 
-    try {
-      // Create application in Sanity
-      await client.create({
-        _type: 'application',
-        cat: {
-          _type: 'reference',
-          _ref: params.catId
-        },
+  try {
+    // Send to API route instead of direct Sanity call
+    const response = await fetch('/api/submit-application', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+      },
+      body: JSON.stringify({
         ...formData,
-        submittedAt: new Date().toISOString(),
-        status: 'new'
+        catId: params.catId  // Add the cat ID
       })
+    })
 
-      // Show success and redirect
-      alert('Application submitted successfully! We will contact you within 48 hours.')
-      router.push('/')
-    } catch (error) {
-      console.error('Error submitting application:', error)
-      alert('There was an error submitting your application. Please try again.')
-    } finally {
-      setSubmitting(false)
+    const result = await response.json()
+
+    if (!response.ok) {
+      throw new Error(result.error || 'Failed to submit application')
     }
+
+    // Success!
+    alert('Application submitted successfully! We will contact you within 48 hours.')
+    router.push('/')
+    
+  } catch (error) {
+    console.error('Error submitting application:', error)
+    alert(`There was an error: ${error.message}. Please try again.`)
+  } finally {
+    setSubmitting(false)
   }
+}
 
   if (loading) {
     return (
