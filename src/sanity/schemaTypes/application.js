@@ -277,16 +277,44 @@ export default {
   ],
 
   fieldsets: [
-    {
-      name: 'officialUse',
-      title: 'For Official Use',
-      description: 'Please leave your feedback and update status below here.',
-      options: {
-        collapsible: true,
-        collapsed: false
-      }
+  {
+    name: 'officialUse',
+    title: 'For Official Use',
+    description: 'Please leave your feedback and update status below here.',
+    options: {
+      collapsible: true,
+      collapsed: false
     }
-  ],
+  }
+],
+
+orderings: [
+  {
+    title: 'Newest First',
+    name: 'submittedAtDesc',
+    by: [{field: 'submittedAt', direction: 'desc'}]
+  },
+  {
+    title: 'Oldest First',
+    name: 'submittedAtAsc',
+    by: [{field: 'submittedAt', direction: 'asc'}]
+  },
+  {
+    title: 'Status',
+    name: 'status',
+    by: [{field: 'status', direction: 'asc'}]
+  },
+  {
+    title: 'Assigned To',
+    name: 'assignedTo',
+    by: [{field: 'assignedTo', direction: 'asc'}]
+  },
+  {
+    title: 'Final Decision',
+    name: 'finalDecision',
+    by: [{field: 'finalDecision', direction: 'asc'}]
+  }
+],
 
   preview: {
     select: {
