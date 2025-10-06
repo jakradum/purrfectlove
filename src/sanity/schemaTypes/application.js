@@ -9,27 +9,27 @@ export default {
       title: 'Applicant Name',
       type: 'string',
       validation: Rule => Rule.required(),
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'email',
       title: 'Email',
       type: 'string',
       validation: Rule => Rule.required().email(),
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'phone',
       title: 'Phone',
       type: 'string',
       validation: Rule => Rule.required(),
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'address',
       title: 'Address',
       type: 'text',
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'cat',
@@ -37,7 +37,7 @@ export default {
       type: 'reference',
       to: [{type: 'cat'}],
       validation: Rule => Rule.required(),
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'housingType',
@@ -50,47 +50,48 @@ export default {
           {title: 'Other', value: 'other'}
         ]
       },
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'hasOtherPets',
       title: 'Has Other Pets',
       type: 'boolean',
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'otherPetsDetails',
       title: 'Other Pets Details',
       type: 'text',
       hidden: ({parent}) => !parent?.hasOtherPets,
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'whyAdopt',
       title: 'Why Do You Want to Adopt?',
       type: 'text',
       validation: Rule => Rule.required().min(50),
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'experience',
       title: 'Experience with Cats',
       type: 'text',
-      readOnly: true 
+      readOnly: true
     },
     {
       name: 'submittedAt',
       title: 'Submitted At',
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
-      readOnly: true,
+      readOnly: true
     },
 
     // === FOR OFFICIAL USE ONLY ===
     {
       name: 'status',
-      title: '📌 Current Status',
+      title: 'Current Status',
       type: 'string',
+      fieldset: 'officialUse',
       options: {
         list: [
           {title: '🆕 New', value: 'new'},
@@ -110,6 +111,7 @@ export default {
       name: 'assignedTo',
       title: 'Assigned To',
       type: 'string',
+      fieldset: 'officialUse',
       options: {
         list: [
           {title: 'Lucia', value: 'lucia'},
@@ -124,12 +126,14 @@ export default {
       name: 'interviewCompleted',
       title: 'Interview Completed?',
       type: 'boolean',
+      fieldset: 'officialUse',
       initialValue: false
     },
     {
       name: 'interviewedBy',
       title: 'Interviewed By',
       type: 'string',
+      fieldset: 'officialUse',
       options: {
         list: [
           {title: 'Lucia', value: 'lucia'},
@@ -143,12 +147,14 @@ export default {
       name: 'interviewDate',
       title: 'Interview Date',
       type: 'datetime',
+      fieldset: 'officialUse',
       hidden: ({parent}) => !parent?.interviewCompleted
     },
     {
       name: 'interviewNotes',
       title: 'Interview Notes',
       type: 'text',
+      fieldset: 'officialUse',
       hidden: ({parent}) => !parent?.interviewCompleted
     },
 
@@ -157,12 +163,14 @@ export default {
       name: 'homeVisitCompleted',
       title: 'Home Visit Completed?',
       type: 'boolean',
+      fieldset: 'officialUse',
       initialValue: false
     },
     {
       name: 'homeVisitBy',
       title: 'Home Visit Conducted By',
       type: 'string',
+      fieldset: 'officialUse',
       options: {
         list: [
           {title: 'Lucia', value: 'lucia'},
@@ -176,12 +184,14 @@ export default {
       name: 'homeVisitDate',
       title: 'Home Visit Date',
       type: 'datetime',
+      fieldset: 'officialUse',
       hidden: ({parent}) => !parent?.homeVisitCompleted
     },
     {
       name: 'homeVisitNotes',
       title: 'Home Visit Notes',
       type: 'text',
+      fieldset: 'officialUse',
       hidden: ({parent}) => !parent?.homeVisitCompleted
     },
 
@@ -190,6 +200,7 @@ export default {
       name: 'teamFeedback',
       title: 'Team Decision',
       type: 'string',
+      fieldset: 'officialUse',
       options: {
         list: [
           {title: '✅ Approve', value: 'approve'},
@@ -202,6 +213,7 @@ export default {
       name: 'feedbackNotes',
       title: 'Detailed Feedback',
       type: 'text',
+      fieldset: 'officialUse',
       rows: 5
     },
 
@@ -210,6 +222,7 @@ export default {
       name: 'finalDecision',
       title: 'Final Decision',
       type: 'string',
+      fieldset: 'officialUse',
       options: {
         list: [
           {title: 'Approved', value: 'approved'},
@@ -223,17 +236,20 @@ export default {
       name: 'rejectionReason',
       title: 'Rejection Reason',
       type: 'text',
+      fieldset: 'officialUse',
       hidden: ({parent}) => parent?.finalDecision !== 'rejected'
     },
     {
       name: 'decisionDate',
       title: 'Decision Date',
-      type: 'datetime'
+      type: 'datetime',
+      fieldset: 'officialUse'
     },
     {
       name: 'adoptionDate',
       title: 'Adoption Date',
       type: 'datetime',
+      fieldset: 'officialUse',
       hidden: ({parent}) => parent?.status !== 'adopted'
     },
 
@@ -241,19 +257,34 @@ export default {
     {
       name: 'followUpRequired',
       title: 'Follow-up Required?',
-      type: 'boolean'
+      type: 'boolean',
+      fieldset: 'officialUse'
     },
     {
       name: 'followUpDate',
       title: 'Follow-up Date',
       type: 'datetime',
+      fieldset: 'officialUse',
       hidden: ({parent}) => !parent?.followUpRequired
     },
     {
       name: 'followUpNotes',
       title: 'Follow-up Notes',
       type: 'text',
+      fieldset: 'officialUse',
       hidden: ({parent}) => !parent?.followUpRequired
+    }
+  ],
+
+  fieldsets: [
+    {
+      name: 'officialUse',
+      title: 'For Official Use',
+      description: 'Please leave your feedback and update status below here.',
+      options: {
+        collapsible: true,
+        collapsed: false
+      }
     }
   ],
 
@@ -262,10 +293,11 @@ export default {
       name: 'applicantName',
       cat: 'cat.name',
       status: 'status',
+      assignedTo: 'assignedTo',
       date: 'submittedAt'
     },
-    prepare({name, cat, status, date}) {
-      const statusEmoji = {
+    prepare({name, cat, status, assignedTo, date}) {
+      const statusLabels = {
         new: '🆕',
         review: '👀',
         interviewScheduled: '📞',
@@ -276,9 +308,16 @@ export default {
         rejected: '❌',
         adopted: '🎉'
       }
+      
+      const assignedLabels = {
+        lucia: 'Lucia',
+        besly: 'Besly',
+        devraj: 'Devraj'
+      }
+      
       return {
-        title: `${statusEmoji[status]} ${name}`,
-        subtitle: `${cat} - ${new Date(date).toLocaleDateString()}`
+        title: name,
+        subtitle: `${cat} • ${statusLabels[status] || status} • ${assignedLabels[assignedTo] || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
       }
     }
   }
