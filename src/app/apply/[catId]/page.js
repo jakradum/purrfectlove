@@ -3,12 +3,14 @@
 import { useState, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
 import { client } from '@/sanity/lib/client'
+import { Turnstile } from '@marsidev/react-turnstile'
 
 export default function ApplyPage({ params }) {
   const router = useRouter()
   const [cat, setCat] = useState(null)
   const [loading, setLoading] = useState(true)
   const [submitting, setSubmitting] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState('')
   const [formData, setFormData] = useState({
     applicantName: '',
     email: '',
@@ -298,7 +300,10 @@ export default function ApplyPage({ params }) {
             }}
           />
         </div>
-
+<Turnstile
+  siteKey="YOUR_TURNSTILE_SITE_KEY"
+  onSuccess={(token) => setTurnstileToken(token)}
+/>
         <button
           type="submit"
           disabled={submitting}
