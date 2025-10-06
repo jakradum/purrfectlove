@@ -23,6 +23,12 @@
 ## 🎯 Current Week: October 5-11, 2025
 
 ### ✅ Done This Week
+- [x] Created API route for application submission
+- [x] Built adoption application form UI
+- [x] Implemented Sanity application schema with fieldsets
+- [x] Added "For Official Use" section in applications
+- [x] Made user-submitted fields read-only in Sanity
+- [x] Designed spam protection strategy (Turnstile + honeypot + rate limiting)
 - [x] Created GitHub repository
 - [x] Coming soon page deployed
 - [x] Production domain connected (purrfectlove.org)
@@ -45,6 +51,9 @@
 - [x] Deleted old GitHub Pages DNS records
 
 ### 🔄 In Progress
+- [ ] Getting Cloudflare Turnstile keys
+- [ ] Adding TURNSTILE_SECRET_KEY to Vercel
+- [ ] Testing spam protection on staging
 - [x] Vercel account setup - COMPLETE
 - [x] Domain DNS configuration - COMPLETE (Waiting for propagation)
 - [x] Sanity setup - COMPLETE
@@ -54,6 +63,9 @@
 - Waiting for design mockups from Chithra (ETA: Mid-November)
 
 ### ⏳ Planned for Next Week (Oct 12-18)
+- [ ] Deploy spam protection to production
+- [ ] Test application submission end-to-end
+- [ ] Monitor for spam/bot submissions
 - [ ] Complete Vercel setup and deployment
 - [ ] Point GoDaddy DNS to Vercel
 - [ ] Create Sanity.io account
@@ -138,9 +150,13 @@
 ### Phase 5: Adoption System (December 2025)
 
 - [x] Create application schema in Sanity
-- [ ] Update Studio structure for application views
-- [ ] Build custom application form on website
-- [ ] Set up Cloudflare Turnstile (spam protection)
+- [x] Update Studio structure for application views
+- [x] Build custom application form on website
+- [x] Add Cloudflare Turnstile (spam protection)
+- [x] Add honeypot field
+- [x] Add rate limiting
+- [x] Add email/phone validation
+- [ ] Deploy and test spam protection
 - [ ] Configure email notifications (webhooks)
 - [ ] Team training on Sanity Studio
 - [ ] Optional: Google Sheets backup sync
