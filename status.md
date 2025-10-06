@@ -1,6 +1,6 @@
 # Purrfect Love - Project Status Tracker
 
-**Last Updated**: October 5, 2025  
+**Last Updated**: October 6, 2025  
 **Current Phase**: Foundation Setup  
 **Target Launch**: End of November 2025
 
@@ -9,7 +9,7 @@
 ## 📊 Overall Progress
 
 - [ ] **v0 Launch** (End of November 2025) - 5% complete
-- [ ] **v0.5** (December 2025) - 10% started (schema ready)
+- [x] **v0.5** (December 2025) - 95% complete (spam protection deployed!)
 - [ ] **v1 Launch** (January 2026) - Not started
 
 ## PRODUCTION LIVE
@@ -17,24 +17,37 @@
 - **Studio**: https://purrfectlove.org/studio ✓
 - **Domain**: Connected and SSL active ✓
 - **Deployment**: Vercel Pro (30-day trial - considering downgrade to free)
+- **Spam Protection**: LIVE ✓
 
 ---
 
-## 🎯 Current Week: October 5-11, 2025
+## 🎯 Current Week: October 5-12, 2025
 
 ### ✅ Done This Week
+- [x] **SPAM PROTECTION DEPLOYED** 🎉
+  - Got Cloudflare Turnstile keys
+  - Added TURNSTILE_SECRET_KEY to Vercel (all environments)
+  - Added NEXT_PUBLIC_TURNSTILE_SITE_KEY to Vercel (all environments)
+  - Updated application form with Turnstile widget
+  - Updated API route with full spam protection:
+    - Turnstile verification
+    - Honeypot field
+    - Rate limiting (5 min per IP)
+    - Email validation (blocks disposable emails)
+    - Phone validation (Indian format)
+  - Deployed to production
+  - Tested end-to-end - working!
 - [x] Created API route for application submission
 - [x] Built adoption application form UI
 - [x] Implemented Sanity application schema with fieldsets
 - [x] Added "For Official Use" section in applications
 - [x] Made user-submitted fields read-only in Sanity
-- [x] Designed spam protection strategy (Turnstile + honeypot + rate limiting)
+- [x] Designed spam protection strategy
 - [x] Created GitHub repository
 - [x] Coming soon page deployed
 - [x] Production domain connected (purrfectlove.org)
 - [x] Fixed Sanity CORS for production URLs
 - [x] Studio accessible at production URL
-- [x] Created adoption application schema in Sanity
 - [x] Resolved Vercel deployment queue issues (upgraded to Pro trial)
 - [x] PRD finalized with Claude
 - [x] Tech stack decided (Vercel + GitHub + GoDaddy + Sanity)
@@ -47,29 +60,21 @@
 - [x] Added first test cat (Falooda)
 - [x] Tested integration end-to-end on staging
 - [x] Updated next.config.mjs for dynamic routes
-- [x] Pointed GoDaddy DNS to Vercel (A: 216.198.79.1, CNAME: 00ace12d444b56a0.vercel-dns-017.com)
-- [x] Deleted old GitHub Pages DNS records
+- [x] Pointed GoDaddy DNS to Vercel
 
 ### 🔄 In Progress
-- [ ] Getting Cloudflare Turnstile keys
-- [ ] Adding TURNSTILE_SECRET_KEY to Vercel
-- [ ] Testing spam protection on staging
-- [x] Vercel account setup - COMPLETE
-- [x] Domain DNS configuration - COMPLETE (Waiting for propagation)
-- [x] Sanity setup - COMPLETE
+- [ ] Monitoring spam protection effectiveness
+- [ ] Gathering real cat content from team
 
 ### 🚫 Blocked / Waiting On
 - Waiting for logo concepts from Anandhi (ETA: Mid-November)
 - Waiting for design mockups from Chithra (ETA: Mid-November)
 
-### ⏳ Planned for Next Week (Oct 12-18)
-- [ ] Deploy spam protection to production
-- [ ] Test application submission end-to-end
-- [ ] Monitor for spam/bot submissions
-- [ ] Complete Vercel setup and deployment
-- [ ] Point GoDaddy DNS to Vercel
-- [ ] Create Sanity.io account
-- [ ] Set up Google Analytics
+### ⏳ Planned for Next Week (Oct 13-19)
+- [ ] Monitor application submissions for spam/bot attempts
+- [ ] Check Cloudflare Turnstile dashboard for analytics
+- [ ] Set up Google Analytics 4
+- [ ] Configure email addresses (adoption@, info@, germany@)
 - [ ] Start writing homepage copy
 - [ ] Organize existing cat photos
 
@@ -147,7 +152,7 @@
 - [ ] Lighthouse audit
 - [ ] **LAUNCH v0** 🚀
 
-### Phase 5: Adoption System (December 2025)
+### Phase 5: Adoption System (December 2025) - MOSTLY COMPLETE! 🎉
 
 - [x] Create application schema in Sanity
 - [x] Update Studio structure for application views
@@ -156,15 +161,24 @@
 - [x] Add honeypot field
 - [x] Add rate limiting
 - [x] Add email/phone validation
-- [ ] Deploy and test spam protection
-- [ ] Configure email notifications (webhooks)
+- [x] Deploy spam protection to production
+- [x] Test application submission end-to-end
+- [ ] Monitor for spam/bot submissions (ongoing)
+- [ ] Configure email notifications (webhooks) - *Next priority*
 - [ ] Team training on Sanity Studio
 - [ ] Optional: Google Sheets backup sync
 - [ ] **LAUNCH v0.5** 🚀
 
 ---
 
-### Week of Oct 5, 2025 (Afternoon Update)
+### Week of Oct 6, 2025 (Afternoon Update)
+- **MAJOR**: Spam protection fully deployed to production!
+- **Complete**: Turnstile (invisible mode), honeypot, rate limiting, validation
+- **Tested**: Form submission working end-to-end
+- **Next**: Email notifications via webhooks, then team training
+- **Note**: v0.5 is 95% complete - just need email automation and training
+
+### Week of Oct 5, 2025 (Afternoon)
 - **MAJOR**: Production site live at purrfectlove.org
 - **MAJOR**: Studio live at purrfectlove.org/studio
 - **Fixed**: Added production domains to Sanity CORS settings
@@ -191,6 +205,7 @@
 - CMS: Sanity.io (not Strapi, Contentful, or others)
 - Deployment: Vercel (not GitHub Pages)
 - Forms: Custom forms → Sanity (not Google Forms long-term)
+- Spam Protection: Cloudflare Turnstile + honeypot + rate limiting
 
 ---
 
@@ -204,17 +219,11 @@
 - Waiting on site design from Chithra (needed by mid-November)
 
 ### Low Priority
-- Waiting for DNS propagation (1-48 hours) and SSL certificate provisioning
 - Need to gather cat content from team
 
 ---
 
 ## ❓ Questions / Need Help With
-
-### For Claude
-- How to structure the cat schema in Sanity?
-- Best practices for Sanity + Next.js integration?
-- How to set up Vercel environment variables for Sanity?
 
 ### For Team
 - Which 3 team members should get Sanity access?
@@ -259,13 +268,14 @@
 
 ## 📅 Upcoming Milestones
 
-- **Oct 15, 2025**: Vercel fully configured, domain connected
-- **Oct 22, 2025**: Sanity project set up, schemas designed
+- **Oct 15, 2025**: Google Analytics configured
+- **Oct 22, 2025**: Content collection complete
 - **Nov 1, 2025**: All page copy written
 - **Nov 8, 2025**: Backend development complete (placeholder styling)
 - **Nov 15, 2025**: Logo + designs delivered (HARD DEADLINE)
 - **Nov 22, 2025**: Design integration complete
 - **Nov 30, 2025**: 🚀 **v0 LAUNCH**
+- **Dec 15, 2025**: Email automation + team training
 - **Dec 31, 2025**: 🚀 **v0.5 LAUNCH** (Adoption system)
 - **Jan 31, 2026**: 🚀 **v1 LAUNCH** (German version)
 
@@ -286,10 +296,9 @@
 - **Repo**: https://github.com/jakradum/purrfectlove
 - **Vercel Dashboard**: https://vercel.com/pranav-karnads-projects/purrfectlove
 - **Sanity Management**: https://sanity.io/manage
-- **Staging Site**: https://purrfectlove-git-staging-pranav-karnads-projects.vercel.app
-- **Sanity Studio (Staging)**: https://purrfectlove-git-staging-pranav-karnads-projects.vercel.app/studio
-- **Sanity Studio (Local)**: http://localhost:3000/studio
-- **Live Site**: https://purrfectlove.org (coming soon page)
+- **Cloudflare Turnstile**: https://dash.cloudflare.com (Turnstile section)
+- **Live Site**: https://purrfectlove.org
+- **Sanity Studio**: https://purrfectlove.org/studio
 - **Instagram**: @purrfectlove.bangalore
 
 ---
@@ -301,6 +310,23 @@
 - **Design**: Chithra
 - **Content**: [Team member names]
 - **Germany**: [Team member name]
+
+---
+
+## 🔐 Security Notes
+
+**Spam Protection Layers (LIVE):**
+1. **Cloudflare Turnstile** - Invisible bot detection
+2. **Honeypot Field** - Hidden trap for basic bots
+3. **Rate Limiting** - 5 minute cooldown per IP
+4. **Email Validation** - Blocks disposable/temporary emails
+5. **Phone Validation** - Indian format (10-12 digits)
+6. **Server-side Verification** - Cannot be bypassed client-side
+
+**Monitoring:**
+- Check Cloudflare dashboard weekly for Turnstile stats
+- Monitor Vercel logs for failed submissions
+- Review Sanity for suspicious applications
 
 ---
 
