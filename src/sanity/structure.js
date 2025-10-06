@@ -1,28 +1,26 @@
+import {StructureBuilder as S} from 'sanity/desk'
+
 export const structure = (S) =>
   S.list()
     .title('Content')
     .items([
+      // Applications with custom view
       S.listItem()
         .title('📋 Applications')
         .child(
           S.documentTypeList('application')
-            .title('Adoption Applications')
+            .title('All Applications')
+            .defaultOrdering([{field: 'submittedAt', direction: 'desc'}])
+            .child(documentId =>
+              S.document()
+                .documentId(documentId)
+                .schemaType('application')
+            )
         ),
-      S.divider(),
-      S.listItem()
-        .title('🐱 Cats')
-        .child(
-          S.documentTypeList('cat')
-            .title('All Cats')
-        ),
-      S.divider(),
-      S.listItem()
-        .title('👥 Team Members')
-        .child(S.documentTypeList('teamMember').title('Team')),
-      S.listItem()
-        .title('❓ FAQs')
-        .child(S.documentTypeList('faq').title('FAQs')),
-      S.listItem()
-        .title('🎉 Success Stories')
-        .child(S.documentTypeList('successStory').title('Success Stories')),
+      
+      // Other content
+      S.documentTypeListItem('cat').title('🐱 Cats'),
+      S.documentTypeListItem('teamMember').title('👥 Team'),
+      S.documentTypeListItem('successStory').title('💚 Success Stories'),
+      S.documentTypeListItem('faq').title('❓ FAQs'),
     ])

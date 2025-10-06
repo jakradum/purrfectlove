@@ -8,31 +8,36 @@ export default {
       name: 'applicantName',
       title: 'Applicant Name',
       type: 'string',
-      validation: Rule => Rule.required()
+      validation: Rule => Rule.required(),
+      readOnly: true 
     },
     {
       name: 'email',
       title: 'Email',
       type: 'string',
-      validation: Rule => Rule.required().email()
+      validation: Rule => Rule.required().email(),
+      readOnly: true 
     },
     {
       name: 'phone',
       title: 'Phone',
       type: 'string',
-      validation: Rule => Rule.required()
+      validation: Rule => Rule.required(),
+      readOnly: true 
     },
     {
       name: 'address',
       title: 'Address',
-      type: 'text'
+      type: 'text',
+      readOnly: true 
     },
     {
       name: 'cat',
       title: 'Interested in Cat',
       type: 'reference',
       to: [{type: 'cat'}],
-      validation: Rule => Rule.required()
+      validation: Rule => Rule.required(),
+      readOnly: true 
     },
     {
       name: 'housingType',
@@ -44,36 +49,41 @@ export default {
           {title: 'Rented Apartment', value: 'rent'},
           {title: 'Other', value: 'other'}
         ]
-      }
+      },
+      readOnly: true 
     },
     {
       name: 'hasOtherPets',
       title: 'Has Other Pets',
-      type: 'boolean'
+      type: 'boolean',
+      readOnly: true 
     },
     {
       name: 'otherPetsDetails',
       title: 'Other Pets Details',
       type: 'text',
-      hidden: ({parent}) => !parent?.hasOtherPets
+      hidden: ({parent}) => !parent?.hasOtherPets,
+      readOnly: true 
     },
     {
       name: 'whyAdopt',
       title: 'Why Do You Want to Adopt?',
       type: 'text',
-      validation: Rule => Rule.required().min(50)
+      validation: Rule => Rule.required().min(50),
+      readOnly: true 
     },
     {
       name: 'experience',
       title: 'Experience with Cats',
-      type: 'text'
+      type: 'text',
+      readOnly: true 
     },
     {
       name: 'submittedAt',
       title: 'Submitted At',
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
-      readOnly: true
+      readOnly: true,
     },
 
     // === FOR OFFICIAL USE ONLY ===
