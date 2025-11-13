@@ -1,3 +1,4 @@
+'use client'
 import { createClient } from '@sanity/client'
 import Turnstile from '@marsidev/react-turnstile'
 import { useState, useRef } from 'react'
