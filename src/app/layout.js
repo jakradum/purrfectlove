@@ -1,25 +1,27 @@
-import { Geist, Geist_Mono } from "next/font/google";
+import { Outfit, Lora } from "next/font/google";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const outfit = Outfit({
+  variable: "--font-outfit",
   subsets: ["latin"],
+  weight: ['400', '600', '700']
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const lora = Lora({
+  variable: "--font-lora",
   subsets: ["latin"],
+  weight: ['400', '600']
 });
 
 export const metadata = {
-  title: "Purrfect Love | Cat Adoption",
-  description: "Cat adoption in Bangalore",
+  title: "Purrfect Love",
+  description: "Cat adoption and rehab collective based in Bangalore and Stuttgart",
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} ${geistMono.variable}`}>
+      <body className={`${outfit.variable} ${lora.variable}`}>
         {children}
       </body>
     </html>
