@@ -27,7 +27,7 @@
   display: flex;
   justify-content: space-between;
   align-items: center;
-  height: 80px;
+  height: 5rem;
 }
 
 .logo {
@@ -72,13 +72,11 @@
   left: 0;
   width: 0;
   height: 3px;
-  background: repeating-linear-gradient(
-    90deg,
-    var(--tabby-brown) 0px,
-    var(--tabby-brown) 3px,
-    transparent 3px,
-    transparent 6px
-  );
+  background: repeating-linear-gradient(90deg,
+      var(--tabby-brown) 0px,
+      var(--tabby-brown) 3px,
+      transparent 3px,
+      transparent 6px);
   transform: skewX(-20deg);
   transition: width 0.2s;
 }
@@ -117,6 +115,7 @@
   0% {
     clip-path: inset(0 100% 0 0);
   }
+
   100% {
     clip-path: inset(0 0 0 0);
   }
@@ -172,14 +171,28 @@
   left: 0;
   right: 0;
   bottom: 0;
-  background-color: rgba(246, 244, 240, 0.85);
-  backdrop-filter: blur(5px);
-  -webkit-backdrop-filter: blur(12px);
+  
+  /* Base frosted glass effect */
+  background: 
+    linear-gradient(
+      to bottom,
+      rgba(246, 244, 240, 1) 0%,           /* Solid whisker cream at top */
+      rgba(246, 244, 240, 0.95) 10%,       /* Still mostly solid */
+      rgba(246, 244, 240, 0.85) 20%,       /* Starting to fade around Contact */
+      rgba(246, 244, 240, 0.7) 30%,        /* More translucent */
+      rgba(246, 244, 240, 0.6) 40%        /* Fully frosted at bottom */
+    );
+  
+  border-radius: 16px;
+  box-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  backdrop-filter: blur(5.3px);
+  -webkit-backdrop-filter: blur(5.3px);
+  border: 1px solid rgba(255, 255, 255, 0.26);
+  
   z-index: 99;
   min-height: 100vh;
   padding: 1rem;
-  border-bottom: 2px solid var(--tabby-brown);
-  
+
   /* Opening animation */
   animation: curtainDrop 0.5s ease-out;
   transform-origin: top;
@@ -196,6 +209,13 @@
   gap: 1rem;
 }
 
+/* Desktop flags */
+.langLink img {
+  width: 24px;
+  height: auto;
+  vertical-align: middle;
+}
+
 /* Staggered animation for menu items */
 .mobileNavLink,
 .mobileLangSwitcher,
@@ -206,7 +226,7 @@
 .mobileNavLink {
   color: var(--text-dark);
   font-family: var(--font-outfit);
-  font-size: 18px;
+  font-size: 1.2rem;
   font-weight: 600;
   text-decoration: none;
   padding: 0.5rem 0;
@@ -220,7 +240,7 @@
   display: flex;
   gap: 1rem;
   padding: 0.5rem 0;
-  font-size: 16px;
+  font-size: 1rem;
 }
 
 .mobileLangLink {
@@ -235,6 +255,7 @@
   text-align: center;
   text-decoration: none;
   padding: 0.5rem 0;
+  font-size: 1.5rem;
 }
 
 /* Animation keyframes */
@@ -243,6 +264,7 @@
     transform: translateY(-100%);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -254,6 +276,7 @@
     transform: translateY(0);
     opacity: 1;
   }
+
   to {
     transform: translateY(-100%);
     opacity: 0;
@@ -265,6 +288,7 @@
     transform: translateY(-20px);
     opacity: 0;
   }
+
   to {
     transform: translateY(0);
     opacity: 1;
@@ -279,6 +303,13 @@
   .navContent {
     height: 64px;
   }
+
+  /* Mobile flags */
+.mobileLangLink img {
+  width: 32px;
+  height: auto;
+  vertical-align: middle;
+}
 
   .logoImage {
     height: 40px;
@@ -304,6 +335,9 @@
     width: 100%;
     height: 3px;
     position: relative;
+    transition: all 0.3s ease;
+    transform-origin: center;
+    /* Add this - makes them rotate from center */
   }
 
   .scratchLine::before {
@@ -315,4 +349,18 @@
     background-size: 100% 100%;
     background-repeat: no-repeat;
   }
+
+  .menuButton.open .scratchLine:nth-child(1) {
+    transform: translateY(-9px) rotate(45deg);
+  }
+
+  .menuButton.open .scratchLine:nth-child(2) {
+    opacity: 0;
+    transform: scaleX(0);
+  }
+
+  .menuButton.open .scratchLine:nth-child(3) {
+    transform: translateY(-8px) rotate(-45deg);
+  }
+
 }

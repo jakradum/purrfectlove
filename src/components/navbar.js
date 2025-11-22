@@ -1,17 +1,16 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import { X } from 'lucide-react';
 import styles from './Navbar.module.css';
+import menuItems from '@/data/menuItems.json';
 
 export default function Navbar({ locale = 'en' }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
-  const [isClosing, setIsClosing] = useState(false)
-  console.log('isOpen:', isOpen);
+  const [isClosing, setIsClosing] = useState(false);
 
   useEffect(() => {
     const handleScroll = () => {
@@ -28,27 +27,20 @@ export default function Navbar({ locale = 'en' }) {
 
       setLastScrollY(currentScrollY);
     };
-    
 
     window.addEventListener('scroll', handleScroll, { passive: true });
     return () => window.removeEventListener('scroll', handleScroll);
   }, [lastScrollY]);
 
-  const navLinks = [
-    { href: '/', label: 'Home' },
-    { href: '/adoption', label: 'Adoption' },
-    { href: '/process', label: 'Process' },
-    { href: '/first-days', label: 'First Days' },
-    { href: '/about', label: 'About' },
-    { href: '/contact', label: 'Contact' },
-  ];
   const handleClose = () => {
     setIsClosing(true);
     setTimeout(() => {
       setIsOpen(false);
       setIsClosing(false);
-    }, 350);
-  }
+    }, 250);
+  };
+
+  const { navLinks, cta, languages } = menuItems;
 
   return (
     <nav className={`${styles.navbar} ${isVisible ? styles.visible : styles.hidden}`}>
@@ -69,35 +61,30 @@ export default function Navbar({ locale = 'en' }) {
             </div>
 
             <div className={styles.langSwitcher}>
-              <Link href="/" className={`${styles.langLink} ${styles.active}`}>
-                EN
-              </Link>
-              <span className={styles.langDivider}>|</span>
-              <Link href="/de" className={styles.langLink}>
-                DE
-              </Link>
+              {languages.map((lang, index) => (
+                <Fragment key={lang.code}>
+                  <Link href={lang.href} className={`${styles.langLink} ${locale === lang.code ? styles.active : ''}`}>
+                    {lang.label}
+                  </Link>
+                  {index < languages.length - 1 && <span className={styles.langDivider}>|</span>}
+                </Fragment>
+              ))}
             </div>
 
-            <Link href="/apply" className={styles.cta}>
-              Apply to Adopt
+            <Link href={cta.href} className={styles.cta}>
+              {cta.label}
             </Link>
           </div>
 
           {/* Mobile Menu Button */}
           <button
             onClick={() => (isOpen ? handleClose() : setIsOpen(true))}
-            className={styles.menuButton}
+            className={`${styles.menuButton} ${isOpen && !isClosing ? styles.open : ''}`}
             aria-label="Toggle menu"
           >
-            {isOpen ? (
-              <X size={28} color="#C85C3F" />
-            ) : (
-              <>
-                <div className={styles.scratchLine}></div>
-                <div className={styles.scratchLine}></div>
-                <div className={styles.scratchLine}></div>
-              </>
-            )}
+            <div className={styles.scratchLine}></div>
+            <div className={styles.scratchLine}></div>
+            <div className={styles.scratchLine}></div>
           </button>
         </div>
       </div>
@@ -126,25 +113,27 @@ export default function Navbar({ locale = 'en' }) {
             ))}
 
             <div className={styles.mobileLangSwitcher} style={{ animationDelay: `${navLinks.length * 0.05}s` }}>
-              <Link href="/" onClick={handleClose} className={styles.mobileLangLink}>
-                English
-              </Link>
-              <span>|</span>
-              <Link href="/de" onClick={handleClose} className={styles.mobileLangLink}>
-                Deutsch
-              </Link>
+              {languages.map((lang, index) => (
+                <Fragment key={lang.code}>
+                  <Link href={lang.href} onClick={handleClose} className={styles.mobileLangLink}>
+                    {lang.fullLabel}
+                  </Link>
+                  {index < languages.length - 1 && <span>|</span>}
+                </Fragment>
+              ))}
             </div>
 
             <Link
-              href="/apply"
+              href={cta.href}
               onClick={handleClose}
               className={styles.mobileCta}
               style={{ animationDelay: `${(navLinks.length + 1) * 0.05}s` }}
             >
-              Apply to Adopt
+              {cta.mobileLabel}
             </Link>
           </div>
         </div>
       )}
     </nav>
-  );}
+  );
+}

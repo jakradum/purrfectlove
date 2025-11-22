@@ -1,0 +1,19 @@
+{
+  "navLinks": [
+    { "href": "/", "label": "Home" },
+    { "href": "/adoption", "label": "Adoption" },
+    { "href": "/process", "label": "Process" },
+    { "href": "/first-days", "label": "First Days" },
+    { "href": "/about", "label": "About" },
+    { "href": "/contact", "label": "Contact" }
+  ],
+  "cta": {
+    "href": "/apply",
+    "label": "Adopt a cat",
+    "mobileLabel": "Adopt a cat"
+  },
+  "languages": [
+    { "code": "en", "label": "EN 🇮🇳", "fullLabel": "EN 🇮🇳", "href": "/" },
+    { "code": "de", "label": "DE 🇩🇪", "fullLabel": "DE 🇩🇪", "href": "/de" }
+  ]
+}

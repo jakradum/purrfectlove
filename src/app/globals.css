@@ -17,6 +17,8 @@ body {
   color: var(--text-dark);
   background: var(--whisker-cream);
   padding-top: 80px;
+   max-width: 100vw;
+  overflow-x: hidden;
 }
 
 h1, h2, h3, h4, h5, h6, button, a {
