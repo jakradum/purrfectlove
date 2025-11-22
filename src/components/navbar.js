@@ -4,7 +4,8 @@ import { useState, useEffect, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
 import styles from './Navbar.module.css';
-import menuItems from '@/data/menuItems.json';
+import menuItemsEN from '@/data/menuItems.en.json';
+import menuItemsDE from '@/data/menuItems.de.json';
 
 export default function Navbar({ locale = 'en' }) {
   const [isOpen, setIsOpen] = useState(false);
@@ -12,10 +13,18 @@ export default function Navbar({ locale = 'en' }) {
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
 
+  const menuItems = locale === 'de' ? menuItemsDE : menuItemsEN;
+  const { navLinks, cta } = menuItems;
+
+  const languages = [
+    { code: 'en', label: 'EN', fullLabel: 'English', href: '/' },
+    { code: 'de', label: 'DE', fullLabel: 'Deutsch', href: '/de' }
+  ];
+
   useEffect(() => {
     const handleScroll = () => {
       const currentScrollY = window.scrollY;
-      const scrollThreshold = window.innerHeight / 10;
+      const scrollThreshold = window.innerHeight / 5;
 
       if (currentScrollY < scrollThreshold) {
         setIsVisible(true);
@@ -39,8 +48,6 @@ export default function Navbar({ locale = 'en' }) {
       setIsClosing(false);
     }, 250);
   };
-
-  const { navLinks, cta, languages } = menuItems;
 
   return (
     <nav className={`${styles.navbar} ${isVisible ? styles.visible : styles.hidden}`}>

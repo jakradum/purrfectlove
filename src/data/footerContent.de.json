@@ -1,0 +1,31 @@
+{
+  "about": {
+    "title": "Purrfect Love",
+    "description": "Ein Katzenadoptions- und Rehakollektiv mit Sitz in Bangalore und Stuttgart. Wir glauben, dass jede Katze ein liebevolles Zuhause verdient."
+  },
+  "quickLinks": {
+    "title": "Schnelllinks",
+    "links": [
+      { "href": "/de", "label": "Startseite" },
+      { "href": "/de/adoption", "label": "Adoption" },
+      { "href": "/de/process", "label": "Prozess" },
+      { "href": "/de/first-days", "label": "Erste Tage" },
+      { "href": "/de/about", "label": "Über uns" },
+      { "href": "/de/contact", "label": "Kontakt" }
+    ]
+  },
+  "social": {
+    "title": "Verbinden",
+    "instagram": {
+      "href": "https://www.instagram.com/purrfectlove.bangalore/",
+      "label": "Instagram"
+    },
+    "whatsapp": {
+      "href": "https://wa.me/yourwhatsappnumber",
+      "label": "WhatsApp"
+    }
+  },
+  "copyright": "© {year} Purrfect Love. Alle Rechte vorbehalten.",
+  "madeWith": "Mit 🧡 für Katzen und Katzenliebhaber gemacht",
+  "location": "Bangalore • Stuttgart"
+}

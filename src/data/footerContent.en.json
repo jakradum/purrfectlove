@@ -1,0 +1,31 @@
+{
+  "about": {
+    "title": "Purrfect Love",
+    "description": "A cat adoption and rehab collective based in Bangalore and Stuttgart. We believe every cat deserves a loving home."
+  },
+  "quickLinks": {
+    "title": "Quick Links",
+    "links": [
+      { "href": "/", "label": "Home" },
+      { "href": "/adoption", "label": "Adoption" },
+      { "href": "/process", "label": "Process" },
+      { "href": "/first-days", "label": "First Days" },
+      { "href": "/about", "label": "About" },
+      { "href": "/contact", "label": "Contact" }
+    ]
+  },
+  "social": {
+    "title": "Connect",
+    "instagram": {
+      "href": "https://www.instagram.com/purrfectlove.bangalore/",
+      "label": "Instagram"
+    },
+    "whatsapp": {
+      "href": "https://wa.me/yourwhatsappnumber",
+      "label": "WhatsApp"
+    }
+  },
+  "copyright": "© {year} Purrfect Love. All rights reserved.",
+  "madeWith": "Made with 🧡 for cats and cat lovers",
+  "location": "Bangalore • Stuttgart"
+}

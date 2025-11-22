@@ -11,9 +11,5 @@
     "href": "/apply",
     "label": "Adopt a cat",
     "mobileLabel": "Adopt a cat"
-  },
-  "languages": [
-    { "code": "en", "label": "EN 🇮🇳", "fullLabel": "EN 🇮🇳", "href": "/" },
-    { "code": "de", "label": "DE 🇩🇪", "fullLabel": "DE 🇩🇪", "href": "/de" }
-  ]
+  }
 }

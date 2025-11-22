@@ -1,6 +1,5 @@
 import { Outfit, Lora } from 'next/font/google';
 import "./globals.css";
-import Navbar from '../components/navbar';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -31,7 +30,6 @@ export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${outfit.variable} ${lora.variable}`}>
-        <Navbar />
         {children}
       </body>
     </html>
