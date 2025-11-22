@@ -1,17 +1,31 @@
-* {
-  margin: 0;
-  padding: 0;
-  box-sizing: border-box;
-}
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
 
-html, body, #__next {
-  margin: 0 !important;
-  padding: 0 !important;
-  width: 100vw;
-  height: 100vh;
-  overflow-x: hidden;
+:root {
+  --tabby-brown: #C85C3F;
+  --hunter-green: #2C5F4F;
+  --whisker-cream: #F6F4F0;
+  --text-dark: #2A2A2A;
+  --text-light: #6B6B6B;
+  --font-outfit: var(--font-outfit);
+  --font-lora: var(--font-lora);
 }
 
 body {
-  background: #2a4674;
+  font-family: var(--font-lora);
+  color: var(--text-dark);
+  background: var(--whisker-cream);
+  padding-top: 80px;
+}
+
+h1, h2, h3, h4, h5, h6, button, a {
+  font-family: var(--font-outfit);
+}
+
+
+@media (max-width: 930px) {
+  body {
+    padding-top: 64px;
+  }
 }

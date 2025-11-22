@@ -4,23 +4,32 @@ export const structure = (S) =>
   S.list()
     .title('Content')
     .items([
-      // Applications with custom view
       S.listItem()
-        .title('📋 Applications')
-        .child(
-          S.documentTypeList('application')
-            .title('All Applications')
-            .defaultOrdering([{field: 'submittedAt', direction: 'desc'}])
-            .child(documentId =>
-              S.document()
-                .documentId(documentId)
-                .schemaType('application')
-            )
-        ),
-      
-      // Other content
-      S.documentTypeListItem('cat').title('🐱 Cats'),
-      S.documentTypeListItem('teamMember').title('👥 Team'),
-      S.documentTypeListItem('successStory').title('💚 Success Stories'),
-      S.documentTypeListItem('faq').title('❓ FAQs'),
+        .title('Cats')
+        .icon(() => '🐱')
+        .child(S.documentTypeList('cat')),
+      S.listItem()
+        .title('Applications')
+        .icon(() => '📋')
+        .child(S.documentTypeList('application')),
+      S.listItem()
+        .title('Team')
+        .icon(() => '👥')
+        .child(S.documentTypeList('teamMember')),
+      S.listItem()
+        .title('Success Stories')
+        .icon(() => '💚')
+        .child(S.documentTypeList('successStory')),
+      S.listItem()
+        .title('FAQs')
+        .icon(() => '❓')
+        .child(S.documentTypeList('faq')),
+      S.listItem()
+        .title('Process Steps')
+        .icon(() => '📝')
+        .child(S.documentTypeList('processStep')),
+      S.listItem()
+        .title('Blog Posts')
+        .icon(() => '✍️')
+        .child(S.documentTypeList('blogPost')),
     ])

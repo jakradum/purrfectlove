@@ -1,27 +1,37 @@
-import { Outfit, Lora } from "next/font/google";
+import { Outfit, Lora } from 'next/font/google';
 import "./globals.css";
+import Navbar from '../components/navbar';
 
 const outfit = Outfit({
-  variable: "--font-outfit",
-  subsets: ["latin"],
-  weight: ['400', '600', '700']
+  subsets: ['latin'],
+  weight: ['400', '600', '700'],
+  variable: '--font-outfit'
 });
 
 const lora = Lora({
-  variable: "--font-lora",
-  subsets: ["latin"],
-  weight: ['400', '600']
+  subsets: ['latin'],
+  weight: ['400', '600'],
+  variable: '--font-lora'
 });
 
 export const metadata = {
-  title: "Purrfect Love",
-  description: "Cat adoption and rehab collective based in Bangalore and Stuttgart",
+  title: "Purrfect Love | Cat adoption & Rehab",
+  description: "Cat adoption and rescue collective based in Bangalore and Stuttgart",
+  icons: {
+    icon: [
+      { url: '/favicon.ico' },
+      { url: '/favicon-96x96.png', sizes: '96x96', type: 'image/png' }
+    ],
+    apple: '/apple-touch-icon.png',
+  },
+  manifest: '/site.webmanifest',
 };
 
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
       <body className={`${outfit.variable} ${lora.variable}`}>
+        <Navbar />
         {children}
       </body>
     </html>

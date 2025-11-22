@@ -1,72 +1,37 @@
-// sanity/schemas/teamMember.js
-export default {
+import {defineType, defineField} from 'sanity'
+
+export default defineType({
   name: 'teamMember',
   title: 'Team Members',
   type: 'document',
   fields: [
-    {
+    defineField({
       name: 'name',
       title: 'Name',
       type: 'string',
       validation: Rule => Rule.required()
-    },
-    {
+    }),
+    defineField({
       name: 'role',
       title: 'Role',
-      type: 'string',
-      validation: Rule => Rule.required()
-    },
-    {
-      name: 'location',
-      title: 'Location',
-      type: 'string',
-      options: {
-        list: [
-          {title: 'Bangalore, India', value: 'bangalore'},
-          {title: 'Germany', value: 'germany'}
-        ]
-      },
-      validation: Rule => Rule.required()
-    },
-    {
-      name: 'photo',
-      title: 'Photo',
-      type: 'image',
-      options: {
-        hotspot: true
-      }
-    },
-    {
+      type: 'localeString'
+    }),
+    defineField({
       name: 'bio',
       title: 'Bio',
-      type: 'text',
-      rows: 4,
-      validation: Rule => Rule.max(300)
-    },
-    {
-      name: 'email',
-      title: 'Email (optional)',
-      type: 'string'
-    },
-    {
+      type: 'localeBlock'
+    }),
+    defineField({
+      name: 'image',
+      title: 'Photo',
+      type: 'image',
+      options: {hotspot: true}
+    }),
+    defineField({
       name: 'order',
       title: 'Display Order',
       type: 'number',
-      description: 'Lower numbers appear first'
-    }
-  ],
-  preview: {
-    select: {
-      title: 'name',
-      subtitle: 'role',
-      media: 'photo'
-    }
-  },
-  orderings: [
-    {
-      title: 'Display Order',
-      name: 'orderAsc',
-      by: [{field: 'order', direction: 'asc'}]
-    }
+      validation: Rule => Rule.required()
+    })
   ]
-}
+})
