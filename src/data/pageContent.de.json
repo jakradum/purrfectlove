@@ -1,11 +1,9 @@
 {
   "home": {
     "hero": {
-      "headlineStart": "Eine Katze verdient",
-      "rotatingWords": ["Liebe", "ein Zuhause", "Komfort", "gute Menschen", "ein Nickerchen", "zu spielen"],
-      "subtext": "Adoptieren, nicht kaufen"
-    },
-    "heading": "willkommen bei purrfect love",
-    "body": "purrfect love ist ein Katzenadoptions- und Rehakollektiv mit Sitz in Bangalore und Stuttgart. Diese Seite macht gerade ein Nickerchen, wir räumen auf und sind bald fertig!"
+      "heading": "Jede Katze verdient ein Zuhause",
+      "subheading": "We rescue, rehabilitate, and rehome cats in Bangalore, connecting them with families who will love them forever.",
+      "subtext": "Adopt, don't shop"
+    }
   }
 }

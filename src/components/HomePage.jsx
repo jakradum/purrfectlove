@@ -21,6 +21,7 @@ export default function HomePage({ locale = 'en' }) {
             {content.home.hero.subtext}
           </p>
         </div>
+        
         <div className={styles.heroImageWrapper}>
           <img 
             src="/logo-hero.png" 
@@ -28,11 +29,10 @@ export default function HomePage({ locale = 'en' }) {
             className={styles.heroLogo}
           />
         </div>
-      </section>
-      
-      <section className={styles.content}>
-        <h2>{content.home.heading}</h2>
-        <p>{content.home.body}</p>
+
+        <div className={styles.heroSideText}>
+          <p>{content.home.hero.sideText}</p>
+        </div>
       </section>
     </div>
   );

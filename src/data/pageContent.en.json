@@ -3,7 +3,8 @@
     "hero": {
       "heading": "Every cat deserves a loving home",
       "subheading": "We rescue, rehabilitate, and rehome cats in Bangalore, connecting them with families who will love them forever.",
-      "subtext": "Adopt, don't shop"
+      "subtext": "Adopt, don't shop",
+      "sideText": "Your text here - no heading, just a paragraph or two that provides additional context or information."
     }
   }
 }
