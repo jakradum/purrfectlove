@@ -1,9 +1,28 @@
 {
   "home": {
     "hero": {
-      "heading": "Jede Katze verdient ein Zuhause",
+      "heading": "Mein kampf berliner",
       "subheading": "We rescue, rehabilitate, and rehome cats in Bangalore, connecting them with families who will love them forever.",
-      "subtext": "Adopt, don't shop"
+      "subtext": "ich bin berliner",
+      "sideText": "Your text here - no heading, just a paragraph or two that provides additional context or information."
+    },
+    "about": {
+      "heading": "What makes Purrfect Love different",
+      "points": [
+        {
+          "title": "Systematic vetting",
+          "description": "Every adopter goes through our careful review process to ensure the best match for both cat and family."
+        },
+        {
+          "title": "Lifelong support",
+          "description": "We're here for you after adoption with advice, resources, and a community of cat lovers."
+        },
+        {
+          "title": "No fees, pure love",
+          "description": "We never charge adoption fees. Our only goal is finding loving homes for every cat."
+        }
+      ],
+      "cta": "Meet our cats"
     }
   }
 }

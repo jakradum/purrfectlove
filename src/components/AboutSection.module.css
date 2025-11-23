@@ -1,0 +1,51 @@
+/* src/components/AboutSection.module.css */
+.about {
+  padding: 6rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+}
+
+.aboutHeading {
+  font-family: var(--font-outfit);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--tabby-brown);
+  margin-bottom: 3rem;
+}
+
+.aboutContent {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.aboutPoint h3 {
+  font-family: var(--font-outfit);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--hunter-green);
+  margin-bottom: 1rem;
+}
+
+.aboutPoint p {
+  font-family: var(--font-lora);
+  font-size: 1.125rem;
+  color: var(--text-dark);
+  line-height: 1.7;
+}
+
+.ctaWrapper {
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .about {
+    padding: 4rem 1.5rem;
+  }
+  
+  .aboutContent {
+    gap: 2rem;
+  }
+}

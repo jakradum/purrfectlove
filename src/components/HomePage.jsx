@@ -1,4 +1,5 @@
 import styles from './HomePage.module.css';
+import AboutSection from '@/components/AboutSection';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -34,6 +35,7 @@ export default function HomePage({ locale = 'en' }) {
           <p>{content.home.hero.sideText}</p>
         </div>
       </section>
+        <AboutSection content={content.home.about} />
     </div>
   );
 }
