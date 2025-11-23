@@ -1,28 +1,51 @@
+
 {
   "home": {
     "hero": {
-      "heading": "Mein kampf berliner",
-      "subheading": "We rescue, rehabilitate, and rehome cats in Bangalore, connecting them with families who will love them forever.",
-      "subtext": "ich bin berliner",
-      "sideText": "Your text here - no heading, just a paragraph or two that provides additional context or information."
+      "heading": "Jede Katze verdient ein liebevolles Zuhause",
+      "subheading": "Wir retten, rehabilitieren und vermitteln Katzen in Bangalore und verbinden sie mit Familien, die sie für immer lieben werden.",
+      "subtext": "Adoptieren, nicht kaufen",
+      "sideText": "Jede Adoption rettet ein Leben und schafft Platz für eine weitere Rettung."
     },
     "about": {
-      "heading": "What makes Purrfect Love different",
+      "heading": "Was macht Purrfect Love anders",
       "points": [
         {
-          "title": "Systematic vetting",
-          "description": "Every adopter goes through our careful review process to ensure the best match for both cat and family."
+          "title": "Systematische Prüfung",
+          "description": "Jeder Adoptant durchläuft unseren sorgfältigen Prüfprozess, um die beste Übereinstimmung für Katze und Familie zu gewährleisten."
         },
         {
-          "title": "Lifelong support",
-          "description": "We're here for you after adoption with advice, resources, and a community of cat lovers."
+          "title": "Lebenslange Unterstützung",
+          "description": "Wir sind auch nach der Adoption für Sie da – mit Ratschlägen, Ressourcen und einer Gemeinschaft von Katzenliebhabern."
         },
         {
-          "title": "No fees, pure love",
-          "description": "We never charge adoption fees. Our only goal is finding loving homes for every cat."
+          "title": "Keine Gebühren, pure Liebe",
+          "description": "Wir erheben niemals Adoptionsgebühren. Unser einziges Ziel ist es, liebevolle Zuhause für jede Katze zu finden."
         }
       ],
-      "cta": "Meet our cats"
+      "cta": "Unsere Katzen kennenlernen"
+    },
+    "process": {
+      "heading": "So funktioniert die Adoption",
+      "steps": [
+        {
+          "title": "Katzen durchstöbern",
+          "description": "Schauen Sie sich unsere verfügbaren Katzen an und finden Sie Ihre perfekte Übereinstimmung"
+        },
+        {
+          "title": "Antrag einreichen",
+          "description": "Füllen Sie unser Adoptionsformular mit Details über Ihr Zuhause und Ihren Lebensstil aus"
+        },
+        {
+          "title": "Treffen & Prüfung",
+          "description": "Wir prüfen Ihren Antrag und vereinbaren ein Kennenlerntreffen"
+        },
+        {
+          "title": "Nach Hause nehmen",
+          "description": "Nach einem Hausbesuch heißen Sie Ihr neues Familienmitglied willkommen!"
+        }
+      ],
+      "cta": "Mehr über den Prozess erfahren"
     }
   }
 }

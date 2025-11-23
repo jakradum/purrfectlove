@@ -8,6 +8,7 @@
   --whisker-cream: #F6F4F0;
   --text-dark: #2A2A2A;
   --text-light: #6B6B6B;
+  --paw-pink: #F5D5C8;
   --font-outfit: var(--font-outfit);
   --font-lora: var(--font-lora);
 }
@@ -17,13 +18,20 @@ body {
   color: var(--text-dark);
   background: var(--whisker-cream);
   padding-top: 80px;
-   max-width: 100vw;
+  max-width: 100vw;
   overflow-x: hidden;
   padding: 0;
   margin: 0;
 }
 
-h1, h2, h3, h4, h5, h6, button, a {
+h1,
+h2,
+h3,
+h4,
+h5,
+h6,
+button,
+a {
   font-family: var(--font-outfit);
 }
 

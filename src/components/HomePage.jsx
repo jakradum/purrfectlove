@@ -2,6 +2,7 @@ import styles from './HomePage.module.css';
 import AboutSection from '@/components/AboutSection';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
+import AdoptionProcess from './AdoptionProcess';
 
 // HomePage.jsx
 export default function HomePage({ locale = 'en' }) {
@@ -36,6 +37,7 @@ export default function HomePage({ locale = 'en' }) {
         </div>
       </section>
         <AboutSection content={content.home.about} />
+        <AdoptionProcess content={content.home.process} />
     </div>
   );
 }

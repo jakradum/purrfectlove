@@ -1,0 +1,147 @@
+/* src/components/AdoptionProcess.module.css */
+.process {
+  padding: 6rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+  background-color: var(--whisker-cream);
+}
+
+.processHeading {
+  font-family: var(--font-outfit);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--tabby-brown);
+  margin-bottom: 4rem;
+}
+
+.processSteps {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+  gap: 3rem;
+  margin-bottom: 3rem;
+}
+
+.step {
+  position: relative;
+  padding: 3rem 2rem;
+}
+
+.step::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 280px;
+  height: 280px;
+  background-size: 100% 100%;
+  background-repeat: no-repeat;
+  z-index: -1;
+  opacity: 0.15;
+}
+
+/* AdoptionProcess.module.css - Replace the blob styles */
+
+.step::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 300px;
+  height: 300px;
+  background-color: var(--paw-pink);
+  opacity: 100;
+  z-index: 0;
+  border-radius: 50%;
+}
+
+.step:nth-child(1)::before {
+  border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+}
+
+.step:nth-child(2)::before {
+  border-radius: 41% 59% 38% 62% / 66% 43% 57% 34%;
+}
+
+.step:nth-child(3)::before {
+  border-radius: 58% 42% 61% 39% / 48% 59% 41% 52%;
+}
+
+.step:nth-child(4)::before {
+  border-radius: 44% 56% 49% 51% / 61% 47% 53% 39%;
+}
+
+/* Make sure content is above blob */
+.stepNumber,
+.step h3,
+.step p {
+  position: relative;
+  z-index: 1;
+}
+
+.stepNumber {
+  font-family: var(--font-outfit);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--tabby-brown);
+
+  margin-bottom: 1rem;
+}
+
+.step h3 {
+  font-family: var(--font-outfit);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--hunter-green);
+  margin-bottom: 1rem;
+}
+
+.step p {
+  font-family: var(--font-lora);
+  font-size: 1rem;
+  color: var(--text-dark);
+  line-height: 1.6;
+}
+
+.ctaWrapper {
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .process {
+    padding: 4rem 1.5rem;
+  }
+  
+  .processSteps {
+    gap: 02rem;
+  }
+  
+  .step::before {
+    width: 240px;
+    height: 240px;
+  }
+   
+  .step {
+    padding: 2rem 1.5rem; /* Reduced from 3rem 2rem */
+  }
+  
+  .step::before {
+    width: 260px; /* Increased from 240px */
+    height: 260px;
+  }
+  
+  .stepNumber {
+    font-size: 2.5rem; /* Reduced from 3rem */
+    margin-bottom: 0.75rem;
+  }
+  
+  .step h3 {
+    font-size: 1.25rem; /* Reduced from 1.5rem */
+  }
+  
+  .step p {
+    font-size: 0.95rem; /* Reduced from 1rem */
+  }
+}

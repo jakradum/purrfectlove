@@ -23,6 +23,28 @@
         }
       ],
       "cta": "Meet our cats"
+    },
+    "process": {
+      "heading": "How adoption works",
+      "steps": [
+        {
+          "title": "Browse cats",
+          "description": "Look through our available cats and find your perfect match"
+        },
+        {
+          "title": "Submit application",
+          "description": "Fill out our adoption form with details about your home and lifestyle"
+        },
+        {
+          "title": "Meet & review",
+          "description": "We review your application and arrange a meet-and-greet"
+        },
+        {
+          "title": "Take home",
+          "description": "After a home visit, welcome your new family member!"
+        }
+      ],
+      "cta": "Learn more about the process"
     }
   }
 }
