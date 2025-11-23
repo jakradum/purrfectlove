@@ -1,11 +1,9 @@
 {
   "home": {
     "hero": {
-      "leftText": "when you adopt",
-      "rightText": "you are loved",
+      "heading": "Every cat deserves a loving home",
+      "subheading": "We rescue, rehabilitate, and rehome cats in Bangalore, connecting them with families who will love them forever.",
       "subtext": "Adopt, don't shop"
-    },
-    "heading": "welcome to purrfect love",
-    "body": "purrfect love is a cat adoption and rehab collective based out of Bangalore and Stuttgart. this page is having a nap, we'll clean up and be ready soon!"
+    }
   }
 }

@@ -1,8 +1,8 @@
 {
   "home": {
     "hero": {
-      "leftText": "JEDE KATZE",
-      "rightText": "VERDIENT LIEBE",
+      "headlineStart": "Eine Katze verdient",
+      "rotatingWords": ["Liebe", "ein Zuhause", "Komfort", "gute Menschen", "ein Nickerchen", "zu spielen"],
       "subtext": "Adoptieren, nicht kaufen"
     },
     "heading": "willkommen bei purrfect love",
