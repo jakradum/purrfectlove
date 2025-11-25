@@ -5,8 +5,8 @@ export default function DeLayout({ children }) {
   return (
     <>
       <Navbar locale="de" />
-      {children}
-<Footer locale='de' />
+      <div style={{ minHeight: '100vh' }}>{children}</div>
+      <Footer locale="de" />
     </>
   );
 }

@@ -5,7 +5,7 @@ export default function EnLayout({ children }) {
   return (
     <>
       <Navbar locale="en" />
-      {children}
+      <div style={{ minHeight: '100vh' }}>{children}</div>
       <Footer locale="en" />
     </>
   );
