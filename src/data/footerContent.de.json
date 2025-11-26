@@ -8,8 +8,8 @@
     "links": [
       { "href": "/de", "label": "Startseite" },
       { "href": "/de/adoption", "label": "Adoption" },
-      { "href": "/de/process", "label": "Prozess" },
-      { "href": "/de/first-days", "label": "Erste Tage" },
+      { "href": "/de/guides/process", "label": "Prozess" },
+      { "href": "/de/guides/first-days", "label": "Erste Tage" },
       { "href": "/de/about", "label": "Über uns" },
       { "href": "/de/contact", "label": "Kontakt" }
     ]

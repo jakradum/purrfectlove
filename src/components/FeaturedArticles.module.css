@@ -1,0 +1,42 @@
+/* src/components/FeaturedArticles.module.css */
+.section {
+  padding: 4rem 2rem 2rem;
+  max-width: 1200px;
+  margin: 0 auto;
+  text-align: center;
+  background-color: var(--whisker-cream);
+}
+
+.heading {
+  font-family: var(--font-outfit);
+  font-size: clamp(2rem, 4vw, 3rem);
+  font-weight: 700;
+  color: var(--tabby-brown);
+  margin-bottom: 3rem;
+}
+
+.posts {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+  gap: 2rem;
+  margin-bottom: 2rem;
+}
+
+.ctaWrapper {
+  margin-top: 2rem;
+}
+
+@media (max-width: 768px) {
+  .section {
+    padding: 3rem 1.5rem;
+  }
+
+  .heading {
+    margin-bottom: 2rem;
+  }
+
+  .posts {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 1rem;
+  }
+}

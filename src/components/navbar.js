@@ -12,6 +12,8 @@ export default function Navbar({ locale = 'en' }) {
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
   const [isClosing, setIsClosing] = useState(false);
+  const [openDropdown, setOpenDropdown] = useState(null);
+  const [mobileExpandedMenu, setMobileExpandedMenu] = useState(null);
 
   const menuItems = locale === 'de' ? menuItemsDE : menuItemsEN;
   const { navLinks, cta } = menuItems;
@@ -60,10 +62,37 @@ export default function Navbar({ locale = 'en' }) {
           {/* Desktop Nav */}
           <div className={styles.navRight}>
             <div className={styles.navLinks}>
-              {navLinks.map((link) => (
-                <Link key={link.href} href={link.href} className={styles.navLink}>
-                  {link.label}
-                </Link>
+              {navLinks.map((link, index) => (
+                link.children ? (
+                  <div
+                    key={link.label}
+                    className={styles.dropdown}
+                    onMouseEnter={() => setOpenDropdown(index)}
+                    onMouseLeave={() => setOpenDropdown(null)}
+                  >
+                    <button className={styles.navLink}>
+                      {link.label}
+                      <span className={styles.dropdownArrow}>▾</span>
+                    </button>
+                    {openDropdown === index && (
+                      <div className={styles.dropdownMenu}>
+                        {link.children.map((child) => (
+                          <Link
+                            key={child.href}
+                            href={child.href}
+                            className={styles.dropdownItem}
+                          >
+                            {child.label}
+                          </Link>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                ) : (
+                  <Link key={link.href} href={link.href} className={styles.navLink}>
+                    {link.label}
+                  </Link>
+                )
               ))}
             </div>
 
@@ -108,15 +137,41 @@ export default function Navbar({ locale = 'en' }) {
         >
           <div className={styles.mobileMenuContent}>
             {navLinks.map((link, index) => (
-              <Link
-                key={link.href}
-                href={link.href}
-                onClick={handleClose}
-                className={styles.mobileNavLink}
-                style={{ animationDelay: `${index * 0.05}s` }}
-              >
-                {link.label}
-              </Link>
+              link.children ? (
+                <div key={link.label} style={{ animationDelay: `${index * 0.05}s` }} className={styles.mobileDropdown}>
+                  <button
+                    className={styles.mobileNavLink}
+                    onClick={() => setMobileExpandedMenu(mobileExpandedMenu === index ? null : index)}
+                  >
+                    {link.label}
+                    <span className={`${styles.mobileDropdownArrow} ${mobileExpandedMenu === index ? styles.expanded : ''}`}>▾</span>
+                  </button>
+                  {mobileExpandedMenu === index && (
+                    <div className={styles.mobileSubmenu}>
+                      {link.children.map((child) => (
+                        <Link
+                          key={child.href}
+                          href={child.href}
+                          onClick={handleClose}
+                          className={styles.mobileSubmenuLink}
+                        >
+                          {child.label}
+                        </Link>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ) : (
+                <Link
+                  key={link.href}
+                  href={link.href}
+                  onClick={handleClose}
+                  className={styles.mobileNavLink}
+                  style={{ animationDelay: `${index * 0.05}s` }}
+                >
+                  {link.label}
+                </Link>
+              )
             ))}
 
             <div className={styles.mobileLangSwitcher} style={{ animationDelay: `${navLinks.length * 0.05}s` }}>

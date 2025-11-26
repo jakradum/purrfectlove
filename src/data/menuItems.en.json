@@ -2,8 +2,14 @@
   "navLinks": [
     { "href": "/", "label": "Home" },
     { "href": "/adoption", "label": "Adoption" },
-    { "href": "/process", "label": "Process" },
-    { "href": "/first-days", "label": "First Days" },
+    {
+      "label": "Guides",
+      "children": [
+        { "href": "/guides/process", "label": "Process" },
+        { "href": "/guides/first-days", "label": "First Days" },
+        { "href": "/guides/blog", "label": "Blog" }
+      ]
+    },
     { "href": "/about", "label": "About" },
     { "href": "/contact", "label": "Contact" }
   ],

@@ -1,0 +1,32 @@
+/* src/components/Breadcrumb.module.css */
+.breadcrumb {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+}
+
+.item {
+  display: inline-flex;
+  align-items: center;
+}
+
+.link {
+  color: var(--tabby-brown);
+  text-decoration: none;
+  transition: opacity 0.2s;
+}
+
+.link:hover {
+  opacity: 0.8;
+}
+
+.separator {
+  margin: 0 0.5rem;
+  color: var(--text-light);
+}
+
+.current {
+  color: var(--text-dark);
+}

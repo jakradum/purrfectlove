@@ -48,6 +48,22 @@
     },
     "happyCats": {
       "heading": "Happy cats of Purrfect Love"
+    },
+    "featuredArticles": {
+      "heading": "Featured articles",
+      "readMore": "Read more",
+      "cta": "Read all blogs"
+    }
+  },
+  "blog": {
+    "heading": "The Purrfect Blog",
+    "subheading": "Guides, thoughts, tips & stories on cat care",
+    "readMore": "Read more",
+    "noPosts": "No blog posts yet. Check back soon!",
+    "breadcrumb": {
+      "home": "Home",
+      "guides": "Guides",
+      "blog": "Blog"
     }
   }
 }

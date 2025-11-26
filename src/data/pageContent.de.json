@@ -47,8 +47,24 @@
       ],
       "cta": "Mehr über den Prozess erfahren"
     },
-     "happyCats": {
+    "happyCats": {
       "heading": "Glückliche Katzen von Purrfect Love"
+    },
+    "featuredArticles": {
+      "heading": "Ausgewählte Artikel",
+      "readMore": "Weiterlesen",
+      "cta": "Alle Blogs lesen"
+    }
+  },
+  "blog": {
+    "heading": "Der Purrfect Blog",
+    "subheading": "Ratgeber, Gedanken, Tipps & Geschichten zur Katzenpflege",
+    "readMore": "Weiterlesen",
+    "noPosts": "Noch keine Blogbeiträge. Schau bald wieder vorbei!",
+    "breadcrumb": {
+      "home": "Startseite",
+      "guides": "Ratgeber",
+      "blog": "Blog"
     }
   }
 }

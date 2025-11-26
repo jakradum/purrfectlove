@@ -1,0 +1,143 @@
+/* src/components/BlogCard.module.css */
+.card {
+  position: relative;
+  padding: 2.5rem 2rem;
+  text-align: center;
+  margin-bottom: 0;
+}
+
+.card::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  width: 270px;
+  height: 270px;
+  background-color: var(--paw-pink);
+  z-index: 0;
+  border-radius: 50%;
+}
+
+.card:nth-child(1)::before {
+  border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+}
+
+.card:nth-child(2)::before {
+  border-radius: 41% 59% 38% 62% / 66% 43% 57% 34%;
+}
+
+.card:nth-child(3)::before {
+  border-radius: 58% 42% 61% 39% / 48% 59% 41% 52%;
+}
+
+.card:nth-child(4)::before {
+  border-radius: 44% 56% 49% 51% / 61% 47% 53% 39%;
+}
+
+.card:nth-child(5)::before {
+  border-radius: 52% 48% 43% 57% / 54% 62% 38% 46%;
+}
+
+.card:nth-child(6)::before {
+  border-radius: 47% 53% 56% 44% / 42% 55% 45% 58%;
+}
+
+.content {
+  position: relative;
+  z-index: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  min-height: 200px;
+}
+
+.date {
+  font-family: var(--font-outfit);
+  font-size: 0.75rem;
+  color: var(--text-light);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.titleLink {
+  text-decoration: none;
+}
+
+.title {
+  font-family: var(--font-outfit);
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: var(--hunter-green);
+  line-height: 1.3;
+  margin-bottom: 0.75rem;
+  transition: color 0.2s ease;
+  max-width: 200px;
+}
+
+.titleLink:hover .title {
+  color: var(--tabby-brown);
+}
+
+.excerpt {
+  font-family: var(--font-lora);
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  line-height: 1.5;
+  margin-bottom: 0.75rem;
+  max-width: 200px;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.readMore {
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+  color: var(--tabby-brown);
+  text-decoration: none;
+  position: relative;
+}
+
+.readMore::after {
+  content: '';
+  position: absolute;
+  bottom: -2px;
+  left: 0;
+  width: 0;
+  height: 1px;
+  background-color: var(--tabby-brown);
+  transition: width 0.2s ease;
+}
+
+.readMore:hover::after {
+  width: 100%;
+}
+
+@media (max-width: 768px) {
+  .card {
+    padding: 2rem 1.5rem;
+  }
+
+  .card::before {
+    width: 234px;
+    height: 234px;
+  }
+
+  .content {
+    min-height: 180px;
+  }
+
+  .title {
+    font-size: 1.1rem;
+    max-width: 180px;
+  }
+
+  .excerpt {
+    font-size: 0.8rem;
+    max-width: 180px;
+    -webkit-line-clamp: 2;
+  }
+}

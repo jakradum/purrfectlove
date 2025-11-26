@@ -4,6 +4,7 @@ import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 import AdoptionProcess from './AdoptionProcess';
 import HappyCats from './HappyCats';
+import FeaturedArticles from './FeaturedArticles';
 
 // HomePage.jsx
 export default function HomePage({ locale = 'en' }) {
@@ -38,8 +39,9 @@ export default function HomePage({ locale = 'en' }) {
         </div>
       </section>
         <AboutSection content={content.home.about} />
-        <AdoptionProcess content={content.home.process} />
+        <AdoptionProcess content={content.home.process} locale={locale} />
         <HappyCats content={content.home.happyCats} locale={locale} />
+        <FeaturedArticles content={content.home.featuredArticles} locale={locale} />
     </div>
   );
 }

@@ -2,7 +2,9 @@
 import styles from './AdoptionProcess.module.css';
 import CTAButton from './CTAButton';
 
-export default function AdoptionProcess({ content }) {
+export default function AdoptionProcess({ content, locale = 'en' }) {
+  const processHref = locale === 'de' ? '/de/guides/process' : '/guides/process';
+
   return (
     <section className={styles.process}>
       <h2 className={styles.processHeading}>
@@ -18,7 +20,7 @@ export default function AdoptionProcess({ content }) {
         ))}
       </div>
       <div className={styles.ctaWrapper}>
-        <CTAButton href="/process">
+        <CTAButton href={processHref}>
           {content.cta}
         </CTAButton>
       </div>

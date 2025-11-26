@@ -85,6 +85,54 @@
   width: 100%;
 }
 
+/* Dropdown styles */
+.dropdown {
+  position: relative;
+}
+
+.dropdown > button.navLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.dropdownArrow {
+  margin-left: 0.25rem;
+  font-size: 0.75rem;
+  transition: transform 0.2s;
+}
+
+.dropdown:hover .dropdownArrow {
+  transform: rotate(180deg);
+}
+
+.dropdownMenu {
+  position: absolute;
+  top: 100%;
+  left: 0;
+  background-color: var(--whisker-cream);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
+  min-width: 150px;
+  padding: 0.5rem 0;
+  z-index: 1000;
+}
+
+.dropdownItem {
+  display: block;
+  padding: 0.75rem 1rem;
+  color: var(--text-dark);
+  font-family: var(--font-outfit);
+  font-size: 14px;
+  text-decoration: none;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+.dropdownItem:hover {
+  background-color: rgba(44, 95, 79, 0.1);
+  color: var(--tabby-brown);
+}
+
 .cta {
   color: var(--tabby-brown);
   font-family: var(--font-outfit);
@@ -235,6 +283,40 @@
 }
 
 .mobileNavLink:hover {
+  color: var(--tabby-brown);
+}
+
+/* Mobile dropdown styles */
+.mobileDropdown {
+  animation: slideInFade 0.4s ease-out backwards;
+}
+
+.mobileDropdown > button.mobileNavLink {
+  background: none;
+  border: none;
+  cursor: pointer;
+}
+
+.mobileDropdownArrow {
+  display: none;
+}
+
+.mobileSubmenu {
+  padding-left: 1rem;
+  margin-top: 0.5rem;
+}
+
+.mobileSubmenuLink {
+  display: block;
+  color: var(--text-dark);
+  font-family: var(--font-outfit);
+  font-size: 1rem;
+  font-weight: 500;
+  text-decoration: none;
+  padding: 0.5rem 0;
+}
+
+.mobileSubmenuLink:hover {
   color: var(--tabby-brown);
 }
 

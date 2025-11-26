@@ -1,0 +1,177 @@
+/* src/components/BlogPostPage.module.css */
+.main {
+  min-height: 100vh;
+  padding-top: 6rem;
+  padding-bottom: 4rem;
+}
+
+.container {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 0 2rem;
+}
+
+.header {
+  text-align: left;
+  margin: 3rem 0 2rem;
+}
+
+.date {
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+  color: var(--text-light);
+  display: block;
+  margin-bottom: 0.5rem;
+}
+
+.title {
+  font-family: var(--font-outfit);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: var(--text-dark);
+  line-height: 1.2;
+  margin-bottom: 1.5rem;
+}
+
+.authorByline {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+}
+
+.authorImage {
+  width: 48px;
+  height: 48px;
+  border-radius: 50%;
+  object-fit: cover;
+}
+
+.authorInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.125rem;
+}
+
+.authorName {
+  font-family: var(--font-outfit);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: var(--text-dark);
+}
+
+.authorBio {
+  font-family: var(--font-lora);
+  font-size: 0.8125rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.imageWrapper {
+  margin: 2rem 0 3rem;
+  border-radius: 4px;
+  overflow: hidden;
+}
+
+.image {
+  width: 100%;
+  height: auto;
+  display: block;
+}
+
+.content {
+  margin-bottom: 4rem;
+}
+
+.content h2 {
+  font-family: var(--font-outfit);
+  font-size: 1.75rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 2.5rem 0 1rem;
+}
+
+.content h3 {
+  font-family: var(--font-outfit);
+  font-size: 1.375rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 2rem 0 0.75rem;
+}
+
+.content p {
+  font-family: var(--font-lora);
+  font-size: 1.125rem;
+  color: var(--text-dark);
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+}
+
+.content ul,
+.content ol {
+  font-family: var(--font-lora);
+  font-size: 1.125rem;
+  color: var(--text-dark);
+  line-height: 1.8;
+  margin-bottom: 1.5rem;
+  padding-left: 1.5rem;
+}
+
+.content li {
+  margin-bottom: 0.5rem;
+}
+
+.content blockquote {
+  font-family: var(--font-lora);
+  font-size: 1.25rem;
+  font-style: italic;
+  color: var(--text-light);
+  border-left: 3px solid var(--tabby-brown);
+  padding-left: 1.5rem;
+  margin: 2rem 0;
+}
+
+.content a {
+  color: var(--tabby-brown);
+  text-decoration: underline;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 2px;
+}
+
+.content a:hover {
+  text-decoration-thickness: 2px;
+}
+
+.content img {
+  max-width: 100%;
+  height: auto;
+  border-radius: 4px;
+  margin: 1.5rem 0;
+}
+
+@media (max-width: 768px) {
+  .main {
+    padding-top: 5rem;
+  }
+
+  .container {
+    padding: 0 1.5rem;
+  }
+
+  .header {
+    margin: 2rem 0 1.5rem;
+  }
+
+  .content p,
+  .content ul,
+  .content ol {
+    font-size: 1rem;
+  }
+
+  .content h2 {
+    font-size: 1.5rem;
+  }
+
+  .content h3 {
+    font-size: 1.25rem;
+  }
+}
