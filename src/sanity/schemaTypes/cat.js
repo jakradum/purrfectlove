@@ -149,6 +149,21 @@ export default {
       initialValue: false
     },
     {
+      name: 'language',
+      title: 'Show on Website',
+      type: 'string',
+      description: 'Which language version of the website should this cat appear on?',
+      options: {
+        list: [
+          {title: 'English only', value: 'en'},
+          {title: 'German only', value: 'de'},
+          {title: 'Both', value: 'both'}
+        ],
+        layout: 'radio'
+      },
+      initialValue: 'both'
+    },
+    {
       name: 'adoptionDate',
       title: 'Adoption Date',
       type: 'date',

@@ -18,8 +18,8 @@ export function urlFor(source) {
 
 // Common queries
 export const queries = {
-  // Get all available cats
-  availableCats: `*[_type == "cat" && status == "available"] | order(_createdAt desc) {
+  // Get all available cats (filtered by language)
+  availableCats: (locale = 'en') => `*[_type == "cat" && status == "available" && (language == "${locale}" || language == "both" || !defined(language))] | order(_createdAt desc) {
     _id,
     name,
     slug,
@@ -50,8 +50,8 @@ export const queries = {
     adoptionDate
   }`,
 
-  // Get featured cats for homepage
-  featuredCats: `*[_type == "cat" && featured == true && status == "available"] | order(_createdAt desc)[0...3] {
+  // Get featured cats for homepage (filtered by language)
+  featuredCats: (locale = 'en') => `*[_type == "cat" && featured == true && status == "available" && (language == "${locale}" || language == "both" || !defined(language))] | order(_createdAt desc)[0...3] {
     _id,
     name,
     slug,
@@ -80,8 +80,8 @@ export const queries = {
     category
   }`,
 
-  // Get success stories
-  successStories: `*[_type == "successStory" && consentGiven == true] | order(adoptionDate desc) {
+  // Get success stories (filtered by language)
+  successStories: (locale = 'en') => `*[_type == "successStory" && consentGiven == true && (language == "${locale}" || language == "both" || !defined(language))] | order(adoptionDate desc) {
     _id,
     "catName": cat->name,
     adopterName,
@@ -91,8 +91,8 @@ export const queries = {
     featured
   }`,
 
-  // Get featured success stories for homepage
-  featuredSuccessStories: `*[_type == "successStory" && featured == true && consentGiven == true] | order(adoptionDate desc)[0...3] {
+  // Get featured success stories for homepage (filtered by language)
+  featuredSuccessStories: (locale = 'en') => `*[_type == "successStory" && featured == true && consentGiven == true && (language == "${locale}" || language == "both" || !defined(language))] | order(adoptionDate desc)[0...3] {
     _id,
     "catName": cat->name,
     adopterName,

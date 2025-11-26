@@ -1,6 +1,6 @@
 /* src/components/HappyCats.module.css */
 .happyCats {
-  padding: 6rem 2rem;
+  padding: 2rem 2rem 6rem;
   max-width: 1200px;
   margin: 0 auto;
 }
@@ -16,8 +16,10 @@
 
 .grid {
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+  grid-template-columns: repeat(3, 1fr);
   gap: 2rem;
+  max-width: 65%;
+  margin: 0 auto;
 }
 
 .card {
@@ -72,12 +74,47 @@
   line-height: 1.6;
 }
 
+.ctaCard {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-top: 2rem;
+}
+
 @media (max-width: 768px) {
   .happyCats {
     padding: 4rem 1.5rem;
   }
-  
+
   .grid {
-    grid-template-columns: 1fr;
+    grid-template-columns: repeat(2, 1fr);
+    max-width: 100%;
+    gap: 1rem;
+  }
+
+  .image {
+    height: 150px;
+  }
+
+  .info {
+    padding: 1rem;
+  }
+
+  .info h3 {
+    font-size: 1.1rem;
+  }
+
+  .adopter {
+    font-size: 0.875rem;
+  }
+
+  .date {
+    font-size: 0.75rem;
+    margin-bottom: 0.5rem;
+  }
+
+  .quote {
+    font-size: 0.85rem;
   }
 }

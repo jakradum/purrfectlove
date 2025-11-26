@@ -2,6 +2,7 @@
 .cta {
   color: var(--tabby-brown);
   font-family: var(--font-outfit);
+  font-size: 1.5rem;
   font-weight: 600;
   text-decoration: none;
   position: relative;

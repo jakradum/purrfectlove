@@ -2,6 +2,7 @@
 import styles from './HappyCats.module.css';
 import { client } from '@/sanity/lib/client';
 import imageUrlBuilder from '@sanity/image-url';
+import CTAButton from './CTAButton';
 
 const builder = imageUrlBuilder(client);
 
@@ -11,7 +12,7 @@ function urlFor(source) {
 
 export default async function HappyCats({ content, locale }) {
 const stories = await client.fetch(
-  `*[_type == "successStory"] | order(adoptionDate desc)[0...6] {
+  `*[_type == "successStory" && (language == $locale || language == "both" || !defined(language))] | order(adoptionDate desc)[0...6] {
     _id,
     catName,
     adopterName,
@@ -23,10 +24,13 @@ const stories = await client.fetch(
         url
       }
     }
-  }`
+  }`,
+  { locale }
 );
 
   console.log('Stories:', JSON.stringify(stories, null, 2));
+
+  const isOdd = stories.length % 2 !== 0;
 
   return (
     <section className={styles.happyCats}>
@@ -56,6 +60,11 @@ const stories = await client.fetch(
             </div>
           </div>
         ))}
+        <div className={`${styles.ctaCard} ${isOdd ? styles.ctaCardOdd : styles.ctaCardEven}`}>
+          <CTAButton href={`/${locale}/adoption`}>
+            {content.seeAllCats || 'See all cats'}
+          </CTAButton>
+        </div>
       </div>
     </section>
   );
