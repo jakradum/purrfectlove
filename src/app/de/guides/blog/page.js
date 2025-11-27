@@ -1,4 +1,4 @@
-import BlogPage from '@/components/BlogPage';
+import BlogPage from '@/components/Blog/BlogPage';
 
 export default function BlogRoute() {
   return <BlogPage locale="de" />;

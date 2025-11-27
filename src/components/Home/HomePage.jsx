@@ -1,5 +1,5 @@
 import styles from './HomePage.module.css';
-import AboutSection from '@/components/AboutSection';
+import AboutSection from './AboutSection';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 import AdoptionProcess from './AdoptionProcess';

@@ -55,6 +55,69 @@
       "cta": "Read all blogs"
     }
   },
+  "apply": {
+    "heading": "Meet your future cat",
+    "subheading": "These cats are neutered, vaccinated, litter-trained and ready to come home with you. Take a look at their resumes 😉 and apply if you're interested in any of them.",
+    "noCats": "No cats available at the moment. Check back soon!",
+    "months": "months",
+    "month": "month",
+    "year": "year",
+    "years": "years",
+    "ageGroups": {
+      "kitten": "Kitten (0-6 months)",
+      "young": "Young (6 months - 2 years)",
+      "adult": "Adult (2-7 years)",
+      "senior": "Senior (7+ years)"
+    },
+    "labels": {
+      "location": "Location",
+      "vaccinated": "Vaccinated",
+      "goodWith": "Good with",
+      "children": "children",
+      "cats": "other cats",
+      "dogs": "dogs"
+    },
+    "breadcrumb": {
+      "home": "Home",
+      "apply": "Adopt a Cat"
+    },
+    "adoptButton": "Adopt {catName}",
+    "form": {
+      "title": "Adopt {catName}",
+      "subtitle": "Fill out this form and we'll get back to you within 24-48 hours.",
+      "fields": {
+        "name": "Full Name",
+        "email": "Email",
+        "phone": "Phone Number",
+        "phonePlaceholder": "10-digit mobile number",
+        "address": "Address",
+        "housingType": "Housing Type",
+        "selectOption": "Select...",
+        "housingOptions": {
+          "own": "Own House",
+          "rent": "Rented Apartment",
+          "other": "Other"
+        },
+        "hasOtherPets": "I have other pets",
+        "otherPetsDetails": "Tell us about your other pets",
+        "whyAdopt": "Why do you want to adopt? (minimum 50 characters)",
+        "characters": "characters",
+        "experience": "Experience with cats"
+      },
+      "submit": "Submit Application",
+      "submitting": "Submitting...",
+      "errors": {
+        "verification": "Please complete the verification",
+        "verificationFailed": "Verification failed. Please try again.",
+        "failed": "Failed to submit application"
+      },
+      "success": {
+        "title": "Application Submitted!",
+        "message": "Thank you for your interest in adopting {catName}. We'll review your application and get back to you within 24-48 hours.",
+        "button": "Close"
+      }
+    }
+  },
   "blog": {
     "heading": "The Purrfect Blog",
     "subheading": "Guides, thoughts, tips & stories on cat care",

@@ -1,6 +1,6 @@
 // src/components/AboutSection.jsx
 import styles from './AboutSection.module.css';
-import CTAButton from './CTAButton';
+import CTAButton from '@/components/CTAButton';
 
 export default function AboutSection({ content }) {
   return (

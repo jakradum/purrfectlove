@@ -4,7 +4,7 @@ import { PortableText } from '@portabletext/react';
 import styles from './BlogPostPage.module.css';
 import { client } from '@/sanity/lib/client';
 import imageUrlBuilder from '@sanity/image-url';
-import Breadcrumb from './Breadcrumb';
+import Breadcrumb from '@/components/Breadcrumb';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 

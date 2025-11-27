@@ -56,6 +56,69 @@
       "cta": "Alle Blogs lesen"
     }
   },
+  "apply": {
+    "heading": "Lerne deine zukünftige Katze kennen",
+    "subheading": "Diese Katzen sind kastriert, geimpft, stubenrein und bereit, mit dir nach Hause zu kommen. Schau dir ihre Lebensläufe an 😉 und bewirb dich, wenn du an einer von ihnen interessiert bist.",
+    "noCats": "Momentan sind keine Katzen verfügbar. Schau bald wieder vorbei!",
+    "months": "Monate",
+    "month": "Monat",
+    "year": "Jahr",
+    "years": "Jahre",
+    "ageGroups": {
+      "kitten": "Kätzchen (0-6 Monate)",
+      "young": "Jung (6 Monate - 2 Jahre)",
+      "adult": "Erwachsen (2-7 Jahre)",
+      "senior": "Senior (7+ Jahre)"
+    },
+    "labels": {
+      "location": "Standort",
+      "vaccinated": "Geimpft",
+      "goodWith": "Verträglich mit",
+      "children": "Kindern",
+      "cats": "anderen Katzen",
+      "dogs": "Hunden"
+    },
+    "breadcrumb": {
+      "home": "Startseite",
+      "apply": "Katze adoptieren"
+    },
+    "adoptButton": "{catName} adoptieren",
+    "form": {
+      "title": "{catName} adoptieren",
+      "subtitle": "Füllen Sie dieses Formular aus und wir melden uns innerhalb von 24-48 Stunden bei Ihnen.",
+      "fields": {
+        "name": "Vollständiger Name",
+        "email": "E-Mail",
+        "phone": "Telefonnummer",
+        "phonePlaceholder": "Handynummer",
+        "address": "Adresse",
+        "housingType": "Wohnungstyp",
+        "selectOption": "Auswählen...",
+        "housingOptions": {
+          "own": "Eigenes Haus",
+          "rent": "Mietwohnung",
+          "other": "Sonstiges"
+        },
+        "hasOtherPets": "Ich habe andere Haustiere",
+        "otherPetsDetails": "Erzählen Sie uns von Ihren anderen Haustieren",
+        "whyAdopt": "Warum möchten Sie adoptieren? (mindestens 50 Zeichen)",
+        "characters": "Zeichen",
+        "experience": "Erfahrung mit Katzen"
+      },
+      "submit": "Antrag einreichen",
+      "submitting": "Wird eingereicht...",
+      "errors": {
+        "verification": "Bitte vervollständigen Sie die Verifizierung",
+        "verificationFailed": "Verifizierung fehlgeschlagen. Bitte versuchen Sie es erneut.",
+        "failed": "Antrag konnte nicht eingereicht werden"
+      },
+      "success": {
+        "title": "Antrag eingereicht!",
+        "message": "Vielen Dank für Ihr Interesse an der Adoption von {catName}. Wir werden Ihren Antrag prüfen und uns innerhalb von 24-48 Stunden bei Ihnen melden.",
+        "button": "Schließen"
+      }
+    }
+  },
   "blog": {
     "heading": "Der Purrfect Blog",
     "subheading": "Ratgeber, Gedanken, Tipps & Geschichten zur Katzenpflege",

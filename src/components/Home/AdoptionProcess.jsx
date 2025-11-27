@@ -1,6 +1,6 @@
 // src/components/AdoptionProcess.jsx
 import styles from './AdoptionProcess.module.css';
-import CTAButton from './CTAButton';
+import CTAButton from '@/components/CTAButton';
 
 export default function AdoptionProcess({ content, locale = 'en' }) {
   const processHref = locale === 'de' ? '/de/guides/process' : '/guides/process';

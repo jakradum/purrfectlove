@@ -1,4 +1,4 @@
-import BlogPostPage from '@/components/BlogPostPage';
+import BlogPostPage from '@/components/Blog/BlogPostPage';
 
 export default async function BlogPostRoute({ params }) {
   const { slug } = await params;

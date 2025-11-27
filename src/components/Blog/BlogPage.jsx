@@ -1,8 +1,8 @@
 // src/components/BlogPage.jsx
 import styles from './BlogPage.module.css';
 import { client } from '@/sanity/lib/client';
-import Breadcrumb from './Breadcrumb';
-import BlogCard from './BlogCard';
+import Breadcrumb from '@/components/Breadcrumb';
+import FeaturedBlogCard from '@/components/Home/FeaturedBlogCard';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -47,7 +47,7 @@ export default async function BlogPage({ locale = 'en' }) {
         {posts.length > 0 ? (
           <div className={styles.posts}>
             {posts.map((post) => (
-              <BlogCard
+              <FeaturedBlogCard
                 key={post._id}
                 post={post}
                 locale={locale}

@@ -82,16 +82,38 @@ export default {
       validation: Rule => Rule.max(500).required()
     },
     {
-      name: 'location',
-      title: 'Area/Locality',
+      name: 'locationEn',
+      title: 'Locality (English)',
       type: 'string',
-      description: 'Current location in Bangalore (e.g., Jayanagar, Koramangala)',
-      placeholder: 'Jayanagar'
+      description: 'Enter locality in English (e.g., Jayanagar, Koramangala). Cat will appear on English website only.',
+      placeholder: 'Jayanagar',
+      hidden: ({document}) => !!document?.locationDe,
+      validation: Rule => Rule.custom((value, context) => {
+        if (value && context.document?.locationDe) {
+          return 'Cannot have both English and German locality. Please remove one.'
+        }
+        return true
+      })
+    },
+    {
+      name: 'locationDe',
+      title: 'Locality (German)',
+      type: 'string',
+      description: 'Enter locality in German (e.g., Berlin, München). Cat will appear on German website only.',
+      placeholder: 'Berlin',
+      hidden: ({document}) => !!document?.locationEn,
+      validation: Rule => Rule.custom((value, context) => {
+        if (value && context.document?.locationEn) {
+          return 'Cannot have both English and German locality. Please remove one.'
+        }
+        return true
+      })
     },
     {
       name: 'healthStatus',
       title: 'Health Status',
       type: 'object',
+      validation: Rule => Rule.required(),
       fields: [
         {
           name: 'vaccinated',
@@ -131,10 +153,10 @@ export default {
       type: 'string',
       options: {
         list: [
-          {title: '🟢 Available for Adoption', value: 'available'},
-          {title: '🟡 Application Pending', value: 'pending'},
-          {title: '🔴 Adopted', value: 'adopted'},
-          {title: '⚪ In Foster Care', value: 'foster'}
+          {title: 'Available for Adoption', value: 'available'},
+          {title: 'Application Pending', value: 'pending'},
+          {title: 'Adopted', value: 'adopted'},
+          {title: 'In Foster Care', value: 'foster'}
         ],
         layout: 'radio'
       },
@@ -149,21 +171,6 @@ export default {
       initialValue: false
     },
     {
-      name: 'language',
-      title: 'Show on Website',
-      type: 'string',
-      description: 'Which language version of the website should this cat appear on?',
-      options: {
-        list: [
-          {title: 'English only', value: 'en'},
-          {title: 'German only', value: 'de'},
-          {title: 'Both', value: 'both'}
-        ],
-        layout: 'radio'
-      },
-      initialValue: 'both'
-    },
-    {
       name: 'adoptionDate',
       title: 'Adoption Date',
       type: 'date',
@@ -175,12 +182,21 @@ export default {
       title: 'name',
       media: 'photos.0',
       status: 'status',
-      age: 'age'
+      age: 'age',
+      locationEn: 'locationEn',
+      locationDe: 'locationDe'
     },
-    prepare({title, media, status, age}) {
+    prepare({title, media, status, age, locationEn, locationDe}) {
+      const statusLabels = {
+        available: 'Available',
+        pending: 'Pending',
+        adopted: 'Adopted',
+        foster: 'Foster'
+      }
+      const lang = locationDe ? 'DE' : locationEn ? 'EN' : 'No locale'
       return {
         title,
-        subtitle: `${age || 'Unknown age'} • ${status || 'No status'}`,
+        subtitle: `${age || 'Unknown age'} | ${statusLabels[status] || 'No status'} | ${lang}`,
         media
       }
     }

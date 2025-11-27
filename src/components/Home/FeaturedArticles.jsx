@@ -1,8 +1,8 @@
-// src/components/FeaturedArticles.jsx
+// src/components/Home/FeaturedArticles.jsx
 import styles from './FeaturedArticles.module.css';
 import { client } from '@/sanity/lib/client';
-import BlogCard from './BlogCard';
-import CTAButton from './CTAButton';
+import FeaturedBlogCard from './FeaturedBlogCard';
+import CTAButton from '@/components/CTAButton';
 
 export default async function FeaturedArticles({ content, locale = 'en' }) {
   const blogHref = locale === 'de' ? '/de/guides/blog' : '/guides/blog';
@@ -28,7 +28,7 @@ export default async function FeaturedArticles({ content, locale = 'en' }) {
       <h2 className={styles.heading}>{content.heading}</h2>
       <div className={styles.posts}>
         {posts.map((post) => (
-          <BlogCard
+          <FeaturedBlogCard
             key={post._id}
             post={post}
             locale={locale}

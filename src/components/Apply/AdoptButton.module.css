@@ -1,0 +1,20 @@
+/* src/components/Apply/AdoptButton.module.css */
+.adoptButton {
+  font-family: var(--font-outfit);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--tabby-brown);
+  background-color: var(--whisker-cream);
+  border: 2px solid var(--tabby-brown);
+  border-radius: 8px;
+  padding: 1rem 2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  margin-top: 1.5rem;
+  width: 100%;
+}
+
+.adoptButton:hover {
+  background-color: var(--tabby-brown);
+  color: var(--whisker-cream);
+}
