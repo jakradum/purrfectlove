@@ -14,7 +14,9 @@ const submissions = new Map()
 export async function POST(request) {
   try {
     const body = await request.json()
-    
+    console.log('Received submission for cat:', body.catId)
+    console.log('Turnstile token present:', !!body.turnstileToken)
+
     // 1. HONEYPOT CHECK
     if (body.website) {
       console.log('Honeypot triggered - spam detected')
@@ -54,9 +56,10 @@ export async function POST(request) {
     )
     
     const turnstileResult = await turnstileResponse.json()
-    
+    console.log('Turnstile result:', turnstileResult)
+
     if (!turnstileResult.success) {
-      console.log('Turnstile verification failed:', turnstileResult)
+      console.log('Turnstile verification failed:', turnstileResult['error-codes'])
       return Response.json(
         { error: 'Verification failed. Please try again.' },
         { status: 400 }
