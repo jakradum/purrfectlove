@@ -7,7 +7,6 @@
     "title": "Schnelllinks",
     "links": [
       { "href": "/de", "label": "Startseite" },
-      { "href": "/de/adoption", "label": "Adoption" },
       { "href": "/de/guides/process", "label": "Prozess" },
       { "href": "/de/guides/first-days", "label": "Erste Tage" },
       { "href": "/de/about", "label": "Über uns" },
@@ -27,5 +26,10 @@
   },
   "copyright": "© {year} Purrfect Love. Alle Rechte vorbehalten.",
   "madeWith": "Mit 🧡 für Katzen und Katzenliebhaber gemacht",
-  "location": "Bangalore • Stuttgart"
+  "location": "Bangalore • Stuttgart",
+  "credit": {
+    "text": "Website von",
+    "name": "Pranav",
+    "href": "https://www.linkedin.com/in/pranavkarnad/"
+  }
 }

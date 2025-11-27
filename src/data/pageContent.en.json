@@ -118,6 +118,14 @@
       }
     }
   },
+  "process": {
+    "heading": "How Adoption Works",
+    "subheading": "Our process ensures every cat finds the perfect forever home",
+    "breadcrumb": {
+      "home": "Home",
+      "process": "Process"
+    }
+  },
   "blog": {
     "heading": "The Purrfect Blog",
     "subheading": "Guides, thoughts, tips & stories on cat care",

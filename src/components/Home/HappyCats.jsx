@@ -61,7 +61,7 @@ const stories = await client.fetch(
           </div>
         ))}
         <div className={`${styles.ctaCard} ${isOdd ? styles.ctaCardOdd : styles.ctaCardEven}`}>
-          <CTAButton href={`/${locale}/adoption`}>
+          <CTAButton href={locale === 'de' ? '/de/apply' : '/apply'}>
             {content.seeAllCats || 'See all cats'}
           </CTAButton>
         </div>

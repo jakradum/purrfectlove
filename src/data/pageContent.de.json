@@ -119,6 +119,14 @@
       }
     }
   },
+  "process": {
+    "heading": "So funktioniert die Adoption",
+    "subheading": "Unser Prozess stellt sicher, dass jede Katze das perfekte Zuhause findet",
+    "breadcrumb": {
+      "home": "Startseite",
+      "process": "Prozess"
+    }
+  },
   "blog": {
     "heading": "Der Purrfect Blog",
     "subheading": "Ratgeber, Gedanken, Tipps & Geschichten zur Katzenpflege",

@@ -65,7 +65,20 @@ export default function Footer({ locale = 'en' }) {
       <div className={styles.bottomBar}>
         <div className={styles.bottomContainer}>
           <p className={styles.copyright}>{copyright}</p>
-          <p className={styles.madeWith}>{content.madeWith}</p>
+          <div className={styles.madeWithWrapper}>
+            <p className={styles.madeWith}>{content.madeWith}</p>
+            <p className={styles.credit}>
+              {content.credit.text}{' '}
+              <a
+                href={content.credit.href}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={styles.creditLink}
+              >
+                {content.credit.name}
+              </a>
+            </p>
+          </div>
           <div className={styles.languageSwitcher}>
             <Link 
               href="/" 

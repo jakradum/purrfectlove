@@ -17,7 +17,7 @@ export default function AboutSection({ content }) {
         ))}
       </div>
       <div className={styles.ctaWrapper}>
-        <CTAButton href="/adoption">
+        <CTAButton href="/apply">
           {content.cta}
         </CTAButton>
       </div>

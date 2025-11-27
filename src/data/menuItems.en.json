@@ -1,7 +1,6 @@
 {
   "navLinks": [
     { "href": "/", "label": "Home" },
-    { "href": "/adoption", "label": "Adoption" },
     {
       "label": "Guides",
       "children": [
