@@ -127,6 +127,14 @@
       "process": "Prozess"
     }
   },
+  "about": {
+    "heading": "Das Purrfect Love Team",
+    "subheading": "Lernen Sie die leidenschaftlichen Menschen hinter unserer Mission kennen",
+    "breadcrumb": {
+      "home": "Startseite",
+      "about": "Über uns"
+    }
+  },
   "blog": {
     "heading": "Der Purrfect Blog",
     "subheading": "Ratgeber, Gedanken, Tipps & Geschichten zur Katzenpflege",

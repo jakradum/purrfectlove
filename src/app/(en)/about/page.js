@@ -1,3 +1,5 @@
-export default function AboutPage() {
-  return <main></main>;
+import AboutPage from '@/components/About/AboutPage';
+
+export default function About() {
+  return <AboutPage locale="en" />;
 }
