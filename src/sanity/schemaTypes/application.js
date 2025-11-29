@@ -3,33 +3,45 @@ export default {
   title: 'Adoption Application',
   type: 'document',
   fields: [
-    // === APPLICANT INFORMATION ===
+    // === APPLICATION ID ===
+    {
+      name: 'applicationId',
+      title: 'Application ID',
+      type: 'string',
+      readOnly: true,
+      hidden: true
+    },
+    // === APPLICANT INFORMATION (hidden in form, shown in custom view) ===
     {
       name: 'applicantName',
       title: 'Applicant Name',
       type: 'string',
       validation: Rule => Rule.required(),
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'email',
       title: 'Email',
       type: 'string',
       validation: Rule => Rule.required().email(),
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'phone',
       title: 'Phone',
       type: 'string',
       validation: Rule => Rule.required(),
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'address',
       title: 'Address',
       type: 'text',
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'cat',
@@ -37,7 +49,8 @@ export default {
       type: 'reference',
       to: [{type: 'cat'}],
       validation: Rule => Rule.required(),
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'housingType',
@@ -50,40 +63,45 @@ export default {
           {title: 'Other', value: 'other'}
         ]
       },
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'hasOtherPets',
       title: 'Has Other Pets',
       type: 'boolean',
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'otherPetsDetails',
       title: 'Other Pets Details',
       type: 'text',
-      hidden: ({parent}) => !parent?.hasOtherPets,
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'whyAdopt',
       title: 'Why Do You Want to Adopt?',
       type: 'text',
       validation: Rule => Rule.required().min(50),
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'experience',
       title: 'Experience with Cats',
       type: 'text',
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
     {
       name: 'submittedAt',
       title: 'Submitted At',
       type: 'datetime',
       initialValue: () => new Date().toISOString(),
-      readOnly: true
+      readOnly: true,
+      hidden: true
     },
 
     // === FOR OFFICIAL USE ONLY ===
@@ -318,13 +336,14 @@ orderings: [
 
   preview: {
     select: {
+      applicationId: 'applicationId',
       name: 'applicantName',
       cat: 'cat.name',
       status: 'status',
       assignedTo: 'assignedTo',
       date: 'submittedAt'
     },
-    prepare({name, cat, status, assignedTo, date}) {
+    prepare({applicationId, name, cat, status, assignedTo, date}) {
       const statusLabels = {
         new: '🆕',
         review: '👀',
@@ -336,15 +355,17 @@ orderings: [
         rejected: '❌',
         adopted: '🎉'
       }
-      
+
       const assignedLabels = {
         lucia: 'Lucia',
         besly: 'Besly',
         devraj: 'Devraj'
       }
-      
+
+      const idPrefix = applicationId ? `#${applicationId} ` : ''
+
       return {
-        title: name,
+        title: `${idPrefix}${name}`,
         subtitle: `${cat} • ${statusLabels[status] || status} • ${assignedLabels[assignedTo] || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
       }
     }

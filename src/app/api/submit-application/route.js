@@ -11,6 +11,34 @@ const serverClient = createClient({
 // Simple in-memory rate limiting
 const submissions = new Map()
 
+// Generate unique 4-character alphanumeric ID
+async function generateUniqueId() {
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789' // Removed confusing chars: I, O, 0, 1
+  let attempts = 0
+  const maxAttempts = 10
+
+  while (attempts < maxAttempts) {
+    let id = ''
+    for (let i = 0; i < 4; i++) {
+      id += chars.charAt(Math.floor(Math.random() * chars.length))
+    }
+
+    // Check if ID already exists
+    const existing = await serverClient.fetch(
+      `*[_type == "application" && applicationId == $id][0]`,
+      { id }
+    )
+
+    if (!existing) {
+      return id
+    }
+    attempts++
+  }
+
+  // Fallback: use timestamp-based ID if random fails
+  return Date.now().toString(36).slice(-4).toUpperCase()
+}
+
 export async function POST(request) {
   try {
     const body = await request.json()
@@ -113,9 +141,13 @@ export async function POST(request) {
       )
     }
     
-    // 7. CREATE APPLICATION IN SANITY
+    // 7. GENERATE UNIQUE APPLICATION ID
+    const applicationId = await generateUniqueId()
+
+    // 8. CREATE APPLICATION IN SANITY
     const result = await serverClient.create({
       _type: 'application',
+      applicationId,
       cat: {
         _type: 'reference',
         _ref: body.catId

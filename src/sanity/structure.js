@@ -1,4 +1,5 @@
 import {StructureBuilder as S} from 'sanity/desk'
+import {ApplicantInfoDisplay} from './components/ApplicantInfoDisplay'
 
 export const structure = (S) =>
   S.list()
@@ -11,7 +12,18 @@ export const structure = (S) =>
       S.listItem()
         .title('Applications')
         .icon(() => '📋')
-        .child(S.documentTypeList('application')),
+        .child(
+          S.documentTypeList('application')
+            .child((documentId) =>
+              S.document()
+                .documentId(documentId)
+                .schemaType('application')
+                .views([
+                  S.view.component(ApplicantInfoDisplay).title('Applicant Info'),
+                  S.view.form().title('Review & Status')
+                ])
+            )
+        ),
       S.listItem()
         .title('Team')
         .icon(() => '👥')
