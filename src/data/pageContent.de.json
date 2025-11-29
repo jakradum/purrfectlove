@@ -2,25 +2,24 @@
 {
   "home": {
     "hero": {
-      "heading": "Jede Katze verdient ein liebevolles Zuhause",
-      "subheading": "Wir retten, rehabilitieren und vermitteln Katzen in Bangalore und verbinden sie mit Familien, die sie für immer lieben werden.",
-      "subtext": "Adoptieren, nicht kaufen",
-      "sideText": "Jede Adoption rettet ein Leben und schafft Platz für eine weitere Rettung."
+      "heading": "Man besitzt keine Katze. Man lebt einfach mit ihr.",
+      "sideText": "Purrfect Love ist ein Katzenadoptions-Kollektiv; wir rehabilitieren verlorene oder ausgesetzte Katzen und finden Zuhause für junge Katzen ohne eines."
     },
     "about": {
-      "heading": "Was macht Purrfect Love anders",
+      "heading": "Warum bei uns adoptieren?",
+      "intro": "Sie können überall adoptieren, wirklich. Aber hier ist, was wir anders machen.",
       "points": [
         {
-          "title": "Systematische Prüfung",
-          "description": "Jeder Adoptant durchläuft unseren sorgfältigen Prüfprozess, um die beste Übereinstimmung für Katze und Familie zu gewährleisten."
+          "title": "Katzen sind auch Persönlichkeiten",
+          "description": "Wir übergeben sie nicht einfach. Wir erstellen ihre Gesundheitsakten, verstehen ihre Eigenheiten und Bedürfnisse und finden die beste Übereinstimmung. Es braucht Zeit, aber es lohnt sich; für Sie und für sie."
         },
         {
-          "title": "Lebenslange Unterstützung",
-          "description": "Wir sind auch nach der Adoption für Sie da – mit Ratschlägen, Ressourcen und einer Gemeinschaft von Katzenliebhabern."
+          "title": "Eine Gemeinschaft von Katzenfreunden",
+          "description": "Nach der Adoption gehören Sie zur Gruppe. Wir bleiben in Kontakt, tauschen Geschichten aus, teilen Tipps. Es hilft, mit Menschen zu sprechen, die es verstehen."
         },
         {
-          "title": "Keine Gebühren, pure Liebe",
-          "description": "Wir erheben niemals Adoptionsgebühren. Unser einziges Ziel ist es, liebevolle Zuhause für jede Katze zu finden."
+          "title": "Rundum-Betreuung",
+          "description": "Wir wissen einiges über alles rund um Katzen. Ernährung, Rezepte, Tierarztbesuche, Notfall-Hausmittel und mehr. Alles hier auf unserer Website."
         }
       ],
       "cta": "Unsere Katzen kennenlernen"
@@ -29,26 +28,27 @@
       "heading": "So funktioniert die Adoption",
       "steps": [
         {
-          "title": "Katzen durchstöbern",
-          "description": "Schauen Sie sich unsere verfügbaren Katzen an und finden Sie Ihre perfekte Übereinstimmung"
+          "title": "Finde eine Katze",
+          "description": "Stöbere durch unsere Katzen. Jemand Interessantes dabei? Bewirb dich!"
         },
         {
-          "title": "Antrag einreichen",
-          "description": "Füllen Sie unser Adoptionsformular mit Details über Ihr Zuhause und Ihren Lebensstil aus"
+          "title": "Fülle das Formular aus",
+          "description": "Erzähl uns ein bisschen von dir. Wir melden uns bei dir."
         },
         {
-          "title": "Treffen & Prüfung",
-          "description": "Wir prüfen Ihren Antrag und vereinbaren ein Kennenlerntreffen"
+          "title": "Kennenlernen",
+          "description": "Ein oder zwei kurze Gespräche; wir helfen dir, dich auf deine Katze vorzubereiten."
         },
         {
-          "title": "Nach Hause nehmen",
-          "description": "Nach einem Hausbesuch heißen Sie Ihr neues Familienmitglied willkommen!"
+          "title": "Bring deine Katze nach Hause",
+          "description": "Wir bringen sie vorbei, helfen beim Eingewöhnen und sind in den ersten Tagen für dich da."
         }
       ],
       "cta": "Mehr über den Prozess erfahren"
     },
     "happyCats": {
-      "heading": "Glückliche Katzen von Purrfect Love"
+      "heading": "Die glücklichen Katzen von Purrfect Love",
+      "subheading": "Lerne einige der Katzen kennen, die durch uns ein Zuhause gefunden haben."
     },
     "featuredArticles": {
       "heading": "Ausgewählte Artikel",
@@ -168,6 +168,34 @@
       "guides": "Ratgeber",
       "faqs": "FAQ"
     }
+  },
+  "contact": {
+    "heading": "Kontakt aufnehmen",
+    "subheading": "Wir freuen uns, von Ihnen zu hören",
+    "breadcrumb": {
+      "home": "Startseite",
+      "contact": "Kontakt"
+    },
+    "form": {
+      "name": "Ihr Name",
+      "email": "E-Mail-Adresse",
+      "subject": "Betreff",
+      "subjectPlaceholder": "Worum geht es?",
+      "message": "Ihre Nachricht",
+      "messagePlaceholder": "Teilen Sie uns mit, was Sie beschäftigt...",
+      "submit": "Nachricht senden",
+      "submitting": "Wird gesendet...",
+      "success": {
+        "title": "Nachricht gesendet!",
+        "message": "Vielen Dank für Ihre Nachricht. Wir werden uns so schnell wie möglich bei Ihnen melden."
+      },
+      "errors": {
+        "verification": "Bitte vervollständigen Sie die Verifizierung",
+        "failed": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
+      }
+    },
+    "emailNote": "Haben Sie spezielle Fragen? Schreiben Sie uns an",
+    "email": "contact@purrfectlove.org"
   },
   "onboarding": {
     "heading": "Die ersten Tage mit Ihrer neuen Katze",

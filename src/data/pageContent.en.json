@@ -1,25 +1,24 @@
 {
   "home": {
     "hero": {
-      "heading": "Every cat deserves a loving home",
-      "subheading": "We rescue, rehabilitate, and rehome cats in Bangalore, connecting them with families who will love them forever.",
-      "subtext": "Adopt, don't shop",
-      "sideText": "Every adoption saves a life and makes room for another rescue."
+      "heading": "You don't own a cat. You simply live with one.",
+      "sideText": "Purrfect Love is a cat adoption collective; we work to rehabilitate lost or abandoned cats, as well as find homes for young cats without one."
     },
     "about": {
-      "heading": "What makes Purrfect Love different",
+      "heading": "Why adopt from us?",
+      "intro": "You can adopt from anywhere, really. But here's what we do differently.",
       "points": [
         {
-          "title": "Systematic vetting",
-          "description": "Every adopter goes through our careful review process to ensure the best match for both cat and family."
+          "title": "Cats are people too",
+          "description": "We don't just hand them over to you. We get their health records in place, understand their quirks and needs, and find the best match. It takes time, but it's worth it; for you and for them."
         },
         {
-          "title": "Lifelong support",
-          "description": "We're here for you after adoption with advice, resources, and a community of cat lovers."
+          "title": "A community of cat people",
+          "description": "Once you've adopted, you're part of the group. We stay in touch, swap stories, share tips. It helps to talk to people who get it."
         },
         {
-          "title": "No fees, pure love",
-          "description": "We never charge adoption fees. Our only goal is finding loving homes for every cat."
+          "title": "All-round care",
+          "description": "We know a thing or two about all things cats. Diets, recipes, vet visits, emergency home remedies, and more. All right here on our site."
         }
       ],
       "cta": "Meet our cats"
@@ -28,26 +27,27 @@
       "heading": "How adoption works",
       "steps": [
         {
-          "title": "Browse cats",
-          "description": "Look through our available cats and find your perfect match"
+          "title": "Find a cat",
+          "description": "Browse our cats. Someone interesting? Apply!"
         },
         {
-          "title": "Submit application",
-          "description": "Fill out our adoption form with details about your home and lifestyle"
+          "title": "Fill out the form",
+          "description": "Tell us a bit about yourself. We'll get back to you."
         },
         {
-          "title": "Meet & review",
-          "description": "We review your application and arrange a meet-and-greet"
+          "title": "Meet and greet",
+          "description": "A quick call or two; we help you get ready to welcome your cat."
         },
         {
-          "title": "Take home",
-          "description": "After a home visit, welcome your new family member!"
+          "title": "Bring your cat home",
+          "description": "We drop them off, help you settle in, and stay available for those first few days."
         }
       ],
       "cta": "Learn more about the process"
     },
     "happyCats": {
-      "heading": "Happy cats of Purrfect Love"
+      "heading": "The Happy Cats of Purrfect Love",
+      "subheading": "Meet some of the cats that found homes through us."
     },
     "featuredArticles": {
       "heading": "Featured articles",
@@ -167,6 +167,34 @@
       "guides": "Guides",
       "faqs": "FAQs"
     }
+  },
+  "contact": {
+    "heading": "Get in Touch",
+    "subheading": "We'd love to hear from you",
+    "breadcrumb": {
+      "home": "Home",
+      "contact": "Contact"
+    },
+    "form": {
+      "name": "Your Name",
+      "email": "Email Address",
+      "subject": "Subject",
+      "subjectPlaceholder": "What is this about?",
+      "message": "Your Message",
+      "messagePlaceholder": "Tell us what's on your mind...",
+      "submit": "Send Message",
+      "submitting": "Sending...",
+      "success": {
+        "title": "Message Sent!",
+        "message": "Thank you for reaching out. We'll get back to you as soon as possible."
+      },
+      "errors": {
+        "verification": "Please complete the verification",
+        "failed": "Failed to send message. Please try again."
+      }
+    },
+    "emailNote": "Have specific questions? Write to us at",
+    "email": "contact@purrfectlove.org"
   },
   "onboarding": {
     "heading": "The First Days with Your New Cat",

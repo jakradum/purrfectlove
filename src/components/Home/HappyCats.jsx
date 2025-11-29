@@ -31,6 +31,9 @@ export default async function HappyCats({ content, locale }) {
   return (
     <section className={styles.happyCats}>
       <h2 className={styles.heading}>{content.heading}</h2>
+      {content.subheading && (
+        <p className={styles.subheading}>{content.subheading}</p>
+      )}
       <div className={styles.grid}>
         {stories.map((story) => (
           <div key={story._id} className={styles.card}>

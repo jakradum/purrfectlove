@@ -47,16 +47,6 @@ export default function Footer({ locale = 'en' }) {
               <Instagram size={20} />
               <span>{content.social.instagram.label}</span>
             </a>
-            <a
-              href={content.social.whatsapp.href}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.socialLink}
-              aria-label="WhatsApp"
-            >
-              <span>💬</span>
-              <span>{content.social.whatsapp.label}</span>
-            </a>
           </div>
         </div>
       </div>

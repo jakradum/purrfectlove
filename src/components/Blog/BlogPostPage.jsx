@@ -105,49 +105,120 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
     { label: title },
   ];
 
-  return (
-    <main className={styles.main}>
-      <article className={styles.container}>
-        <Breadcrumb items={breadcrumbItems} />
+  // Generate excerpt for description
+  const excerpt = post.excerpt?.[locale] || post.excerpt?.en || truncateText(extractPlainText(postContent), 160);
 
-        <header className={styles.header}>
-          <time className={styles.date}>{formattedDate}</time>
-          <h1 className={styles.title}>{title}</h1>
-          {author && (
-            <div className={styles.authorByline}>
-              {author.image?.asset && (
-                <img
-                  src={urlFor(author.image).width(48).height(48).url()}
-                  alt={author.name}
-                  className={styles.authorImage}
-                />
-              )}
-              <div className={styles.authorInfo}>
-                <span className={styles.authorName}>{author.name}</span>
-                {authorBioText && (
-                  <span className={styles.authorBio}>{authorBioText}</span>
+  // Article schema for SEO
+  const baseUrl = 'https://purrfectlove.org';
+  const localePath = locale === 'de' ? '/de' : '';
+  const postSlug = locale === 'de' ? (post.slugDe?.current || post.slug?.current) : post.slug?.current;
+  const articleUrl = `${baseUrl}${localePath}/guides/blog/${postSlug}`;
+  const imageUrl = post.featuredImage?.asset?.url || `${baseUrl}/logo-hero.png`;
+
+  const articleSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'Article',
+    headline: title,
+    description: excerpt,
+    image: imageUrl,
+    datePublished: post.publishedAt,
+    dateModified: post.publishedAt,
+    author: {
+      '@type': 'Person',
+      name: author?.name || 'Purrfect Love',
+    },
+    publisher: {
+      '@type': 'Organization',
+      name: 'Purrfect Love',
+      logo: {
+        '@type': 'ImageObject',
+        url: `${baseUrl}/logo-hero.png`,
+      },
+    },
+    mainEntityOfPage: {
+      '@type': 'WebPage',
+      '@id': articleUrl,
+    },
+  };
+
+  const breadcrumbSchema = {
+    '@context': 'https://schema.org',
+    '@type': 'BreadcrumbList',
+    itemListElement: [
+      {
+        '@type': 'ListItem',
+        position: 1,
+        name: blogContent.breadcrumb.home,
+        item: `${baseUrl}${localePath || '/'}`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 2,
+        name: blogContent.breadcrumb.blog,
+        item: `${baseUrl}${localePath}/guides/blog`,
+      },
+      {
+        '@type': 'ListItem',
+        position: 3,
+        name: title,
+        item: articleUrl,
+      },
+    ],
+  };
+
+  return (
+    <>
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(articleSchema) }}
+      />
+      <script
+        type="application/ld+json"
+        dangerouslySetInnerHTML={{ __html: JSON.stringify(breadcrumbSchema) }}
+      />
+      <main className={styles.main}>
+        <article className={styles.container}>
+          <Breadcrumb items={breadcrumbItems} />
+
+          <header className={styles.header}>
+            <time className={styles.date}>{formattedDate}</time>
+            <h1 className={styles.title}>{title}</h1>
+            {author && (
+              <div className={styles.authorByline}>
+                {author.image?.asset && (
+                  <img
+                    src={urlFor(author.image).width(48).height(48).url()}
+                    alt={author.name}
+                    className={styles.authorImage}
+                  />
                 )}
+                <div className={styles.authorInfo}>
+                  <span className={styles.authorName}>{author.name}</span>
+                  {authorBioText && (
+                    <span className={styles.authorBio}>{authorBioText}</span>
+                  )}
+                </div>
               </div>
+            )}
+          </header>
+
+          {post.featuredImage?.asset && (
+            <div className={styles.imageWrapper}>
+              <img
+                src={urlFor(post.featuredImage).width(1200).height(675).url()}
+                alt={title}
+                className={styles.image}
+              />
             </div>
           )}
-        </header>
 
-        {post.featuredImage?.asset && (
-          <div className={styles.imageWrapper}>
-            <img
-              src={urlFor(post.featuredImage).width(1200).height(675).url()}
-              alt={title}
-              className={styles.image}
-            />
+          <div className={styles.content}>
+            <PortableText value={postContent} />
           </div>
-        )}
 
-        <div className={styles.content}>
-          <PortableText value={postContent} />
-        </div>
-
-        <Breadcrumb items={breadcrumbItems} />
-      </article>
-    </main>
+          <Breadcrumb items={breadcrumbItems} />
+        </article>
+      </main>
+    </>
   );
 }

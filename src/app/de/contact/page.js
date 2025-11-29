@@ -1,3 +1,29 @@
-export default function ContactPage() {
-  return <main></main>;
+import ContactPage from '@/components/Contact/ContactPage';
+import BreadcrumbSchema from '@/components/SEO/BreadcrumbSchema';
+
+export const metadata = {
+  title: 'Kontakt - Purrfect Love',
+  description: 'Nehmen Sie Kontakt mit Purrfect Love auf. Wir freuen uns, von Ihnen zu hören - über Katzenadoption, Freiwilligenarbeit oder Fragen.',
+  alternates: {
+    canonical: 'https://purrfectlove.org/de/contact',
+    languages: {
+      'en': 'https://purrfectlove.org/contact',
+      'de': 'https://purrfectlove.org/de/contact',
+    },
+  },
+};
+
+export default function ContactRoute() {
+  return (
+    <>
+      <BreadcrumbSchema
+        locale="de"
+        items={[
+          { name: 'Startseite', path: '/' },
+          { name: 'Kontakt', path: '/contact' },
+        ]}
+      />
+      <ContactPage locale="de" />
+    </>
+  );
 }

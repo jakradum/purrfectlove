@@ -18,18 +18,12 @@ export default function HomePage({ locale = 'en' }) {
           <h1 className={styles.heroHeading}>
             {content.home.hero.heading}
           </h1>
-          <p className={styles.heroSubheading}>
-            {content.home.hero.subheading}
-          </p>
-          <p className={styles.tagline}>
-            {content.home.hero.subtext}
-          </p>
         </div>
-        
+
         <div className={styles.heroImageWrapper}>
-          <img 
-            src="/logo-hero.png" 
-            alt="Purrfect Love" 
+          <img
+            src="/logo-hero.png"
+            alt="Purrfect Love"
             className={styles.heroLogo}
           />
         </div>

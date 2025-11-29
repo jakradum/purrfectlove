@@ -1,10 +1,29 @@
 import OnboardingPage from '@/components/Guides/OnboardingPage';
+import BreadcrumbSchema from '@/components/SEO/BreadcrumbSchema';
 
 export const metadata = {
   title: 'Die ersten Tage mit Ihrer neuen Katze - Purrfect Love',
-  description: 'Ein vollständiger Leitfaden, um Ihrer neuen Katze zu helfen, sich in ihrem neuen Zuhause einzuleben. Erfahren Sie, was Sie in den ersten 3 Wochen nach der Adoption erwarten können.',
+  description: 'Ein vollständiger Leitfaden, um Ihrer neuen Katze zu helfen, sich in ihrem neuen Zuhause einzuleben. Erfahren Sie, was Sie in den ersten 3 Wochen erwarten können.',
+  alternates: {
+    canonical: 'https://purrfectlove.org/de/guides/onboarding',
+    languages: {
+      'en': 'https://purrfectlove.org/guides/onboarding',
+      'de': 'https://purrfectlove.org/de/guides/onboarding',
+    },
+  },
 };
 
 export default function OnboardingRoute() {
-  return <OnboardingPage locale="de" />;
+  return (
+    <>
+      <BreadcrumbSchema
+        locale="de"
+        items={[
+          { name: 'Startseite', path: '/' },
+          { name: 'Die ersten Tage', path: '/guides/onboarding' },
+        ]}
+      />
+      <OnboardingPage locale="de" />
+    </>
+  );
 }

@@ -1,0 +1,12 @@
+# Robots.txt for Purrfect Love
+# https://purrfectlove.org
+
+User-agent: *
+Allow: /
+
+# Block Sanity Studio from indexing
+Disallow: /studio
+Disallow: /studio/
+
+# Sitemap location
+Sitemap: https://purrfectlove.org/sitemap.xml

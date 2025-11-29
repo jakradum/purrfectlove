@@ -30,22 +30,6 @@
   margin: 0;
 }
 
-.heroSubheading {
-  font-family: var(--font-lora);
-  font-size: clamp(0.875rem, 1.5vw, 1.25rem);
-  color: var(--text-dark);
-  line-height: 1.6;
-  margin: 0;
-}
-
-.tagline {
-  font-family: var(--font-lora);
-  font-size: clamp(0.75rem, 1.25vw, 1rem);
-  color: var(--text-light);
-  margin: 0;
-  margin-top: 0.5rem;
-}
-
 .heroImageWrapper {
   display: flex;
   align-items: center;

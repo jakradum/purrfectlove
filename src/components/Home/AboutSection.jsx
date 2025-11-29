@@ -8,6 +8,9 @@ export default function AboutSection({ content }) {
       <h2 className={styles.aboutHeading}>
         {content.heading}
       </h2>
+      {content.intro && (
+        <p className={styles.aboutIntro}>{content.intro}</p>
+      )}
       <div className={styles.aboutContent}>
         {content.points.map((point, index) => (
           <div key={index} className={styles.aboutPoint}>

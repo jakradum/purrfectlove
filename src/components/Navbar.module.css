@@ -1,6 +1,7 @@
 .navbar {
   background-color: var(--whisker-cream);
   border-bottom: 1px solid rgba(44, 95, 79, 0.1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04), 0 2px 8px rgba(0, 0, 0, 0.03);
   position: fixed;
   top: 0;
   left: 0;

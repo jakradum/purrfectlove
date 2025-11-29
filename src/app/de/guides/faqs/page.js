@@ -1,10 +1,29 @@
 import FAQsPage from '@/components/Guides/FAQsPage';
+import BreadcrumbSchema from '@/components/SEO/BreadcrumbSchema';
 
 export const metadata = {
   title: 'FAQ - Purrfect Love',
-  description: 'Häufig gestellte Fragen zur Adoption einer Katze von Purrfect Love',
+  description: 'Häufig gestellte Fragen zur Adoption einer Katze von Purrfect Love. Erfahren Sie mehr über Voraussetzungen, Gebühren und den Prozess.',
+  alternates: {
+    canonical: 'https://purrfectlove.org/de/guides/faqs',
+    languages: {
+      'en': 'https://purrfectlove.org/guides/faqs',
+      'de': 'https://purrfectlove.org/de/guides/faqs',
+    },
+  },
 };
 
 export default function FAQsRoute() {
-  return <FAQsPage locale="de" />;
+  return (
+    <>
+      <BreadcrumbSchema
+        locale="de"
+        items={[
+          { name: 'Startseite', path: '/' },
+          { name: 'FAQ', path: '/guides/faqs' },
+        ]}
+      />
+      <FAQsPage locale="de" />
+    </>
+  );
 }
