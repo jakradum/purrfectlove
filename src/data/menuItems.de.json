@@ -5,7 +5,8 @@
       "label": "Ratgeber",
       "children": [
         { "href": "/de/guides/process", "label": "Prozess" },
-        { "href": "/de/guides/first-days", "label": "Erste Tage" },
+        { "href": "/de/guides/onboarding", "label": "Erste Tage" },
+        { "href": "/de/guides/faqs", "label": "FAQ" },
         { "href": "/de/guides/blog", "label": "Blog" }
       ]
     },
@@ -13,7 +14,7 @@
     { "href": "/de/contact", "label": "Kontakt" }
   ],
   "cta": {
-    "href": "/de/apply",
+    "href": "/de/adopt",
     "label": "Katze adoptieren",
     "mobileLabel": "Katze adoptieren"
   }

@@ -10,24 +10,23 @@ function urlFor(source) {
 }
 
 export default async function HappyCats({ content, locale }) {
-const stories = await client.fetch(
-  `*[_type == "successStory" && (language == $locale || language == "both" || !defined(language))] | order(adoptionDate desc)[0...6] {
-    _id,
-    catName,
-    adopterName,
-    adoptionDate,
-    quote,
-    image {
-      asset-> {
-        _id,
-        url
+  // Fetch stories that have a quote in the current language, limit to 4
+  const stories = await client.fetch(
+    `*[_type == "successStory" && defined(quote[$locale]) && quote[$locale] != ""] | order(adoptionDate desc)[0...4] {
+      _id,
+      catName,
+      adopterName,
+      adoptionDate,
+      quote,
+      image {
+        asset-> {
+          _id,
+          url
+        }
       }
-    }
-  }`,
-  { locale }
-);
-
-  console.log('Stories:', JSON.stringify(stories, null, 2));
+    }`,
+    { locale }
+  );
 
   return (
     <section className={styles.happyCats}>

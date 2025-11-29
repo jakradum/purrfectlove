@@ -30,7 +30,7 @@ function formatAge(ageMonths, locale, content) {
 export default function CatCard({ cat, locale, content }) {
   const photo = cat.photos?.[0];
   const age = formatAge(cat.ageMonths, locale, content);
-  const href = locale === 'de' ? `/de/apply/${cat.slug?.current}` : `/apply/${cat.slug?.current}`;
+  const href = locale === 'de' ? `/de/adopt/${cat.slug?.current}` : `/adopt/${cat.slug?.current}`;
 
   return (
     <Link href={href} className={styles.card}>

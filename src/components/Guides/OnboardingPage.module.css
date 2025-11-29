@@ -1,0 +1,171 @@
+/* src/components/Guides/OnboardingPage.module.css */
+.main {
+  min-height: calc(100vh - 80px);
+  background-color: var(--whisker-cream);
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.header {
+  margin-bottom: 3rem;
+}
+
+.heading {
+  font-family: var(--font-outfit);
+  font-size: clamp(2rem, 5vw, 3rem);
+  font-weight: 700;
+  color: var(--tabby-brown);
+  margin-bottom: 1rem;
+  line-height: 1.2;
+}
+
+.subheading {
+  font-family: var(--font-lora);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--text-light);
+  line-height: 1.6;
+}
+
+.article {
+  font-family: var(--font-lora);
+  color: var(--text-dark);
+  line-height: 1.7;
+}
+
+/* Introduction */
+.intro {
+  font-size: 1.1rem;
+  margin-bottom: 3rem;
+}
+
+.intro p {
+  margin-bottom: 1rem;
+}
+
+.intro p:last-child {
+  margin-bottom: 0;
+}
+
+/* Timeline */
+.timeline {
+  display: flex;
+  flex-direction: column;
+  gap: 2.5rem;
+}
+
+.timelineItem {
+  position: relative;
+}
+
+.timelineHeading {
+  font-family: var(--font-outfit);
+  font-size: 1.5rem;
+  font-weight: 600;
+  color: var(--tabby-brown);
+  margin-bottom: 1rem;
+  padding-bottom: 0.75rem;
+  border-bottom: 2px solid var(--blush-pink);
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+}
+
+.dayMarker {
+  display: inline-block;
+  background-color: var(--tabby-brown);
+  color: white;
+  padding: 0.25rem 0.75rem;
+  border-radius: 6px;
+  font-size: 0.9rem;
+  font-weight: 500;
+  font-family: var(--font-outfit);
+}
+
+.timelineContent p {
+  margin-bottom: 1rem;
+}
+
+.timelineContent p:last-of-type {
+  margin-bottom: 0;
+}
+
+/* Tip box */
+.tip {
+  background-color: #E8F0ED;
+  border-left: 4px solid var(--hunter-green);
+  padding: 1rem 1.25rem;
+  margin-top: 1.5rem;
+  border-radius: 0 8px 8px 0;
+  font-size: 0.95rem;
+}
+
+.tip strong {
+  color: var(--hunter-green);
+  font-family: var(--font-outfit);
+}
+
+/* Closing */
+.closing {
+  margin-top: 3rem;
+}
+
+.closing p {
+  font-size: 1.2rem;
+  margin-bottom: 0.5rem;
+  color: var(--text-dark);
+}
+
+.closingBold {
+  font-size: 1.4rem !important;
+  font-weight: 700;
+  font-family: var(--font-outfit);
+  color: var(--tabby-brown);
+  margin-bottom: 0 !important;
+}
+
+/* Mobile */
+@media (max-width: 600px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .header {
+    margin-bottom: 2rem;
+  }
+
+  .intro {
+    font-size: 1rem;
+    margin-bottom: 2rem;
+  }
+
+  .timeline {
+    gap: 2rem;
+  }
+
+  .timelineHeading {
+    font-size: 1.25rem;
+  }
+
+  .dayMarker {
+    font-size: 0.8rem;
+    padding: 0.2rem 0.6rem;
+  }
+
+  .tip {
+    padding: 0.875rem 1rem;
+    font-size: 0.9rem;
+  }
+
+  .closing p {
+    font-size: 1.1rem;
+  }
+
+  .closingBold {
+    font-size: 1.25rem !important;
+  }
+}

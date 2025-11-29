@@ -56,7 +56,7 @@
       "cta": "Alle Blogs lesen"
     }
   },
-  "apply": {
+  "adopt": {
     "heading": "Lerne deine zukünftige Katze kennen",
     "subheading": "Diese Katzen sind kastriert, geimpft, stubenrein und bereit, mit dir nach Hause zu kommen. Schau dir ihre Lebensläufe an 😉 und bewirb dich, wenn du an einer von ihnen interessiert bist.",
     "noCats": "Momentan sind keine Katzen verfügbar. Schau bald wieder vorbei!",
@@ -80,7 +80,7 @@
     },
     "breadcrumb": {
       "home": "Startseite",
-      "apply": "Katze adoptieren"
+      "adopt": "Katze adoptieren"
     },
     "adoptButton": "{catName} adoptieren",
     "form": {
@@ -148,6 +148,103 @@
       "home": "Startseite",
       "guides": "Ratgeber",
       "blog": "Blog"
+    }
+  },
+  "faqs": {
+    "heading": "Häufig gestellte Fragen",
+    "subheading": "Alles, was Sie über die Adoption einer Katze von Purrfect Love wissen müssen",
+    "noFaqs": "Noch keine FAQs verfügbar. Schau bald wieder vorbei!",
+    "categories": {
+      "process": "Adoptionsprozess",
+      "requirements": "Voraussetzungen",
+      "fees": "Kosten & Gebühren",
+      "cats": "Die Katzen",
+      "after": "Nach der Adoption",
+      "location": "Standort & Logistik",
+      "general": "Allgemein"
+    },
+    "breadcrumb": {
+      "home": "Startseite",
+      "guides": "Ratgeber",
+      "faqs": "FAQ"
+    }
+  },
+  "onboarding": {
+    "heading": "Die ersten Tage mit Ihrer neuen Katze",
+    "subheading": "Ein vollständiger Leitfaden, um Ihrer neuen Katze zu helfen, sich in ihrem neuen Zuhause einzuleben",
+    "breadcrumb": {
+      "home": "Startseite",
+      "guides": "Ratgeber",
+      "onboarding": "Erste Tage"
+    },
+    "intro": [
+      "Wenn Sie eine neue Katze bekommen, ist es in gewisser Weise wie ein Neugeborenes im Haus zu haben. Die Atmosphäre verändert sich; es ist aufregend und gleichzeitig ein wenig angespannt. Was darf ich tun? Was darf ich nicht tun? Wie sehr wird mein Leben und meine Freiheit eingeschränkt? Oft gibt es mehr Fragen, als Sie bewältigen können. Aber wir haben das schon hunderte Male gemacht (keine Übertreibung). Lassen Sie uns das aufschlüsseln.",
+      "Typischerweise ist die Eingewöhnung einer neuen Katze ein 3-wöchiger Prozess. Lassen Sie sich davon nicht abschrecken; die erste Woche ist die längste, und danach wird alles dramatisch einfacher. Dennoch ist jede Katze einzigartig und jede Eingewöhnung ist daher einzigartig. Wir werden Ihnen dabei helfen, egal was passiert.",
+      "So können Sie es typischerweise erwarten."
+    ],
+    "timeline": [
+      {
+        "day": "Tag 1",
+        "title": "Versteckspiel",
+        "content": [
+          "Katzen brauchen ihre Zeit und ihren Raum. Ihre neue Katze wurde gerade von allem Vertrauten entwurzelt; den Gerüchen, den Geräuschen, den Menschen, die sie kannte. Sie befindet sich jetzt in einer völlig fremden Umgebung, und ihr Instinkt ist es, sich zu verstecken. Das ist völlig normal.",
+          "Seien Sie nicht beunruhigt, wenn Ihre Katze in einem Schrank, unter einem Bett oder hinter einem Sofa verschwindet und sich weigert herauszukommen. Sie wird vielleicht nicht einmal herauskommen, wenn sie hungrig ist. Katzen können ein oder zwei Tage ohne Essen auskommen, wenn sie gestresst sind; der Überlebensmodus setzt ein und Essen wird zweitrangig zur Sicherheit. Stellen Sie etwas Futter und Wasser in die Nähe (aber nicht zu nah) ihres Verstecks und verlassen Sie dann den Raum. Lassen Sie sie in Ruhe. Widerstehen Sie dem Drang, sie herauszulocken oder wiederholt nachzuschauen; jedes Mal, wenn Sie das tun, setzen Sie ihre Angst-Uhr zurück."
+        ],
+        "tip": "Bevor Sie Ihre Katze nach Hause bringen, richten Sie einen kleinen, ruhigen Raum als ihren sicheren Raum ein — wir nennen dies das \"Basecamp\". Ein Badezimmer oder ein Gästezimmer eignet sich gut. Halten Sie die Katzentoilette, Futter, Wasser und ein gemütliches Versteck (selbst eine Pappschachtel mit einer Decke) alles in diesem einen Raum. Dies wird für die ersten Tage ihre Welt."
+      },
+      {
+        "day": "Tag 2",
+        "title": "Jetzt siehst du mich, jetzt nicht",
+        "content": [
+          "Wenn sie das Futter über Nacht gefressen hat, ist das ein gutes Zeichen. Es bedeutet, dass der Überlebensinstinkt dem Komfort weicht. Sie bemerken vielleicht, dass der Futternapf am Morgen leer ist, aber keine Spur von der Katze; das ist in Ordnung. Sie beobachtet Sie, auch wenn Sie sie nicht sehen können.",
+          "Versuchen Sie heute, ruhig im Raum zu sitzen. Gehen Sie nicht auf sie zu, machen Sie keine plötzlichen Bewegungen, starren Sie sie nicht direkt an (Katzen empfinden anhaltenden Augenkontakt als bedrohlich). Existieren Sie einfach in ihrem Raum. Lesen Sie ein Buch, scrollen Sie durch Ihr Handy oder sitzen Sie einfach still. Lassen Sie sie Sie beobachten. Sie lernt: Ist diese Person sicher?",
+          "Wenn sie herauskommt, um zu fressen, während Sie da sind, ist das ein kleiner Sieg. Sie beginnt, Sie zu \"markieren\"; sie schnüffelt und katalogisiert Ihren Geruch als nicht bedrohlich."
+        ],
+        "tip": "Sprechen Sie leise, wenn Sie im Raum sind. Sie muss wissen, wie Sie klingen. Eine ruhige, tiefe Stimme hilft ihr, Sie mit Sicherheit zu assoziieren. Vermeiden Sie hohe Aufregung oder laute Gespräche in ihrer Nähe; machen Sie langsame Bewegungen, halten Sie Ihre Stimme sanft. Sie lernt Sie genauso kennen wie Sie sie."
+      },
+      {
+        "day": "Tag 3–5",
+        "title": "Unterwegs",
+        "content": [
+          "Mittlerweile fühlt sich Ihre Katze bei Ihnen wohl, wenn auch vielleicht noch nicht bei anderen Familienmitgliedern. Sie hat jeden Zentimeter ihres sicheren Raums erkundet und ist nun neugierig auf das, was hinter dieser Tür liegt. Sie werden bemerken, dass sie in der Nähe der Tür sitzt, am Spalt schnüffelt, vielleicht miaut, um hinausgelassen zu werden.",
+          "Dies ist ein guter Zeitpunkt, sie den Rest Ihres Hauses erkunden zu lassen, aber tun Sie es strategisch. Am besten lassen Sie sie heraus, wenn das Haus ruhig ist; wenn andere Familienmitglieder entweder weg sind oder still sitzen und sich nicht viel bewegen. Die Katze wird erkunden, erkunden, erkunden. Jede Ecke, jedes Möbelstück, jeden seltsamen Geruch. Das kann Stunden dauern, und sie wird sich vielleicht mehrmals in ihren sicheren Raum zurückziehen. Das ist in Ordnung. Es ist ein Prozess der Erweiterung ihres Territoriums in kleinen, handhabbaren Dosen."
+        ],
+        "tip": "Stellen Sie eine zuvor benutzte Katzentoilette (mit etwas ihres eigenen Abfalls) im \"neuen\" Teil des Hauses auf. Der vertraute Geruch ihres eigenen Urins ist seltsam beruhigend für sie; er sagt: \"Ich war hier, das gehört mir, das ist sicher.\""
+      },
+      {
+        "day": "Tag 5–10",
+        "title": "Neues Zuhause, neues Ich",
+        "content": [
+          "In dieser Phase beginnen Katzen, ihre wahre Persönlichkeit zu zeigen. Manche sind albern und verspielt und werfen Dinge von Tischen, nur um sie fallen zu sehen. Manche sind gesprächig und miauen laut zu ungewöhnlichen Zeiten, als ob sie ihren inneren Monolog erzählen würden. Manche sind noch vorsichtig, beobachten Sie aus der Distanz und tauen in ihrem eigenen Tempo auf.",
+          "Was auch immer der Fall ist, diese Phase ist ein Test der Geduld; glauben Sie uns, das gilt sowohl für Mensch als auch für Katze. Sie gewöhnt sich an Ihre Zeitpläne: wann Sie aufwachen, wann Sie gehen, wann Sie zurückkommen, wann Sie schlafen. Sie lernt die Rhythmen Ihres Haushalts. Und Sie lernen ihre.",
+          "Sie werden sie vielleicht an unerwarteten Orten schlafen finden, um 4 Uhr morgens Futter fordern oder plötzlich ohne ersichtlichen Grund durch das Haus rasen (das ist normal; es wird \"Zoomies\" genannt). Nehmen Sie es an. Das ist Ihre Katze, die herausfindet, wie sie mit Ihnen leben kann."
+        ],
+        "tip": "Halten Sie so gut wie möglich an einer Routine fest. Füttern Sie sie jeden Tag zur gleichen Zeit. Katzen sind Gewohnheitstiere, und Vorhersehbarkeit hilft ihnen, sich sicher zu fühlen."
+      },
+      {
+        "day": "Tag 10–20",
+        "title": "Zwei Schritte vor, einer zurück",
+        "content": [
+          "In vielen Fällen, gerade wenn Sie das Gefühl haben, dass sich Ihre Katze eingelebt hat, wird es irgendein Zeichen oder Verhaltensvorfall geben, der Sie direkt zurück auf Tag eins versetzt. Sie faucht ein Familienmitglied an. Sie weigert sich, einen ganzen Tag aus dem Versteck zu kommen. Sie benutzt die Katzentoilette nicht mehr. Es fühlt sich an, als wäre all Ihre Arbeit zunichtegemacht.",
+          "Das ist sie nicht. Das ist völlig normal.",
+          "Das bedeutet nicht, dass all die Arbeit zunichtegemacht wurde; es ist nur so, dass dies ein nicht-linearer Prozess ist. Genau wie bei menschlichen Kindern brauchen Katzen ihre Zeit, um ihre neue Umgebung, ihre neuen Gewohnheiten, ihre neuen Verhaltensweisen zu lernen. Es wird Rückschläge geben. Ein lautes Geräusch könnte sie erschrecken. Ein neuer Besucher könnte ihre Angst zurücksetzen. Eine Änderung in Ihrem Zeitplan könnte sie durcheinanderbringen.",
+          "Halten Sie durch. Geraten Sie nicht in Panik, werden Sie nicht frustriert und geben Sie vor allem nicht auf. Sie wird verinnerlichen, was sie gelernt hat. Die Rückschläge werden kleiner und seltener. Eines Tages werden Sie feststellen, dass Sie sich nicht erinnern können, wann sie sich zuletzt vor Ihnen versteckt hat."
+        ],
+        "tip": "Wenn ein bestimmter Vorfall einen Rückfall verursacht, erzwingen Sie keine Erholung. Geben Sie ihr Raum, gehen Sie zu den Grundlagen zurück (mehr Zeit im sicheren Raum, ruhigere Umgebung) und lassen Sie sie in ihrem eigenen Tempo zu Ihnen zurückkommen."
+      },
+      {
+        "day": "Tag 20+",
+        "title": "Hallo Welt!",
+        "content": [
+          "Die Katze ist aus dem Sack, buchstäblich. Ihr Zuhause ist jetzt ihr Zuhause. Das Verstecken hat aufgehört. Das Misstrauen ist verblasst. Sie werden sie an sonnigen Plätzen liegen sehen, Sie an der Tür begrüßen, vielleicht sogar in Ihrem Bett schlafen (ob Sie sie eingeladen haben oder nicht).",
+          "Zu diesem Zeitpunkt liegen die meisten Holprigkeiten hinter Ihnen. Ihre Katze weiß, wo das Futter ist, wo die Katzentoilette ist, wo die besten Schlafplätze sind. Sie kennt Ihre Stimme, Ihre Schritte, Ihren Geruch. Und Sie kennen ihre Eigenheiten, ihre Vorlieben, ihre kleinen Arten, um Aufmerksamkeit zu bitten.",
+          "Das bedeutet nicht, dass das Lernen aufhört; Katzen überraschen Sie weiterhin jahrelang. Aber der schwierige Teil? Der ist vorbei. Sie haben es geschafft. Und sie auch."
+        ]
+      }
+    ],
+    "closing": {
+      "line1": "Willkommen im Leben mit einer Katze.",
+      "line2": "Es wird wunderbar."
     }
   }
 }

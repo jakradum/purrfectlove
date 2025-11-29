@@ -1,3 +1,9 @@
+import {DuplicateNotice} from '../components/DuplicateNotice'
+import {CatAdoptedNotice} from '../components/CatAdoptedNotice'
+
+// Helper to check if application is marked as duplicate
+const isMarkedAsDuplicate = ({parent}) => parent?.isDuplicateOf && parent.isDuplicateOf.length > 0
+
 export default {
   name: 'application',
   title: 'Adoption Application',
@@ -105,6 +111,45 @@ export default {
     },
 
     // === FOR OFFICIAL USE ONLY ===
+    // DUPLICATE DETECTION - At the top so it's the first thing team sees
+    {
+      name: 'isDuplicateOf',
+      title: 'Mark as Duplicate Of',
+      description: 'Link to the original application from this person. Only shows applications that are not already marked as duplicates.',
+      type: 'array',
+      fieldset: 'officialUse',
+      of: [{
+        type: 'reference',
+        to: [{type: 'application'}],
+        options: {
+          filter: ({document}) => {
+            // Only show applications that:
+            // 1. Are submitted before this one
+            // 2. Are NOT already marked as duplicates (no isDuplicateOf references)
+            return {
+              filter: '_type == "application" && _id != $currentId && submittedAt < $currentDate && (!defined(isDuplicateOf) || count(isDuplicateOf) == 0)',
+              params: {
+                currentId: document._id,
+                currentDate: document.submittedAt || new Date().toISOString()
+              }
+            }
+          }
+        }
+      }]
+    },
+    // Notice shown when marked as duplicate
+    {
+      name: 'duplicateNotice',
+      title: ' ',
+      type: 'string',
+      fieldset: 'officialUse',
+      readOnly: true,
+      hidden: ({parent}) => !parent?.isDuplicateOf || parent.isDuplicateOf.length === 0,
+      components: {
+        field: DuplicateNotice
+      }
+    },
+
     // Status colors: new=#3b82f6 (blue), evaluation=#f59e0b (amber), adopted=#22c55e (green), rejected=#ef4444 (red), returned=#8b5cf6 (purple)
     {
       name: 'status',
@@ -120,8 +165,47 @@ export default {
           {title: 'Returned Cat', value: 'returned'}
         ]
       },
-      initialValue: 'new'
+      initialValue: 'new',
+      readOnly: isMarkedAsDuplicate
     },
+
+    // Cat adopted notice - shows when the original cat is already adopted
+    {
+      name: 'catAdoptedNotice',
+      title: ' ',
+      type: 'string',
+      fieldset: 'officialUse',
+      readOnly: true,
+      components: {
+        field: CatAdoptedNotice
+      }
+    },
+
+    // Reassign to different cat
+    {
+      name: 'reassignToCat',
+      title: 'Redirect to New Cat',
+      type: 'reference',
+      fieldset: 'officialUse',
+      to: [{type: 'cat'}],
+      description: 'Assign this applicant to a new cat if original cat is already adopted by someone else',
+      options: {
+        filter: ({document}) => {
+          // Only show cats that are:
+          // 1. Not already adopted (no application with status "adopted")
+          // 2. Not the original cat this application was for
+          const originalCatId = document?.cat?._ref || ''
+          return {
+            filter: '_type == "cat" && _id != $originalCatId && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0',
+            params: {
+              originalCatId
+            }
+          }
+        }
+      },
+      readOnly: isMarkedAsDuplicate
+    },
+
     {
       name: 'assignedTo',
       title: 'Assigned To',
@@ -133,32 +217,8 @@ export default {
           {title: 'Besly', value: 'besly'},
           {title: 'Devraj', value: 'devraj'}
         ]
-      }
-    },
-
-    // DUPLICATE DETECTION
-    {
-      name: 'isDuplicateOf',
-      title: 'Mark as Duplicate Of',
-      description: 'Link to earlier application(s) from the same person. This will automatically set status to "Repeat Applicant".',
-      type: 'array',
-      fieldset: 'officialUse',
-      of: [{
-        type: 'reference',
-        to: [{type: 'application'}],
-        options: {
-          filter: ({document}) => {
-            // Only show applications submitted before this one
-            return {
-              filter: '_type == "application" && _id != $currentId && submittedAt < $currentDate',
-              params: {
-                currentId: document._id,
-                currentDate: document.submittedAt || new Date().toISOString()
-              }
-            }
-          }
-        }
-      }]
+      },
+      readOnly: isMarkedAsDuplicate
     },
 
     // INTERVIEW SECTION
@@ -167,7 +227,8 @@ export default {
       title: 'Interview Completed?',
       type: 'boolean',
       fieldset: 'officialUse',
-      initialValue: false
+      initialValue: false,
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'interviewedBy',
@@ -181,21 +242,24 @@ export default {
           {title: 'Devraj', value: 'devraj'}
         ]
       },
-      hidden: ({parent}) => !parent?.interviewCompleted
+      hidden: ({parent}) => !parent?.interviewCompleted,
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'interviewDate',
       title: 'Interview Date',
       type: 'datetime',
       fieldset: 'officialUse',
-      hidden: ({parent}) => !parent?.interviewCompleted
+      hidden: ({parent}) => !parent?.interviewCompleted,
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'interviewNotes',
       title: 'Interview Notes',
       type: 'text',
       fieldset: 'officialUse',
-      hidden: ({parent}) => !parent?.interviewCompleted
+      hidden: ({parent}) => !parent?.interviewCompleted,
+      readOnly: isMarkedAsDuplicate
     },
 
     // HOME VISIT SECTION
@@ -204,7 +268,8 @@ export default {
       title: 'Home Visit Completed?',
       type: 'boolean',
       fieldset: 'officialUse',
-      initialValue: false
+      initialValue: false,
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'homeVisitBy',
@@ -218,93 +283,59 @@ export default {
           {title: 'Devraj', value: 'devraj'}
         ]
       },
-      hidden: ({parent}) => !parent?.homeVisitCompleted
+      hidden: ({parent}) => !parent?.homeVisitCompleted,
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'homeVisitDate',
       title: 'Home Visit Date',
       type: 'datetime',
       fieldset: 'officialUse',
-      hidden: ({parent}) => !parent?.homeVisitCompleted
+      hidden: ({parent}) => !parent?.homeVisitCompleted,
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'homeVisitNotes',
       title: 'Home Visit Notes',
       type: 'text',
       fieldset: 'officialUse',
-      hidden: ({parent}) => !parent?.homeVisitCompleted
+      hidden: ({parent}) => !parent?.homeVisitCompleted,
+      readOnly: isMarkedAsDuplicate
     },
 
-    // TEAM FEEDBACK
+    // NOTES
     {
-      name: 'teamFeedback',
-      title: 'Team Decision',
-      type: 'string',
-      fieldset: 'officialUse',
-      options: {
-        list: [
-          {title: '✅ Approve', value: 'approve'},
-          {title: '💬 Needs Discussion', value: 'discuss'},
-          {title: '❌ Reject', value: 'reject'}
-        ]
-      }
-    },
-    {
-      name: 'feedbackNotes',
-      title: 'Detailed Feedback',
+      name: 'notes',
+      title: 'Notes',
       type: 'text',
       fieldset: 'officialUse',
-      rows: 5
-    },
-
-    // FINAL DECISION
-    {
-      name: 'finalDecision',
-      title: 'Final Decision',
-      type: 'string',
-      fieldset: 'officialUse',
-      options: {
-        list: [
-          {title: 'Approved', value: 'approved'},
-          {title: 'Rejected', value: 'rejected'},
-          {title: 'Pending', value: 'pending'}
-        ]
-      },
-      initialValue: 'pending'
-    },
-    {
-      name: 'rejectionReason',
-      title: 'Rejection Reason',
-      type: 'text',
-      fieldset: 'officialUse',
-      hidden: ({parent}) => parent?.finalDecision !== 'rejected'
-    },
-    {
-      name: 'decisionDate',
-      title: 'Decision Date',
-      type: 'datetime',
-      fieldset: 'officialUse'
+      rows: 5,
+      description: 'Any additional notes about this application',
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'adoptionDate',
       title: 'Adoption Date',
       type: 'datetime',
       fieldset: 'officialUse',
-      hidden: ({parent}) => parent?.status !== 'adopted' && parent?.status !== 'returned'
+      hidden: ({parent}) => parent?.status !== 'adopted' && parent?.status !== 'returned',
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'returnedDate',
       title: 'Returned Date',
       type: 'datetime',
       fieldset: 'officialUse',
-      hidden: ({parent}) => parent?.status !== 'returned'
+      hidden: ({parent}) => parent?.status !== 'returned',
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'returnReason',
       title: 'Reason for Return',
       type: 'text',
       fieldset: 'officialUse',
-      hidden: ({parent}) => parent?.status !== 'returned'
+      hidden: ({parent}) => parent?.status !== 'returned',
+      readOnly: isMarkedAsDuplicate
     },
 
     // FOLLOW UP
@@ -312,21 +343,24 @@ export default {
       name: 'followUpRequired',
       title: 'Follow-up Required?',
       type: 'boolean',
-      fieldset: 'officialUse'
+      fieldset: 'officialUse',
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'followUpDate',
       title: 'Follow-up Date',
       type: 'datetime',
       fieldset: 'officialUse',
-      hidden: ({parent}) => !parent?.followUpRequired
+      hidden: ({parent}) => !parent?.followUpRequired,
+      readOnly: isMarkedAsDuplicate
     },
     {
       name: 'followUpNotes',
       title: 'Follow-up Notes',
       type: 'text',
       fieldset: 'officialUse',
-      hidden: ({parent}) => !parent?.followUpRequired
+      hidden: ({parent}) => !parent?.followUpRequired,
+      readOnly: isMarkedAsDuplicate
     }
   ],
 
@@ -364,9 +398,14 @@ orderings: [
     by: [{field: 'assignedTo', direction: 'asc'}]
   },
   {
-    title: 'Final Decision',
-    name: 'finalDecision',
-    by: [{field: 'finalDecision', direction: 'asc'}]
+    title: 'Location (Germany first)',
+    name: 'locationDeFirst',
+    by: [{field: 'cat.locationDe', direction: 'desc'}]
+  },
+  {
+    title: 'Location (India first)',
+    name: 'locationEnFirst',
+    by: [{field: 'cat.locationEn', direction: 'desc'}]
   }
 ],
 
@@ -375,12 +414,14 @@ orderings: [
       applicationId: 'applicationId',
       name: 'applicantName',
       cat: 'cat.name',
+      catLocationEn: 'cat.locationEn',
+      catLocationDe: 'cat.locationDe',
       status: 'status',
       assignedTo: 'assignedTo',
       date: 'submittedAt',
       isDuplicateOf: 'isDuplicateOf'
     },
-    prepare({applicationId, name, cat, status, assignedTo, date, isDuplicateOf}) {
+    prepare({applicationId, name, cat, catLocationEn, catLocationDe, status, assignedTo, date, isDuplicateOf}) {
       // Status labels with color indicators
       const statusLabels = {
         new: '🔵 New',
@@ -396,12 +437,15 @@ orderings: [
         devraj: 'Devraj'
       }
 
+      // Determine country flag based on cat location
+      const countryFlag = catLocationDe ? '🇩🇪' : catLocationEn ? '🇮🇳' : ''
+
       const idPrefix = applicationId ? `#${applicationId} ` : ''
       const hasDuplicates = isDuplicateOf && isDuplicateOf.length > 0
       const repeatLabel = hasDuplicates ? ' [REPEAT]' : ''
 
       return {
-        title: `${idPrefix}${name}${repeatLabel}`,
+        title: `${countryFlag} ${idPrefix}${name}${repeatLabel}`,
         subtitle: `${cat} • ${statusLabels[status] || status} • ${assignedLabels[assignedTo] || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
       }
     }

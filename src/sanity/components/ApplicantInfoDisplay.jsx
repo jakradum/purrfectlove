@@ -26,6 +26,79 @@ function CopyButton({ value }) {
   )
 }
 
+function ShareButton({ doc, catName }) {
+  const [copied, setCopied] = useState(false)
+
+  const housingLabels = {
+    own: 'Own House',
+    rent: 'Rented Apartment',
+    other: 'Other'
+  }
+
+  const formatShareText = () => {
+    const lines = [
+      `*Adoption Application #${doc.applicationId}*`,
+      '',
+      `*Applicant:* ${doc.applicantName || '—'}`,
+      `*Phone:* ${doc.phone || '—'}`,
+      `*Email:* ${doc.email || '—'}`,
+      `*Address:* ${doc.address || '—'}`,
+      '',
+      `*Interested in:* ${catName || '—'}`,
+      `*Housing:* ${housingLabels[doc.housingType] || doc.housingType || '—'}`,
+      `*Has Other Pets:* ${doc.hasOtherPets ? 'Yes' : 'No'}`,
+    ]
+
+    if (doc.hasOtherPets && doc.otherPetsDetails) {
+      lines.push(`*Other Pets:* ${doc.otherPetsDetails}`)
+    }
+
+    lines.push('')
+
+    if (doc.whyAdopt) {
+      lines.push(`*Why they want to adopt:*`)
+      lines.push(doc.whyAdopt)
+      lines.push('')
+    }
+
+    if (doc.experience) {
+      lines.push(`*Experience with cats:*`)
+      lines.push(doc.experience)
+    }
+
+    return lines.join('\n')
+  }
+
+  const handleShare = async () => {
+    const text = formatShareText()
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 3000)
+  }
+
+  const buttonStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    backgroundColor: copied ? '#22c55e' : '#f1f5f9',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '0.8125rem',
+    fontWeight: 500,
+    color: copied ? '#fff' : '#475569',
+    transition: 'all 0.2s ease'
+  }
+
+  return (
+    <button style={buttonStyle} onClick={handleShare} title="Copy all info for sharing on WhatsApp">
+      <span style={{ fontSize: '1rem' }}>{copied ? '✓' : '↗'}</span>
+      <span>{copied ? 'Copied!' : 'Share'}</span>
+    </button>
+  )
+}
+
 export function ApplicantInfoDisplay(props) {
   const { document } = props
   const client = useClient({ apiVersion: '2024-01-01' })
@@ -152,6 +225,12 @@ export function ApplicantInfoDisplay(props) {
     <div style={styles.container}>
       <div style={{ ...styles.title, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Applicant Information</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+          <ShareButton doc={doc} catName={catName} />
+          <span style={{ fontSize: '0.6875rem', color: '#94a3b8', fontWeight: 400 }}>
+            Copy all info
+          </span>
+        </div>
       </div>
 
       {/* Show repeat applicant warning if this is a duplicate */}

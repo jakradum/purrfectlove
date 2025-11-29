@@ -1,10 +1,11 @@
-// src/components/Apply/CatDetailPage.jsx
+// src/components/Adopt/CatDetailPage.jsx
 import { notFound } from 'next/navigation';
 import styles from './CatDetailPage.module.css';
 import { client } from '@/sanity/lib/client';
 import imageUrlBuilder from '@sanity/image-url';
 import Breadcrumb from '@/components/Breadcrumb';
 import AdoptButton from './AdoptButton';
+import ImageGallery from './ImageGallery';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -12,6 +13,15 @@ const builder = imageUrlBuilder(client);
 
 function urlFor(source) {
   return builder.image(source);
+}
+
+// Prepare image URLs for client component
+function prepareImages(photos) {
+  if (!photos) return [];
+  return photos.map(photo => ({
+    main: urlFor(photo).width(800).height(800).url(),
+    thumb: urlFor(photo).width(100).height(100).url()
+  }));
 }
 
 function formatAge(ageMonths, content) {
@@ -41,10 +51,12 @@ function getGoodWithList(goodWith, labels) {
 
 export default async function CatDetailPage({ slug, locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
-  const applyContent = content.apply;
+  const adoptContent = content.adopt;
 
+  // Only show cats that don't have an adopted application
+  // A cat is considered adopted if ANY application for it has status "adopted"
   const query = locale === 'de'
-    ? `*[_type == "cat" && slug.current == $slug][0] {
+    ? `*[_type == "cat" && slug.current == $slug && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0][0] {
         _id,
         name,
         slug,
@@ -58,7 +70,7 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
         healthStatus,
         goodWith
       }`
-    : `*[_type == "cat" && slug.current == $slug][0] {
+    : `*[_type == "cat" && slug.current == $slug && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0][0] {
         _id,
         name,
         slug,
@@ -73,21 +85,22 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
         goodWith
       }`;
 
-  const cat = await client.fetch(query, { slug }, { next: { revalidate: 0 } });
+  const cat = await client.fetch(query, { slug }, { cache: 'no-store' });
 
+  // Return 404 if cat doesn't exist or is adopted
   if (!cat) {
     notFound();
   }
 
-  const exactAge = formatAge(cat.ageMonths, applyContent);
-  const ageDisplay = exactAge || applyContent.ageGroups?.[cat.age] || cat.age;
-  const goodWithList = getGoodWithList(cat.goodWith, applyContent.labels);
+  const exactAge = formatAge(cat.ageMonths, adoptContent);
+  const ageDisplay = exactAge || adoptContent.ageGroups?.[cat.age] || cat.age;
+  const goodWithList = getGoodWithList(cat.goodWith, adoptContent.labels);
 
   const homeHref = locale === 'de' ? '/de' : '/';
-  const applyHref = locale === 'de' ? '/de/apply' : '/apply';
+  const adoptHref = locale === 'de' ? '/de/adopt' : '/adopt';
   const breadcrumbItems = [
-    { href: homeHref, label: applyContent.breadcrumb.home },
-    { href: applyHref, label: applyContent.breadcrumb.apply },
+    { href: homeHref, label: adoptContent.breadcrumb.home },
+    { href: adoptHref, label: adoptContent.breadcrumb.adopt },
     { label: cat.name },
   ];
 
@@ -98,15 +111,10 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
 
         <div className={styles.content}>
           <div className={styles.gallery}>
-            {cat.photos?.map((photo, index) => (
-              <div key={index} className={styles.imageWrapper}>
-                <img
-                  src={urlFor(photo).width(800).height(800).url()}
-                  alt={`${cat.name} - photo ${index + 1}`}
-                  className={styles.image}
-                />
-              </div>
-            ))}
+            <ImageGallery
+              images={prepareImages(cat.photos)}
+              catName={cat.name}
+            />
           </div>
 
           <div className={styles.details}>
@@ -125,27 +133,27 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
             <div className={styles.info}>
               {cat.location && (
                 <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>{applyContent.labels.location}</span>
+                  <span className={styles.infoLabel}>{adoptContent.labels.location}</span>
                   <span className={styles.infoValue}>{cat.location}</span>
                 </div>
               )}
 
               {cat.healthStatus?.vaccinated && (
                 <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>{applyContent.labels.vaccinated}</span>
+                  <span className={styles.infoLabel}>{adoptContent.labels.vaccinated}</span>
                   <span className={styles.infoValue}>✓</span>
                 </div>
               )}
 
               {goodWithList.length > 0 && (
                 <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>{applyContent.labels.goodWith}</span>
+                  <span className={styles.infoLabel}>{adoptContent.labels.goodWith}</span>
                   <span className={styles.infoValue}>{goodWithList.join(', ')}</span>
                 </div>
               )}
             </div>
 
-            <AdoptButton cat={cat} content={applyContent} />
+            <AdoptButton cat={cat} content={adoptContent} />
           </div>
         </div>
 

@@ -1,9 +1,61 @@
 // sanity/schemas/cat.js
+import {client} from '../lib/client'
+import {CatApplicationsDisplay} from '../components/CatApplicationsDisplay'
+
+// Custom slugify function that adds number suffix for duplicates
+async function slugifyWithUnique(input, schemaType, context) {
+  // Create base slug from input
+  const baseSlug = input
+    .toLowerCase()
+    .trim()
+    .replace(/[^\w\s-]/g, '')
+    .replace(/[\s_-]+/g, '-')
+    .replace(/^-+|-+$/g, '')
+
+  // Check if this slug already exists (excluding current document)
+  const currentId = context.parent._id || ''
+  const existing = await client.fetch(
+    `*[_type == "cat" && slug.current == $slug && _id != $currentId][0]`,
+    { slug: baseSlug, currentId }
+  )
+
+  if (!existing) {
+    return baseSlug
+  }
+
+  // Find highest number suffix for this base slug
+  const similarSlugs = await client.fetch(
+    `*[_type == "cat" && slug.current match $pattern && _id != $currentId].slug.current`,
+    { pattern: `${baseSlug}*`, currentId }
+  )
+
+  // Extract numbers from existing slugs
+  let maxNum = 1
+  similarSlugs.forEach(slug => {
+    const match = slug.match(new RegExp(`^${baseSlug}(\\d+)$`))
+    if (match) {
+      const num = parseInt(match[1], 10)
+      if (num >= maxNum) maxNum = num + 1
+    }
+  })
+
+  return `${baseSlug}${maxNum}`
+}
+
 export default {
   name: 'cat',
   title: 'Cats',
   type: 'document',
   fields: [
+    // Applications display at the top - shows adoption status derived from applications
+    {
+      name: 'applicationsDisplay',
+      title: 'Applications & Adoption Status',
+      type: 'string',
+      components: {
+        field: CatApplicationsDisplay
+      }
+    },
     {
       name: 'name',
       title: 'Cat Name',
@@ -16,7 +68,8 @@ export default {
       type: 'slug',
       options: {
         source: 'name',
-        maxLength: 96
+        maxLength: 96,
+        slugify: slugifyWithUnique
       },
       validation: Rule => Rule.required()
     },
@@ -92,6 +145,9 @@ export default {
         if (value && context.document?.locationDe) {
           return 'Cannot have both English and German locality. Please remove one.'
         }
+        if (!value && !context.document?.locationDe) {
+          return 'Please enter a locality (either English or German)'
+        }
         return true
       })
     },
@@ -105,6 +161,9 @@ export default {
       validation: Rule => Rule.custom((value, context) => {
         if (value && context.document?.locationEn) {
           return 'Cannot have both English and German locality. Please remove one.'
+        }
+        if (!value && !context.document?.locationEn) {
+          return 'Please enter a locality (either English or German)'
         }
         return true
       })
@@ -149,7 +208,7 @@ export default {
     },
     {
       name: 'status',
-      title: 'Adoption Status',
+      title: 'Adoption Status (Legacy)',
       type: 'string',
       options: {
         list: [
@@ -161,7 +220,8 @@ export default {
         layout: 'radio'
       },
       initialValue: 'available',
-      validation: Rule => Rule.required()
+      hidden: true,
+      readOnly: true
     },
     {
       name: 'featured',
@@ -169,12 +229,6 @@ export default {
       type: 'boolean',
       description: 'Show this cat on the homepage featured section',
       initialValue: false
-    },
-    {
-      name: 'adoptionDate',
-      title: 'Adoption Date',
-      type: 'date',
-      hidden: ({document}) => document?.status !== 'adopted'
     }
   ],
   preview: {

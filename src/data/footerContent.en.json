@@ -8,7 +8,7 @@
     "links": [
       { "href": "/", "label": "Home" },
       { "href": "/guides/process", "label": "Process" },
-      { "href": "/guides/first-days", "label": "First Days" },
+      { "href": "/guides/faqs", "label": "FAQs" },
       { "href": "/about", "label": "About" },
       { "href": "/contact", "label": "Contact" }
     ]

@@ -1,17 +1,18 @@
-// src/components/ApplyPage.jsx
-import styles from './ApplyPage.module.css';
+// src/components/Adopt/AdoptPage.jsx
+import styles from './AdoptPage.module.css';
 import { client } from '@/sanity/lib/client';
 import CatCard from './CatCard';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
-export default async function ApplyPage({ locale = 'en' }) {
+export default async function AdoptPage({ locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
-  const applyContent = content.apply;
+  const adoptContent = content.adopt;
 
-  // Filter cats by locale based on which locality field is filled
+  // Filter cats by locale and exclude cats that have an adopted application
+  // A cat is considered adopted if ANY application for it has status "adopted"
   const query = locale === 'de'
-    ? `*[_type == "cat" && status == "available" && defined(locationDe)] | order(_createdAt desc) {
+    ? `*[_type == "cat" && defined(locationDe) && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
         _id,
         name,
         slug,
@@ -19,7 +20,7 @@ export default async function ApplyPage({ locale = 'en' }) {
         ageMonths,
         "location": locationDe
       }`
-    : `*[_type == "cat" && status == "available" && defined(locationEn)] | order(_createdAt desc) {
+    : `*[_type == "cat" && defined(locationEn) && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
         _id,
         name,
         slug,
@@ -28,14 +29,14 @@ export default async function ApplyPage({ locale = 'en' }) {
         "location": locationEn
       }`;
 
-  const cats = await client.fetch(query, {}, { next: { revalidate: 0 } });
+  const cats = await client.fetch(query, {}, { cache: 'no-store' });
 
   return (
     <main className={styles.main}>
       <div className={styles.container}>
         <header className={styles.header}>
-          <h1 className={styles.heading}>{applyContent.heading}</h1>
-          <p className={styles.subheading}>{applyContent.subheading}</p>
+          <h1 className={styles.heading}>{adoptContent.heading}</h1>
+          <p className={styles.subheading}>{adoptContent.subheading}</p>
         </header>
 
         {cats.length > 0 ? (
@@ -45,12 +46,12 @@ export default async function ApplyPage({ locale = 'en' }) {
                 key={cat._id}
                 cat={cat}
                 locale={locale}
-                content={applyContent}
+                content={adoptContent}
               />
             ))}
           </div>
         ) : (
-          <p className={styles.noCats}>{applyContent.noCats}</p>
+          <p className={styles.noCats}>{adoptContent.noCats}</p>
         )}
       </div>
     </main>

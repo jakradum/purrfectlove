@@ -7,10 +7,10 @@ export default function CatNotFound() {
       <div className={styles.container}>
         <h1 className={styles.headline}>Pspspsps!</h1>
         <p className={styles.subhead}>
-          Cat not found! That's probably good news, because the cat you're looking for is either adopted or there's no cat by that name (yet).
+          Katze nicht gefunden! Das sind wahrscheinlich gute Nachrichten, denn die Katze, die du suchst, wurde entweder adoptiert oder es gibt (noch) keine Katze mit diesem Namen.
         </p>
-        <Link href="/apply" className={styles.link}>
-          See all available cats
+        <Link href="/de/adopt" className={styles.link}>
+          Alle verfügbaren Katzen ansehen
         </Link>
       </div>
     </main>

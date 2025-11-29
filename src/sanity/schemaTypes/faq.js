@@ -3,19 +3,106 @@ export default {
   name: 'faq',
   title: 'FAQs',
   type: 'document',
-  fields: [
+  fieldsets: [
     {
-      name: 'question',
-      title: 'Question',
-      type: 'string',
-      validation: Rule => Rule.required()
+      name: 'english',
+      title: 'English Content',
+      options: { collapsible: true, collapsed: false }
     },
     {
-      name: 'answer',
-      title: 'Answer',
-      type: 'text',
-      rows: 5,
-      validation: Rule => Rule.required()
+      name: 'german',
+      title: 'German Content (Deutscher Inhalt)',
+      options: { collapsible: true, collapsed: false }
+    }
+  ],
+  fields: [
+    {
+      name: 'questionEn',
+      title: 'Question (English)',
+      type: 'string',
+      fieldset: 'english',
+      validation: Rule => Rule.required().error('English question is required')
+    },
+    {
+      name: 'answerEn',
+      title: 'Answer (English)',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [{title: 'Normal', value: 'normal'}],
+          lists: [],
+          marks: {
+            decorators: [
+              {title: 'Bold', value: 'strong'},
+              {title: 'Italic', value: 'em'}
+            ],
+            annotations: [
+              {
+                name: 'link',
+                type: 'object',
+                title: 'Link',
+                fields: [
+                  {
+                    name: 'href',
+                    type: 'url',
+                    title: 'URL',
+                    validation: Rule => Rule.uri({
+                      scheme: ['http', 'https', 'mailto', 'tel']
+                    })
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      fieldset: 'english',
+      validation: Rule => Rule.required().error('English answer is required')
+    },
+    {
+      name: 'questionDe',
+      title: 'Question (German / Frage)',
+      type: 'string',
+      fieldset: 'german',
+      validation: Rule => Rule.required().error('German question is required')
+    },
+    {
+      name: 'answerDe',
+      title: 'Answer (German / Antwort)',
+      type: 'array',
+      of: [
+        {
+          type: 'block',
+          styles: [{title: 'Normal', value: 'normal'}],
+          lists: [],
+          marks: {
+            decorators: [
+              {title: 'Bold', value: 'strong'},
+              {title: 'Italic', value: 'em'}
+            ],
+            annotations: [
+              {
+                name: 'link',
+                type: 'object',
+                title: 'Link',
+                fields: [
+                  {
+                    name: 'href',
+                    type: 'url',
+                    title: 'URL',
+                    validation: Rule => Rule.uri({
+                      scheme: ['http', 'https', 'mailto', 'tel']
+                    })
+                  }
+                ]
+              }
+            ]
+          }
+        }
+      ],
+      fieldset: 'german',
+      validation: Rule => Rule.required().error('German answer is required')
     },
     {
       name: 'category',
@@ -24,25 +111,44 @@ export default {
       options: {
         list: [
           {title: 'Adoption Process', value: 'process'},
-          {title: 'Cat Care', value: 'care'},
-          {title: 'Fees & Costs', value: 'fees'},
           {title: 'Requirements', value: 'requirements'},
+          {title: 'Costs & Fees', value: 'fees'},
+          {title: 'The Cats', value: 'cats'},
+          {title: 'After Adoption', value: 'after'},
+          {title: 'Location & Logistics', value: 'location'},
           {title: 'General', value: 'general'}
         ]
       },
-      validation: Rule => Rule.required()
+      validation: Rule => Rule.required().error('Category is required')
     },
     {
       name: 'order',
       title: 'Display Order',
       type: 'number',
-      description: 'Lower numbers appear first'
+      description: 'Lower numbers appear first',
+      validation: Rule => Rule.required().min(1).error('Display order is required')
     }
   ],
   preview: {
     select: {
-      title: 'question',
-      subtitle: 'category'
+      questionEn: 'questionEn',
+      questionDe: 'questionDe',
+      category: 'category'
+    },
+    prepare({questionEn, questionDe, category}) {
+      const categoryLabels = {
+        process: 'Adoption Process',
+        requirements: 'Requirements',
+        fees: 'Costs & Fees',
+        cats: 'The Cats',
+        after: 'After Adoption',
+        location: 'Location & Logistics',
+        general: 'General'
+      }
+      return {
+        title: questionEn || questionDe || 'Untitled FAQ',
+        subtitle: categoryLabels[category] || category
+      }
     }
   },
   orderings: [
@@ -50,6 +156,14 @@ export default {
       title: 'Display Order',
       name: 'orderAsc',
       by: [{field: 'order', direction: 'asc'}]
+    },
+    {
+      title: 'Category, then Order',
+      name: 'categoryOrder',
+      by: [
+        {field: 'category', direction: 'asc'},
+        {field: 'order', direction: 'asc'}
+      ]
     }
   ]
 }

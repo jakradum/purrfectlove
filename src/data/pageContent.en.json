@@ -55,7 +55,7 @@
       "cta": "Read all blogs"
     }
   },
-  "apply": {
+  "adopt": {
     "heading": "Meet your future cat",
     "subheading": "These cats are neutered, vaccinated, litter-trained and ready to come home with you. Take a look at their resumes 😉 and apply if you're interested in any of them.",
     "noCats": "No cats available at the moment. Check back soon!",
@@ -79,7 +79,7 @@
     },
     "breadcrumb": {
       "home": "Home",
-      "apply": "Adopt a Cat"
+      "adopt": "Adopt a Cat"
     },
     "adoptButton": "Adopt {catName}",
     "form": {
@@ -147,6 +147,103 @@
       "home": "Home",
       "guides": "Guides",
       "blog": "Blog"
+    }
+  },
+  "faqs": {
+    "heading": "Frequently Asked Questions",
+    "subheading": "Everything you need to know about adopting a cat from Purrfect Love",
+    "noFaqs": "No FAQs available yet. Check back soon!",
+    "categories": {
+      "process": "Adoption Process",
+      "requirements": "Requirements",
+      "fees": "Costs & Fees",
+      "cats": "The Cats",
+      "after": "After Adoption",
+      "location": "Location & Logistics",
+      "general": "General"
+    },
+    "breadcrumb": {
+      "home": "Home",
+      "guides": "Guides",
+      "faqs": "FAQs"
+    }
+  },
+  "onboarding": {
+    "heading": "The First Days with Your New Cat",
+    "subheading": "A complete guide to helping your new cat settle into their forever home",
+    "breadcrumb": {
+      "home": "Home",
+      "guides": "Guides",
+      "onboarding": "First Days"
+    },
+    "intro": [
+      "When you get a new cat, it's in some ways like having a newborn child in your house. There's a change in the atmosphere; it's both exciting and a bit tense. What can I do? What can't I do? How much of my life and freedom is compromised? Often there are more questions than you can handle. But we've done this hundreds of times (no exaggeration). Let's break this down.",
+      "Typically, onboarding a new cat is a 3-week process. Don't be thrown off by that; it's the first week that's the longest, and things get easier dramatically after that. That said, each cat is unique and each onboarding is therefore unique. We'll help you through it, no matter what.",
+      "This is typically how you can expect it to go."
+    ],
+    "timeline": [
+      {
+        "day": "Day 1",
+        "title": "Peekaboo",
+        "content": [
+          "Cats need their time and space. Your new cat has just been uprooted from everything familiar; the smells, the sounds, the people it knew. It's now in a completely alien environment, and its instinct is to hide. This is completely normal.",
+          "Don't be alarmed if your cat disappears into a cupboard, under a bed, or behind a sofa and refuses to come out. They may not emerge even if they're hungry. Cats can go a day or two without eating when stressed; survival mode kicks in and food becomes secondary to safety. Place some food and water near (but not too close to) their hiding spot, and then leave the room. Let them be. Resist the urge to coax them out or peek in repeatedly; every time you do, you reset their anxiety clock."
+        ],
+        "tip": "Before you bring your cat home, set up a small, quiet room as their safe room; we call this the \"Basecamp\". A bathroom or a spare bedroom works well. Keep the litter tray, food, water, and a cosy hiding spot (even a cardboard box with a blanket) all in this one room. This becomes their world for the first few days."
+      },
+      {
+        "day": "Day 2",
+        "title": "Now You See Me, Now You Don't",
+        "content": [
+          "If they've eaten the food overnight, that's a good sign. It means survival instinct is giving way to comfort. You might notice the food bowl empty in the morning but no sign of the cat; that's fine. They're watching you even when you can't see them.",
+          "Today, try sitting quietly in the room. Don't approach them, don't make sudden movements, don't stare directly at them (cats find prolonged eye contact threatening). Just exist in their space. Read a book, scroll through your phone, or simply sit still. Let them observe you. They're learning: is this person safe?",
+          "If they come out to eat while you're there, that's a small victory. They're starting to \"tag\" you; sniffing and cataloguing your scent as non-threatening."
+        ],
+        "tip": "Speak softly when you're in the room. They need to know what you sound like. A calm, low voice helps them associate you with safety. Avoid high-pitched excitement or loud conversations near them; make slow movements, keep your voice gentle. They're learning you just as much as you're learning them."
+      },
+      {
+        "day": "Days 3–5",
+        "title": "Out and About",
+        "content": [
+          "By now, your cat is getting comfortable with you, though perhaps not yet with other family members. They've explored every inch of their safe room and are now curious about what's beyond that door. You'll notice them sitting near the door, sniffing at the gap, maybe meowing to be let out.",
+          "This is a good time to let them explore the rest of your home, but do it strategically. Best to let them out when the house is quiet; when other family members are either out or sitting still, not moving about much. The cat will explore, explore, explore. Every corner, every piece of furniture, every strange smell. This can take hours, and they might retreat back to their safe room several times. That's okay. It's a process of expanding their territory in small, manageable doses."
+        ],
+        "tip": "Place a previously used litter tray (with some of their own waste) in the \"new\" part of the house. The familiar scent of their own urine is oddly reassuring to them; it says, \"I've been here, this is mine, this is safe.\""
+      },
+      {
+        "day": "Days 5–10",
+        "title": "New Home, New Me",
+        "content": [
+          "This is when cats start to show their true personalities. Some are goofy and playful, knocking things off tables just to watch them fall. Some are chatty, meowing loudly at odd hours as if narrating their inner monologue. Some are still cautious, watching you from a distance, warming up in their own time.",
+          "Whatever the case, this phase is a test of patience; believe us, this goes for both human and cat. They're getting used to your schedules: when you wake up, when you leave, when you return, when you sleep. They're learning the rhythms of your household. And you're learning theirs.",
+          "You might find them sleeping in unexpected places, demanding food at 4 AM, or suddenly zooming across the house for no apparent reason (this is normal; it's called the \"zoomies\"). Embrace it. This is your cat figuring out how to live with you."
+        ],
+        "tip": "Stick to a routine as much as possible. Feed them at the same times each day. Cats are creatures of habit, and predictability helps them feel secure."
+      },
+      {
+        "day": "Days 10–20",
+        "title": "Two Steps Forward, One Step Back",
+        "content": [
+          "In many cases, just when you feel your cat has settled in, there will be some sign or behavioural incident that will put you squarely back to day one. They hiss at a family member. They refuse to come out of hiding for a whole day. They stop using the litter tray. It feels like all your work has been undone.",
+          "It hasn't. This is completely normal.",
+          "This doesn't mean all the work has been undone; it's just that this is a non-linear process. Just like with human children, cats take their time to learn their new environment, their new habits, their new behaviours. There will be setbacks. A loud noise might spook them. A new visitor might reset their anxiety. A change in your schedule might throw them off.",
+          "Ride this one through. Don't panic, don't get frustrated, and most importantly, don't give up. They will internalise what they've learnt. The setbacks become smaller and less frequent. One day, you'll realise you can't remember the last time they hid from you."
+        ],
+        "tip": "If a specific incident causes a regression, don't force recovery. Give them space, go back to basics (more time in the safe room, quieter environment), and let them come back to you at their own pace."
+      },
+      {
+        "day": "Day 20+",
+        "title": "Hello World!",
+        "content": [
+          "The cat is out of the bag, quite literally. Your home is now its home. The hiding has stopped. The suspicion has faded. You'll find them lounging in sunny spots, greeting you at the door, maybe even sleeping on your bed (whether you invited them or not).",
+          "By this time, most of the bumps are behind you. Your cat knows where the food is, where the litter is, where the best napping spots are. It knows your voice, your footsteps, your smell. And you know its quirks, its preferences, its little ways of asking for attention.",
+          "This doesn't mean the learning stops; cats continue to surprise you for years. But the hard part? That's done. You made it. And so did they."
+        ]
+      }
+    ],
+    "closing": {
+      "line1": "Welcome to life with a cat.",
+      "line2": "It's going to be wonderful."
     }
   }
 }

@@ -5,7 +5,8 @@
       "label": "Guides",
       "children": [
         { "href": "/guides/process", "label": "Process" },
-        { "href": "/guides/first-days", "label": "First Days" },
+        { "href": "/guides/onboarding", "label": "First Days" },
+        { "href": "/guides/faqs", "label": "FAQs" },
         { "href": "/guides/blog", "label": "Blog" }
       ]
     },
@@ -13,7 +14,7 @@
     { "href": "/contact", "label": "Contact" }
   ],
   "cta": {
-    "href": "/apply",
+    "href": "/adopt",
     "label": "Adopt a cat",
     "mobileLabel": "Adopt a cat"
   }
