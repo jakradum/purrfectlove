@@ -26,13 +26,20 @@ function CopyButton({ value }) {
   )
 }
 
-function ShareButton({ doc, catName }) {
+function ShareButton({ doc, catName, reassignedCatName }) {
   const [copied, setCopied] = useState(false)
 
   const housingLabels = {
     own: 'Own House',
     rent: 'Rented Apartment',
     other: 'Other'
+  }
+
+  const getInterestedInText = () => {
+    if (doc.isOpenToAnyCat) {
+      return reassignedCatName ? `Any Cat → ${reassignedCatName}` : 'Any Cat'
+    }
+    return catName || '—'
   }
 
   const formatShareText = () => {
@@ -44,7 +51,7 @@ function ShareButton({ doc, catName }) {
       `*Email:* ${doc.email || '—'}`,
       `*Address:* ${doc.address || '—'}`,
       '',
-      `*Interested in:* ${catName || '—'}`,
+      `*Interested in:* ${getInterestedInText()}`,
       `*Housing:* ${housingLabels[doc.housingType] || doc.housingType || '—'}`,
       `*Has Other Pets:* ${doc.hasOtherPets ? 'Yes' : 'No'}`,
     ]
@@ -103,6 +110,7 @@ export function ApplicantInfoDisplay(props) {
   const { document } = props
   const client = useClient({ apiVersion: '2024-01-01' })
   const [catName, setCatName] = useState('')
+  const [reassignedCatName, setReassignedCatName] = useState('')
   const [originalAppId, setOriginalAppId] = useState(null)
 
   const doc = document.displayed
@@ -113,6 +121,16 @@ export function ApplicantInfoDisplay(props) {
         .then(name => setCatName(name || 'Unknown'))
     }
   }, [doc?.cat?._ref, client])
+
+  // Fetch reassigned cat name if exists
+  useEffect(() => {
+    if (doc?.reassignToCat?._ref) {
+      client.fetch(`*[_id == $id][0].name`, { id: doc.reassignToCat._ref })
+        .then(name => setReassignedCatName(name || 'Unknown'))
+    } else {
+      setReassignedCatName('')
+    }
+  }, [doc?.reassignToCat?._ref, client])
 
   // Fetch original application ID if this is a duplicate
   useEffect(() => {
@@ -226,7 +244,7 @@ export function ApplicantInfoDisplay(props) {
       <div style={{ ...styles.title, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Applicant Information</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <ShareButton doc={doc} catName={catName} />
+          <ShareButton doc={doc} catName={catName} reassignedCatName={reassignedCatName} />
           <span style={{ fontSize: '0.6875rem', color: '#94a3b8', fontWeight: 400 }}>
             Copy all info
           </span>
@@ -323,7 +341,19 @@ export function ApplicantInfoDisplay(props) {
 
       <div style={styles.row}>
         <span style={styles.label}>Interested in:</span>
-        <span style={styles.value}>{catName || '—'}</span>
+        <span style={styles.value}>
+          {doc.isOpenToAnyCat ? (
+            reassignedCatName ? (
+              <span style={{ color: '#22c55e', fontWeight: 600 }}>
+                🐱 Any → {reassignedCatName}
+              </span>
+            ) : (
+              <span style={{ color: '#3b82f6', fontWeight: 600 }}>🐱 Any Cat</span>
+            )
+          ) : (
+            catName || '—'
+          )}
+        </span>
       </div>
 
       <div style={styles.row}>

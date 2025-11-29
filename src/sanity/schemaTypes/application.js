@@ -1,5 +1,6 @@
 import {DuplicateNotice} from '../components/DuplicateNotice'
 import {CatAdoptedNotice} from '../components/CatAdoptedNotice'
+import {OpenToAnyCatNotice} from '../components/OpenToAnyCatNotice'
 
 // Helper to check if application is marked as duplicate
 const isMarkedAsDuplicate = ({parent}) => parent?.isDuplicateOf && parent.isDuplicateOf.length > 0
@@ -54,7 +55,20 @@ export default {
       title: 'Interested in Cat',
       type: 'reference',
       to: [{type: 'cat'}],
-      validation: Rule => Rule.required(),
+      validation: Rule => Rule.custom((cat, context) => {
+        // Cat is required unless isOpenToAnyCat is true
+        if (!cat && !context.parent?.isOpenToAnyCat) {
+          return 'Cat is required unless applicant is open to any cat'
+        }
+        return true
+      }),
+      readOnly: true,
+      hidden: true
+    },
+    {
+      name: 'isOpenToAnyCat',
+      title: 'Open to Any Cat',
+      type: 'boolean',
       readOnly: true,
       hidden: true
     },
@@ -176,8 +190,22 @@ export default {
       type: 'string',
       fieldset: 'officialUse',
       readOnly: true,
+      hidden: ({parent}) => parent?.isOpenToAnyCat,
       components: {
         field: CatAdoptedNotice
+      }
+    },
+
+    // Open to any cat notice - shows when applicant didn't select a specific cat
+    {
+      name: 'openToAnyCatNotice',
+      title: ' ',
+      type: 'string',
+      fieldset: 'officialUse',
+      readOnly: true,
+      hidden: ({parent}) => !parent?.isOpenToAnyCat,
+      components: {
+        field: OpenToAnyCatNotice
       }
     },
 
@@ -416,12 +444,14 @@ orderings: [
       cat: 'cat.name',
       catLocationEn: 'cat.locationEn',
       catLocationDe: 'cat.locationDe',
+      isOpenToAnyCat: 'isOpenToAnyCat',
+      reassignedCat: 'reassignToCat.name',
       status: 'status',
       assignedTo: 'assignedTo',
       date: 'submittedAt',
       isDuplicateOf: 'isDuplicateOf'
     },
-    prepare({applicationId, name, cat, catLocationEn, catLocationDe, status, assignedTo, date, isDuplicateOf}) {
+    prepare({applicationId, name, cat, catLocationEn, catLocationDe, isOpenToAnyCat, reassignedCat, status, assignedTo, date, isDuplicateOf}) {
       // Status labels with color indicators
       const statusLabels = {
         new: '🔵 New',
@@ -437,16 +467,24 @@ orderings: [
         devraj: 'Devraj'
       }
 
-      // Determine country flag based on cat location
+      // Determine country flag based on cat location (empty for "any cat" applications)
       const countryFlag = catLocationDe ? '🇩🇪' : catLocationEn ? '🇮🇳' : ''
 
       const idPrefix = applicationId ? `#${applicationId} ` : ''
       const hasDuplicates = isDuplicateOf && isDuplicateOf.length > 0
       const repeatLabel = hasDuplicates ? ' [REPEAT]' : ''
 
+      // Show "Any Cat -> {assigned cat}" if applicant is open to any cat
+      let catDisplay = cat
+      if (isOpenToAnyCat) {
+        catDisplay = reassignedCat
+          ? `🐱 Any → ${reassignedCat}`
+          : '🐱 Any Cat'
+      }
+
       return {
         title: `${countryFlag} ${idPrefix}${name}${repeatLabel}`,
-        subtitle: `${cat} • ${statusLabels[status] || status} • ${assignedLabels[assignedTo] || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
+        subtitle: `${catDisplay} • ${statusLabels[status] || status} • ${assignedLabels[assignedTo] || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
       }
     }
   }

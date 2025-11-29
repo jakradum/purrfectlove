@@ -1,4 +1,5 @@
 import {ApplicantInfoDisplay} from './components/ApplicantInfoDisplay'
+import {ContactMessageDisplay} from './components/ContactMessageDisplay'
 
 export const structure = (S) =>
   S.list()
@@ -63,5 +64,24 @@ export const structure = (S) =>
                 .icon(() => '📝')
                 .child(S.documentTypeList('processStep')),
             ])
+        ),
+
+      // === CONTACT MESSAGES ===
+      S.listItem()
+        .title('Contact Messages')
+        .icon(() => '📬')
+        .child(
+          S.documentTypeList('contactMessage')
+            .title('Contact Messages')
+            .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
+            .child((documentId) =>
+              S.document()
+                .documentId(documentId)
+                .schemaType('contactMessage')
+                .views([
+                  S.view.component(ContactMessageDisplay).title('Message'),
+                  S.view.form().title('Status & Notes')
+                ])
+            )
         ),
     ])

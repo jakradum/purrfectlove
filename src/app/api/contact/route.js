@@ -1,3 +1,13 @@
+import { createClient } from '@sanity/client';
+
+const serverClient = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET,
+  token: process.env.SANITY_API_TOKEN,
+  apiVersion: '2024-01-01',
+  useCdn: false
+});
+
 // Simple in-memory rate limiting
 const submissions = new Map();
 
@@ -69,17 +79,18 @@ export async function POST(request) {
       );
     }
 
-    // 6. SEND EMAIL (via mailto: we'll just log for now, you can integrate with SendGrid/Resend later)
-    console.log('Contact form submission:', {
+    // 6. SAVE TO SANITY
+    const result = await serverClient.create({
+      _type: 'contactMessage',
       name: body.name,
       email: body.email,
-      subject: body.subject || 'No subject',
       message: body.message,
-      timestamp: new Date().toISOString()
+      locale: body.locale || 'en',
+      submittedAt: new Date().toISOString(),
+      status: 'open'
     });
 
-    // TODO: Integrate with email service (SendGrid, Resend, etc.)
-    // For now, we'll just return success - the form data is logged
+    console.log('Contact message saved:', result._id);
 
     // Update rate limit tracker
     submissions.set(ip, now);

@@ -82,6 +82,12 @@
       "adopt": "Adopt a Cat"
     },
     "adoptButton": "Adopt {catName}",
+    "adoptAnyCat": {
+      "button": "Adopt any cat",
+      "title": "Adopt a Cat",
+      "subtitle": "",
+      "successMessage": "Thank you for your interest in adopting a cat. We'll review your application and get back to you within 24-48 hours."
+    },
     "form": {
       "title": "Adopt {catName}",
       "subtitle": "Fill out this form and we'll get back to you within 24-48 hours.",
@@ -170,19 +176,21 @@
   },
   "contact": {
     "heading": "Get in Touch",
-    "subheading": "We'd love to hear from you",
+    "subheading": "Looking to get in touch? Fill out the form and we'll get back.",
+    "faqLink": {
+      "text": "Jump to FAQs",
+      "href": "/guides/faqs"
+    },
     "breadcrumb": {
       "home": "Home",
       "contact": "Contact"
     },
     "form": {
-      "name": "Your Name",
-      "email": "Email Address",
-      "subject": "Subject",
-      "subjectPlaceholder": "What is this about?",
+      "name": "Name",
+      "email": "Email",
       "message": "Your Message",
       "messagePlaceholder": "Tell us what's on your mind...",
-      "submit": "Send Message",
+      "submit": "Submit",
       "submitting": "Sending...",
       "success": {
         "title": "Message Sent!",
@@ -193,8 +201,11 @@
         "failed": "Failed to send message. Please try again."
       }
     },
-    "emailNote": "Have specific questions? Write to us at",
-    "email": "contact@purrfectlove.org"
+    "adoptLink": {
+      "text": "Looking to adopt a cat?",
+      "cta": "Adopt here",
+      "href": "/adopt"
+    }
   },
   "onboarding": {
     "heading": "The First Days with Your New Cat",

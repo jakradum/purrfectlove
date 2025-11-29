@@ -83,6 +83,12 @@
       "adopt": "Katze adoptieren"
     },
     "adoptButton": "{catName} adoptieren",
+    "adoptAnyCat": {
+      "button": "Jede Katze adoptieren",
+      "title": "Eine Katze adoptieren",
+      "subtitle": "",
+      "successMessage": "Vielen Dank für Ihr Interesse an der Adoption einer Katze. Wir werden Ihren Antrag prüfen und uns innerhalb von 24-48 Stunden bei Ihnen melden."
+    },
     "form": {
       "title": "{catName} adoptieren",
       "subtitle": "Füllen Sie dieses Formular aus und wir melden uns innerhalb von 24-48 Stunden bei Ihnen.",
@@ -171,19 +177,21 @@
   },
   "contact": {
     "heading": "Kontakt aufnehmen",
-    "subheading": "Wir freuen uns, von Ihnen zu hören",
+    "subheading": "Möchten Sie uns kontaktieren? Füllen Sie das Formular aus und wir melden uns.",
+    "faqLink": {
+      "text": "Zu den FAQs",
+      "href": "/de/guides/faqs"
+    },
     "breadcrumb": {
       "home": "Startseite",
       "contact": "Kontakt"
     },
     "form": {
-      "name": "Ihr Name",
-      "email": "E-Mail-Adresse",
-      "subject": "Betreff",
-      "subjectPlaceholder": "Worum geht es?",
+      "name": "Name",
+      "email": "E-Mail",
       "message": "Ihre Nachricht",
       "messagePlaceholder": "Teilen Sie uns mit, was Sie beschäftigt...",
-      "submit": "Nachricht senden",
+      "submit": "Absenden",
       "submitting": "Wird gesendet...",
       "success": {
         "title": "Nachricht gesendet!",
@@ -194,8 +202,11 @@
         "failed": "Nachricht konnte nicht gesendet werden. Bitte versuchen Sie es erneut."
       }
     },
-    "emailNote": "Haben Sie spezielle Fragen? Schreiben Sie uns an",
-    "email": "contact@purrfectlove.org"
+    "adoptLink": {
+      "text": "Möchten Sie eine Katze adoptieren?",
+      "cta": "Hier adoptieren",
+      "href": "/de/adopt"
+    }
   },
   "onboarding": {
     "heading": "Die ersten Tage mit Ihrer neuen Katze",

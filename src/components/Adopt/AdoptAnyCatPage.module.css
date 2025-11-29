@@ -1,45 +1,35 @@
-/* src/components/Contact/ContactPage.module.css */
+/* src/components/Adopt/AdoptAnyCatPage.module.css */
 .main {
-  min-height: calc(100vh - 80px);
+  min-height: 100vh;
+  padding-top: 6rem;
+  padding-bottom: 4rem;
   background-color: var(--whisker-cream);
 }
 
 .container {
-  max-width: 700px;
+  max-width: 650px;
   margin: 0 auto;
-  padding: 2rem;
+  padding: 0 2rem;
 }
 
 .header {
-  margin-bottom: 2.5rem;
+  text-align: center;
+  margin: 2rem 0 2rem;
 }
 
 .heading {
   font-family: var(--font-outfit);
-  font-size: clamp(2rem, 5vw, 2.5rem);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
   font-weight: 700;
   color: var(--tabby-brown);
-  margin-bottom: 0.75rem;
-  line-height: 1.2;
+  margin-bottom: 1rem;
 }
 
 .subheading {
   font-family: var(--font-lora);
-  font-size: clamp(1rem, 2vw, 1.125rem);
-  color: var(--text-light);
+  font-size: 1.125rem;
+  color: var(--text-dark);
   line-height: 1.6;
-}
-
-.faqLink {
-  color: var(--hunter-green);
-  font-weight: 500;
-  text-decoration: none;
-  white-space: nowrap;
-}
-
-.faqLink:hover {
-  color: var(--tabby-brown);
-  text-decoration: underline;
 }
 
 .formWrapper {
@@ -87,7 +77,8 @@
 }
 
 .input,
-.textarea {
+.textarea,
+.select {
   font-family: var(--font-lora);
   font-size: 0.9375rem;
   color: var(--text-dark);
@@ -99,7 +90,8 @@
 }
 
 .input:focus,
-.textarea:focus {
+.textarea:focus,
+.select:focus {
   outline: none;
   border-color: var(--hunter-green);
   box-shadow: 0 0 0 3px rgba(44, 95, 79, 0.1);
@@ -107,7 +99,35 @@
 
 .textarea {
   resize: vertical;
-  min-height: 120px;
+  min-height: 60px;
+}
+
+.select {
+  cursor: pointer;
+}
+
+.checkboxLabel {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-outfit);
+  font-size: 0.9375rem;
+  color: var(--text-dark);
+  cursor: pointer;
+}
+
+.checkbox {
+  width: 1.125rem;
+  height: 1.125rem;
+  accent-color: var(--hunter-green);
+  cursor: pointer;
+}
+
+.charCount {
+  font-family: var(--font-outfit);
+  font-size: 0.75rem;
+  color: var(--text-light);
+  text-align: right;
 }
 
 .turnstileWrapper {
@@ -120,7 +140,7 @@
   font-family: var(--font-outfit);
   font-size: 1rem;
   font-weight: 600;
-  color: var(--whisker-cream);
+  color: white;
   background-color: var(--hunter-green);
   border: 2px solid var(--hunter-green);
   border-radius: 8px;
@@ -140,25 +160,6 @@
   cursor: not-allowed;
 }
 
-.adoptNote {
-  font-family: var(--font-lora);
-  font-size: 0.9375rem;
-  color: var(--text-light);
-  text-align: center;
-  margin-top: 1.5rem;
-}
-
-.adoptLink {
-  color: var(--hunter-green);
-  font-weight: 500;
-  text-decoration: none;
-}
-
-.adoptLink:hover {
-  color: var(--tabby-brown);
-  text-decoration: underline;
-}
-
 /* Success state */
 .success {
   text-align: center;
@@ -166,12 +167,12 @@
   background-color: white;
   border-radius: 16px;
   box-shadow: 0 2px 12px rgba(0, 0, 0, 0.06);
-  margin-bottom: 2rem;
+  margin: 2rem 0;
 }
 
 .successIcon {
-  width: 72px;
-  height: 72px;
+  width: 80px;
+  height: 80px;
   background-color: var(--hunter-green);
   color: white;
   border-radius: 50%;
@@ -192,18 +193,50 @@
 
 .successMessage {
   font-family: var(--font-lora);
-  font-size: 1.125rem;
+  font-size: 1rem;
   color: var(--text-dark);
   line-height: 1.6;
-  margin: 0;
+  margin: 0 0 2rem;
   max-width: 400px;
-  margin: 0 auto;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.backButton {
+  display: inline-block;
+  font-family: var(--font-outfit);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--hunter-green);
+  background-color: transparent;
+  border: 2px solid var(--hunter-green);
+  border-radius: 8px;
+  padding: 0.875rem 2rem;
+  text-decoration: none;
+  transition: all 0.2s ease;
+}
+
+.backButton:hover {
+  background-color: var(--hunter-green);
+  color: white;
 }
 
 /* Mobile styles */
-@media (max-width: 600px) {
+@media (max-width: 768px) {
+  .main {
+    padding-top: 5rem;
+  }
+
   .container {
-    padding: 1.5rem;
+    padding: 0 1rem;
+  }
+
+  .header {
+    margin: 1.5rem 0;
+  }
+
+  .subheading {
+    font-size: 1rem;
   }
 
   .formWrapper {

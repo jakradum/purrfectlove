@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import styles from './AdoptionForm.module.css';
 
-export default function AdoptionForm({ cat, content, onClose }) {
+export default function AdoptionForm({ cat, content, onClose, isAnyCat = false }) {
   const [formData, setFormData] = useState({
     applicantName: '',
     email: '',
@@ -65,14 +65,22 @@ export default function AdoptionForm({ cat, content, onClose }) {
     }
 
     try {
+      const requestBody = {
+        ...formData,
+        turnstileToken
+      };
+
+      // Add cat ID or isOpenToAnyCat flag
+      if (isAnyCat) {
+        requestBody.isOpenToAnyCat = true;
+      } else {
+        requestBody.catId = cat._id;
+      }
+
       const response = await fetch('/api/submit-application', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...formData,
-          catId: cat._id,
-          turnstileToken
-        })
+        body: JSON.stringify(requestBody)
       });
 
       const data = await response.json();
@@ -92,6 +100,10 @@ export default function AdoptionForm({ cat, content, onClose }) {
   };
 
   if (submitted) {
+    const successMessage = isAnyCat
+      ? content.adoptAnyCat.successMessage
+      : content.form.success.message.replace('{catName}', cat.name);
+
     return (
       <div className={styles.overlay} ref={modalRef} onClick={handleBackdropClick}>
         <div className={styles.modal}>
@@ -101,9 +113,7 @@ export default function AdoptionForm({ cat, content, onClose }) {
           <div className={styles.success}>
             <div className={styles.successIcon}>&#10003;</div>
             <h2 className={styles.successTitle}>{content.form.success.title}</h2>
-            <p className={styles.successMessage}>
-              {content.form.success.message.replace('{catName}', cat.name)}
-            </p>
+            <p className={styles.successMessage}>{successMessage}</p>
             <button className={styles.successButton} onClick={onClose}>
               {content.form.success.button}
             </button>
@@ -122,9 +132,13 @@ export default function AdoptionForm({ cat, content, onClose }) {
 
         <div className={styles.header}>
           <h2 className={styles.title}>
-            {content.form.title.replace('{catName}', cat.name)}
+            {isAnyCat
+              ? content.adoptAnyCat.title
+              : content.form.title.replace('{catName}', cat.name)}
           </h2>
-          <p className={styles.subtitle}>{content.form.subtitle}</p>
+          <p className={styles.subtitle}>
+            {isAnyCat ? content.adoptAnyCat.subtitle : content.form.subtitle}
+          </p>
         </div>
 
         {error && (

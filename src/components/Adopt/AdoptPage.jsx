@@ -2,6 +2,7 @@
 import styles from './AdoptPage.module.css';
 import { client } from '@/sanity/lib/client';
 import CatCard from './CatCard';
+import AdoptAnyCatButton from './AdoptAnyCatButton';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -53,6 +54,8 @@ export default async function AdoptPage({ locale = 'en' }) {
         ) : (
           <p className={styles.noCats}>{adoptContent.noCats}</p>
         )}
+
+        <AdoptAnyCatButton content={adoptContent} locale={locale} />
       </div>
     </main>
   );

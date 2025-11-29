@@ -1,5 +1,6 @@
 'use client';
 import { useState, useRef } from 'react';
+import Link from 'next/link';
 import { Turnstile } from '@marsidev/react-turnstile';
 import styles from './ContactPage.module.css';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -13,7 +14,6 @@ export default function ContactPage({ locale = 'en' }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
-    subject: '',
     message: '',
     website: '' // Honeypot
   });
@@ -52,6 +52,7 @@ export default function ContactPage({ locale = 'en' }) {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...formData,
+          locale,
           turnstileToken
         })
       });
@@ -79,7 +80,12 @@ export default function ContactPage({ locale = 'en' }) {
 
         <header className={styles.header}>
           <h1 className={styles.heading}>{contactContent.heading}</h1>
-          <p className={styles.subheading}>{contactContent.subheading}</p>
+          <p className={styles.subheading}>
+            {contactContent.subheading}{' '}
+            <Link href={contactContent.faqLink.href} className={styles.faqLink}>
+              {contactContent.faqLink.text} &rarr;
+            </Link>
+          </p>
         </header>
 
         {submitted ? (
@@ -117,18 +123,6 @@ export default function ContactPage({ locale = 'en' }) {
                     className={styles.input}
                   />
                 </div>
-              </div>
-
-              <div className={styles.formGroup}>
-                <label className={styles.label}>{contactContent.form.subject}</label>
-                <input
-                  type="text"
-                  name="subject"
-                  value={formData.subject}
-                  onChange={handleChange}
-                  placeholder={contactContent.form.subjectPlaceholder}
-                  className={styles.input}
-                />
               </div>
 
               <div className={styles.formGroup}>
@@ -175,11 +169,11 @@ export default function ContactPage({ locale = 'en' }) {
               </button>
             </form>
 
-            <p className={styles.emailNote}>
-              {contactContent.emailNote}{' '}
-              <a href={`mailto:${contactContent.email}`} className={styles.emailLink}>
-                {contactContent.email}
-              </a>
+            <p className={styles.adoptNote}>
+              {contactContent.adoptLink.text}{' '}
+              <Link href={contactContent.adoptLink.href} className={styles.adoptLink}>
+                {contactContent.adoptLink.cta} &rarr;
+              </Link>
             </p>
           </div>
         )}

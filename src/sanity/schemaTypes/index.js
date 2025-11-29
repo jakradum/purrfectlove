@@ -5,6 +5,7 @@ import teamMember from './teamMember'
 import application from './application'
 import processStep from './processStep'
 import blogPost from './blogPost'
+import contactMessage from './contactMessage'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -18,6 +19,7 @@ export const schema = {
     teamMember,
     application,
     processStep,
-    blogPost
+    blogPost,
+    contactMessage
   ]
 }

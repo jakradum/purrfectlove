@@ -42,8 +42,9 @@ async function generateUniqueId() {
 export async function POST(request) {
   try {
     const body = await request.json()
-    console.log('Received submission for cat:', body.catId)
+    console.log('Received submission for cat:', body.catId || 'Any Cat')
     console.log('Turnstile token present:', !!body.turnstileToken)
+    console.log('Is open to any cat:', body.isOpenToAnyCat || false)
 
     // 1. HONEYPOT CHECK
     if (body.website) {
@@ -102,7 +103,10 @@ export async function POST(request) {
       )
     }
     
-    if (!body.catId) {
+    // Check if this is an "any cat" application or a specific cat
+    const isOpenToAnyCat = body.isOpenToAnyCat === true
+
+    if (!body.catId && !isOpenToAnyCat) {
       return Response.json(
         { error: 'Cat ID is required' },
         { status: 400 }
@@ -145,13 +149,9 @@ export async function POST(request) {
     const applicationId = await generateUniqueId()
 
     // 8. CREATE APPLICATION IN SANITY
-    const result = await serverClient.create({
+    const applicationData = {
       _type: 'application',
       applicationId,
-      cat: {
-        _type: 'reference',
-        _ref: body.catId
-      },
       applicantName: body.applicantName,
       email: body.email,
       phone: body.phone,
@@ -164,7 +164,19 @@ export async function POST(request) {
       submittedAt: new Date().toISOString(),
       status: 'new',
       finalDecision: 'pending'
-    })
+    }
+
+    // Add cat reference or isOpenToAnyCat flag
+    if (isOpenToAnyCat) {
+      applicationData.isOpenToAnyCat = true
+    } else {
+      applicationData.cat = {
+        _type: 'reference',
+        _ref: body.catId
+      }
+    }
+
+    const result = await serverClient.create(applicationData)
     
     // Update rate limit tracker
     submissions.set(ip, now)

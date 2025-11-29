@@ -1,0 +1,37 @@
+.wrapper {
+  display: flex;
+  justify-content: center;
+  margin-top: 3rem;
+}
+
+.button {
+  display: inline-block;
+  padding: 1rem 2rem;
+  text-align: center;
+  text-decoration: none;
+  font-family: var(--font-outfit);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: white;
+  background-color: var(--hunter-green);
+  border: 2px solid var(--hunter-green);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.button:hover {
+  background-color: var(--tabby-brown);
+  border-color: var(--tabby-brown);
+}
+
+@media (max-width: 768px) {
+  .wrapper {
+    margin-top: 2rem;
+  }
+
+  .button {
+    padding: 0.875rem 1.5rem;
+    font-size: 1rem;
+  }
+}
