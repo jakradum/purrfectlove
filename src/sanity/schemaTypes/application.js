@@ -105,6 +105,7 @@ export default {
     },
 
     // === FOR OFFICIAL USE ONLY ===
+    // Status colors: new=#3b82f6 (blue), evaluation=#f59e0b (amber), adopted=#22c55e (green), rejected=#ef4444 (red), returned=#8b5cf6 (purple)
     {
       name: 'status',
       title: 'Current Status',
@@ -112,15 +113,11 @@ export default {
       fieldset: 'officialUse',
       options: {
         list: [
-          {title: '🆕 New', value: 'new'},
-          {title: '👀 Under Review', value: 'review'},
-          {title: '📞 Interview Scheduled', value: 'interviewScheduled'},
-          {title: '✅ Interview Complete', value: 'interviewComplete'},
-          {title: '🏠 Home Visit Scheduled', value: 'homeVisitScheduled'},
-          {title: '✅ Home Visit Complete', value: 'homeVisitComplete'},
-          {title: '✅ Approved', value: 'approved'},
-          {title: '❌ Rejected', value: 'rejected'},
-          {title: '🎉 Adopted', value: 'adopted'}
+          {title: 'New', value: 'new'},
+          {title: 'Interview / Evaluation', value: 'evaluation'},
+          {title: 'Adopted', value: 'adopted'},
+          {title: 'Rejected', value: 'rejected'},
+          {title: 'Returned Cat', value: 'returned'}
         ]
       },
       initialValue: 'new'
@@ -137,6 +134,31 @@ export default {
           {title: 'Devraj', value: 'devraj'}
         ]
       }
+    },
+
+    // DUPLICATE DETECTION
+    {
+      name: 'isDuplicateOf',
+      title: 'Mark as Duplicate Of',
+      description: 'Link to earlier application(s) from the same person. This will automatically set status to "Repeat Applicant".',
+      type: 'array',
+      fieldset: 'officialUse',
+      of: [{
+        type: 'reference',
+        to: [{type: 'application'}],
+        options: {
+          filter: ({document}) => {
+            // Only show applications submitted before this one
+            return {
+              filter: '_type == "application" && _id != $currentId && submittedAt < $currentDate',
+              params: {
+                currentId: document._id,
+                currentDate: document.submittedAt || new Date().toISOString()
+              }
+            }
+          }
+        }
+      }]
     },
 
     // INTERVIEW SECTION
@@ -268,7 +290,21 @@ export default {
       title: 'Adoption Date',
       type: 'datetime',
       fieldset: 'officialUse',
-      hidden: ({parent}) => parent?.status !== 'adopted'
+      hidden: ({parent}) => parent?.status !== 'adopted' && parent?.status !== 'returned'
+    },
+    {
+      name: 'returnedDate',
+      title: 'Returned Date',
+      type: 'datetime',
+      fieldset: 'officialUse',
+      hidden: ({parent}) => parent?.status !== 'returned'
+    },
+    {
+      name: 'returnReason',
+      title: 'Reason for Return',
+      type: 'text',
+      fieldset: 'officialUse',
+      hidden: ({parent}) => parent?.status !== 'returned'
     },
 
     // FOLLOW UP
@@ -341,19 +377,17 @@ orderings: [
       cat: 'cat.name',
       status: 'status',
       assignedTo: 'assignedTo',
-      date: 'submittedAt'
+      date: 'submittedAt',
+      isDuplicateOf: 'isDuplicateOf'
     },
-    prepare({applicationId, name, cat, status, assignedTo, date}) {
+    prepare({applicationId, name, cat, status, assignedTo, date, isDuplicateOf}) {
+      // Status labels with color indicators
       const statusLabels = {
-        new: '🆕',
-        review: '👀',
-        interviewScheduled: '📞',
-        interviewComplete: '✅',
-        homeVisitScheduled: '🏠',
-        homeVisitComplete: '✅',
-        approved: '✅',
-        rejected: '❌',
-        adopted: '🎉'
+        new: '🔵 New',
+        evaluation: '🟡 Evaluation',
+        adopted: '🟢 Adopted',
+        rejected: '🔴 Rejected',
+        returned: '🟣 Returned'
       }
 
       const assignedLabels = {
@@ -363,9 +397,11 @@ orderings: [
       }
 
       const idPrefix = applicationId ? `#${applicationId} ` : ''
+      const hasDuplicates = isDuplicateOf && isDuplicateOf.length > 0
+      const repeatLabel = hasDuplicates ? ' [REPEAT]' : ''
 
       return {
-        title: `${idPrefix}${name}`,
+        title: `${idPrefix}${name}${repeatLabel}`,
         subtitle: `${cat} • ${statusLabels[status] || status} • ${assignedLabels[assignedTo] || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
       }
     }

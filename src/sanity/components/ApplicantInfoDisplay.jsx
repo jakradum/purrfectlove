@@ -30,6 +30,7 @@ export function ApplicantInfoDisplay(props) {
   const { document } = props
   const client = useClient({ apiVersion: '2024-01-01' })
   const [catName, setCatName] = useState('')
+  const [originalAppId, setOriginalAppId] = useState(null)
 
   const doc = document.displayed
 
@@ -39,6 +40,17 @@ export function ApplicantInfoDisplay(props) {
         .then(name => setCatName(name || 'Unknown'))
     }
   }, [doc?.cat?._ref, client])
+
+  // Fetch original application ID if this is a duplicate
+  useEffect(() => {
+    if (doc?.isDuplicateOf && doc.isDuplicateOf.length > 0) {
+      const firstDuplicateRef = doc.isDuplicateOf[0]._ref
+      client.fetch(`*[_id == $id][0].applicationId`, { id: firstDuplicateRef })
+        .then(id => setOriginalAppId(id))
+    } else {
+      setOriginalAppId(null)
+    }
+  }, [doc?.isDuplicateOf, client])
 
   if (!doc) return null
 
@@ -103,24 +115,97 @@ export function ApplicantInfoDisplay(props) {
     }
   }
 
-  const idStyle = {
-    display: 'inline-block',
-    backgroundColor: '#e8e4df',
-    padding: '0.25rem 0.5rem',
-    borderRadius: '4px',
-    fontFamily: 'monospace',
-    fontSize: '0.875rem',
-    fontWeight: 600,
-    letterSpacing: '0.05em'
+  // Color coding for Adopter ID based on status
+  // Status colors: new=#3b82f6 (blue), evaluation=#f59e0b (amber), adopted=#22c55e (green), rejected=#ef4444 (red), returned=#8b5cf6 (purple)
+  const getIdStyle = (status, isDuplicate) => {
+    const baseStyle = {
+      display: 'inline-flex',
+      alignItems: 'center',
+      padding: '0.25rem 0.5rem',
+      borderRadius: '4px',
+      fontFamily: 'monospace',
+      fontSize: '0.875rem',
+      fontWeight: 600,
+      letterSpacing: '0.05em'
+    }
+
+    // If this is a duplicate, show greyed out
+    if (isDuplicate) {
+      return { ...baseStyle, backgroundColor: '#9ca3af', color: '#fff' } // Grey
+    }
+
+    const statusColors = {
+      new: { bg: '#3b82f6', color: '#fff' },        // Blue
+      evaluation: { bg: '#f59e0b', color: '#fff' }, // Amber
+      adopted: { bg: '#22c55e', color: '#fff' },    // Green
+      rejected: { bg: '#ef4444', color: '#fff' },   // Red
+      returned: { bg: '#8b5cf6', color: '#fff' }    // Purple
+    }
+
+    const colors = statusColors[status] || { bg: '#6b7280', color: '#fff' }
+    return { ...baseStyle, backgroundColor: colors.bg, color: colors.color }
   }
+
+  const isDuplicate = doc.isDuplicateOf && doc.isDuplicateOf.length > 0
 
   return (
     <div style={styles.container}>
       <div style={{ ...styles.title, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Applicant Information</span>
-        {doc.applicationId && (
-          <span style={idStyle}>#{doc.applicationId}</span>
-        )}
+      </div>
+
+      {/* Show repeat applicant warning if this is a duplicate */}
+      {isDuplicate && (
+        <div style={{
+          backgroundColor: '#fef3c7',
+          border: '1px solid #f59e0b',
+          borderRadius: '6px',
+          padding: '0.75rem 1rem',
+          marginBottom: '1rem',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.5rem'
+        }}>
+          <span style={{ fontSize: '1rem' }}>⚠️</span>
+          <span style={{ fontSize: '0.875rem', color: '#92400e' }}>
+            <strong>Repeat Applicant</strong> — Use original ID{' '}
+            {originalAppId && (
+              <>
+                <span style={{
+                  fontFamily: 'monospace',
+                  fontWeight: 600,
+                  backgroundColor: '#22c55e',
+                  color: '#fff',
+                  padding: '0.125rem 0.375rem',
+                  borderRadius: '3px'
+                }}>#{originalAppId}</span>
+                <CopyButton value={originalAppId} />
+              </>
+            )}
+          </span>
+        </div>
+      )}
+
+      <div style={styles.row}>
+        <span style={styles.label}>Adopter ID:</span>
+        <span style={styles.value}>
+          {doc.applicationId ? (
+            <>
+              <span style={getIdStyle(doc.status, isDuplicate)}>#{doc.applicationId}</span>
+              {!isDuplicate && <CopyButton value={doc.applicationId} />}
+              {!isDuplicate && (
+                <span style={{ marginLeft: '12px', fontSize: '0.75rem', color: '#888', fontWeight: 400 }}>
+                  Refer this ID to communicate with the PL team
+                </span>
+              )}
+              {isDuplicate && (
+                <span style={{ marginLeft: '12px', fontSize: '0.75rem', color: '#9ca3af', fontWeight: 400, fontStyle: 'italic' }}>
+                  (superseded by #{originalAppId || '...'})
+                </span>
+              )}
+            </>
+          ) : '—'}
+        </span>
       </div>
 
       <div style={styles.row}>

@@ -18,7 +18,7 @@ export default async function AboutPage({ locale = 'en' }) {
   const aboutContent = content.about;
 
   const teamMembers = await client.fetch(
-    `*[_type == "teamMember"] | order(order asc) {
+    `*[_type == "teamMember" && showOnWebsite == true] | order(order asc) {
       _id,
       name,
       "role": role.${locale},
