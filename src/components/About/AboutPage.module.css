@@ -103,6 +103,27 @@
   margin: 0;
 }
 
+.missionSection {
+  max-width: 800px;
+  margin: 0 auto 3rem;
+  text-align: center;
+}
+
+.missionHeading {
+  font-family: var(--font-outfit);
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  font-weight: 600;
+  color: var(--tabby-brown);
+  margin-bottom: 1rem;
+}
+
+.missionBody {
+  font-family: var(--font-lora);
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  color: var(--text-dark);
+  line-height: 1.8;
+}
+
 /* Tablet */
 @media (max-width: 900px) {
   .grid {

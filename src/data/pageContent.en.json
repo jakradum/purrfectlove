@@ -129,6 +129,10 @@
   "about": {
     "heading": "The Purrfect Love Team",
     "subheading": "Meet the passionate people behind our mission",
+    "mission": {
+      "heading": "Why we do what we do",
+      "body": "We are cat lovers (probably just like you), but we go further than just loving them. We work hard to rescue, rehabilitate, heal, and help them find homes. Cats, we believe, are companion animals. Although very unlike dogs in terms of their relationship with humans, they form deep bonds with us. Our work at Purrfect Love is not to find just any home for any cat, but the right match in terms of a human-cat personality match."
+    },
     "breadcrumb": {
       "home": "Home",
       "about": "About"

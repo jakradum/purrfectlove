@@ -130,6 +130,10 @@
   "about": {
     "heading": "Das Purrfect Love Team",
     "subheading": "Lernen Sie die leidenschaftlichen Menschen hinter unserer Mission kennen",
+    "mission": {
+      "heading": "Warum wir tun, was wir tun",
+      "body": "Wir sind Katzenliebhaber (wahrscheinlich genau wie Sie), aber wir gehen weiter als sie nur zu lieben. Wir arbeiten hart daran, sie zu retten, zu rehabilitieren, zu heilen und ihnen zu helfen, ein Zuhause zu finden. Katzen sind, so glauben wir, Begleittiere. Obwohl sie sich in ihrer Beziehung zu Menschen sehr von Hunden unterscheiden, bauen sie tiefe Bindungen zu uns auf. Unsere Arbeit bei Purrfect Love besteht nicht darin, irgendein Zuhause für irgendeine Katze zu finden, sondern die richtige Übereinstimmung in Bezug auf die Persönlichkeit von Mensch und Katze."
+    },
     "breadcrumb": {
       "home": "Startseite",
       "about": "Über uns"

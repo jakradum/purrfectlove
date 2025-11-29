@@ -79,6 +79,13 @@ export default async function AboutPage({ locale = 'en' }) {
           </div>
         </section>
 
+        {aboutContent.mission && (
+          <section className={styles.missionSection}>
+            <h2 className={styles.missionHeading}>{aboutContent.mission.heading}</h2>
+            <p className={styles.missionBody}>{aboutContent.mission.body}</p>
+          </section>
+        )}
+
         <Breadcrumb items={breadcrumbItems} />
       </div>
     </main>
