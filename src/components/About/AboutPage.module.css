@@ -50,6 +50,14 @@
   overflow: hidden;
   display: flex;
   flex-direction: column;
+  text-decoration: none;
+  color: inherit;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+a.card:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.1);
 }
 
 .image {
@@ -101,6 +109,19 @@
 
 .bio p {
   margin: 0;
+}
+
+.readMore {
+  display: inline-block;
+  margin-top: 0.75rem;
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: var(--hunter-green);
+}
+
+a.card:hover .readMore {
+  text-decoration: underline;
 }
 
 .missionSection {

@@ -19,6 +19,22 @@ export default defineType({
       validation: Rule => Rule.required()
     }),
     defineField({
+      name: 'slug',
+      title: 'URL Slug',
+      type: 'slug',
+      options: {
+        source: 'name',
+        maxLength: 96
+      },
+      validation: Rule => Rule.custom((value, context) => {
+        if (!context.document?.showOnWebsite) return true
+        if (!value?.current) {
+          return 'Slug is required when showing on website'
+        }
+        return true
+      })
+    }),
+    defineField({
       name: 'role',
       title: 'Role',
       type: 'localeString',

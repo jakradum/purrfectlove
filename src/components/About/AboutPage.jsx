@@ -3,7 +3,7 @@ import styles from './AboutPage.module.css';
 import { client } from '@/sanity/lib/client';
 import imageUrlBuilder from '@sanity/image-url';
 import Breadcrumb from '@/components/Breadcrumb';
-import { PortableText } from '@portabletext/react';
+import Link from 'next/link';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -11,6 +11,30 @@ const builder = imageUrlBuilder(client);
 
 function urlFor(source) {
   return builder.image(source);
+}
+
+// Extract plain text from PortableText blocks and truncate
+function truncateBio(bioBlocks, maxChars = 100) {
+  if (!bioBlocks || bioBlocks.length === 0) return '';
+
+  let text = '';
+  for (const block of bioBlocks) {
+    if (block._type === 'block' && block.children) {
+      for (const child of block.children) {
+        if (child.text) {
+          text += child.text + ' ';
+        }
+      }
+    }
+  }
+
+  text = text.trim();
+  if (text.length <= maxChars) return text;
+
+  // Truncate at word boundary
+  const truncated = text.substring(0, maxChars);
+  const lastSpace = truncated.lastIndexOf(' ');
+  return (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...';
 }
 
 export default async function AboutPage({ locale = 'en' }) {
@@ -21,6 +45,7 @@ export default async function AboutPage({ locale = 'en' }) {
     `*[_type == "teamMember" && showOnWebsite == true] | order(order asc) {
       _id,
       name,
+      "slug": slug.current,
       "role": role.${locale},
       "bio": bio.${locale},
       image {
@@ -54,30 +79,50 @@ export default async function AboutPage({ locale = 'en' }) {
 
         <section className={styles.teamSection}>
           <div className={styles.grid}>
-            {teamMembers.map((member) => (
-              <div key={member._id} className={styles.card}>
-                {member.image?.asset ? (
-                  <img
-                    src={urlFor(member.image).width(400).height(400).url()}
-                    alt={member.name}
-                    className={styles.image}
-                  />
-                ) : (
-                  <div className={styles.imagePlaceholder}>No image</div>
-                )}
-                <div className={styles.info}>
-                  <h3 className={styles.name}>{member.name}</h3>
-                  {member.role && (
-                    <p className={styles.role}>{member.role}</p>
+            {teamMembers.map((member) => {
+              const memberHref = member.slug
+                ? (locale === 'de' ? `/de/about/${member.slug}` : `/about/${member.slug}`)
+                : null;
+              const truncatedBio = truncateBio(member.bio, 100);
+
+              const cardContent = (
+                <>
+                  {member.image?.asset ? (
+                    <img
+                      src={urlFor(member.image).width(400).height(400).url()}
+                      alt={member.name}
+                      className={styles.image}
+                    />
+                  ) : (
+                    <div className={styles.imagePlaceholder}>No image</div>
                   )}
-                  {member.bio && (
-                    <div className={styles.bio}>
-                      <PortableText value={member.bio} />
-                    </div>
-                  )}
+                  <div className={styles.info}>
+                    <h3 className={styles.name}>{member.name}</h3>
+                    {member.role && (
+                      <p className={styles.role}>{member.role}</p>
+                    )}
+                    {truncatedBio && (
+                      <p className={styles.bio}>{truncatedBio}</p>
+                    )}
+                    {memberHref && (
+                      <span className={styles.readMore}>
+                        {locale === 'de' ? 'Mehr erfahren →' : 'Read more →'}
+                      </span>
+                    )}
+                  </div>
+                </>
+              );
+
+              return memberHref ? (
+                <Link key={member._id} href={memberHref} className={styles.card}>
+                  {cardContent}
+                </Link>
+              ) : (
+                <div key={member._id} className={styles.card}>
+                  {cardContent}
                 </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </section>
 

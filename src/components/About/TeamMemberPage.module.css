@@ -1,0 +1,94 @@
+.main {
+  min-height: calc(100vh - 80px);
+  background-color: var(--whisker-cream);
+}
+
+.container {
+  max-width: 800px;
+  margin: 0 auto;
+  padding: 2rem;
+}
+
+.article {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2rem;
+  margin: 2rem 0;
+}
+
+.imageWrapper {
+  flex-shrink: 0;
+}
+
+.image {
+  width: 280px;
+  height: 280px;
+  object-fit: cover;
+  border-radius: 12px;
+}
+
+.imagePlaceholder {
+  width: 280px;
+  height: 280px;
+  background: white;
+  border-radius: 12px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--text-light);
+  font-family: var(--font-lora);
+}
+
+.content {
+  text-align: center;
+  max-width: 600px;
+}
+
+.name {
+  font-family: var(--font-outfit);
+  font-size: clamp(1.75rem, 4vw, 2.5rem);
+  font-weight: 700;
+  color: var(--hunter-green);
+  margin-bottom: 0.5rem;
+}
+
+.role {
+  font-family: var(--font-lora);
+  font-size: clamp(1rem, 2vw, 1.25rem);
+  color: var(--tabby-brown);
+  font-weight: 500;
+  margin-bottom: 1.5rem;
+}
+
+.bio {
+  font-family: var(--font-lora);
+  font-size: clamp(1rem, 2vw, 1.125rem);
+  color: var(--text-dark);
+  line-height: 1.8;
+  text-align: left;
+}
+
+.bio p {
+  margin: 0 0 1rem;
+}
+
+.bio p:last-child {
+  margin-bottom: 0;
+}
+
+@media (max-width: 600px) {
+  .container {
+    padding: 1.5rem;
+  }
+
+  .article {
+    gap: 1.5rem;
+  }
+
+  .image,
+  .imagePlaceholder {
+    width: 200px;
+    height: 200px;
+  }
+}
