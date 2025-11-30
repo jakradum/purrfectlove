@@ -55,14 +55,9 @@ export default {
     {
       name: 'assignedTo',
       title: 'Assigned To',
-      type: 'string',
-      options: {
-        list: [
-          { title: 'Lucia', value: 'lucia' },
-          { title: 'Besly', value: 'besly' },
-          { title: 'Devraj', value: 'devraj' }
-        ]
-      }
+      type: 'reference',
+      to: [{ type: 'teamMember' }],
+      options: { disableNew: true }
     },
     {
       name: 'notes',
@@ -96,19 +91,13 @@ export default {
       email: 'email',
       locale: 'locale',
       status: 'status',
-      assignedTo: 'assignedTo',
+      assignedToName: 'assignedTo.name',
       date: 'submittedAt'
     },
-    prepare({ name, email, locale, status, assignedTo, date }) {
+    prepare({ name, email, locale, status, assignedToName, date }) {
       const statusLabels = {
         open: 'Open',
         closed: 'Closed'
-      }
-
-      const assignedLabels = {
-        lucia: 'Lucia',
-        besly: 'Besly',
-        devraj: 'Devraj'
       }
 
       const countryFlag = locale === 'de' ? '🇩🇪' : '🇮🇳'
@@ -116,7 +105,7 @@ export default {
 
       return {
         title: `${countryFlag} ${name}`,
-        subtitle: `${statusIcon} ${statusLabels[status] || 'Open'} • ${assignedLabels[assignedTo] || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
+        subtitle: `${statusIcon} ${statusLabels[status] || 'Open'} • ${assignedToName || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
       }
     }
   }

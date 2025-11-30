@@ -20,7 +20,7 @@ export function CatApplicationsDisplay(props) {
     const cleanId = documentId.replace('drafts.', '')
 
     client.fetch(
-      `*[_type == "application" && cat._ref == $catId && (!defined(isDuplicateOf) || count(isDuplicateOf) == 0)] | order(submittedAt desc) {
+      `*[_type == "application" && cat._ref == $catId && !defined(isDuplicateOf)] | order(submittedAt desc) {
         _id,
         applicationId,
         applicantName,

@@ -3,7 +3,7 @@ import {CatAdoptedNotice} from '../components/CatAdoptedNotice'
 import {OpenToAnyCatNotice} from '../components/OpenToAnyCatNotice'
 
 // Helper to check if application is marked as duplicate
-const isMarkedAsDuplicate = ({parent}) => parent?.isDuplicateOf && parent.isDuplicateOf.length > 0
+const isMarkedAsDuplicate = ({parent}) => !!parent?.isDuplicateOf
 
 export default {
   name: 'application',
@@ -129,27 +129,25 @@ export default {
     {
       name: 'isDuplicateOf',
       title: 'Mark as Duplicate Of',
-      description: 'Link to the original application from this person. Only shows applications that are not already marked as duplicates.',
-      type: 'array',
+      description: 'Select the original application if this is a repeat submission from the same person.',
+      type: 'reference',
       fieldset: 'officialUse',
-      of: [{
-        type: 'reference',
-        to: [{type: 'application'}],
-        options: {
-          filter: ({document}) => {
-            // Only show applications that:
-            // 1. Are submitted before this one
-            // 2. Are NOT already marked as duplicates (no isDuplicateOf references)
-            return {
-              filter: '_type == "application" && _id != $currentId && submittedAt < $currentDate && (!defined(isDuplicateOf) || count(isDuplicateOf) == 0)',
-              params: {
-                currentId: document._id,
-                currentDate: document.submittedAt || new Date().toISOString()
-              }
+      to: [{type: 'application'}],
+      options: {
+        disableNew: true,
+        filter: ({document}) => {
+          // Only show applications that:
+          // 1. Are submitted before this one
+          // 2. Are NOT already marked as duplicates
+          return {
+            filter: '_type == "application" && _id != $currentId && submittedAt < $currentDate && !defined(isDuplicateOf)',
+            params: {
+              currentId: document._id,
+              currentDate: document.submittedAt || new Date().toISOString()
             }
           }
         }
-      }]
+      }
     },
     // Notice shown when marked as duplicate
     {
@@ -158,7 +156,7 @@ export default {
       type: 'string',
       fieldset: 'officialUse',
       readOnly: true,
-      hidden: ({parent}) => !parent?.isDuplicateOf || parent.isDuplicateOf.length === 0,
+      hidden: ({parent}) => !parent?.isDuplicateOf,
       components: {
         field: DuplicateNotice
       }
@@ -218,6 +216,7 @@ export default {
       to: [{type: 'cat'}],
       description: 'Assign this applicant to a new cat if original cat is already adopted by someone else',
       options: {
+        disableNew: true,
         filter: ({document}) => {
           // Only show cats that are:
           // 1. Not already adopted (no application with status "adopted")
@@ -237,15 +236,10 @@ export default {
     {
       name: 'assignedTo',
       title: 'Assigned To',
-      type: 'string',
+      type: 'reference',
+      to: [{type: 'teamMember'}],
       fieldset: 'officialUse',
-      options: {
-        list: [
-          {title: 'Lucia', value: 'lucia'},
-          {title: 'Besly', value: 'besly'},
-          {title: 'Devraj', value: 'devraj'}
-        ]
-      },
+      options: { disableNew: true },
       readOnly: isMarkedAsDuplicate
     },
 
@@ -261,15 +255,10 @@ export default {
     {
       name: 'interviewedBy',
       title: 'Interviewed By',
-      type: 'string',
+      type: 'reference',
+      to: [{type: 'teamMember'}],
       fieldset: 'officialUse',
-      options: {
-        list: [
-          {title: 'Lucia', value: 'lucia'},
-          {title: 'Besly', value: 'besly'},
-          {title: 'Devraj', value: 'devraj'}
-        ]
-      },
+      options: { disableNew: true },
       hidden: ({parent}) => !parent?.interviewCompleted,
       readOnly: isMarkedAsDuplicate
     },
@@ -302,15 +291,10 @@ export default {
     {
       name: 'homeVisitBy',
       title: 'Home Visit Conducted By',
-      type: 'string',
+      type: 'reference',
+      to: [{type: 'teamMember'}],
       fieldset: 'officialUse',
-      options: {
-        list: [
-          {title: 'Lucia', value: 'lucia'},
-          {title: 'Besly', value: 'besly'},
-          {title: 'Devraj', value: 'devraj'}
-        ]
-      },
+      options: { disableNew: true },
       hidden: ({parent}) => !parent?.homeVisitCompleted,
       readOnly: isMarkedAsDuplicate
     },
@@ -447,11 +431,11 @@ orderings: [
       isOpenToAnyCat: 'isOpenToAnyCat',
       reassignedCat: 'reassignToCat.name',
       status: 'status',
-      assignedTo: 'assignedTo',
+      assignedToName: 'assignedTo.name',
       date: 'submittedAt',
       isDuplicateOf: 'isDuplicateOf'
     },
-    prepare({applicationId, name, cat, catLocationEn, catLocationDe, isOpenToAnyCat, reassignedCat, status, assignedTo, date, isDuplicateOf}) {
+    prepare({applicationId, name, cat, catLocationEn, catLocationDe, isOpenToAnyCat, reassignedCat, status, assignedToName, date, isDuplicateOf}) {
       // Status labels with color indicators
       const statusLabels = {
         new: '🔵 New',
@@ -461,17 +445,11 @@ orderings: [
         returned: '🟣 Returned'
       }
 
-      const assignedLabels = {
-        lucia: 'Lucia',
-        besly: 'Besly',
-        devraj: 'Devraj'
-      }
-
       // Determine country flag based on cat location (empty for "any cat" applications)
       const countryFlag = catLocationDe ? '🇩🇪' : catLocationEn ? '🇮🇳' : ''
 
       const idPrefix = applicationId ? `#${applicationId} ` : ''
-      const hasDuplicates = isDuplicateOf && isDuplicateOf.length > 0
+      const hasDuplicates = !!isDuplicateOf
       const repeatLabel = hasDuplicates ? ' [REPEAT]' : ''
 
       // Show "Any Cat -> {assigned cat}" if applicant is open to any cat
@@ -484,7 +462,7 @@ orderings: [
 
       return {
         title: `${countryFlag} ${idPrefix}${name}${repeatLabel}`,
-        subtitle: `${catDisplay} • ${statusLabels[status] || status} • ${assignedLabels[assignedTo] || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
+        subtitle: `${catDisplay} • ${statusLabels[status] || status} • ${assignedToName || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
       }
     }
   }

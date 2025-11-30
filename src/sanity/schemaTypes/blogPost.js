@@ -49,14 +49,16 @@ export default defineType({
       title: 'Author (English)',
       type: 'reference',
       to: [{type: 'teamMember'}],
-      description: 'Optional - select a team member as author for English version'
+      description: 'Optional - select a team member as author for English version',
+      options: { disableNew: true }
     }),
     defineField({
       name: 'authorDe',
       title: 'Author (German)',
       type: 'reference',
       to: [{type: 'teamMember'}],
-      description: 'Optional - select a team member as author for German version'
+      description: 'Optional - select a team member as author for German version',
+      options: { disableNew: true }
     }),
     defineField({
       name: 'slug',

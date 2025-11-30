@@ -9,9 +9,8 @@ export function DuplicateNotice(props) {
   const isDuplicateOf = useFormValue(['isDuplicateOf'])
 
   useEffect(() => {
-    if (isDuplicateOf && isDuplicateOf.length > 0) {
-      const firstDuplicateRef = isDuplicateOf[0]._ref
-      client.fetch(`*[_id == $id][0].applicationId`, { id: firstDuplicateRef })
+    if (isDuplicateOf?._ref) {
+      client.fetch(`*[_id == $id][0].applicationId`, { id: isDuplicateOf._ref })
         .then(id => setOriginalAppId(id))
     } else {
       setOriginalAppId(null)
@@ -19,7 +18,7 @@ export function DuplicateNotice(props) {
   }, [isDuplicateOf, client])
 
   // Only show when marked as duplicate
-  if (!isDuplicateOf || isDuplicateOf.length === 0) {
+  if (!isDuplicateOf) {
     return null
   }
 

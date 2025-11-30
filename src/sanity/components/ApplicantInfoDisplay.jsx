@@ -99,9 +99,158 @@ function ShareButton({ doc, catName, reassignedCatName }) {
   }
 
   return (
-    <button style={buttonStyle} onClick={handleShare} title="Copy all info for sharing on WhatsApp">
+    <button style={buttonStyle} onClick={handleShare} title="Copy applicant info for sharing">
       <span style={{ fontSize: '1rem' }}>{copied ? '✓' : '↗'}</span>
       <span>{copied ? 'Copied!' : 'Share'}</span>
+    </button>
+  )
+}
+
+function ExportButton({ doc, catName, reassignedCatName, assignedToName, interviewedByName, homeVisitByName }) {
+  const [copied, setCopied] = useState(false)
+
+  const housingLabels = {
+    own: 'Own House',
+    rent: 'Rented Apartment',
+    other: 'Other'
+  }
+
+  const statusLabels = {
+    new: 'New',
+    evaluation: 'Interview / Evaluation',
+    adopted: 'Adopted',
+    rejected: 'Rejected',
+    returned: 'Returned Cat'
+  }
+
+  const formatDate = (dateStr) => {
+    if (!dateStr) return '—'
+    return new Date(dateStr).toLocaleString('en-IN', {
+      day: 'numeric',
+      month: 'short',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    })
+  }
+
+  const getInterestedInText = () => {
+    if (doc.isOpenToAnyCat) {
+      return reassignedCatName ? `Any Cat → ${reassignedCatName}` : 'Any Cat'
+    }
+    return catName || '—'
+  }
+
+  const formatExportText = () => {
+    const lines = [
+      `═══════════════════════════════════════`,
+      `ADOPTION APPLICATION #${doc.applicationId}`,
+      `═══════════════════════════════════════`,
+      '',
+      `APPLICANT DETAILS`,
+      `─────────────────`,
+      `Name: ${doc.applicantName || '—'}`,
+      `Phone: ${doc.phone || '—'}`,
+      `Email: ${doc.email || '—'}`,
+      `Address: ${doc.address || '—'}`,
+      `Housing: ${housingLabels[doc.housingType] || doc.housingType || '—'}`,
+      `Has Other Pets: ${doc.hasOtherPets ? 'Yes' : 'No'}`,
+    ]
+
+    if (doc.hasOtherPets && doc.otherPetsDetails) {
+      lines.push(`Other Pets: ${doc.otherPetsDetails}`)
+    }
+
+    lines.push('')
+    lines.push(`CAT INTEREST`)
+    lines.push(`────────────`)
+    lines.push(`Interested in: ${getInterestedInText()}`)
+
+    lines.push('')
+    lines.push(`APPLICATION RESPONSES`)
+    lines.push(`─────────────────────`)
+
+    if (doc.whyAdopt) {
+      lines.push(`Why they want to adopt:`)
+      lines.push(doc.whyAdopt)
+      lines.push('')
+    }
+
+    if (doc.experience) {
+      lines.push(`Experience with cats:`)
+      lines.push(doc.experience)
+      lines.push('')
+    }
+
+    lines.push(`OFFICIAL STATUS`)
+    lines.push(`───────────────`)
+    lines.push(`Status: ${statusLabels[doc.status] || doc.status || '—'}`)
+    lines.push(`Assigned To: ${assignedToName || 'Unassigned'}`)
+    lines.push(`Submitted: ${formatDate(doc.submittedAt)}`)
+
+    if (doc.notes) {
+      lines.push('')
+      lines.push(`Internal Notes:`)
+      lines.push(doc.notes)
+    }
+
+    if (doc.interviewCompleted) {
+      lines.push('')
+      lines.push(`INTERVIEW`)
+      lines.push(`─────────`)
+      lines.push(`Interviewed By: ${interviewedByName || '—'}`)
+      lines.push(`Interview Date: ${formatDate(doc.interviewDate)}`)
+      if (doc.interviewNotes) {
+        lines.push(`Interview Notes:`)
+        lines.push(doc.interviewNotes)
+      }
+    }
+
+    if (doc.homeVisitCompleted) {
+      lines.push('')
+      lines.push(`HOME VISIT`)
+      lines.push(`──────────`)
+      lines.push(`Conducted By: ${homeVisitByName || '—'}`)
+      lines.push(`Visit Date: ${formatDate(doc.homeVisitDate)}`)
+      if (doc.homeVisitNotes) {
+        lines.push(`Home Visit Notes:`)
+        lines.push(doc.homeVisitNotes)
+      }
+    }
+
+    lines.push('')
+    lines.push(`═══════════════════════════════════════`)
+    lines.push(`Exported on ${new Date().toLocaleString('en-IN')}`)
+
+    return lines.join('\n')
+  }
+
+  const handleExport = async () => {
+    const text = formatExportText()
+    await navigator.clipboard.writeText(text)
+    setCopied(true)
+    setTimeout(() => setCopied(false), 3000)
+  }
+
+  const buttonStyle = {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '6px',
+    padding: '6px 12px',
+    backgroundColor: copied ? '#22c55e' : '#e0e7ff',
+    border: 'none',
+    borderRadius: '6px',
+    cursor: 'pointer',
+    fontSize: '0.8125rem',
+    fontWeight: 500,
+    color: copied ? '#fff' : '#4338ca',
+    transition: 'all 0.2s ease'
+  }
+
+  return (
+    <button style={buttonStyle} onClick={handleExport} title="Export full application with notes and status">
+      <span style={{ fontSize: '1rem' }}>{copied ? '✓' : '📋'}</span>
+      <span>{copied ? 'Copied!' : 'Export'}</span>
     </button>
   )
 }
@@ -112,6 +261,9 @@ export function ApplicantInfoDisplay(props) {
   const [catName, setCatName] = useState('')
   const [reassignedCatName, setReassignedCatName] = useState('')
   const [originalAppId, setOriginalAppId] = useState(null)
+  const [assignedToName, setAssignedToName] = useState('')
+  const [interviewedByName, setInterviewedByName] = useState('')
+  const [homeVisitByName, setHomeVisitByName] = useState('')
 
   const doc = document.displayed
 
@@ -134,14 +286,43 @@ export function ApplicantInfoDisplay(props) {
 
   // Fetch original application ID if this is a duplicate
   useEffect(() => {
-    if (doc?.isDuplicateOf && doc.isDuplicateOf.length > 0) {
-      const firstDuplicateRef = doc.isDuplicateOf[0]._ref
-      client.fetch(`*[_id == $id][0].applicationId`, { id: firstDuplicateRef })
+    if (doc?.isDuplicateOf?._ref) {
+      client.fetch(`*[_id == $id][0].applicationId`, { id: doc.isDuplicateOf._ref })
         .then(id => setOriginalAppId(id))
     } else {
       setOriginalAppId(null)
     }
   }, [doc?.isDuplicateOf, client])
+
+  // Fetch assigned to name
+  useEffect(() => {
+    if (doc?.assignedTo?._ref) {
+      client.fetch(`*[_id == $id][0].name`, { id: doc.assignedTo._ref })
+        .then(name => setAssignedToName(name || ''))
+    } else {
+      setAssignedToName('')
+    }
+  }, [doc?.assignedTo?._ref, client])
+
+  // Fetch interviewed by name
+  useEffect(() => {
+    if (doc?.interviewedBy?._ref) {
+      client.fetch(`*[_id == $id][0].name`, { id: doc.interviewedBy._ref })
+        .then(name => setInterviewedByName(name || ''))
+    } else {
+      setInterviewedByName('')
+    }
+  }, [doc?.interviewedBy?._ref, client])
+
+  // Fetch home visit by name
+  useEffect(() => {
+    if (doc?.homeVisitBy?._ref) {
+      client.fetch(`*[_id == $id][0].name`, { id: doc.homeVisitBy._ref })
+        .then(name => setHomeVisitByName(name || ''))
+    } else {
+      setHomeVisitByName('')
+    }
+  }, [doc?.homeVisitBy?._ref, client])
 
   if (!doc) return null
 
@@ -237,17 +418,22 @@ export function ApplicantInfoDisplay(props) {
     return { ...baseStyle, backgroundColor: colors.bg, color: colors.color }
   }
 
-  const isDuplicate = doc.isDuplicateOf && doc.isDuplicateOf.length > 0
+  const isDuplicate = !!doc.isDuplicateOf
 
   return (
     <div style={styles.container}>
       <div style={{ ...styles.title, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Applicant Information</span>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
           <ShareButton doc={doc} catName={catName} reassignedCatName={reassignedCatName} />
-          <span style={{ fontSize: '0.6875rem', color: '#94a3b8', fontWeight: 400 }}>
-            Copy all info
-          </span>
+          <ExportButton
+            doc={doc}
+            catName={catName}
+            reassignedCatName={reassignedCatName}
+            assignedToName={assignedToName}
+            interviewedByName={interviewedByName}
+            homeVisitByName={homeVisitByName}
+          />
         </div>
       </div>
 

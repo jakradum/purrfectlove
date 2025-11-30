@@ -29,7 +29,9 @@ export default async function AboutPage({ locale = 'en' }) {
           url
         }
       }
-    }`
+    }`,
+    {},
+    { next: { revalidate: 60 } }
   );
 
   const homeHref = locale === 'de' ? '/de' : '/';
