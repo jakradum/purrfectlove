@@ -16,7 +16,8 @@ export default async function FeaturedArticles({ content, locale = 'en' }) {
       excerpt,
       publishedAt
     }`,
-    { locale }
+    { locale },
+    { next: { revalidate: 60 } }
   );
 
   if (!posts || posts.length === 0) {

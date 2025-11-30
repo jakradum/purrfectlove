@@ -75,7 +75,8 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
         }
       }
     }`,
-    { slug }
+    { slug },
+    { next: { revalidate: 60 } }
   );
 
   if (!post) {

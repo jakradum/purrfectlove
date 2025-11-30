@@ -25,7 +25,8 @@ export default async function HappyCats({ content, locale }) {
         }
       }
     }`,
-    { locale }
+    { locale },
+    { next: { revalidate: 60 } }
   );
 
   return (

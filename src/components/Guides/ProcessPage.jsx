@@ -16,7 +16,9 @@ export default async function ProcessPage({ locale = 'en' }) {
       "title": title.${locale},
       "description": description.${locale},
       icon
-    }`
+    }`,
+    {},
+    { next: { revalidate: 60 } }
   );
 
   const homeHref = locale === 'de' ? '/de' : '/';

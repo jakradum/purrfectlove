@@ -25,7 +25,8 @@ export default async function BlogPage({ locale = 'en' }) {
         }
       }
     }`,
-    { locale }
+    { locale },
+    { next: { revalidate: 60 } }
   );
 
   const homeHref = locale === 'de' ? '/de' : '/';
