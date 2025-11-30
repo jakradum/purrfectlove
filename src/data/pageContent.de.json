@@ -209,76 +209,74 @@
     }
   },
   "onboarding": {
-    "heading": "Die ersten Tage mit Ihrer neuen Katze",
-    "subheading": "Ein vollständiger Leitfaden, um Ihrer neuen Katze zu helfen, sich in ihrem neuen Zuhause einzuleben",
+    "heading": "Willkommen, kleine Seele",
+    "subheading": "Ein 6-Phasen-Guide für die ersten Wochen mit deiner neuen Katze",
     "breadcrumb": {
       "home": "Startseite",
       "guides": "Ratgeber",
       "onboarding": "Erste Tage"
     },
     "intro": [
-      "Wenn Sie eine neue Katze bekommen, ist es in gewisser Weise wie ein Neugeborenes im Haus zu haben. Die Atmosphäre verändert sich; es ist aufregend und gleichzeitig ein wenig angespannt. Was darf ich tun? Was darf ich nicht tun? Wie sehr wird mein Leben und meine Freiheit eingeschränkt? Oft gibt es mehr Fragen, als Sie bewältigen können. Aber wir haben das schon hunderte Male gemacht (keine Übertreibung). Lassen Sie uns das aufschlüsseln.",
-      "Typischerweise ist die Eingewöhnung einer neuen Katze ein 3-wöchiger Prozess. Lassen Sie sich davon nicht abschrecken; die erste Woche ist die längste, und danach wird alles dramatisch einfacher. Dennoch ist jede Katze einzigartig und jede Eingewöhnung ist daher einzigartig. Wir werden Ihnen dabei helfen, egal was passiert.",
-      "So können Sie es typischerweise erwarten."
+      "Jede Katze kommt mit einem kleinen, unsichtbaren Koffer zu dir. Darin befinden sich Erinnerungen, leise Ängste und vertraute Gerüche sowie eine vorsichtige Hoffnung, dass dieser Ort, dieser Mensch und dieses Leben ein echtes Zuhause sein können.",
+      "Dieser Guide ist nur eine Orientierungshilfe, die an die Persönlichkeit deiner Katze angepasst werden sollte. Jede Katze hat ihr eigenes Tempo: Manche sind neugierig und springen mutig ins Leben, andere sind vorsichtig und erkunden ihre Umgebung langsam. Beides ist normal.",
+      "Katzen sind dämmerungsaktiv. Nachts fühlen sie mehr, sind aktiver und können in den ersten Wochen weinen oder unruhig sein. Das bedeutet nicht, dass sie unglücklich sind, sondern dass sie Sicherheit und Orientierung suchen."
     ],
     "timeline": [
       {
-        "day": "Tag 1",
-        "title": "Versteckspiel",
+        "day": "Phase 1",
+        "title": "Tag 1 – Versteckspiel",
         "content": [
-          "Katzen brauchen ihre Zeit und ihren Raum. Ihre neue Katze wurde gerade von allem Vertrauten entwurzelt; den Gerüchen, den Geräuschen, den Menschen, die sie kannte. Sie befindet sich jetzt in einer völlig fremden Umgebung, und ihr Instinkt ist es, sich zu verstecken. Das ist völlig normal.",
-          "Seien Sie nicht beunruhigt, wenn Ihre Katze in einem Schrank, unter einem Bett oder hinter einem Sofa verschwindet und sich weigert herauszukommen. Sie wird vielleicht nicht einmal herauskommen, wenn sie hungrig ist. Katzen können ein oder zwei Tage ohne Essen auskommen, wenn sie gestresst sind; der Überlebensmodus setzt ein und Essen wird zweitrangig zur Sicherheit. Stellen Sie etwas Futter und Wasser in die Nähe (aber nicht zu nah) ihres Verstecks und verlassen Sie dann den Raum. Lassen Sie sie in Ruhe. Widerstehen Sie dem Drang, sie herauszulocken oder wiederholt nachzuschauen; jedes Mal, wenn Sie das tun, setzen Sie ihre Angst-Uhr zurück."
+          "Am ersten Tag ist alles neu: Gerüche, Geräusche und Räume wirken fremd. Die meisten Katzen suchen sofort einen sicheren Rückzugsort, wie unter dem Bett, hinter dem Schrank oder neben dem Kühlschrank.",
+          "Ein Zimmer sollte als Basecamp eingerichtet werden. Die Katze sollte sich dort frei bewegen können, ohne dass sie isoliert wird. Fenster, Lüftungen und kleine Öffnungen sollten gesichert sein, damit keine Gefahr besteht. Sprich ruhig und bewege dich gelassen, um der Katze ein Gefühl von Sicherheit zu vermitteln.",
+          "Heute geht es nicht darum, Nähe zu erzwingen, sondern darum, dass die Katze die neue Umgebung in Ruhe erkunden kann."
         ],
-        "tip": "Bevor Sie Ihre Katze nach Hause bringen, richten Sie einen kleinen, ruhigen Raum als ihren sicheren Raum ein — wir nennen dies das \"Basecamp\". Ein Badezimmer oder ein Gästezimmer eignet sich gut. Halten Sie die Katzentoilette, Futter, Wasser und ein gemütliches Versteck (selbst eine Pappschachtel mit einer Decke) alles in diesem einen Raum. Dies wird für die ersten Tage ihre Welt."
+        "tip": "Halte das Basecamp klein und übersichtlich. Sicherheit entsteht in einem klar abgegrenzten Bereich."
       },
       {
-        "day": "Tag 2",
-        "title": "Jetzt siehst du mich, jetzt nicht",
+        "day": "Phase 2",
+        "title": "Tag 2–5 – Jetzt tauche ich auf, und gleich darauf bin ich wieder im Schatten",
         "content": [
-          "Wenn sie das Futter über Nacht gefressen hat, ist das ein gutes Zeichen. Es bedeutet, dass der Überlebensinstinkt dem Komfort weicht. Sie bemerken vielleicht, dass der Futternapf am Morgen leer ist, aber keine Spur von der Katze; das ist in Ordnung. Sie beobachtet Sie, auch wenn Sie sie nicht sehen können.",
-          "Versuchen Sie heute, ruhig im Raum zu sitzen. Gehen Sie nicht auf sie zu, machen Sie keine plötzlichen Bewegungen, starren Sie sie nicht direkt an (Katzen empfinden anhaltenden Augenkontakt als bedrohlich). Existieren Sie einfach in ihrem Raum. Lesen Sie ein Buch, scrollen Sie durch Ihr Handy oder sitzen Sie einfach still. Lassen Sie sie Sie beobachten. Sie lernt: Ist diese Person sicher?",
-          "Wenn sie herauskommt, um zu fressen, während Sie da sind, ist das ein kleiner Sieg. Sie beginnt, Sie zu \"markieren\"; sie schnüffelt und katalogisiert Ihren Geruch als nicht bedrohlich."
+          "In diesen Tagen beginnt die Katze, dich aus sicherer Entfernung zu beobachten. Sie registriert deinen Duft, deine Bewegungen und deinen Tagesablauf. Dabei entscheidet sie selbst, wann sie neugierig wird und Kontakt sucht.",
+          "Vertrauen kann gefördert werden, indem du viel Zeit im Basecamp verbringst, deine Aktivitäten ruhig fortsetzt, sanft sprichst und dich bewusst langsam bewegst. Biete deine Hand an, aber zwinge keine Nähe. Wenn die Katze sich nähert, belohne vorsichtige Neugier mit Streicheleinheiten oder kleinen Leckerlis. So verbindet die Katze dich und deine Nähe mit positiven Erfahrungen."
         ],
-        "tip": "Sprechen Sie leise, wenn Sie im Raum sind. Sie muss wissen, wie Sie klingen. Eine ruhige, tiefe Stimme hilft ihr, Sie mit Sicherheit zu assoziieren. Vermeiden Sie hohe Aufregung oder laute Gespräche in ihrer Nähe; machen Sie langsame Bewegungen, halten Sie Ihre Stimme sanft. Sie lernt Sie genauso kennen wie Sie sie."
+        "tip": "Bewege dich ruhig und vorhersehbar. Beginne außerdem, positive Assoziationen zwischen dir, deiner Stimme und Futter herzustellen."
       },
       {
-        "day": "Tag 3–5",
-        "title": "Unterwegs",
+        "day": "Phase 3",
+        "title": "Tag 5–10 – Die Welt wird größer",
         "content": [
-          "Mittlerweile fühlt sich Ihre Katze bei Ihnen wohl, wenn auch vielleicht noch nicht bei anderen Familienmitgliedern. Sie hat jeden Zentimeter ihres sicheren Raums erkundet und ist nun neugierig auf das, was hinter dieser Tür liegt. Sie werden bemerken, dass sie in der Nähe der Tür sitzt, am Spalt schnüffelt, vielleicht miaut, um hinausgelassen zu werden.",
-          "Dies ist ein guter Zeitpunkt, sie den Rest Ihres Hauses erkunden zu lassen, aber tun Sie es strategisch. Am besten lassen Sie sie heraus, wenn das Haus ruhig ist; wenn andere Familienmitglieder entweder weg sind oder still sitzen und sich nicht viel bewegen. Die Katze wird erkunden, erkunden, erkunden. Jede Ecke, jedes Möbelstück, jeden seltsamen Geruch. Das kann Stunden dauern, und sie wird sich vielleicht mehrmals in ihren sicheren Raum zurückziehen. Das ist in Ordnung. Es ist ein Prozess der Erweiterung ihres Territoriums in kleinen, handhabbaren Dosen."
+          "Sobald die Katze sich sicherer fühlt, darf sie beginnen, andere Räume zu erkunden. Sie wagt vorsichtige Schritte, beobachtet neugierig Ecken und testet neue Plätze. Dies ist der richtige Zeitpunkt, um die Umgebung schrittweise zu erweitern.",
+          "Decken, Spielzeug oder Kartons aus dem Basecamp können in die neuen Räume gebracht werden, damit vertraute Gerüche Sicherheit geben. Lobe mutiges Verhalten, aber zwinge keine Aktivitäten. Kratzbäume und Aussichtspunkte sollten immer vor Fenster oder Glasbalkontüren stehen, da Katzen diese nur dann nutzen."
         ],
-        "tip": "Stellen Sie eine zuvor benutzte Katzentoilette (mit etwas ihres eigenen Abfalls) im \"neuen\" Teil des Hauses auf. Der vertraute Geruch ihres eigenen Urins ist seltsam beruhigend für sie; er sagt: \"Ich war hier, das gehört mir, das ist sicher.\""
+        "tip": "Kratzbäume immer vor Lichtquellen platzieren. Nur so werden sie genutzt."
       },
       {
-        "day": "Tag 5–10",
-        "title": "Neues Zuhause, neues Ich",
+        "day": "Phase 4",
+        "title": "Tag 10–20 – Zwei Schritte vor, einer zurück",
         "content": [
-          "In dieser Phase beginnen Katzen, ihre wahre Persönlichkeit zu zeigen. Manche sind albern und verspielt und werfen Dinge von Tischen, nur um sie fallen zu sehen. Manche sind gesprächig und miauen laut zu ungewöhnlichen Zeiten, als ob sie ihren inneren Monolog erzählen würden. Manche sind noch vorsichtig, beobachten Sie aus der Distanz und tauen in ihrem eigenen Tempo auf.",
-          "Was auch immer der Fall ist, diese Phase ist ein Test der Geduld; glauben Sie uns, das gilt sowohl für Mensch als auch für Katze. Sie gewöhnt sich an Ihre Zeitpläne: wann Sie aufwachen, wann Sie gehen, wann Sie zurückkommen, wann Sie schlafen. Sie lernt die Rhythmen Ihres Haushalts. Und Sie lernen ihre.",
-          "Sie werden sie vielleicht an unerwarteten Orten schlafen finden, um 4 Uhr morgens Futter fordern oder plötzlich ohne ersichtlichen Grund durch das Haus rasen (das ist normal; es wird \"Zoomies\" genannt). Nehmen Sie es an. Das ist Ihre Katze, die herausfindet, wie sie mit Ihnen leben kann."
+          "Die Katze wirkt vertraut, kann aber nachts rufen oder umherwandern. Dies ist ein normaler Teil der Anpassung. Sie zeigt nun ihre Gefühle und verarbeitet Heimweh, Unsicherheit oder neue Eindrücke.",
+          "Du kannst sie unterstützen, indem du Feliway-Spray auf Bett, Decken und Kratzbaum nutzt, Kartons mit Papier als Duftanker bereitstellst und diese schrittweise in andere Räume verschiebst. Ein stabiler Tagesablauf mit Fütterung, Spiel, Belohnung und Ruhe hilft ihr, Sicherheit zu gewinnen. Leise Musik oder Brown Noise in der Nacht kann zusätzlich beruhigen."
         ],
-        "tip": "Halten Sie so gut wie möglich an einer Routine fest. Füttern Sie sie jeden Tag zur gleichen Zeit. Katzen sind Gewohnheitstiere, und Vorhersehbarkeit hilft ihnen, sich sicher zu fühlen."
+        "tip": "Nachtweinen ist normal. Bleib ruhig und präsent, das gibt Orientierung."
       },
       {
-        "day": "Tag 10–20",
-        "title": "Zwei Schritte vor, einer zurück",
+        "day": "Phase 5",
+        "title": "Tag 20–30 – Unterwegs",
         "content": [
-          "In vielen Fällen, gerade wenn Sie das Gefühl haben, dass sich Ihre Katze eingelebt hat, wird es irgendein Zeichen oder Verhaltensvorfall geben, der Sie direkt zurück auf Tag eins versetzt. Sie faucht ein Familienmitglied an. Sie weigert sich, einen ganzen Tag aus dem Versteck zu kommen. Sie benutzt die Katzentoilette nicht mehr. Es fühlt sich an, als wäre all Ihre Arbeit zunichtegemacht.",
-          "Das ist sie nicht. Das ist völlig normal.",
-          "Das bedeutet nicht, dass all die Arbeit zunichtegemacht wurde; es ist nur so, dass dies ein nicht-linearer Prozess ist. Genau wie bei menschlichen Kindern brauchen Katzen ihre Zeit, um ihre neue Umgebung, ihre neuen Gewohnheiten, ihre neuen Verhaltensweisen zu lernen. Es wird Rückschläge geben. Ein lautes Geräusch könnte sie erschrecken. Ein neuer Besucher könnte ihre Angst zurücksetzen. Eine Änderung in Ihrem Zeitplan könnte sie durcheinanderbringen.",
-          "Halten Sie durch. Geraten Sie nicht in Panik, werden Sie nicht frustriert und geben Sie vor allem nicht auf. Sie wird verinnerlichen, was sie gelernt hat. Die Rückschläge werden kleiner und seltener. Eines Tages werden Sie feststellen, dass Sie sich nicht erinnern können, wann sie sich zuletzt vor Ihnen versteckt hat."
+          "Jetzt beginnt die Katze, Routinen gut zu erkennen. Vorhersehbarkeit vermittelt Sicherheit und reduziert Stress. Ein stabiler Tagesablauf erleichtert die Anpassung und stärkt die Bindung.",
+          "Biete regelmäßige Fütterungszeiten und kleine Jagdspiele an, wechsle Spielzeuge und Klettermöglichkeiten ab, richte sichere Rückzugsplätze ein und achte auf geeignete Kratzmöglichkeiten. Wenn die Katze etwas tut, das dir nicht gefällt – zum Beispiel auf den Klavierdeckel springt oder in deinen Teller geht – bestrafe sie nicht. Sorge stattdessen dafür, dass es eine klare, attraktive Alternative gibt, die genauso spannend ist. Belohne die Katze, wenn sie diese Alternative benutzt. So lernt sie von selbst, wohin sie darf, ohne Angst oder Frust.",
+          "Positive Verstärkung ist wichtiger als Strafe, um Vertrauen aufzubauen und gewünschtes Verhalten zu fördern."
         ],
-        "tip": "Wenn ein bestimmter Vorfall einen Rückfall verursacht, erzwingen Sie keine Erholung. Geben Sie ihr Raum, gehen Sie zu den Grundlagen zurück (mehr Zeit im sicheren Raum, ruhigere Umgebung) und lassen Sie sie in ihrem eigenen Tempo zu Ihnen zurückkommen."
+        "tip": "Futter- und Spielrituale stabil halten, denn Routine beruhigt und schafft Sicherheit. Schaffe klare Alternativen für unerwünschtes Verhalten und belohne die Katze, wenn sie sie nutzt."
       },
       {
-        "day": "Tag 20+",
-        "title": "Hallo Welt!",
+        "day": "Phase 6",
+        "title": "Nach 1 Monat – Hallo Welt!",
         "content": [
-          "Die Katze ist aus dem Sack, buchstäblich. Ihr Zuhause ist jetzt ihr Zuhause. Das Verstecken hat aufgehört. Das Misstrauen ist verblasst. Sie werden sie an sonnigen Plätzen liegen sehen, Sie an der Tür begrüßen, vielleicht sogar in Ihrem Bett schlafen (ob Sie sie eingeladen haben oder nicht).",
-          "Zu diesem Zeitpunkt liegen die meisten Holprigkeiten hinter Ihnen. Ihre Katze weiß, wo das Futter ist, wo die Katzentoilette ist, wo die besten Schlafplätze sind. Sie kennt Ihre Stimme, Ihre Schritte, Ihren Geruch. Und Sie kennen ihre Eigenheiten, ihre Vorlieben, ihre kleinen Arten, um Aufmerksamkeit zu bitten.",
-          "Das bedeutet nicht, dass das Lernen aufhört; Katzen überraschen Sie weiterhin jahrelang. Aber der schwierige Teil? Der ist vorbei. Sie haben es geschafft. Und sie auch."
-        ]
+          "Nach etwa einem Monat zeigt die Katze mehr Selbstvertrauen. Sie erkundet die Wohnung sicher, findet Lieblingsplätze und schnurrt zunehmend. Nun erkennt sie, dass dies ihr Zuhause ist und dass du ihr vertrauter Ansprechpartner bist.",
+          "Für ein langfristig harmonisches Zusammenleben solltest du weiterhin Spiel- und Klettermöglichkeiten bieten, Stresssignale beobachten, Rituale stabil halten und Liebe ruhig, aber konsequent geben."
+        ],
+        "tip": "Geduld, Zeit und eine klare Routine sind die besten Werkzeuge, um Vertrauen aufzubauen und eine starke Bindung zu schaffen."
       }
     ],
     "closing": {

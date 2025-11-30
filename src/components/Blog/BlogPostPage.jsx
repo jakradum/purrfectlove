@@ -5,6 +5,7 @@ import styles from './BlogPostPage.module.css';
 import { client } from '@/sanity/lib/client';
 import imageUrlBuilder from '@sanity/image-url';
 import Breadcrumb from '@/components/Breadcrumb';
+import Link from 'next/link';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -27,6 +28,22 @@ function truncateText(text, maxLength) {
   if (text.length <= maxLength) return text;
   return text.substring(0, maxLength).trim() + '...';
 }
+
+// Custom components for PortableText rendering
+const portableTextComponents = {
+  marks: {
+    link: ({children, value}) => {
+      const { href, openInNewTab } = value;
+      return openInNewTab ? (
+        <a href={href} target="_blank" rel="noopener noreferrer">
+          {children}
+        </a>
+      ) : (
+        <a href={href}>{children}</a>
+      );
+    }
+  }
+};
 
 export default async function BlogPostPage({ slug, locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
@@ -54,8 +71,7 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
       },
       author-> {
         name,
-        role,
-        bio,
+        "slug": slug.current,
         image {
           asset-> {
             _id,
@@ -65,8 +81,7 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
       },
       authorDe-> {
         name,
-        role,
-        bio,
+        "slug": slug.current,
         image {
           asset-> {
             _id,
@@ -86,8 +101,9 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
   const title = post.title?.[locale] || post.title?.en || '';
   const postContent = post.content?.[locale] || post.content?.en || [];
   const author = locale === 'de' ? (post.authorDe || post.author) : post.author;
-  const authorBio = author?.bio?.[locale] || author?.bio?.en;
-  const authorBioText = truncateText(extractPlainText(authorBio), 50);
+  const authorHref = author?.slug
+    ? (locale === 'de' ? `/de/about/${author.slug}` : `/about/${author.slug}`)
+    : null;
 
   const formattedDate = new Date(post.publishedAt).toLocaleDateString(
     locale === 'de' ? 'de-DE' : 'en-US',
@@ -184,23 +200,35 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
           <header className={styles.header}>
             <time className={styles.date}>{formattedDate}</time>
             <h1 className={styles.title}>{title}</h1>
-            {author && (
-              <div className={styles.authorByline}>
-                {author.image?.asset && (
-                  <img
-                    src={urlFor(author.image).width(48).height(48).url()}
-                    alt={author.name}
-                    className={styles.authorImage}
-                  />
-                )}
-                <div className={styles.authorInfo}>
-                  <span className={styles.authorName}>{author.name}</span>
-                  {authorBioText && (
-                    <span className={styles.authorBio}>{authorBioText}</span>
-                  )}
-                </div>
-              </div>
-            )}
+            <div className={styles.authorByline}>
+              {author ? (
+                authorHref ? (
+                  <Link href={authorHref} className={styles.authorLink}>
+                    {author.image?.asset && (
+                      <img
+                        src={urlFor(author.image).width(48).height(48).url()}
+                        alt={author.name}
+                        className={styles.authorImage}
+                      />
+                    )}
+                    <span className={styles.authorName}>{author.name}</span>
+                  </Link>
+                ) : (
+                  <>
+                    {author.image?.asset && (
+                      <img
+                        src={urlFor(author.image).width(48).height(48).url()}
+                        alt={author.name}
+                        className={styles.authorImage}
+                      />
+                    )}
+                    <span className={styles.authorName}>{author.name}</span>
+                  </>
+                )
+              ) : (
+                <span className={styles.authorName}>Purrfect Love Team</span>
+              )}
+            </div>
           </header>
 
           {post.featuredImage?.asset && (
@@ -214,7 +242,7 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
           )}
 
           <div className={styles.content}>
-            <PortableText value={postContent} />
+            <PortableText value={postContent} components={portableTextComponents} />
           </div>
 
           <Breadcrumb items={breadcrumbItems} />

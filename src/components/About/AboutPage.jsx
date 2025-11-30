@@ -13,30 +13,6 @@ function urlFor(source) {
   return builder.image(source);
 }
 
-// Extract plain text from PortableText blocks and truncate
-function truncateBio(bioBlocks, maxChars = 100) {
-  if (!bioBlocks || bioBlocks.length === 0) return '';
-
-  let text = '';
-  for (const block of bioBlocks) {
-    if (block._type === 'block' && block.children) {
-      for (const child of block.children) {
-        if (child.text) {
-          text += child.text + ' ';
-        }
-      }
-    }
-  }
-
-  text = text.trim();
-  if (text.length <= maxChars) return text;
-
-  // Truncate at word boundary
-  const truncated = text.substring(0, maxChars);
-  const lastSpace = truncated.lastIndexOf(' ');
-  return (lastSpace > 0 ? truncated.substring(0, lastSpace) : truncated) + '...';
-}
-
 export default async function AboutPage({ locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
   const aboutContent = content.about;
@@ -47,7 +23,6 @@ export default async function AboutPage({ locale = 'en' }) {
       name,
       "slug": slug.current,
       "role": role.${locale},
-      "bio": bio.${locale},
       image {
         asset-> {
           _id,
@@ -83,7 +58,6 @@ export default async function AboutPage({ locale = 'en' }) {
               const memberHref = member.slug
                 ? (locale === 'de' ? `/de/about/${member.slug}` : `/about/${member.slug}`)
                 : null;
-              const truncatedBio = truncateBio(member.bio, 100);
 
               const cardContent = (
                 <>
@@ -100,9 +74,6 @@ export default async function AboutPage({ locale = 'en' }) {
                     <h3 className={styles.name}>{member.name}</h3>
                     {member.role && (
                       <p className={styles.role}>{member.role}</p>
-                    )}
-                    {truncatedBio && (
-                      <p className={styles.bio}>{truncatedBio}</p>
                     )}
                     {memberHref && (
                       <span className={styles.readMore}>
