@@ -3,6 +3,7 @@
 import { useState, useEffect, Fragment } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import { usePathname } from 'next/navigation';
 import styles from './Navbar.module.css';
 import menuItemsEN from '@/data/menuItems.en.json';
 import menuItemsDE from '@/data/menuItems.de.json';
@@ -14,13 +15,30 @@ export default function Navbar({ locale = 'en' }) {
   const [isClosing, setIsClosing] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [mobileExpandedMenu, setMobileExpandedMenu] = useState(null);
+  const pathname = usePathname();
 
   const menuItems = locale === 'de' ? menuItemsDE : menuItemsEN;
   const { navLinks, cta } = menuItems;
 
+  // Get language switcher hrefs that preserve current page
+  const getLanguageHref = (targetLocale) => {
+    if (targetLocale === 'de') {
+      // Switch to German: add /de prefix if not already there
+      if (pathname.startsWith('/de')) return pathname;
+      return `/de${pathname === '/' ? '' : pathname}`;
+    } else {
+      // Switch to English: remove /de prefix
+      if (pathname.startsWith('/de')) {
+        const withoutDe = pathname.replace(/^\/de/, '');
+        return withoutDe || '/';
+      }
+      return pathname;
+    }
+  };
+
   const languages = [
-    { code: 'en', label: 'EN', fullLabel: 'English', href: '/' },
-    { code: 'de', label: 'DE', fullLabel: 'Deutsch', href: '/de' }
+    { code: 'en', label: 'EN', fullLabel: 'English', href: getLanguageHref('en') },
+    { code: 'de', label: 'DE', fullLabel: 'Deutsch', href: getLanguageHref('de') }
   ];
 
   useEffect(() => {
@@ -55,7 +73,7 @@ export default function Navbar({ locale = 'en' }) {
     <nav className={`${styles.navbar} ${isVisible ? styles.visible : styles.hidden}`}>
       <div className={styles.container}>
         <div className={styles.navContent}>
-          <Link href="/" className={styles.logo}>
+          <Link href={locale === 'de' ? '/de' : '/'} className={styles.logo}>
             <Image src="/logo.svg" alt="Purrfect Love" width={180} height={60} className={styles.logoImage} />
           </Link>
 

@@ -1,0 +1,75 @@
+/* src/components/Adopt/CatNavigation.module.css */
+.navigation {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1.5rem 0;
+  margin-top: 1rem;
+}
+
+.navButton {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.75rem 1rem;
+  background: var(--paw-pink);
+  border-radius: 8px;
+  text-decoration: none;
+  color: var(--hunter-green);
+  font-family: var(--font-outfit);
+  font-size: 0.9375rem;
+  font-weight: 500;
+  transition: background-color 0.2s, transform 0.2s;
+}
+
+.navButton:hover {
+  background: var(--tabby-brown);
+  color: white;
+  transform: translateX(0);
+}
+
+.navButton:first-child:hover {
+  transform: translateX(-4px);
+}
+
+.navButton:last-child:hover {
+  transform: translateX(4px);
+}
+
+.catName {
+  max-width: 120px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.navPlaceholder {
+  width: 120px;
+}
+
+.swipeHint {
+  display: flex;
+  justify-content: center;
+  padding: 1rem 0;
+}
+
+.swipeText {
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+  color: var(--text-light);
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.swipeText::before,
+.swipeText::after {
+  content: '←→';
+  font-size: 0.75rem;
+}
+
+@media (max-width: 768px) {
+  .navigation {
+    display: none;
+  }
+}

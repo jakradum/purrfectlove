@@ -6,6 +6,7 @@ import imageUrlBuilder from '@sanity/image-url';
 import Breadcrumb from '@/components/Breadcrumb';
 import AdoptButton from './AdoptButton';
 import ImageGallery from './ImageGallery';
+import CatNavigation from './CatNavigation';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -92,6 +93,24 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
     notFound();
   }
 
+  // Fetch all available cats for navigation
+  const allCatsQuery = locale === 'de'
+    ? `*[_type == "cat" && defined(locationDe) && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+        name,
+        "slug": slug.current
+      }`
+    : `*[_type == "cat" && defined(locationEn) && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+        name,
+        "slug": slug.current
+      }`;
+
+  const allCats = await client.fetch(allCatsQuery, {}, { cache: 'no-store' });
+
+  // Find current cat index and get prev/next
+  const currentIndex = allCats.findIndex(c => c.slug === slug);
+  const prevCat = currentIndex > 0 ? allCats[currentIndex - 1] : null;
+  const nextCat = currentIndex < allCats.length - 1 ? allCats[currentIndex + 1] : null;
+
   const exactAge = formatAge(cat.ageMonths, adoptContent);
   const ageDisplay = exactAge || adoptContent.ageGroups?.[cat.age] || cat.age;
   const goodWithList = getGoodWithList(cat.goodWith, adoptContent.labels);
@@ -156,6 +175,8 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
             <AdoptButton cat={cat} content={adoptContent} />
           </div>
         </div>
+
+        <CatNavigation prevCat={prevCat} nextCat={nextCat} locale={locale} />
 
         <Breadcrumb items={breadcrumbItems} />
       </div>

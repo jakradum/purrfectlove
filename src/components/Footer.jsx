@@ -1,13 +1,31 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import { Instagram } from 'lucide-react';
 import styles from './Footer.module.css';
 import footerContentEN from '@/data/footerContent.en.json';
 import footerContentDE from '@/data/footerContent.de.json';
 
 export default function Footer({ locale = 'en' }) {
+  const pathname = usePathname();
   const content = locale === 'de' ? footerContentDE : footerContentEN;
   const currentYear = new Date().getFullYear();
   const copyright = content.copyright.replace('{year}', currentYear);
+
+  // Get language switcher hrefs that preserve current page
+  const getLanguageHref = (targetLocale) => {
+    if (targetLocale === 'de') {
+      if (pathname.startsWith('/de')) return pathname;
+      return `/de${pathname === '/' ? '' : pathname}`;
+    } else {
+      if (pathname.startsWith('/de')) {
+        const withoutDe = pathname.replace(/^\/de/, '');
+        return withoutDe || '/';
+      }
+      return pathname;
+    }
+  };
 
   return (
     <footer className={styles.footer}>
@@ -70,15 +88,15 @@ export default function Footer({ locale = 'en' }) {
             </p>
           </div>
           <div className={styles.languageSwitcher}>
-            <Link 
-              href="/" 
+            <Link
+              href={getLanguageHref('en')}
               className={locale === 'en' ? styles.activeLanguage : styles.inactiveLanguage}
             >
               EN
             </Link>
             <span className={styles.separator}>|</span>
-            <Link 
-              href="/de" 
+            <Link
+              href={getLanguageHref('de')}
               className={locale === 'de' ? styles.activeLanguage : styles.inactiveLanguage}
             >
               DE
