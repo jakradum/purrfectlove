@@ -32,7 +32,7 @@ export default function HomePage({ locale = 'en' }) {
           <p>{content.home.hero.sideText}</p>
         </div>
       </section>
-        <AboutSection content={content.home.about} />
+        <AboutSection content={content.home.about} locale={locale} />
         <AdoptionProcess content={content.home.process} locale={locale} />
         <HappyCats content={content.home.happyCats} locale={locale} />
         <FeaturedArticles content={content.home.featuredArticles} locale={locale} />

@@ -2,7 +2,9 @@
 import styles from './AboutSection.module.css';
 import CTAButton from '@/components/CTAButton';
 
-export default function AboutSection({ content }) {
+export default function AboutSection({ content, locale = 'en' }) {
+  const adoptHref = locale === 'de' ? '/de/adopt' : '/adopt';
+
   return (
     <section className={styles.about}>
       <h2 className={styles.aboutHeading}>
@@ -20,7 +22,7 @@ export default function AboutSection({ content }) {
         ))}
       </div>
       <div className={styles.ctaWrapper}>
-        <CTAButton href="/adopt">
+        <CTAButton href={adoptHref}>
           {content.cta}
         </CTAButton>
       </div>
