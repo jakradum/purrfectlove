@@ -84,6 +84,7 @@
     },
     "adoptButton": "{catName} adoptieren",
     "adoptAnyCat": {
+      "prompt": "Keine bestimmte Katze im Sinn?",
       "button": "Jede Katze adoptieren",
       "title": "Eine Katze adoptieren",
       "subtitle": "",
@@ -177,7 +178,7 @@
   },
   "contact": {
     "heading": "Kontakt aufnehmen",
-    "subheading": "Möchten Sie uns kontaktieren? Füllen Sie das Formular aus und wir melden uns.",
+    "subheading": "Möchten Sie uns zu etwas anderem als Adoptionen kontaktieren? Schreiben Sie uns hier. Vielleicht möchten Sie zuerst unsere FAQs lesen.",
     "faqLink": {
       "text": "Zu den FAQs",
       "href": "/de/guides/faqs"

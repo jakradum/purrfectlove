@@ -83,6 +83,7 @@
     },
     "adoptButton": "Adopt {catName}",
     "adoptAnyCat": {
+      "prompt": "Not particular about any cat?",
       "button": "Adopt any cat",
       "title": "Adopt a Cat",
       "subtitle": "",
@@ -176,7 +177,7 @@
   },
   "contact": {
     "heading": "Get in Touch",
-    "subheading": "Looking to get in touch? Fill out the form and we'll get back.",
+    "subheading": "Want to contact us about something other than adoptions? Write to us here. You might want to see our FAQs first.",
     "faqLink": {
       "text": "Jump to FAQs",
       "href": "/guides/faqs"

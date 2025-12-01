@@ -7,6 +7,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import AdoptButton from './AdoptButton';
 import ImageGallery from './ImageGallery';
 import CatNavigation from './CatNavigation';
+import SwipeWrapper from './SwipeWrapper';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -111,6 +112,10 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
   const prevCat = currentIndex > 0 ? allCats[currentIndex - 1] : null;
   const nextCat = currentIndex < allCats.length - 1 ? allCats[currentIndex + 1] : null;
 
+  // Build hrefs for swipe navigation
+  const prevHref = prevCat ? (locale === 'de' ? `/de/adopt/${prevCat.slug}` : `/adopt/${prevCat.slug}`) : null;
+  const nextHref = nextCat ? (locale === 'de' ? `/de/adopt/${nextCat.slug}` : `/adopt/${nextCat.slug}`) : null;
+
   const exactAge = formatAge(cat.ageMonths, adoptContent);
   const ageDisplay = exactAge || adoptContent.ageGroups?.[cat.age] || cat.age;
   const goodWithList = getGoodWithList(cat.goodWith, adoptContent.labels);
@@ -124,62 +129,64 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
   ];
 
   return (
-    <main className={styles.main}>
-      <div className={styles.container}>
-        <Breadcrumb items={breadcrumbItems} />
+    <SwipeWrapper prevHref={prevHref} nextHref={nextHref}>
+      <main className={styles.main}>
+        <div className={styles.container}>
+          <Breadcrumb items={breadcrumbItems} />
 
-        <div className={styles.content}>
-          <div className={styles.gallery}>
-            <ImageGallery
-              images={prepareImages(cat.photos)}
-              catName={cat.name}
-            />
-          </div>
-
-          <div className={styles.details}>
-            <h1 className={styles.name}>{cat.name}</h1>
-
-            <div className={styles.meta}>
-              {ageDisplay && <span className={styles.age}>{ageDisplay}</span>}
+          <div className={styles.content}>
+            <div className={styles.gallery}>
+              <ImageGallery
+                images={prepareImages(cat.photos)}
+                catName={cat.name}
+              />
             </div>
 
-            {cat.traits && (
-              <p className={styles.traits}>{cat.traits}</p>
-            )}
+            <div className={styles.details}>
+              <h1 className={styles.name}>{cat.name}</h1>
 
-            <p className={styles.description}>{cat.description}</p>
+              <div className={styles.meta}>
+                {ageDisplay && <span className={styles.age}>{ageDisplay}</span>}
+              </div>
 
-            <div className={styles.info}>
-              {cat.location && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>{adoptContent.labels.location}</span>
-                  <span className={styles.infoValue}>{cat.location}</span>
-                </div>
+              {cat.traits && (
+                <p className={styles.traits}>{cat.traits}</p>
               )}
 
-              {cat.healthStatus?.vaccinated && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>{adoptContent.labels.vaccinated}</span>
-                  <span className={styles.infoValue}>✓</span>
-                </div>
-              )}
+              <p className={styles.description}>{cat.description}</p>
 
-              {goodWithList.length > 0 && (
-                <div className={styles.infoItem}>
-                  <span className={styles.infoLabel}>{adoptContent.labels.goodWith}</span>
-                  <span className={styles.infoValue}>{goodWithList.join(', ')}</span>
-                </div>
-              )}
+              <div className={styles.info}>
+                {cat.location && (
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>{adoptContent.labels.location}</span>
+                    <span className={styles.infoValue}>{cat.location}</span>
+                  </div>
+                )}
+
+                {cat.healthStatus?.vaccinated && (
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>{adoptContent.labels.vaccinated}</span>
+                    <span className={styles.infoValue}>✓</span>
+                  </div>
+                )}
+
+                {goodWithList.length > 0 && (
+                  <div className={styles.infoItem}>
+                    <span className={styles.infoLabel}>{adoptContent.labels.goodWith}</span>
+                    <span className={styles.infoValue}>{goodWithList.join(', ')}</span>
+                  </div>
+                )}
+              </div>
+
+              <AdoptButton cat={cat} content={adoptContent} />
             </div>
-
-            <AdoptButton cat={cat} content={adoptContent} />
           </div>
+
+          <CatNavigation prevCat={prevCat} nextCat={nextCat} locale={locale} />
+
+          <Breadcrumb items={breadcrumbItems} />
         </div>
-
-        <CatNavigation prevCat={prevCat} nextCat={nextCat} locale={locale} />
-
-        <Breadcrumb items={breadcrumbItems} />
-      </div>
-    </main>
+      </main>
+    </SwipeWrapper>
   );
 }

@@ -1,72 +1,15 @@
 /* src/components/Adopt/CatNavigation.module.css */
 
-/* Desktop navigation */
 .navigation {
   display: flex;
   justify-content: space-between;
   align-items: center;
   padding: 1.5rem 0;
   margin-top: 1rem;
-}
-
-.navButton {
-  display: flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.75rem 1rem;
-  background: var(--paw-pink);
-  border-radius: 8px;
-  text-decoration: none;
-  color: var(--hunter-green);
-  font-family: var(--font-outfit);
-  font-size: 0.9375rem;
-  font-weight: 500;
-  transition: background-color 0.2s, transform 0.2s;
-}
-
-.navButton:hover {
-  background: var(--tabby-brown);
-  color: white;
-  transform: translateX(0);
-}
-
-.navButton:first-child:hover {
-  transform: translateX(-4px);
-}
-
-.navButton:last-child:hover {
-  transform: translateX(4px);
-}
-
-.catName {
-  max-width: 120px;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  white-space: nowrap;
-}
-
-.navPlaceholder {
-  width: 120px;
-}
-
-/* Mobile navigation */
-.mobileNavigation {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 1.5rem 0;
-  margin-top: 1rem;
-}
-
-.mobileButtons {
-  display: flex;
-  justify-content: space-between;
-  width: 100%;
   gap: 1rem;
 }
 
-.mobileNavButton {
+.navButton {
   display: flex;
   align-items: center;
   gap: 0.25rem;
@@ -78,45 +21,55 @@
   font-family: var(--font-outfit);
   font-size: 0.875rem;
   font-weight: 500;
-  flex: 1;
-  justify-content: center;
-  max-width: 45%;
+  transition: background-color 0.2s, transform 0.2s;
 }
 
-.mobileNavButton:active {
+.navButton:hover,
+.navButton:active {
   background: var(--tabby-brown);
   color: white;
 }
 
-.mobileNavButton span {
-  max-width: 80px;
+.catName {
+  max-width: 100px;
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
 
-.mobileNavPlaceholder {
-  flex: 1;
-  max-width: 45%;
+.navPlaceholder {
+  width: 100px;
 }
 
 .swipeHint {
   font-family: var(--font-outfit);
   font-size: 0.75rem;
   color: var(--text-light);
-  margin: 0;
+  text-align: center;
+  display: none;
 }
 
-/* Hide desktop nav on mobile */
 @media (max-width: 768px) {
   .navigation {
-    display: none;
+    flex-wrap: wrap;
+    justify-content: center;
   }
-}
 
-/* Hide mobile nav on desktop */
-@media (min-width: 769px) {
-  .mobileNavigation {
-    display: none;
+  .navButton {
+    flex: 1;
+    justify-content: center;
+    max-width: 45%;
+  }
+
+  .navPlaceholder {
+    flex: 1;
+    max-width: 45%;
+  }
+
+  .swipeHint {
+    display: block;
+    width: 100%;
+    order: 3;
+    margin-top: 0.5rem;
   }
 }

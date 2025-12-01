@@ -6,6 +6,7 @@ export default function AdoptAnyCatButton({ content, locale = 'en' }) {
 
   return (
     <div className={styles.wrapper}>
+      <p className={styles.prompt}>{content.adoptAnyCat.prompt}</p>
       <Link href={href} className={styles.button}>
         {content.adoptAnyCat.button}
       </Link>
