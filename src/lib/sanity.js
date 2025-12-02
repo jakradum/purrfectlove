@@ -61,8 +61,8 @@ export const queries = {
     description
   }`,
 
-  // Get team members
-  teamMembers: `*[_type == "teamMember"] | order(order asc) {
+  // Get team members (filtered by language)
+  teamMembers: (locale = 'en') => `*[_type == "teamMember" && (language == "${locale}" || language == "both" || !defined(language))] | order(order asc) {
     _id,
     name,
     role,

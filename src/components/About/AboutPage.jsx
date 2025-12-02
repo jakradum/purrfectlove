@@ -18,7 +18,7 @@ export default async function AboutPage({ locale = 'en' }) {
   const aboutContent = content.about;
 
   const teamMembers = await client.fetch(
-    `*[_type == "teamMember" && showOnWebsite == true] | order(order asc) {
+    `*[_type == "teamMember" && showOnWebsite == true && (language == $locale || language == "both" || !defined(language))] | order(order asc) {
       _id,
       name,
       "slug": slug.current,
@@ -30,7 +30,7 @@ export default async function AboutPage({ locale = 'en' }) {
         }
       }
     }`,
-    {},
+    { locale },
     { next: { revalidate: 60 } }
   );
 

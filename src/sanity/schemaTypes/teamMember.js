@@ -13,6 +13,21 @@ export default defineType({
       initialValue: false
     }),
     defineField({
+      name: 'language',
+      title: 'Language / Region',
+      type: 'string',
+      options: {
+        list: [
+          { title: 'English (IN)', value: 'en' },
+          { title: 'German (DE)', value: 'de' },
+          { title: 'Both', value: 'both' }
+        ],
+        layout: 'radio'
+      },
+      description: 'Which version of the site should this team member appear on?',
+      initialValue: 'both'
+    }),
+    defineField({
       name: 'name',
       title: 'Name',
       type: 'string',
