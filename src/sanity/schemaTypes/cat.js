@@ -71,6 +71,7 @@ export default {
         maxLength: 96,
         slugify: slugifyWithUnique
       },
+      description: 'URL path (e.g. "whiskers" → /adopt/whiskers)',
       validation: Rule => Rule.required()
     },
     {
@@ -83,6 +84,7 @@ export default {
           hotspot: true
         }
       }],
+      description: 'First photo is the main image shown on cards',
       validation: Rule => Rule.min(1).max(10).required()
     },
     {

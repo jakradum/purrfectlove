@@ -29,6 +29,11 @@ export default async function HappyCats({ content, locale }) {
     { next: { revalidate: 60 } }
   );
 
+  // Don't render section if no stories
+  if (!stories || stories.length === 0) {
+    return null;
+  }
+
   return (
     <section className={styles.happyCats}>
       <h2 className={styles.heading}>{content.heading}</h2>

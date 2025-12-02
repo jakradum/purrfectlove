@@ -65,6 +65,7 @@ export default defineType({
       title: 'Slug (English)',
       type: 'slug',
       options: {source: 'title.en'},
+      description: 'URL path (e.g. "cat-care-tips" → /guides/blog/cat-care-tips)',
       validation: Rule => Rule.required()
     }),
     defineField({
@@ -72,12 +73,13 @@ export default defineType({
       title: 'Slug (German)',
       type: 'slug',
       options: {source: 'title.de'},
-      description: 'Optional - uses English slug if not set'
+      description: 'URL path for German (e.g. "katzen-tipps" → /de/guides/blog/katzen-tipps)'
     }),
     defineField({
       name: 'excerpt',
       title: 'Excerpt',
-      type: 'localeText'
+      type: 'localeText',
+      description: 'Short preview shown at the top of the blog post'
     }),
     defineField({
       name: 'content',
@@ -88,7 +90,8 @@ export default defineType({
       name: 'featuredImage',
       title: 'Featured Image',
       type: 'image',
-      options: {hotspot: true}
+      options: {hotspot: true},
+      description: 'Main image shown on cards and at top of post'
     }),
     defineField({
       name: 'publishedAt',

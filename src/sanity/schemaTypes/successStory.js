@@ -32,7 +32,8 @@ export default defineType({
       name: 'image',
       title: 'Image',
       type: 'image',
-      options: {hotspot: true}
+      options: {hotspot: true},
+      description: '1:1 square ratio recommended'
     }),
     defineField({
       name: 'language',

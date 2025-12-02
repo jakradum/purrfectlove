@@ -26,6 +26,7 @@ export default defineType({
         source: 'name',
         maxLength: 96
       },
+      description: 'URL path (e.g. "jane-doe" → /about/jane-doe)',
       validation: Rule => Rule.custom((value, context) => {
         if (!context.document?.showOnWebsite) return true
         if (!value?.current) {
@@ -65,6 +66,7 @@ export default defineType({
       title: 'Photo',
       type: 'image',
       options: {hotspot: true},
+      description: '1:1 square ratio recommended',
       validation: Rule => Rule.custom((value, context) => {
         if (!context.document?.showOnWebsite) return true
         if (!value?.asset) {
@@ -77,6 +79,7 @@ export default defineType({
       name: 'order',
       title: 'Display Order',
       type: 'number',
+      description: 'Position in the team grid (1 = first)',
       validation: Rule => Rule.required()
     })
   ],

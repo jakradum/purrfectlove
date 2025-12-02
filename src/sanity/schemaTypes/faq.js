@@ -125,7 +125,7 @@ export default {
       name: 'order',
       title: 'Display Order',
       type: 'number',
-      description: 'Lower numbers appear first',
+      description: 'Position within category (1 = first)',
       validation: Rule => Rule.required().min(1).error('Display order is required')
     }
   ],
