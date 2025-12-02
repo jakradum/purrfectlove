@@ -3,6 +3,12 @@
     "title": "Purrfect Love",
     "description": "A cat adoption and rehab collective based in Bangalore and Stuttgart. We believe every cat deserves a loving home."
   },
+  "newsletter": {
+    "title": "The Purrfect Newsletter",
+    "description": "Monthly roundup of tips, cat care ideas, and more. Delivered to your inbox. We never spam.",
+    "placeholder": "Your email",
+    "button": "Subscribe"
+  },
   "quickLinks": {
     "title": "Quick Links",
     "links": [

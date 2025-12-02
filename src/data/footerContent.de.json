@@ -3,6 +3,12 @@
     "title": "Purrfect Love",
     "description": "Ein Katzenadoptions- und Rehakollektiv mit Sitz in Bangalore und Stuttgart. Wir glauben, dass jede Katze ein liebevolles Zuhause verdient."
   },
+  "newsletter": {
+    "title": "Der Purrfect Newsletter",
+    "description": "Monatliche Tipps, Katzenpflege-Ideen und mehr. Direkt in dein Postfach. Kein Spam.",
+    "placeholder": "Deine E-Mail",
+    "button": "Abonnieren"
+  },
   "quickLinks": {
     "title": "Schnelllinks",
     "links": [

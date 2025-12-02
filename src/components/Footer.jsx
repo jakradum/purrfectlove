@@ -1,5 +1,6 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
 import { Instagram } from 'lucide-react';
@@ -12,6 +13,45 @@ export default function Footer({ locale = 'en' }) {
   const content = locale === 'de' ? footerContentDE : footerContentEN;
   const currentYear = new Date().getFullYear();
   const copyright = content.copyright.replace('{year}', currentYear);
+
+  const [email, setEmail] = useState('');
+  const [subscribed, setSubscribed] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState('');
+
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  const handleSubscribe = async (e) => {
+    e.preventDefault();
+    setError('');
+
+    if (!email || !emailRegex.test(email)) {
+      setError(locale === 'de' ? 'Bitte gib eine gültige E-Mail ein' : 'Please enter a valid email');
+      return;
+    }
+
+    setLoading(true);
+
+    try {
+      const response = await fetch('/api/newsletter', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email }),
+      });
+
+      if (response.ok) {
+        setSubscribed(true);
+        setEmail('');
+      } else {
+        const data = await response.json();
+        setError(data.error || (locale === 'de' ? 'Fehler beim Abonnieren' : 'Failed to subscribe'));
+      }
+    } catch {
+      setError(locale === 'de' ? 'Fehler beim Abonnieren' : 'Failed to subscribe');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   // Get language switcher hrefs that preserve current page
   const getLanguageHref = (targetLocale) => {
@@ -66,6 +106,39 @@ export default function Footer({ locale = 'en' }) {
               <span>{content.social.instagram.label}</span>
             </a>
           </div>
+        </div>
+
+        {/* Newsletter */}
+        <div className={styles.section}>
+          <h3 className={styles.sectionTitle}>{content.newsletter.title}</h3>
+          <p className={styles.newsletterDescription}>{content.newsletter.description}</p>
+          {subscribed ? (
+            <p className={styles.subscribeSuccess}>
+              {locale === 'de' ? 'Danke! Du bist angemeldet.' : 'Thanks! You\'re subscribed.'}
+            </p>
+          ) : (
+            <form onSubmit={handleSubscribe} className={styles.newsletterForm}>
+              <input
+                type="email"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                placeholder={content.newsletter.placeholder}
+                className={styles.newsletterInput}
+                disabled={loading}
+                required
+              />
+              <button
+                type="submit"
+                className={styles.newsletterButton}
+                disabled={loading}
+              >
+                {loading
+                  ? (locale === 'de' ? '...' : '...')
+                  : content.newsletter.button}
+              </button>
+            </form>
+          )}
+          {error && <p className={styles.subscribeError}>{error}</p>}
         </div>
       </div>
 
