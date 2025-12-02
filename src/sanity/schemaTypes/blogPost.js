@@ -104,20 +104,33 @@ export default defineType({
       title: 'Feature on Home Page',
       type: 'boolean',
       initialValue: false,
-      description: 'Maximum 4 posts can be featured at a time',
+      description: 'Maximum 4 posts can be featured per language',
       validation: Rule => Rule.custom(async (value, context) => {
         if (!value) return true
 
         const {document, getClient} = context
         const client = getClient({apiVersion: '2024-01-01'})
+        const postLanguage = document?.language || 'both'
 
-        const featuredCount = await client.fetch(
-          `count(*[_type == "blogPost" && featuredOnHomePage == true && _id != $currentId])`,
+        // Count featured posts that would appear on English homepage
+        const featuredEnCount = await client.fetch(
+          `count(*[_type == "blogPost" && featuredOnHomePage == true && _id != $currentId && (language == "en" || language == "both")])`,
           {currentId: document._id}
         )
 
-        if (featuredCount >= 4) {
-          return 'Maximum 4 posts can be featured. Please unfeature another post first.'
+        // Count featured posts that would appear on German homepage
+        const featuredDeCount = await client.fetch(
+          `count(*[_type == "blogPost" && featuredOnHomePage == true && _id != $currentId && (language == "de" || language == "both")])`,
+          {currentId: document._id}
+        )
+
+        // Check limits based on which site(s) this post will appear on
+        if ((postLanguage === 'en' || postLanguage === 'both') && featuredEnCount >= 4) {
+          return 'Maximum 4 posts can be featured on English homepage. Please unfeature another English post first.'
+        }
+
+        if ((postLanguage === 'de' || postLanguage === 'both') && featuredDeCount >= 4) {
+          return 'Maximum 4 posts can be featured on German homepage. Please unfeature another German post first.'
         }
 
         return true
