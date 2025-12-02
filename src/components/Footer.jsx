@@ -36,7 +36,7 @@ export default function Footer({ locale = 'en' }) {
       const response = await fetch('/api/newsletter', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ email, language: locale === 'de' ? 'DE' : 'EN' }),
       });
 
       if (response.ok) {

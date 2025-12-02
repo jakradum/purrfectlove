@@ -5,7 +5,7 @@ const AIRTABLE_TABLE_NAME = 'Table 1';
 export async function POST(request) {
   try {
     const body = await request.json();
-    const { email } = body;
+    const { email, language } = body;
 
     // Email validation
     const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
@@ -30,6 +30,7 @@ export async function POST(request) {
             {
               fields: {
                 Email: email,
+                Language: language || 'EN',
                 Date: new Date().toISOString().split('T')[0],
               },
             },
