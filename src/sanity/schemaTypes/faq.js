@@ -8,12 +8,12 @@ export default {
       name: 'language',
       title: 'Language',
       type: 'string',
+      hidden: true,
       options: {
         list: [
           {title: 'English', value: 'en'},
           {title: 'German (Deutsch)', value: 'de'}
-        ],
-        layout: 'radio'
+        ]
       },
       validation: Rule => Rule.required().error('Please select a language')
     },
