@@ -231,28 +231,31 @@ export default {
       type: 'boolean',
       description: 'Show this cat on the homepage featured section',
       initialValue: false
+    },
+    {
+      name: 'adoptedOverride',
+      title: 'Mark as Adopted (Override)',
+      type: 'boolean',
+      description: 'Use if adopted outside the application system',
+      initialValue: false
     }
   ],
   preview: {
     select: {
       title: 'name',
       media: 'photos.0',
-      status: 'status',
       age: 'age',
       locationEn: 'locationEn',
-      locationDe: 'locationDe'
+      locationDe: 'locationDe',
+      adoptedOverride: 'adoptedOverride'
     },
-    prepare({title, media, status, age, locationEn, locationDe}) {
-      const statusLabels = {
-        available: 'Available',
-        pending: 'Pending',
-        adopted: 'Adopted',
-        foster: 'Foster'
-      }
+    prepare({title, media, age, locationEn, locationDe, adoptedOverride}) {
       const lang = locationDe ? 'DE' : locationEn ? 'EN' : 'No locale'
+      // Preview shows override status or "Available" - actual adoption status is shown in CatApplicationsDisplay
+      const displayStatus = adoptedOverride ? 'Adopted (Override)' : 'Available'
       return {
         title,
-        subtitle: `${age || 'Unknown age'} | ${statusLabels[status] || 'No status'} | ${lang}`,
+        subtitle: `${age || 'Unknown age'} | ${displayStatus} | ${lang}`,
         media
       }
     }
