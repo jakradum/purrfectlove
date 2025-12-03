@@ -3,29 +3,29 @@ export default {
   name: 'faq',
   title: 'FAQs',
   type: 'document',
-  fieldsets: [
-    {
-      name: 'english',
-      title: 'English Content',
-      options: { collapsible: true, collapsed: false }
-    },
-    {
-      name: 'german',
-      title: 'German Content (Deutscher Inhalt)',
-      options: { collapsible: true, collapsed: false }
-    }
-  ],
   fields: [
     {
-      name: 'questionEn',
-      title: 'Question (English)',
+      name: 'language',
+      title: 'Language',
       type: 'string',
-      fieldset: 'english',
-      validation: Rule => Rule.required().error('English question is required')
+      options: {
+        list: [
+          {title: 'English', value: 'en'},
+          {title: 'German (Deutsch)', value: 'de'}
+        ],
+        layout: 'radio'
+      },
+      validation: Rule => Rule.required().error('Please select a language')
     },
     {
-      name: 'answerEn',
-      title: 'Answer (English)',
+      name: 'question',
+      title: 'Question',
+      type: 'string',
+      validation: Rule => Rule.required().error('Question is required')
+    },
+    {
+      name: 'answer',
+      title: 'Answer',
       type: 'array',
       of: [
         {
@@ -57,52 +57,7 @@ export default {
           }
         }
       ],
-      fieldset: 'english',
-      validation: Rule => Rule.required().error('English answer is required')
-    },
-    {
-      name: 'questionDe',
-      title: 'Question (German / Frage)',
-      type: 'string',
-      fieldset: 'german',
-      validation: Rule => Rule.required().error('German question is required')
-    },
-    {
-      name: 'answerDe',
-      title: 'Answer (German / Antwort)',
-      type: 'array',
-      of: [
-        {
-          type: 'block',
-          styles: [{title: 'Normal', value: 'normal'}],
-          lists: [],
-          marks: {
-            decorators: [
-              {title: 'Bold', value: 'strong'},
-              {title: 'Italic', value: 'em'}
-            ],
-            annotations: [
-              {
-                name: 'link',
-                type: 'object',
-                title: 'Link',
-                fields: [
-                  {
-                    name: 'href',
-                    type: 'url',
-                    title: 'URL',
-                    validation: Rule => Rule.uri({
-                      scheme: ['http', 'https', 'mailto', 'tel']
-                    })
-                  }
-                ]
-              }
-            ]
-          }
-        }
-      ],
-      fieldset: 'german',
-      validation: Rule => Rule.required().error('German answer is required')
+      validation: Rule => Rule.required().error('Answer is required')
     },
     {
       name: 'category',
@@ -131,11 +86,11 @@ export default {
   ],
   preview: {
     select: {
-      questionEn: 'questionEn',
-      questionDe: 'questionDe',
-      category: 'category'
+      question: 'question',
+      category: 'category',
+      language: 'language'
     },
-    prepare({questionEn, questionDe, category}) {
+    prepare({question, category, language}) {
       const categoryLabels = {
         process: 'Adoption Process',
         requirements: 'Requirements',
@@ -145,9 +100,10 @@ export default {
         location: 'Location & Logistics',
         general: 'General'
       }
+      const langLabel = language === 'de' ? 'DE' : 'EN'
       return {
-        title: questionEn || questionDe || 'Untitled FAQ',
-        subtitle: categoryLabels[category] || category
+        title: question || 'Untitled FAQ',
+        subtitle: `${langLabel} | ${categoryLabels[category] || category}`
       }
     }
   },
@@ -164,6 +120,11 @@ export default {
         {field: 'category', direction: 'asc'},
         {field: 'order', direction: 'asc'}
       ]
+    },
+    {
+      title: 'Language',
+      name: 'languageAsc',
+      by: [{field: 'language', direction: 'asc'}]
     }
   ]
 }

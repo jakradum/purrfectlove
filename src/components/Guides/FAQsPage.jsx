@@ -11,14 +11,14 @@ export default async function FAQsPage({ locale = 'en' }) {
   const faqsContent = content.faqs;
 
   const faqs = await client.fetch(
-    `*[_type == "faq"] | order(category asc, order asc) {
+    `*[_type == "faq" && language == $locale] | order(category asc, order asc) {
       _id,
-      "question": ${locale === 'de' ? 'questionDe' : 'questionEn'},
-      "answer": ${locale === 'de' ? 'answerDe' : 'answerEn'},
+      question,
+      answer,
       category,
       order
     }`,
-    {},
+    { locale },
     { cache: 'no-store' }
   );
 

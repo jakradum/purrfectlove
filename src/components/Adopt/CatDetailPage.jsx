@@ -55,10 +55,10 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
   const adoptContent = content.adopt;
 
-  // Only show cats that don't have an adopted application
-  // A cat is considered adopted if ANY application for it has status "adopted"
+  // Only show cats that aren't adopted
+  // A cat is adopted if: adoptedOverride is true OR an application has status "adopted"
   const query = locale === 'de'
-    ? `*[_type == "cat" && slug.current == $slug && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0][0] {
+    ? `*[_type == "cat" && slug.current == $slug && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0][0] {
         _id,
         name,
         slug,
@@ -72,7 +72,7 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
         healthStatus,
         goodWith
       }`
-    : `*[_type == "cat" && slug.current == $slug && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0][0] {
+    : `*[_type == "cat" && slug.current == $slug && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0][0] {
         _id,
         name,
         slug,
@@ -96,11 +96,11 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
 
   // Fetch all available cats for navigation
   const allCatsQuery = locale === 'de'
-    ? `*[_type == "cat" && defined(locationDe) && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+    ? `*[_type == "cat" && defined(locationDe) && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
         name,
         "slug": slug.current
       }`
-    : `*[_type == "cat" && defined(locationEn) && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+    : `*[_type == "cat" && defined(locationEn) && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
         name,
         "slug": slug.current
       }`;

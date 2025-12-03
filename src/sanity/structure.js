@@ -58,7 +58,36 @@ export const structure = (S) =>
               S.listItem()
                 .title('FAQs')
                 .icon(() => '❓')
-                .child(S.documentTypeList('faq')),
+                .child(
+                  S.list()
+                    .title('FAQs by Language')
+                    .items([
+                      S.listItem()
+                        .title('English FAQs')
+                        .icon(() => '🇬🇧')
+                        .child(
+                          S.documentTypeList('faq')
+                            .title('English FAQs')
+                            .filter('_type == "faq" && language == "en"')
+                            .defaultOrdering([{field: 'category', direction: 'asc'}, {field: 'order', direction: 'asc'}])
+                            .initialValueTemplates([
+                              S.initialValueTemplateItem('faq-en')
+                            ])
+                        ),
+                      S.listItem()
+                        .title('German FAQs (Deutsch)')
+                        .icon(() => '🇩🇪')
+                        .child(
+                          S.documentTypeList('faq')
+                            .title('German FAQs')
+                            .filter('_type == "faq" && language == "de"')
+                            .defaultOrdering([{field: 'category', direction: 'asc'}, {field: 'order', direction: 'asc'}])
+                            .initialValueTemplates([
+                              S.initialValueTemplateItem('faq-de')
+                            ])
+                        ),
+                    ])
+                ),
               S.listItem()
                 .title('Process Steps')
                 .icon(() => '📝')

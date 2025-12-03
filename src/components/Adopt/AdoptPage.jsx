@@ -10,10 +10,10 @@ export default async function AdoptPage({ locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
   const adoptContent = content.adopt;
 
-  // Filter cats by locale and exclude cats that have an adopted application
-  // A cat is considered adopted if ANY application for it has status "adopted"
+  // Filter cats by locale and exclude adopted cats
+  // A cat is adopted if: adoptedOverride is true OR an application has status "adopted"
   const query = locale === 'de'
-    ? `*[_type == "cat" && defined(locationDe) && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+    ? `*[_type == "cat" && defined(locationDe) && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
         _id,
         name,
         slug,
@@ -21,7 +21,7 @@ export default async function AdoptPage({ locale = 'en' }) {
         ageMonths,
         "location": locationDe
       }`
-    : `*[_type == "cat" && defined(locationEn) && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+    : `*[_type == "cat" && defined(locationEn) && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
         _id,
         name,
         slug,

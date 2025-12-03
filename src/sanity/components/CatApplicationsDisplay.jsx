@@ -9,6 +9,7 @@ export function CatApplicationsDisplay(props) {
 
   // Get document ID using useFormValue to access the document's _id
   const documentId = useFormValue(['_id'])
+  const adoptedOverride = useFormValue(['adoptedOverride'])
 
   const fetchApplications = useCallback(() => {
     if (!documentId) {
@@ -164,8 +165,23 @@ export function CatApplicationsDisplay(props) {
         Adoption Status
       </div>
 
-      {/* Show adopted banner if cat is adopted */}
-      {adoptedApp && (
+      {/* Show adopted override banner */}
+      {adoptedOverride && (
+        <div style={styles.adoptedBanner}>
+          <span style={{ fontSize: '1.25rem' }}>🎉</span>
+          <div>
+            <div style={{ fontWeight: 600, color: '#166534' }}>
+              Adopted (Manual Override)
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#15803d' }}>
+              Marked as adopted outside the application system
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Show adopted banner if cat is adopted via application */}
+      {!adoptedOverride && adoptedApp && (
         <div style={styles.adoptedBanner}>
           <span style={{ fontSize: '1.25rem' }}>🎉</span>
           <div>
@@ -180,7 +196,7 @@ export function CatApplicationsDisplay(props) {
       )}
 
       {/* Status indicator */}
-      {!adoptedApp && (
+      {!adoptedOverride && !adoptedApp && (
         <div>
           <span style={{
             ...styles.statusBadge,
@@ -193,7 +209,7 @@ export function CatApplicationsDisplay(props) {
       )}
 
       <div style={styles.helpText}>
-        Adoption status is determined by applications. Mark an application as "Adopted" to update this cat's status.
+        Adoption status is determined by applications or the "Mark as Adopted" override below.
       </div>
 
       {/* Applications table */}
