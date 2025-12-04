@@ -186,27 +186,35 @@
   margin: 0;
 }
 
-/* Tablet */
-@media (max-width: 900px) {
+/* Tablet - 2x2 grid layout */
+@media (max-width: 1000px) {
   .stepsGrid {
-    gap: 1rem;
+    display: grid;
+    grid-template-columns: auto auto;
+    gap: 1.5rem 2rem;
+    justify-content: center;
+    max-width: 500px;
+    margin: 0 auto;
+  }
+
+  .stepWrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+  }
+
+  /* Hide arrows on tablet - cleaner 2x2 grid */
+  .arrowWrapper {
+    display: none;
   }
 
   .stepCard {
-    min-width: 120px;
+    min-width: 160px;
     padding: 1.25rem 1.5rem;
-  }
-
-  .arrowWrapper {
-    width: 40px;
-  }
-
-  .squigglyArrow {
-    width: 30px;
   }
 }
 
-/* Mobile */
+/* Mobile - single column with vertical arrows */
 @media (max-width: 600px) {
   .container {
     padding: 1.5rem;
@@ -217,6 +225,7 @@
   }
 
   .stepsGrid {
+    display: flex;
     flex-direction: column;
     align-items: center;
     gap: 0;
@@ -232,6 +241,7 @@
   }
 
   .arrowWrapper {
+    display: flex;
     width: 40px;
     height: 40px;
     transform: rotate(90deg);

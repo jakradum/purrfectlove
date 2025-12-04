@@ -66,14 +66,29 @@ export default defineType({
       type: 'slug',
       options: {source: 'title.en'},
       description: 'URL path (e.g. "cat-care-tips" → /guides/blog/cat-care-tips)',
-      validation: Rule => Rule.required()
+      validation: Rule => Rule.custom((value, context) => {
+        const language = context.document?.language
+        // Only required if site version is English or Both
+        if ((language === 'en' || language === 'both') && !value?.current) {
+          return 'English slug is required for English site'
+        }
+        return true
+      })
     }),
     defineField({
       name: 'slugDe',
       title: 'Slug (German)',
       type: 'slug',
       options: {source: 'title.de'},
-      description: 'URL path for German (e.g. "katzen-tipps" → /de/guides/blog/katzen-tipps)'
+      description: 'URL path for German (e.g. "katzen-tipps" → /de/guides/blog/katzen-tipps)',
+      validation: Rule => Rule.custom((value, context) => {
+        const language = context.document?.language
+        // Only required if site version is German or Both
+        if ((language === 'de' || language === 'both') && !value?.current) {
+          return 'German slug is required for German site'
+        }
+        return true
+      })
     }),
     defineField({
       name: 'excerpt',
@@ -155,16 +170,10 @@ export default defineType({
         const titleDe = document?.title?.de
         const contentEn = document?.content?.en
         const contentDe = document?.content?.de
-        const slugEn = document?.slug?.current
-        const slugDe = document?.slugDe?.current
-
-        const hasEnglish = titleEn && slugEn && contentEn && contentEn.length > 0
-        const hasGerman = titleDe && slugDe && contentDe && contentDe.length > 0
 
         if (value === 'en') {
           const missingFields = []
           if (!titleEn) missingFields.push('English title')
-          if (!slugEn) missingFields.push('English slug')
           if (!contentEn || contentEn.length === 0) missingFields.push('English content')
 
           if (missingFields.length > 0) {
@@ -175,7 +184,6 @@ export default defineType({
         if (value === 'de') {
           const missingFields = []
           if (!titleDe) missingFields.push('German title')
-          if (!slugDe) missingFields.push('German slug')
           if (!contentDe || contentDe.length === 0) missingFields.push('German content')
 
           if (missingFields.length > 0) {
@@ -187,8 +195,6 @@ export default defineType({
           const missingFields = []
           if (!titleEn) missingFields.push('English title')
           if (!titleDe) missingFields.push('German title')
-          if (!slugEn) missingFields.push('English slug')
-          if (!slugDe) missingFields.push('German slug')
           if (!contentEn || contentEn.length === 0) missingFields.push('English content')
           if (!contentDe || contentDe.length === 0) missingFields.push('German content')
 

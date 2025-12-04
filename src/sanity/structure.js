@@ -16,7 +16,32 @@ export const structure = (S) =>
               S.listItem()
                 .title('Cats')
                 .icon(() => '🐱')
-                .child(S.documentTypeList('cat')),
+                .child(
+                  S.list()
+                    .title('Cats')
+                    .items([
+                      S.listItem()
+                        .title('Available Cats')
+                        .icon(() => '🐱')
+                        .child(
+                          S.documentTypeList('cat')
+                            .title('Available Cats')
+                            .filter('_type == "cat" && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0')
+                        ),
+                      S.listItem()
+                        .title('Adopted Cats')
+                        .icon(() => '💚')
+                        .child(
+                          S.documentTypeList('cat')
+                            .title('Adopted Cats')
+                            .filter('_type == "cat" && (adoptedOverride == true || count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0)')
+                        ),
+                      S.listItem()
+                        .title('All Cats')
+                        .icon(() => '📋')
+                        .child(S.documentTypeList('cat').title('All Cats')),
+                    ])
+                ),
               S.listItem()
                 .title('Applications')
                 .icon(() => '📋')
