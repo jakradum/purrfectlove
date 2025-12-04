@@ -3,7 +3,7 @@ import { useState, useRef, useEffect } from 'react';
 import { Turnstile } from '@marsidev/react-turnstile';
 import styles from './AdoptionForm.module.css';
 
-export default function AdoptionForm({ cat, content, onClose, isAnyCat = false }) {
+export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, locale = 'en' }) {
   const [formData, setFormData] = useState({
     applicantName: '',
     email: '',
@@ -67,7 +67,8 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false }
     try {
       const requestBody = {
         ...formData,
-        turnstileToken
+        turnstileToken,
+        locale
       };
 
       // Add cat ID or isOpenToAnyCat flag

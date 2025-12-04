@@ -178,7 +178,7 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
                 )}
               </div>
 
-              <AdoptButton cat={cat} content={adoptContent} />
+              <AdoptButton cat={cat} content={adoptContent} locale={locale} />
             </div>
           </div>
 

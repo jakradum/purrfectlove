@@ -61,7 +61,8 @@ export default function AdoptAnyCatPage({ locale = 'en' }) {
         body: JSON.stringify({
           ...formData,
           isOpenToAnyCat: true,
-          turnstileToken
+          turnstileToken,
+          locale
         })
       });
 

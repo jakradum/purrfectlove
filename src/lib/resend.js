@@ -2,12 +2,114 @@ import { Resend } from 'resend'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-export async function sendWelcomeEmail({ to, applicantName, applicationId, catName, isOpenToAnyCat }) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://purrfectlove.org'
+const content = {
+  en: {
+    subject: (id) => `Welcome to Purrfect Love! Your Application #${id}`,
+    greeting: (name) => `Welcome, ${name}!`,
+    intro: "Thank you for submitting your adoption application with Purrfect Love! We're thrilled that you're considering giving a cat a loving forever home.",
+    catInfoSpecific: (name) => `You've applied to adopt <strong>${name}</strong>.`,
+    catInfoAny: "You've indicated you're open to meeting any of our cats - that's wonderful!",
+    applicationIdLabel: "Your Application ID",
+    saveForRecords: "Please save this for your records",
+    whatNext: "What happens next?",
+    steps: [
+      {
+        title: "Application Review",
+        description: "Our team will review your application within 3-5 days."
+      },
+      {
+        title: "Orientation Call & Resources",
+        description: "We schedule a call to discuss the 4 pillars of adoption—neutering, nutrition, cat-proofing, and lifelong commitment—and share essential resources on introducing the cat to your home."
+      },
+      {
+        title: "Meet & Prepare",
+        description: "Meet your chosen cat at the foster home to understand their personality. We also plan a quick home check to give tips for a smooth welcome. Meanwhile, prepare your home by cat-proofing and setting up a comfortable basecamp."
+      },
+      {
+        title: "Your Cat Comes Home!",
+        description: "The foster parent brings the cat to their furrever home, providing comfort to the cat and guidance to you, ensuring a smooth and loving transition."
+      }
+    ],
+    learnMore: "In the meantime, feel free to check out our",
+    faqsLink: "FAQs",
+    orText: "or learn more about our",
+    processLink: "adoption process",
+    questionsText: "Have questions? Simply reply to this email or reach out through our",
+    contactLink: "contact page",
+    signoff: "With whiskers and purrs,",
+    team: "The Purrfect Love Team",
+    location: "Bangalore • Stuttgart",
+    madeWith: "Made with 🧡 for cats and cat lovers",
+    faqsUrl: "/guides/faqs",
+    processUrl: "/guides/process",
+    contactUrl: "/contact"
+  },
+  de: {
+    subject: (id) => `Willkommen bei Purrfect Love! Deine Bewerbung #${id}`,
+    greeting: (name) => `Willkommen, ${name}!`,
+    intro: "Vielen Dank für deine Adoptionsbewerbung bei Purrfect Love! Wir freuen uns sehr, dass du einer Katze ein liebevolles Zuhause geben möchtest.",
+    catInfoSpecific: (name) => `Du hast dich für die Adoption von <strong>${name}</strong> beworben.`,
+    catInfoAny: "Du hast angegeben, dass du offen für jede unserer Katzen bist – das ist wunderbar!",
+    applicationIdLabel: "Deine Bewerbungsnummer",
+    saveForRecords: "Bitte bewahre diese für deine Unterlagen auf",
+    whatNext: "Wie geht es weiter?",
+    steps: [
+      {
+        title: "Bewerbungsprüfung",
+        description: "Unser Team prüft deine Bewerbung innerhalb von 3-5 Tagen."
+      },
+      {
+        title: "Orientierungsgespräch & Ressourcen",
+        description: "Wir vereinbaren einen Anruf, um die 4 Säulen der Adoption zu besprechen – Kastration, Ernährung, katzensichere Gestaltung und lebenslange Verantwortung – und teilen wichtige Ressourcen zur Eingewöhnung."
+      },
+      {
+        title: "Kennenlernen & Vorbereitung",
+        description: "Triff deine Wunschkatze im Pflegezuhause, um ihre Persönlichkeit kennenzulernen. Wir vereinbaren auch einen kurzen Haus-Check für Tipps. Bereite dein Zuhause vor: sichere Balkone und richte einen gemütlichen Platz ein."
+      },
+      {
+        title: "Der Einzug!",
+        description: "Die Pflegemama bringt die Katze ins neue Zuhause. So fühlt sich die Katze wohl, die Pflegeperson kann Tipps geben, und der Übergang wird für alle liebevoll gestaltet."
+      }
+    ],
+    learnMore: "In der Zwischenzeit kannst du gerne unsere",
+    faqsLink: "FAQs",
+    orText: "ansehen oder mehr über unseren",
+    processLink: "Adoptionsprozess",
+    questionsText: "Hast du Fragen? Antworte einfach auf diese E-Mail oder kontaktiere uns über unsere",
+    contactLink: "Kontaktseite",
+    signoff: "Mit Schnurrern und Pfötchen,",
+    team: "Das Purrfect Love Team",
+    location: "Bangalore • Stuttgart",
+    madeWith: "Mit 🧡 für Katzen und Katzenliebhaber gemacht",
+    faqsUrl: "/de/guides/faqs",
+    processUrl: "/de/guides/process",
+    contactUrl: "/de/contact"
+  }
+}
 
-  const catInfo = isOpenToAnyCat
-    ? "You've indicated you're open to meeting any of our cats - that's wonderful!"
-    : `You've applied to adopt <strong>${catName}</strong>.`
+export async function sendWelcomeEmail({ to, applicantName, applicationId, catName, isOpenToAnyCat, locale = 'en' }) {
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://purrfectlove.org'
+  const t = content[locale] || content.en
+
+  const catInfo = isOpenToAnyCat ? t.catInfoAny : t.catInfoSpecific(catName)
+  const catInfoText = isOpenToAnyCat ? t.catInfoAny : `${locale === 'de' ? 'Du hast dich für die Adoption von' : "You've applied to adopt"} ${catName}.`
+
+  const stepsHtml = t.steps.map((step, i) => `
+    <tr>
+      <td style="padding: 12px 0; ${i < t.steps.length - 1 ? 'border-bottom: 1px solid #E8E8E8;' : ''}">
+        <table cellpadding="0" cellspacing="0">
+          <tr>
+            <td style="width: 32px; vertical-align: top;">
+              <span style="display: inline-block; width: 24px; height: 24px; background-color: #2D5A3D; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-family: sans-serif;">${i + 1}</span>
+            </td>
+            <td style="padding-left: 12px;">
+              <p style="margin: 0; font-size: 15px; color: #4A4A4A;"><strong>${step.title}</strong> - ${step.description}</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  `).join('')
 
   const html = `
 <!DOCTYPE html>
@@ -25,7 +127,7 @@ export async function sendWelcomeEmail({ to, applicantName, applicationId, catNa
           <!-- Header -->
           <tr>
             <td style="background-color: #2D5A3D; padding: 32px; text-align: center;">
-              <img src="${siteUrl}/logo-white.svg" alt="Purrfect Love" width="180" style="max-width: 180px;" />
+              <h1 style="margin: 0; font-family: 'Trebuchet MS', sans-serif; font-size: 28px; color: #F6F4F0; font-weight: 700;">Purrfect Love</h1>
             </td>
           </tr>
 
@@ -33,11 +135,11 @@ export async function sendWelcomeEmail({ to, applicantName, applicationId, catNa
           <tr>
             <td style="padding: 40px 32px;">
               <h1 style="margin: 0 0 24px 0; font-family: 'Trebuchet MS', sans-serif; font-size: 28px; color: #2D5A3D;">
-                Welcome, ${applicantName}! 🐱
+                ${t.greeting(applicantName)} 🐱
               </h1>
 
               <p style="margin: 0 0 16px 0; font-size: 16px; line-height: 1.7; color: #4A4A4A;">
-                Thank you for submitting your adoption application with Purrfect Love! We're thrilled that you're considering giving a cat a loving forever home.
+                ${t.intro}
               </p>
 
               <p style="margin: 0 0 24px 0; font-size: 16px; line-height: 1.7; color: #4A4A4A;">
@@ -49,92 +151,37 @@ export async function sendWelcomeEmail({ to, applicantName, applicationId, catNa
                 <tr>
                   <td style="background-color: #F5F0E8; border-radius: 12px; padding: 24px; text-align: center;">
                     <p style="margin: 0 0 8px 0; font-size: 14px; color: #6B6B6B; text-transform: uppercase; letter-spacing: 1px;">
-                      Your Application ID
+                      ${t.applicationIdLabel}
                     </p>
                     <p style="margin: 0; font-family: 'Courier New', monospace; font-size: 32px; font-weight: bold; color: #2D5A3D; letter-spacing: 4px;">
                       #${applicationId}
                     </p>
                     <p style="margin: 12px 0 0 0; font-size: 13px; color: #8B8B8B;">
-                      Please save this for your records
+                      ${t.saveForRecords}
                     </p>
                   </td>
                 </tr>
               </table>
 
               <h2 style="margin: 32px 0 16px 0; font-family: 'Trebuchet MS', sans-serif; font-size: 20px; color: #2D5A3D;">
-                What happens next?
+                ${t.whatNext}
               </h2>
 
               <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td style="padding: 12px 0; border-bottom: 1px solid #E8E8E8;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background-color: #2D5A3D; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-family: sans-serif;">1</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <p style="margin: 0; font-size: 15px; color: #4A4A4A;"><strong>Application Review</strong> - Our team will review your application within 3-5 days.</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; border-bottom: 1px solid #E8E8E8;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background-color: #2D5A3D; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-family: sans-serif;">2</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <p style="margin: 0; font-size: 15px; color: #4A4A4A;"><strong>Interview</strong> - We'll reach out to schedule a phone or video call to get to know you better.</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0; border-bottom: 1px solid #E8E8E8;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background-color: #2D5A3D; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-family: sans-serif;">3</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <p style="margin: 0; font-size: 15px; color: #4A4A4A;"><strong>Home Visit</strong> - A quick visit to ensure a safe environment for your new furry friend.</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
-                <tr>
-                  <td style="padding: 12px 0;">
-                    <table cellpadding="0" cellspacing="0">
-                      <tr>
-                        <td style="width: 32px; vertical-align: top;">
-                          <span style="display: inline-block; width: 24px; height: 24px; background-color: #2D5A3D; color: white; border-radius: 50%; text-align: center; line-height: 24px; font-size: 12px; font-family: sans-serif;">4</span>
-                        </td>
-                        <td style="padding-left: 12px;">
-                          <p style="margin: 0; font-size: 15px; color: #4A4A4A;"><strong>Meet & Adopt</strong> - If all goes well, you'll meet your new companion and complete the adoption!</p>
-                        </td>
-                      </tr>
-                    </table>
-                  </td>
-                </tr>
+                ${stepsHtml}
               </table>
 
               <p style="margin: 32px 0 16px 0; font-size: 16px; line-height: 1.7; color: #4A4A4A;">
-                In the meantime, feel free to check out our <a href="${siteUrl}/guides/faqs" style="color: #C85C3F; text-decoration: none;">FAQs</a> or learn more about our <a href="${siteUrl}/guides/process" style="color: #C85C3F; text-decoration: none;">adoption process</a>.
+                ${t.learnMore} <a href="${siteUrl}${t.faqsUrl}" style="color: #C85C3F; text-decoration: none;">${t.faqsLink}</a> ${t.orText} <a href="${siteUrl}${t.processUrl}" style="color: #C85C3F; text-decoration: none;">${t.processLink}</a>.
               </p>
 
               <p style="margin: 24px 0 0 0; font-size: 16px; line-height: 1.7; color: #4A4A4A;">
-                Have questions? Simply reply to this email or reach out through our <a href="${siteUrl}/contact" style="color: #C85C3F; text-decoration: none;">contact page</a>.
+                ${t.questionsText} <a href="${siteUrl}${t.contactUrl}" style="color: #C85C3F; text-decoration: none;">${t.contactLink}</a>.
               </p>
 
               <p style="margin: 32px 0 0 0; font-size: 16px; color: #4A4A4A;">
-                With whiskers and purrs,<br />
-                <strong style="color: #2D5A3D;">The Purrfect Love Team</strong>
+                ${t.signoff}<br />
+                <strong style="color: #2D5A3D;">${t.team}</strong>
               </p>
             </td>
           </tr>
@@ -143,10 +190,10 @@ export async function sendWelcomeEmail({ to, applicantName, applicationId, catNa
           <tr>
             <td style="background-color: #F5F0E8; padding: 24px 32px; text-align: center;">
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #6B6B6B;">
-                Bangalore • Stuttgart
+                ${t.location}
               </p>
               <p style="margin: 0; font-size: 13px; color: #8B8B8B;">
-                Made with 🧡 for cats and cat lovers
+                ${t.madeWith}
               </p>
             </td>
           </tr>
@@ -160,37 +207,35 @@ export async function sendWelcomeEmail({ to, applicantName, applicationId, catNa
 `
 
   const text = `
-Welcome, ${applicantName}!
+${t.greeting(applicantName)}
 
-Thank you for submitting your adoption application with Purrfect Love! We're thrilled that you're considering giving a cat a loving forever home.
+${t.intro}
 
-${isOpenToAnyCat ? "You've indicated you're open to meeting any of our cats - that's wonderful!" : `You've applied to adopt ${catName}.`}
+${catInfoText}
 
-YOUR APPLICATION ID: #${applicationId}
-Please save this for your records.
+${t.applicationIdLabel.toUpperCase()}: #${applicationId}
+${t.saveForRecords}
 
-WHAT HAPPENS NEXT?
+${t.whatNext.toUpperCase()}
 
-1. Application Review - Our team will review your application within 3-5 days.
-2. Interview - We'll reach out to schedule a phone or video call to get to know you better.
-3. Home Visit - A quick visit to ensure a safe environment for your new furry friend.
-4. Meet & Adopt - If all goes well, you'll meet your new companion and complete the adoption!
+${t.steps.map((step, i) => `${i + 1}. ${step.title} - ${step.description}`).join('\n\n')}
 
-In the meantime, feel free to check out our FAQs at ${siteUrl}/guides/faqs or learn more about our adoption process at ${siteUrl}/guides/process.
+${t.learnMore} ${t.faqsLink}: ${siteUrl}${t.faqsUrl}
+${t.orText} ${t.processLink}: ${siteUrl}${t.processUrl}
 
-Have questions? Reply to this email or visit ${siteUrl}/contact.
+${t.questionsText} ${t.contactLink}: ${siteUrl}${t.contactUrl}
 
-With whiskers and purrs,
-The Purrfect Love Team
+${t.signoff}
+${t.team}
 
-Bangalore • Stuttgart
+${t.location}
 `
 
   try {
     const { data, error } = await resend.emails.send({
       from: 'Purrfect Love <support@purrfectlove.org>',
       to: [to],
-      subject: `Welcome to Purrfect Love! Your Application #${applicationId}`,
+      subject: t.subject(applicationId),
       html,
       text
     })

@@ -203,7 +203,8 @@ export async function POST(request) {
       applicantName: body.applicantName,
       applicationId,
       catName,
-      isOpenToAnyCat
+      isOpenToAnyCat,
+      locale: body.locale || 'en'
     }).catch(err => console.error('Failed to send welcome email:', err))
 
     console.log('Application created successfully:', result._id)
