@@ -20,6 +20,11 @@ export default function Navbar({ locale = 'en' }) {
   const menuItems = locale === 'de' ? menuItemsDE : menuItemsEN;
   const { navLinks, cta } = menuItems;
 
+  // Close dropdown on route change (handles touch devices)
+  useEffect(() => {
+    setOpenDropdown(null);
+  }, [pathname]);
+
   // Get language switcher hrefs that preserve current page
   const getLanguageHref = (targetLocale) => {
     if (targetLocale === 'de') {
@@ -99,6 +104,7 @@ export default function Navbar({ locale = 'en' }) {
                             key={child.href}
                             href={child.href}
                             className={styles.dropdownItem}
+                            onClick={() => setOpenDropdown(null)}
                           >
                             {child.label}
                           </Link>
