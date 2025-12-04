@@ -1,4 +1,5 @@
 import { createClient } from '@sanity/client'
+import { sendWelcomeEmail } from '@/lib/resend'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -167,6 +168,7 @@ export async function POST(request) {
     }
 
     // Add cat reference or isOpenToAnyCat flag
+    let catName = null
     if (isOpenToAnyCat) {
       applicationData.isOpenToAnyCat = true
     } else {
@@ -174,13 +176,19 @@ export async function POST(request) {
         _type: 'reference',
         _ref: body.catId
       }
+      // Fetch cat name for the welcome email
+      const cat = await serverClient.fetch(
+        `*[_type == "cat" && _id == $catId][0]{ name }`,
+        { catId: body.catId }
+      )
+      catName = cat?.name || 'your chosen cat'
     }
 
     const result = await serverClient.create(applicationData)
-    
+
     // Update rate limit tracker
     submissions.set(ip, now)
-    
+
     // Clean up old entries (every 100 submissions)
     if (submissions.size > 100) {
       const cutoff = now - 300000
@@ -188,7 +196,16 @@ export async function POST(request) {
         if (value < cutoff) submissions.delete(key)
       }
     }
-    
+
+    // Send welcome email (non-blocking)
+    sendWelcomeEmail({
+      to: body.email,
+      applicantName: body.applicantName,
+      applicationId,
+      catName,
+      isOpenToAnyCat
+    }).catch(err => console.error('Failed to send welcome email:', err))
+
     console.log('Application created successfully:', result._id)
     return Response.json({
       success: true,
