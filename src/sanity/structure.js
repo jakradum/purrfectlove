@@ -64,7 +64,7 @@ export const structure = (S) =>
                     .items([
                       S.listItem()
                         .title('English FAQs')
-                        .icon(() => '🇬🇧')
+                        .icon(() => '🇮🇳')
                         .child(
                           S.documentTypeList('faq')
                             .title('English FAQs')
