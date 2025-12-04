@@ -6,6 +6,7 @@ import application from './application'
 import processStep from './processStep'
 import blogPost from './blogPost'
 import contactMessage from './contactMessage'
+import siteSettings from './siteSettings'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -20,6 +21,7 @@ export const schema = {
     application,
     processStep,
     blogPost,
-    contactMessage
+    contactMessage,
+    siteSettings
   ]
 }

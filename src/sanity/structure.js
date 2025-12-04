@@ -113,4 +113,15 @@ export const structure = (S) =>
                 ])
             )
         ),
+
+      // === SITE SETTINGS ===
+      S.listItem()
+        .title('Site Settings')
+        .icon(() => '⚙️')
+        .child(
+          S.document()
+            .schemaType('siteSettings')
+            .documentId('siteSettings')
+            .title('Site Settings')
+        ),
     ])

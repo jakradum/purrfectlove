@@ -138,17 +138,18 @@ export default defineType({
     }),
     defineField({
       name: 'language',
-      title: 'Language',
+      title: 'Site Version',
       type: 'string',
+      description: 'Select which site(s) this post appears on. Content (title, slug, body) must be filled for the selected language(s) before publishing.',
       options: {
         list: [
-          {title: 'English', value: 'en'},
-          {title: 'German', value: 'de'},
-          {title: 'Both', value: 'both'}
+          {title: 'English site only', value: 'en'},
+          {title: 'German site only', value: 'de'},
+          {title: 'Both sites', value: 'both'}
         ]
       },
       initialValue: 'both',
-      validation: Rule => Rule.custom((value, context) => {
+      validation: Rule => Rule.required().custom((value, context) => {
         const {document} = context
         const titleEn = document?.title?.en
         const titleDe = document?.title?.de

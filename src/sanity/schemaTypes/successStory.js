@@ -6,6 +6,13 @@ export default defineType({
   type: 'document',
   fields: [
     defineField({
+      name: 'published',
+      title: 'Published',
+      type: 'boolean',
+      description: 'Toggle to include this story on the website',
+      initialValue: false
+    }),
+    defineField({
       name: 'catName',
       title: 'Cat Name',
       type: 'string',
@@ -37,16 +44,33 @@ export default defineType({
     }),
     defineField({
       name: 'language',
-      title: 'Language',
+      title: 'Site Version',
       type: 'string',
+      description: 'Which site version(s) will this story appear on?',
       options: {
         list: [
-          {title: 'English', value: 'en'},
-          {title: 'German', value: 'de'},
-          {title: 'Both', value: 'both'}
+          {title: 'English site only', value: 'en'},
+          {title: 'German site only', value: 'de'},
+          {title: 'Both sites', value: 'both'}
         ]
       },
-      initialValue: 'both'
+      initialValue: 'both',
+      validation: Rule => Rule.required()
     })
-  ]
+  ],
+  preview: {
+    select: {
+      catName: 'catName',
+      adopterName: 'adopterName',
+      published: 'published',
+      media: 'image'
+    },
+    prepare({catName, adopterName, published, media}) {
+      return {
+        title: `${published ? '✓ ' : ''}${catName || 'Untitled'}`,
+        subtitle: adopterName ? `Adopted by ${adopterName}` : 'No adopter name',
+        media
+      }
+    }
+  }
 })
