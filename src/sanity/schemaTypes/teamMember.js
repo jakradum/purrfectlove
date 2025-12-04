@@ -101,14 +101,23 @@ export default defineType({
   preview: {
     select: {
       title: 'name',
-      subtitle: 'role.en',
+      roleEn: 'role.en',
+      roleDe: 'role.de',
       media: 'image',
       showOnWebsite: 'showOnWebsite'
     },
-    prepare({title, subtitle, media, showOnWebsite}) {
+    prepare({title, roleEn, roleDe, media, showOnWebsite}) {
+      let subtitle = 'No role set'
+      if (roleEn && roleDe) {
+        subtitle = `${roleEn} | ${roleDe}`
+      } else if (roleEn) {
+        subtitle = roleEn
+      } else if (roleDe) {
+        subtitle = roleDe
+      }
       return {
         title: `${showOnWebsite ? '✓ ' : ''}${title}`,
-        subtitle: subtitle || 'No role set',
+        subtitle,
         media
       }
     }
