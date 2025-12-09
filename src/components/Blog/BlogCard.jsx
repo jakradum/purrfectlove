@@ -3,8 +3,10 @@ import Link from 'next/link';
 import styles from './BlogCard.module.css';
 
 export default function BlogCard({ post, locale, readMoreText }) {
-  const title = post.title?.[locale] || post.title?.en || '';
-  const excerpt = post.excerpt?.[locale] || post.excerpt?.en || '';
+  const fullTitle = post.title?.[locale] || post.title?.en || '';
+  const title = fullTitle.length > 55 ? fullTitle.slice(0, 55) + '...' : fullTitle;
+  const fullExcerpt = post.excerpt?.[locale] || post.excerpt?.en || '';
+  const excerpt = fullExcerpt.length > 30 ? fullExcerpt.slice(0, 30) + '...' : fullExcerpt;
   const slug = locale === 'de'
     ? (post.slugDe?.current || post.slug?.current || '')
     : (post.slug?.current || '');
