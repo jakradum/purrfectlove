@@ -64,6 +64,7 @@ a.card:hover {
   width: 100%;
   height: 200px;
   object-fit: cover;
+  object-position: top;
 }
 
 .imagePlaceholder {
@@ -94,7 +95,7 @@ a.card:hover {
 
 .role {
   font-family: var(--font-lora);
-  font-size: 0.875rem;
+  font-size: 0.79rem;
   color: var(--tabby-brown);
   font-weight: 500;
   margin-bottom: 0.75rem;
@@ -182,7 +183,7 @@ a.card:hover .readMore {
   }
 
   .role {
-    font-size: 0.8125rem;
+    font-size: 0.73rem;
   }
 
   .bio {

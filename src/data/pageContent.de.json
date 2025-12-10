@@ -3,23 +3,23 @@
   "home": {
     "hero": {
       "heading": "Man besitzt keine Katze. Man lebt einfach mit ihr.",
-      "sideText": "Purrfect Love ist ein Katzenadoptions-Kollektiv; wir rehabilitieren verlorene oder ausgesetzte Katzen und finden Zuhause für junge Katzen ohne eines."
+      "sideText": "Purrfect Love ist eine Katzenadoptionsgemeinschaft. Wir kümmern uns um Streunerkatzen und Katzen, die abgegeben wurden, sorgen dafür, dass es ihnen gut geht, und finden ein liebevolles Zuhause, sobald sie bereit dafür sind."
     },
     "about": {
       "heading": "Warum bei uns adoptieren?",
-      "intro": "Sie können überall adoptieren, wirklich. Aber hier ist, was wir anders machen.",
+      "intro": "Du kannst Katzen überall adoptieren, wirklich. Aber hier zeigen wir dir, wie wir es besonders anders machen.",
       "points": [
         {
           "title": "Katzen sind auch Persönlichkeiten",
-          "description": "Wir übergeben sie nicht einfach. Wir erstellen ihre Gesundheitsakten, verstehen ihre Eigenheiten und Bedürfnisse und finden die beste Übereinstimmung. Es braucht Zeit, aber es lohnt sich; für Sie und für sie."
+          "description": "Wir übergeben sie nicht einfach. Wir erstellen ihre Gesundheitsakten, verstehen ihre Eigenheiten und Bedürfnisse und finden die beste Übereinstimmung. Es braucht Zeit, aber es lohnt sich; für Dich und für sie."
         },
         {
           "title": "Eine Gemeinschaft von Katzenfreunden",
-          "description": "Nach der Adoption gehören Sie zur Gruppe. Wir bleiben in Kontakt, tauschen Geschichten aus, teilen Tipps. Es hilft, mit Menschen zu sprechen, die es verstehen."
+          "description": "Nach der Adoption wirst du Teil unserer Katzenfamilie. Wir bleiben in Kontakt, tauschen Geschichten aus und teilen Tipps. Es tut so gut, mit Menschen zu sprechen, die es verstehen."
         },
         {
           "title": "Rundum-Betreuung",
-          "description": "Wir wissen einiges rund um Katzen. Ernährung, Rezepte, Tierarztbesuche, Notfall-Hausmittel und mehr. Alles hier auf unserer Website."
+          "description": "Wir wissen einiges rund um Katzen. Ernährung, Verhalten, Tierarztbesuche, Notfall-Hausmittel und mehr. Alles hier auf unserer Website."
         }
       ],
       "cta": "Unsere Katzen kennenlernen"
@@ -33,11 +33,11 @@
         },
         {
           "title": "Fülle das Formular aus",
-          "description": "Erzähl uns ein bisschen von dir. Wir melden uns bei dir."
+          "description": "Erzähl uns ein bisschen von dir. Wir melden uns!"
         },
         {
           "title": "Kennenlernen",
-          "description": "Wir rufen an und treffen uns; wir helfen dir, dich auf deine Katze vorzubereiten."
+          "description": "Wir rufen dich an und treffen uns mit dir, um dir zu helfen, dich auf deine Katze vorzubereiten."
         },
         {
           "title": "Bring deine Katze nach Hause",
