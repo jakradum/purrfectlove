@@ -169,8 +169,7 @@
   gap: 1rem;
 }
 
-.copyright,
-.madeWith {
+.copyright {
   font-size: 0.875rem;
   color: var(--whisker-cream);
   margin: 0;
@@ -181,6 +180,20 @@
   flex-direction: column;
   align-items: center;
   gap: 0.25rem;
+}
+
+.memorial {
+  display: flex;
+  align-items: center;
+  gap: 0.375rem;
+  font-size: 0.75rem;
+  color: var(--whisker-cream);
+  opacity: 0.85;
+}
+
+.memorialImage {
+  border-radius: 50%;
+  object-fit: cover;
 }
 
 .credit {

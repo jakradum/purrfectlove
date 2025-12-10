@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
 import { Instagram } from 'lucide-react';
 import styles from './Footer.module.css';
@@ -147,7 +148,16 @@ export default function Footer({ locale = 'en' }) {
         <div className={styles.bottomContainer}>
           <p className={styles.copyright}>{copyright}</p>
           <div className={styles.madeWithWrapper}>
-            <p className={styles.madeWith}>{content.madeWith}</p>
+            <div className={styles.memorial}>
+              <Image
+                src="/Marta.png"
+                alt="Marta"
+                width={16}
+                height={16}
+                className={styles.memorialImage}
+              />
+              <span>{content.memorial}</span>
+            </div>
             <p className={styles.credit}>
               {content.credit.text}{' '}
               <a
