@@ -62,9 +62,8 @@ a.card:hover {
 
 .image {
   width: 100%;
-  height: 200px;
+  aspect-ratio: 1 / 1;
   object-fit: cover;
-  object-position: top;
 }
 
 .imagePlaceholder {
@@ -171,7 +170,7 @@ a.card:hover .readMore {
   }
 
   .image {
-    height: 180px;
+    aspect-ratio: 1 / 1;
   }
 
   .info {
