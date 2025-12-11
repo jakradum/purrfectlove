@@ -21,17 +21,15 @@ export default function BlogCard({ post, locale, readMoreText }) {
   );
 
   return (
-    <article className={styles.card}>
+    <Link href={href} className={styles.card}>
       <div className={styles.content}>
         <time className={styles.date}>{formattedDate}</time>
-        <Link href={href} className={styles.titleLink}>
-          <h2 className={styles.title}>{title}</h2>
-        </Link>
+        <h2 className={styles.title}>{title}</h2>
         {excerpt && <p className={styles.excerpt}>{excerpt}</p>}
-        <Link href={href} className={styles.readMore}>
+        <span className={styles.readMore}>
           {readMoreText}
-        </Link>
+        </span>
       </div>
-    </article>
+    </Link>
   );
 }
