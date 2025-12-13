@@ -3,6 +3,7 @@
   min-height: 100vh;
   padding-top: 6rem;
   padding-bottom: 4rem;
+  overflow-x: hidden;
 }
 
 .container {
@@ -31,6 +32,9 @@
   color: var(--text-dark);
   line-height: 1.2;
   margin-bottom: 1.5rem;
+  word-wrap: break-word;
+  overflow-wrap: break-word;
+  hyphens: auto;
 }
 
 .authorByline {
