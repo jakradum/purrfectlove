@@ -7,8 +7,11 @@ import CTAButton from '@/components/CTAButton';
 export default async function FeaturedArticles({ content, locale = 'en' }) {
   const blogHref = locale === 'de' ? '/de/guides/blog' : '/guides/blog';
 
+  // Use language-specific featured flag
+  const featuredField = locale === 'de' ? 'featuredOnHomePageDe' : 'featuredOnHomePageEn';
+
   const posts = await client.fetch(
-    `*[_type == "blogPost" && featuredOnHomePage == true && (language == $locale || language == "both" || !defined(language))] | order(publishedAt desc)[0...4] {
+    `*[_type == "blogPost" && ${featuredField} == true] | order(publishedAt desc)[0...4] {
       _id,
       title,
       slug,
@@ -16,7 +19,7 @@ export default async function FeaturedArticles({ content, locale = 'en' }) {
       excerpt,
       publishedAt
     }`,
-    { locale },
+    {},
     { next: { revalidate: 60 } }
   );
 

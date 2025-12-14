@@ -15,9 +15,10 @@ export default defineType({
       titleEn: 'title.en',
       titleDe: 'title.de',
       media: 'featuredImage',
-      featuredOnHomePage: 'featuredOnHomePage'
+      featuredOnHomePageEn: 'featuredOnHomePageEn',
+      featuredOnHomePageDe: 'featuredOnHomePageDe'
     },
-    prepare({titleEn, titleDe, media, featuredOnHomePage}) {
+    prepare({titleEn, titleDe, media, featuredOnHomePageEn, featuredOnHomePageDe}) {
       let displayTitle = ''
 
       if (titleEn && titleDe) {
@@ -30,9 +31,14 @@ export default defineType({
         displayTitle = 'Untitled'
       }
 
+      const featured = []
+      if (featuredOnHomePageEn) featured.push('EN')
+      if (featuredOnHomePageDe) featured.push('DE')
+      const subtitle = featured.length > 0 ? `Featured: ${featured.join(', ')}` : undefined
+
       return {
         title: displayTitle,
-        subtitle: featuredOnHomePage ? 'Featured' : undefined,
+        subtitle,
         media
       }
     }
@@ -115,37 +121,48 @@ export default defineType({
       validation: Rule => Rule.required()
     }),
     defineField({
-      name: 'featuredOnHomePage',
-      title: 'Feature on Home Page',
+      name: 'featuredOnHomePageEn',
+      title: 'Feature on English Home Page',
       type: 'boolean',
       initialValue: false,
-      description: 'Maximum 4 posts can be featured per language',
+      description: 'Show this post on the English homepage (maximum 4)',
       validation: Rule => Rule.custom(async (value, context) => {
         if (!value) return true
 
         const {document, getClient} = context
         const client = getClient({apiVersion: '2024-01-01'})
-        const postLanguage = document?.language || 'both'
 
-        // Count featured posts that would appear on English homepage
-        const featuredEnCount = await client.fetch(
-          `count(*[_type == "blogPost" && featuredOnHomePage == true && _id != $currentId && (language == "en" || language == "both")])`,
+        const featuredCount = await client.fetch(
+          `count(*[_type == "blogPost" && featuredOnHomePageEn == true && _id != $currentId])`,
           {currentId: document._id}
         )
 
-        // Count featured posts that would appear on German homepage
-        const featuredDeCount = await client.fetch(
-          `count(*[_type == "blogPost" && featuredOnHomePage == true && _id != $currentId && (language == "de" || language == "both")])`,
-          {currentId: document._id}
-        )
-
-        // Check limits based on which site(s) this post will appear on
-        if ((postLanguage === 'en' || postLanguage === 'both') && featuredEnCount >= 4) {
-          return 'Maximum 4 posts can be featured on English homepage. Please unfeature another English post first.'
+        if (featuredCount >= 4) {
+          return 'Maximum 4 posts can be featured on English homepage. Please unfeature another post first.'
         }
 
-        if ((postLanguage === 'de' || postLanguage === 'both') && featuredDeCount >= 4) {
-          return 'Maximum 4 posts can be featured on German homepage. Please unfeature another German post first.'
+        return true
+      })
+    }),
+    defineField({
+      name: 'featuredOnHomePageDe',
+      title: 'Feature on German Home Page',
+      type: 'boolean',
+      initialValue: false,
+      description: 'Show this post on the German homepage (maximum 4)',
+      validation: Rule => Rule.custom(async (value, context) => {
+        if (!value) return true
+
+        const {document, getClient} = context
+        const client = getClient({apiVersion: '2024-01-01'})
+
+        const featuredCount = await client.fetch(
+          `count(*[_type == "blogPost" && featuredOnHomePageDe == true && _id != $currentId])`,
+          {currentId: document._id}
+        )
+
+        if (featuredCount >= 4) {
+          return 'Maximum 4 posts can be featured on German homepage. Please unfeature another post first.'
         }
 
         return true
