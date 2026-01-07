@@ -1,6 +1,27 @@
 // sanity/schemas/cat.js
 import {client} from '../lib/client'
 import {CatApplicationsDisplay} from '../components/CatApplicationsDisplay'
+import {useEffect} from 'react'
+import {useFormValue, set, unset} from 'sanity'
+
+// Component to auto-set contract upload timestamp
+function ContractUploadTimestamp(props) {
+  const contract = useFormValue(['signedAdoptionContract'])
+  const uploadedAt = useFormValue(['contractUploadedAt'])
+
+  useEffect(() => {
+    // If contract exists but no timestamp, set it
+    if (contract?.asset?._ref && !uploadedAt) {
+      props.onChange(set(new Date().toISOString()))
+    }
+    // If contract is removed, remove timestamp
+    if (!contract?.asset?._ref && uploadedAt) {
+      props.onChange(unset())
+    }
+  }, [contract?.asset?._ref, uploadedAt, props])
+
+  return props.renderDefault(props)
+}
 
 // Custom slugify function that adds number suffix for duplicates
 async function slugifyWithUnique(input, schemaType, context) {
@@ -240,13 +261,13 @@ export default {
       initialValue: false
     },
     {
-      name: 'adoptionCertificate',
-      title: 'Adoption Certificate (PDF)',
+      name: 'signedAdoptionContract',
+      title: 'Signed Adoption Contract (PDF)',
       type: 'file',
       options: {
         accept: '.pdf'
       },
-      description: 'Upload adoption certificate (max 200KB). Only visible when cat is adopted.',
+      description: 'Upload signed adoption contract (max 200KB)',
       hidden: ({document}) => {
         // Show only if cat is adopted (either through application system or override)
         const hasApprovedApplication = document?.applicationsDisplay?.includes('Adopted')
@@ -263,6 +284,17 @@ export default {
         }
         return true
       })
+    },
+    {
+      name: 'contractUploadedAt',
+      title: 'Contract Upload Date',
+      type: 'datetime',
+      readOnly: true,
+      hidden: ({document}) => !document?.signedAdoptionContract,
+      description: 'Automatically set when signed contract is uploaded',
+      components: {
+        input: ContractUploadTimestamp
+      }
     }
   ],
   preview: {
