@@ -50,4 +50,37 @@ export default defineConfig({
     }),
   ],
   documentTypes: ['faq', 'processStep', 'teamMember', 'blogPost', 'successStory'],
+  form: {
+    file: {
+      assetSources: (previousAssetSources) => {
+        return previousAssetSources.map((assetSource) => {
+          if (assetSource.name === 'file') {
+            return {
+              ...assetSource,
+              component: (props) => {
+                // Intercept file uploads to check size
+                const originalOnSelect = props.onSelect
+                return assetSource.component({
+                  ...props,
+                  onSelect: (files) => {
+                    const validFiles = files.filter((file) => {
+                      if (file.size > 204800) { // 200KB in bytes
+                        alert(`File "${file.name}" is too large. Maximum file size is 200KB.`)
+                        return false
+                      }
+                      return true
+                    })
+                    if (validFiles.length > 0) {
+                      originalOnSelect(validFiles)
+                    }
+                  }
+                })
+              }
+            }
+          }
+          return assetSource
+        })
+      }
+    }
+  }
 });

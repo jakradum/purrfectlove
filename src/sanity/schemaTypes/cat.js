@@ -238,6 +238,31 @@ export default {
       type: 'boolean',
       description: 'Use if adopted outside the application system',
       initialValue: false
+    },
+    {
+      name: 'adoptionCertificate',
+      title: 'Adoption Certificate (PDF)',
+      type: 'file',
+      options: {
+        accept: '.pdf'
+      },
+      description: 'Upload adoption certificate (max 200KB). Only visible when cat is adopted.',
+      hidden: ({document}) => {
+        // Show only if cat is adopted (either through application system or override)
+        const hasApprovedApplication = document?.applicationsDisplay?.includes('Adopted')
+        const isAdoptedOverride = document?.adoptedOverride === true
+        return !hasApprovedApplication && !isAdoptedOverride
+      },
+      validation: Rule => Rule.custom((value) => {
+        if (!value) return true // PDF is optional
+
+        // Check file size (200KB = 204800 bytes)
+        if (value.asset?._ref) {
+          // File size validation happens on upload via Sanity's asset pipeline
+          return true
+        }
+        return true
+      })
     }
   ],
   preview: {
