@@ -12,15 +12,28 @@
   font-size: 16px !important; /* Prevents zoom on iOS Safari */
 }
 
-/* Portable Text Editor (rich text blocks) */
-[data-testid="pt-editor"] [contenteditable="true"] {
+/* Portable Text Editor (rich text blocks) - Multiple selectors for better coverage */
+[data-testid="pt-editor"],
+[data-testid="pt-editor"] > div,
+[data-testid="pt-editor"] [contenteditable="true"],
+.pt-editor,
+[data-portable-text-editor],
+div[class*="portableText"] [contenteditable="true"] {
   min-height: 200px !important;
   font-size: 16px !important; /* Prevents zoom on iOS Safari */
+}
+
+/* The actual editable content area */
+div[contenteditable="true"][data-slate-editor="true"] {
+  min-height: 200px !important;
+  font-size: 16px !important;
   padding: 12px !important;
 }
 
 /* Block editor specifically */
-.pt-block {
+.pt-block,
+div[data-block],
+[class*="BlockObject"] {
   min-height: 48px !important;
   font-size: 16px !important;
 }
@@ -41,15 +54,23 @@
     padding: 12px !important;
   }
 
-  /* Larger Portable Text Editor on mobile */
-  [data-testid="pt-editor"] [contenteditable="true"] {
-    min-height: 240px !important;
+  /* Larger Portable Text Editor on mobile - multiple selectors */
+  [data-testid="pt-editor"],
+  [data-testid="pt-editor"] > div,
+  [data-testid="pt-editor"] [contenteditable="true"],
+  div[contenteditable="true"][data-slate-editor="true"],
+  .pt-editor,
+  [data-portable-text-editor],
+  div[class*="portableText"] [contenteditable="true"] {
+    min-height: 300px !important;
     font-size: 16px !important;
     padding: 16px !important;
   }
 
   /* Make block editor easier to tap and edit */
-  .pt-block {
+  .pt-block,
+  div[data-block],
+  [class*="BlockObject"] {
     min-height: 56px !important;
     font-size: 16px !important;
     padding: 12px !important;
