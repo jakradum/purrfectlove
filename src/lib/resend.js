@@ -40,6 +40,7 @@ const content = {
     team: "The Purrfect Love Team",
     location: "Bangalore • Stuttgart",
     madeWith: "Made with 🧡 for cats and cat lovers",
+    disclaimer: "This is a system-generated email. Please do not reply to this message. For any support with the adoption process, contact us at support@purrfectlove.org",
     faqsUrl: "/guides/faqs",
     processUrl: "/guides/process",
     contactUrl: "/contact"
@@ -81,6 +82,7 @@ const content = {
     team: "Das Purrfect Love Team",
     location: "Bangalore • Stuttgart",
     madeWith: "Mit 🧡 für Katzen und Katzenliebhaber gemacht",
+    disclaimer: "Dies ist eine automatisch generierte E-Mail. Bitte antworten Sie nicht auf diese Nachricht. Für Unterstützung im Adoptionsprozess kontaktieren Sie uns unter support@purrfectlove.org",
     faqsUrl: "/de/guides/faqs",
     processUrl: "/de/guides/process",
     contactUrl: "/de/contact"
@@ -192,8 +194,11 @@ export async function sendWelcomeEmail({ to, applicantName, applicationId, catNa
               <p style="margin: 0 0 8px 0; font-size: 14px; color: #6B6B6B;">
                 ${t.location}
               </p>
-              <p style="margin: 0; font-size: 13px; color: #8B8B8B;">
+              <p style="margin: 0 0 16px 0; font-size: 13px; color: #8B8B8B;">
                 ${t.madeWith}
+              </p>
+              <p style="margin: 0; font-size: 12px; color: #999999; line-height: 1.5; border-top: 1px solid #E0E0E0; padding-top: 16px;">
+                ${t.disclaimer}
               </p>
             </td>
           </tr>
@@ -229,6 +234,9 @@ ${t.signoff}
 ${t.team}
 
 ${t.location}
+
+---
+${t.disclaimer}
 `
 
   try {
