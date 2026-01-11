@@ -4,10 +4,14 @@ import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
 import {structureTool} from 'sanity/structure'
 import {languageFilter} from '@sanity/language-filter'
+import {dashboardTool} from '@sanity/dashboard'
 
 import {apiVersion, dataset, projectId} from './src/sanity/env'
 import {schema} from './src/sanity/schemaTypes'
 import {structure} from './src/sanity/structure'
+import {BlogOverview} from './src/sanity/dashboardWidgets/BlogOverview'
+import {CatOverview} from './src/sanity/dashboardWidgets/CatOverview'
+import {ApplicationsStats} from './src/sanity/dashboardWidgets/ApplicationsStats'
 
 // Initial value templates for language-specific FAQs
 const initialValueTemplates = [
@@ -38,6 +42,25 @@ export default defineConfig({
     templates: (prev) => [...prev, ...initialValueTemplates]
   },
   plugins: [
+    dashboardTool({
+      widgets: [
+        {
+          name: 'blog-overview',
+          component: BlogOverview,
+          layout: { width: 'medium' }
+        },
+        {
+          name: 'cat-overview',
+          component: CatOverview,
+          layout: { width: 'medium' }
+        },
+        {
+          name: 'applications-stats',
+          component: ApplicationsStats,
+          layout: { width: 'full' }
+        }
+      ]
+    }),
     structureTool({ structure }),
     visionTool({ defaultApiVersion: apiVersion }),
     languageFilter({
