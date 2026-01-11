@@ -2,8 +2,18 @@ export const localeString = {
   name: 'localeString',
   type: 'object',
   fields: [
-    {name: 'en', type: 'string', title: 'English'},
-    {name: 'de', type: 'string', title: 'German'}
+    {
+      name: 'en',
+      type: 'string',
+      title: 'English',
+      hidden: ({document}) => document?.language === 'de'
+    },
+    {
+      name: 'de',
+      type: 'string',
+      title: 'German',
+      hidden: ({document}) => document?.language === 'en'
+    }
   ]
 }
 
@@ -11,8 +21,18 @@ export const localeText = {
   name: 'localeText',
   type: 'object',
   fields: [
-    {name: 'en', type: 'text', title: 'English'},
-    {name: 'de', type: 'text', title: 'German'}
+    {
+      name: 'en',
+      type: 'text',
+      title: 'English',
+      hidden: ({document}) => document?.language === 'de'
+    },
+    {
+      name: 'de',
+      type: 'text',
+      title: 'German',
+      hidden: ({document}) => document?.language === 'en'
+    }
   ]
 }
 
@@ -71,13 +91,15 @@ export const localeBlock = {
       name: 'en',
       type: 'array',
       of: [richTextBlock],
-      title: 'English'
+      title: 'English',
+      hidden: ({document}) => document?.language === 'de'
     },
     {
       name: 'de',
       type: 'array',
       of: [richTextBlock],
-      title: 'German'
+      title: 'German',
+      hidden: ({document}) => document?.language === 'en'
     }
   ]
 }
