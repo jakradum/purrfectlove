@@ -178,8 +178,9 @@ export async function POST(request) {
 
     // Send email notification (non-blocking)
     resend.emails.send({
-      from: 'Purrfect Love <support@purrfectlove.org>',
+      from: 'Purrfect Love <no-reply@purrfectlove.org>',
       to: ['support@purrfectlove.org'],
+      cc: ['support@purrfectlove.org'],
       subject: `New message from ${body.name} - ${languageLabel} ${languageFlag}`,
       html: emailHtml
     }).then(result => {

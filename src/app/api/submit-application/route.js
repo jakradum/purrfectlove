@@ -293,8 +293,9 @@ export async function POST(request) {
 </html>`
 
     resend.emails.send({
-      from: 'Purrfect Love <support@purrfectlove.org>',
+      from: 'Purrfect Love <no-reply@purrfectlove.org>',
       to: ['support@purrfectlove.org'],
+      cc: ['support@purrfectlove.org'],
       subject: `New adoption application from ${body.applicantName} - ${catDisplayName}`,
       html: notificationHtml
     }).then(emailResult => {
