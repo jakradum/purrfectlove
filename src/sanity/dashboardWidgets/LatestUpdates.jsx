@@ -1,9 +1,10 @@
 import React, { useEffect, useState } from 'react'
-import { Card, Stack, Text, Box } from '@sanity/ui'
+import { Card, Stack, Text, Box, Button } from '@sanity/ui'
 
 export function LatestUpdates() {
   const [commits, setCommits] = useState([])
   const [loading, setLoading] = useState(true)
+  const [expanded, setExpanded] = useState(false)
 
   useEffect(() => {
     const fetchCommits = async () => {
@@ -31,14 +32,35 @@ export function LatestUpdates() {
     return null
   }
 
+  const displayedCommits = expanded ? commits : commits.slice(0, 1)
+
   return (
     <Card padding={3} radius={2} shadow={1} tone="transparent">
       <Stack space={2}>
-        <Text size={0} muted style={{ fontFamily: 'monospace', opacity: 0.6 }}>
-          Latest Updates
-        </Text>
+        <Box style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <Text size={0} muted style={{ fontFamily: 'monospace', opacity: 0.6 }}>
+            Latest Updates
+          </Text>
+          {commits.length > 1 && (
+            <button
+              onClick={() => setExpanded(!expanded)}
+              style={{
+                background: 'none',
+                border: 'none',
+                color: '#2276FC',
+                cursor: 'pointer',
+                fontFamily: 'monospace',
+                fontSize: '11px',
+                padding: '4px 8px',
+                textDecoration: 'underline'
+              }}
+            >
+              {expanded ? 'Show less' : `Show all ${commits.length}`}
+            </button>
+          )}
+        </Box>
         <Stack space={1}>
-          {commits.map((commit) => {
+          {displayedCommits.map((commit) => {
             const shortSha = commit.sha.substring(0, 7)
             const message = commit.commit.message.split('\n')[0] // First line only
             const date = new Date(commit.commit.author.date).toLocaleDateString('en-US', {
