@@ -1,0 +1,73 @@
+/* Increase height of text inputs and text areas for better editing experience */
+
+/* Regular text inputs */
+[data-ui="TextInput"] input {
+  min-height: 48px !important;
+  font-size: 16px !important; /* Prevents zoom on iOS Safari */
+}
+
+/* Text areas */
+[data-ui="TextArea"] textarea {
+  min-height: 120px !important;
+  font-size: 16px !important; /* Prevents zoom on iOS Safari */
+}
+
+/* Portable Text Editor (rich text blocks) */
+[data-testid="pt-editor"] [contenteditable="true"] {
+  min-height: 200px !important;
+  font-size: 16px !important; /* Prevents zoom on iOS Safari */
+  padding: 12px !important;
+}
+
+/* Block editor specifically */
+.pt-block {
+  min-height: 48px !important;
+  font-size: 16px !important;
+}
+
+/* Mobile specific adjustments */
+@media (max-width: 768px) {
+  /* Larger text inputs on mobile */
+  [data-ui="TextInput"] input {
+    min-height: 56px !important;
+    font-size: 16px !important;
+    padding: 12px !important;
+  }
+
+  /* Larger text areas on mobile */
+  [data-ui="TextArea"] textarea {
+    min-height: 160px !important;
+    font-size: 16px !important;
+    padding: 12px !important;
+  }
+
+  /* Larger Portable Text Editor on mobile */
+  [data-testid="pt-editor"] [contenteditable="true"] {
+    min-height: 240px !important;
+    font-size: 16px !important;
+    padding: 16px !important;
+  }
+
+  /* Make block editor easier to tap and edit */
+  .pt-block {
+    min-height: 56px !important;
+    font-size: 16px !important;
+    padding: 12px !important;
+  }
+}
+
+/* iOS Safari specific fixes */
+@supports (-webkit-touch-callout: none) {
+  /* All input fields */
+  [data-ui="TextInput"] input,
+  [data-ui="TextArea"] textarea,
+  [data-testid="pt-editor"] [contenteditable="true"],
+  .pt-block {
+    font-size: 16px !important; /* Prevents automatic zoom */
+  }
+
+  /* Increase tap target size */
+  [data-ui="TextInput"] input {
+    min-height: 56px !important;
+  }
+}

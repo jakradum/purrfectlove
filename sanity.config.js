@@ -12,6 +12,9 @@ import {structure} from './src/sanity/structure'
 import {BlogOverview} from './src/sanity/dashboardWidgets/BlogOverview'
 import {CatOverview} from './src/sanity/dashboardWidgets/CatOverview'
 import {ApplicationsStats} from './src/sanity/dashboardWidgets/ApplicationsStats'
+import {LatestUpdates} from './src/sanity/dashboardWidgets/LatestUpdates'
+
+import './src/sanity/studio.css'
 
 // Initial value templates for language-specific FAQs
 const initialValueTemplates = [
@@ -44,6 +47,11 @@ export default defineConfig({
   plugins: [
     dashboardTool({
       widgets: [
+        {
+          name: 'latest-updates',
+          component: LatestUpdates,
+          layout: { width: 'full' }
+        },
         {
           name: 'blog-overview',
           component: BlogOverview,
