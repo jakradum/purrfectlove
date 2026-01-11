@@ -97,7 +97,7 @@ export function ApplicationsStats() {
 
         <Box marginTop={3}>
           <a
-            href="/studio/structure/application"
+            href="structure/catsApplications;applications"
             style={{
               fontSize: '13px',
               color: '#2276FC',

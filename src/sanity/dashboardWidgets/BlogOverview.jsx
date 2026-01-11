@@ -12,8 +12,8 @@ export function BlogOverview() {
         const query = `{
           "totalPublished": count(*[_type == "blogPost" && !(_id in path("drafts.**"))]),
           "totalDrafts": count(*[_type == "blogPost" && _id in path("drafts.**")]),
-          "featuredEn": count(*[_type == "blogPost" && !(_id in path("drafts.**")) && featuredEn == true]),
-          "featuredDe": count(*[_type == "blogPost" && !(_id in path("drafts.**")) && featuredDe == true])
+          "featuredEn": count(*[_type == "blogPost" && !(_id in path("drafts.**")) && featuredOnHomePageEn == true]),
+          "featuredDe": count(*[_type == "blogPost" && !(_id in path("drafts.**")) && featuredOnHomePageDe == true])
         }`
 
         const data = await client.fetch(query)
@@ -91,7 +91,7 @@ export function BlogOverview() {
 
         <Box marginTop={3}>
           <a
-            href="/studio/structure/blogPost"
+            href="structure/coreSiteUpdates;blogPosts"
             style={{
               fontSize: '13px',
               color: '#2276FC',

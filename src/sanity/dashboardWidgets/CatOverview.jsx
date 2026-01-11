@@ -73,7 +73,7 @@ export function CatOverview() {
 
         <Box marginTop={3}>
           <a
-            href="/studio/structure/cat"
+            href="structure/catsApplications;cats"
             style={{
               fontSize: '13px',
               color: '#2276FC',
