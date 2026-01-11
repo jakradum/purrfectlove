@@ -24,6 +24,11 @@ body {
   margin: 0;
 }
 
+/* Remove navbar padding for Sanity Studio */
+body:has([data-ui="RootPortal"]) {
+  padding-top: 0 !important;
+}
+
 h1,
 h2,
 h3,
@@ -39,5 +44,10 @@ a {
 @media (max-width: 930px) {
   body {
     padding-top: 64px;
+  }
+
+  /* Remove navbar padding for Sanity Studio on mobile */
+  body:has([data-ui="RootPortal"]) {
+    padding-top: 0 !important;
   }
 }

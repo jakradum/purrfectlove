@@ -69,7 +69,7 @@ export function BlogOverview() {
               <Stack space={2}>
                 <Flex align="center" gap={2}>
                   <Text size={4} weight="bold">{stats?.featuredEn || 0}</Text>
-                  <Text size={1}>🇬🇧</Text>
+                  <Text size={1}>🇮🇳</Text>
                 </Flex>
                 <Text size={1} muted>English</Text>
               </Stack>
