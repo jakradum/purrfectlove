@@ -233,8 +233,9 @@ ${t.location}
 
   try {
     const { data, error } = await resend.emails.send({
-      from: 'Purrfect Love <onboarding@resend.dev>', // Use Resend test domain
+      from: 'Purrfect Love <no-reply@purrfectlove.org>',
       to: [to],
+      cc: ['support@purrfectlove.org'],
       subject: t.subject(applicationId),
       html,
       text
