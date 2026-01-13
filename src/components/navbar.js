@@ -42,8 +42,8 @@ export default function Navbar({ locale = 'en' }) {
   };
 
   const languages = [
-    { code: 'en', label: 'EN', fullLabel: 'English', href: getLanguageHref('en') },
-    { code: 'de', label: 'DE', fullLabel: 'Deutsch', href: getLanguageHref('de') }
+    { code: 'en', label: 'India', fullLabel: 'India', href: getLanguageHref('en') },
+    { code: 'de', label: 'Deutschland', fullLabel: 'Deutschland', href: getLanguageHref('de') }
   ];
 
   useEffect(() => {
