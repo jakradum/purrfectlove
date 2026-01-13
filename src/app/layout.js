@@ -14,8 +14,48 @@ const lora = Lora({
 });
 
 export const metadata = {
-  title: "Purrfect Love | Cat adoption & Rehab",
-  description: "Cat adoption and rescue collective based in Bangalore and Stuttgart",
+  metadataBase: new URL('https://purrfectlove.org'),
+  title: {
+    default: "Purrfect Love | Cat Adoption & Rescue in Bangalore & Stuttgart",
+    template: "%s | Purrfect Love"
+  },
+  description: "Find your purrfect companion! Cat adoption and rescue collective based in Bangalore, India and Stuttgart, Germany. Adopt cats, learn about cat care, and support our mission.",
+  keywords: ['cat adoption', 'cat rescue', 'adopt cats', 'bangalore cat adoption', 'stuttgart cat adoption', 'katzen adoption', 'purrfect love', 'cat shelter', 'pet adoption india', 'pet adoption germany'],
+  authors: [{ name: 'Purrfect Love Team' }],
+  creator: 'Purrfect Love',
+  publisher: 'Purrfect Love',
+  robots: {
+    index: true,
+    follow: true,
+    googleBot: {
+      index: true,
+      follow: true,
+      'max-video-preview': -1,
+      'max-image-preview': 'large',
+      'max-snippet': -1,
+    },
+  },
+  openGraph: {
+    type: 'website',
+    locale: 'en_IN',
+    alternateLocale: ['de_DE'],
+    url: 'https://purrfectlove.org',
+    title: 'Purrfect Love | Cat Adoption & Rescue',
+    description: 'Find your purrfect companion! Cat adoption and rescue in Bangalore & Stuttgart.',
+    siteName: 'Purrfect Love',
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'Purrfect Love | Cat Adoption & Rescue',
+    description: 'Find your purrfect companion! Cat adoption in Bangalore & Stuttgart.',
+  },
+  alternates: {
+    canonical: 'https://purrfectlove.org',
+    languages: {
+      'en': 'https://purrfectlove.org',
+      'de': 'https://purrfectlove.org/de',
+    },
+  },
   icons: {
     icon: [
       { url: '/favicon.ico' },
@@ -24,6 +64,10 @@ export const metadata = {
     apple: '/apple-touch-icon.png',
   },
   manifest: '/site.webmanifest',
+  other: {
+    'geo.region': 'IN-KA;DE-BW',
+    'geo.placename': 'Bangalore;Stuttgart',
+  },
 };
 
 export default function RootLayout({ children }) {
