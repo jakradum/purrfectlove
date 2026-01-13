@@ -175,14 +175,14 @@ export default function Footer({ locale = 'en' }) {
               href={getLanguageHref('en')}
               className={locale === 'en' ? styles.activeLanguage : styles.inactiveLanguage}
             >
-              EN
+              India
             </Link>
             <span className={styles.separator}>|</span>
             <Link
               href={getLanguageHref('de')}
               className={locale === 'de' ? styles.activeLanguage : styles.inactiveLanguage}
             >
-              DE
+              Deutschland
             </Link>
           </div>
         </div>

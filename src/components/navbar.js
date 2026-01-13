@@ -41,10 +41,27 @@ export default function Navbar({ locale = 'en' }) {
     }
   };
 
-  const languages = [
+  // Detect user's likely region based on timezone
+  const detectUserRegion = () => {
+    if (typeof window === 'undefined') return 'en';
+
+    const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    const germanTimezones = ['Europe/Berlin', 'Europe/Zurich', 'Europe/Vienna'];
+
+    return germanTimezones.includes(timezone) ? 'de' : 'en';
+  };
+
+  const userRegion = detectUserRegion();
+
+  // Reorder languages based on user's detected region
+  const baseLanguages = [
     { code: 'en', label: 'India', fullLabel: 'India', href: getLanguageHref('en') },
     { code: 'de', label: 'Deutschland', fullLabel: 'Deutschland', href: getLanguageHref('de') }
   ];
+
+  const languages = userRegion === 'de'
+    ? [baseLanguages[1], baseLanguages[0]] // Deutschland first
+    : baseLanguages; // India first
 
   useEffect(() => {
     const handleScroll = () => {
