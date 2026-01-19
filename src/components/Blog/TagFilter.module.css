@@ -1,0 +1,42 @@
+.filterContainer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+  justify-content: center;
+  margin-bottom: 2rem;
+  padding: 0 1rem;
+}
+
+.tag {
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+  font-weight: 500;
+  padding: 0.5rem 1rem;
+  border-radius: 20px;
+  border: 1px solid var(--tabby-brown);
+  background: transparent;
+  color: var(--tabby-brown);
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-transform: capitalize;
+}
+
+.tag:hover {
+  background: var(--paw-pink);
+}
+
+.tag.active {
+  background: var(--tabby-brown);
+  color: white;
+}
+
+@media (max-width: 768px) {
+  .filterContainer {
+    gap: 0.375rem;
+  }
+
+  .tag {
+    font-size: 0.8125rem;
+    padding: 0.375rem 0.75rem;
+  }
+}

@@ -2,7 +2,7 @@
 import styles from './BlogPage.module.css';
 import { client } from '@/sanity/lib/client';
 import Breadcrumb from '@/components/Breadcrumb';
-import FeaturedBlogCard from '@/components/Home/FeaturedBlogCard';
+import BlogPageClient from './BlogPageClient';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
 
@@ -18,6 +18,7 @@ export default async function BlogPage({ locale = 'en' }) {
       slugDe,
       excerpt,
       publishedAt,
+      tags,
       featuredImage {
         asset-> {
           _id,
@@ -45,20 +46,11 @@ export default async function BlogPage({ locale = 'en' }) {
           <p className={styles.subheading}>{blogContent.subheading}</p>
         </header>
 
-        {posts.length > 0 ? (
-          <div className={styles.posts}>
-            {posts.map((post) => (
-              <FeaturedBlogCard
-                key={post._id}
-                post={post}
-                locale={locale}
-                readMoreText={blogContent.readMore}
-              />
-            ))}
-          </div>
-        ) : (
-          <p className={styles.noPosts}>{blogContent.noPosts}</p>
-        )}
+        <BlogPageClient
+          posts={posts}
+          locale={locale}
+          blogContent={blogContent}
+        />
 
         <Breadcrumb items={breadcrumbItems} />
       </div>

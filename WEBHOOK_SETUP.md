@@ -158,3 +158,150 @@ Then add `SANITY_WEBHOOK_SECRET` to your `.env.local` and configure the same val
 For issues with:
 - **Resend**: Check https://resend.com/docs
 - **Sanity Webhooks**: Check https://www.sanity.io/docs/webhooks
+
+---
+
+# Sanity Webhook Setup for Auto-Tagging Blog Posts
+
+This section explains how to set up the Sanity webhook that automatically generates tags for blog posts using OpenAI.
+
+## Overview
+
+When a blog post is published in Sanity, a webhook triggers an API endpoint that:
+1. Receives the document ID from Sanity
+2. Fetches the blog post content
+3. Sends the content to OpenAI GPT-4o-mini
+4. Generates 3-6 MECE (Mutually Exclusive, Collectively Exhaustive) tags
+5. Updates the blog post document with the generated tags
+
+## Environment Variables Required
+
+Add these to your Vercel project (Settings → Environment Variables):
+
+```
+OPENAI_API_KEY=sk-...
+SANITY_API_TOKEN=sk...  # Must have write permissions
+SANITY_WEBHOOK_SECRET=your-secret-here  # Optional but recommended
+```
+
+### Getting the API Keys
+
+1. **OpenAI API Key**: https://platform.openai.com/api-keys
+2. **Sanity API Token**:
+   - Go to https://www.sanity.io/manage
+   - Select your project → API → Tokens
+   - Create a new token with **Editor** permissions (needs write access)
+3. **Webhook Secret**: Generate a random string for security
+
+## Setting Up the Sanity Webhook
+
+1. Go to https://www.sanity.io/manage
+2. Select your project
+3. Navigate to **API** → **Webhooks**
+4. Click **Create webhook**
+
+### Webhook Configuration
+
+| Field | Value |
+|-------|-------|
+| **Name** | Auto-tag Blog Posts |
+| **URL** | `https://purrfectlove.org/api/webhooks/sanity-tag-generator` |
+| **Dataset** | production |
+| **Trigger on** | Create, Update |
+| **Filter** | `_type == "blogPost"` |
+| **Projection** | `{_id, _type}` |
+| **HTTP method** | POST |
+| **HTTP Headers** | (leave empty unless adding auth) |
+| **Secret** | (paste your SANITY_WEBHOOK_SECRET value) |
+| **API version** | v2021-03-25 (or v2025-02-19) |
+| **Draft documents** | Disabled (only trigger on published) |
+
+5. Click **Save**
+
+## How It Works
+
+### Tag Generation Logic
+
+The webhook only generates tags when:
+- The document is a `blogPost`
+- The post does NOT already have tags (prevents re-generation on every edit)
+
+Tags are generated based on:
+- English content (preferred) or German content
+- Title and first ~3000 characters of content
+
+### MECE Tag Categories
+
+The AI is prompted to use these categories when applicable:
+- `cat-health`
+- `cat-behavior`
+- `adoption`
+- `rescue-stories`
+- `cat-care`
+- `indoor-cats`
+- `nutrition`
+- `veterinary`
+- `community`
+- `foster-care`
+
+### Manual Override
+
+Editors can manually edit tags in Sanity after they're generated. The field is not read-only, allowing corrections.
+
+## Testing the Webhook
+
+### Local Testing
+
+```bash
+# Test the health check endpoint
+curl http://localhost:3000/api/webhooks/sanity-tag-generator
+
+# Simulate a webhook call (replace with actual document ID)
+curl -X POST http://localhost:3000/api/webhooks/sanity-tag-generator \
+  -H "Content-Type: application/json" \
+  -d '{"_id": "your-document-id", "_type": "blogPost"}'
+```
+
+### Production Testing
+
+1. Create a test blog post in Sanity
+2. Publish it
+3. Check the Sanity webhook logs for success/failure
+4. Verify tags appear on the document
+
+## Troubleshooting
+
+### Tags not generating
+
+1. Check Vercel function logs for errors
+2. Verify environment variables are set
+3. Ensure Sanity token has write permissions
+4. Check webhook is enabled and URL is correct
+
+### Webhook signature errors
+
+If you see "Invalid signature":
+1. Ensure SANITY_WEBHOOK_SECRET matches between Vercel and Sanity webhook config
+2. Or remove the secret from both places to disable verification
+
+### Rate limits
+
+OpenAI has rate limits. If you're bulk-publishing posts:
+- Wait a few seconds between publishes
+- Or manually add tags in Sanity
+
+## Cost Estimation
+
+Using GPT-4o-mini:
+- ~$0.15 per 1M input tokens
+- ~$0.60 per 1M output tokens
+- Each blog post: ~1000-2000 input tokens, ~50 output tokens
+- **Estimated cost: ~$0.0002 per blog post** (negligible)
+
+## Re-generating Tags
+
+To regenerate tags for a post:
+1. Open the blog post in Sanity
+2. Clear the tags field (remove all tags)
+3. Publish the post
+4. The webhook will generate new tags

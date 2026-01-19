@@ -69,6 +69,7 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
           url
         }
       },
+      tags,
       author-> {
         name,
         "slug": slug.current,
@@ -243,6 +244,25 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
             )}
             <PortableText value={postContent} components={portableTextComponents} />
           </div>
+
+          {post.tags && post.tags.length > 0 && (
+            <div className={styles.tagsSection}>
+              <span className={styles.tagsLabel}>
+                {locale === 'de' ? 'Themen:' : 'Topics:'}
+              </span>
+              <div className={styles.tagsList}>
+                {post.tags.map((tag) => (
+                  <Link
+                    key={tag}
+                    href={`${blogHref}?tag=${encodeURIComponent(tag)}`}
+                    className={styles.tag}
+                  >
+                    {tag}
+                  </Link>
+                ))}
+              </div>
+            </div>
+          )}
 
           <Breadcrumb items={breadcrumbItems} />
         </article>
