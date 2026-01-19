@@ -231,17 +231,16 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
             </div>
           </header>
 
-          {post.featuredImage?.asset && (
-            <div className={styles.imageWrapper}>
-              <img
-                src={urlFor(post.featuredImage).width(1200).height(675).url()}
-                alt={title}
-                className={styles.image}
-              />
-            </div>
-          )}
-
           <div className={styles.content}>
+            {post.featuredImage?.asset && (
+              <div className={styles.imageWrapper}>
+                <img
+                  src={urlFor(post.featuredImage).width(1200).fit('max').url()}
+                  alt={title}
+                  className={styles.image}
+                />
+              </div>
+            )}
             <PortableText value={postContent} components={portableTextComponents} />
           </div>
 
