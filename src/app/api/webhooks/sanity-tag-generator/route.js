@@ -82,7 +82,12 @@ Return ONLY a JSON array of tag strings, no explanation. Example: ["cat-health",
     }
 
     const data = await response.json();
-    const tagsText = data.choices[0]?.message?.content?.trim();
+    let tagsText = data.choices[0]?.message?.content?.trim();
+
+    // Remove markdown code blocks if present
+    if (tagsText.startsWith('```')) {
+      tagsText = tagsText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    }
 
     // Parse the JSON response
     const tags = JSON.parse(tagsText);

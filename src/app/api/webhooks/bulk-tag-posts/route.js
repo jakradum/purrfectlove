@@ -65,7 +65,13 @@ Return ONLY a JSON array of tag strings, no explanation. Example: ["cat-health",
     }
 
     const data = await response.json();
-    const tagsText = data.choices[0]?.message?.content?.trim();
+    let tagsText = data.choices[0]?.message?.content?.trim();
+
+    // Remove markdown code blocks if present
+    if (tagsText.startsWith('```')) {
+      tagsText = tagsText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    }
+
     const tags = JSON.parse(tagsText);
 
     if (Array.isArray(tags) && tags.every(t => typeof t === 'string')) {
@@ -157,6 +163,6 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     service: 'bulk-tag-posts',
-    version: '4-debug'
+    version: '5-fix-json'
   });
 }
