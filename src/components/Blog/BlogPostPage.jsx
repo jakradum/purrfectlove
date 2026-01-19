@@ -70,6 +70,7 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
         }
       },
       tags,
+      tagsDe,
       author-> {
         name,
         "slug": slug.current,
@@ -97,6 +98,29 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
 
   if (!post) {
     notFound();
+  }
+
+  // Get tags for this locale (German posts use tagsDe)
+  const postTags = locale === 'de'
+    ? (post.tagsDe && post.tagsDe.length > 0 ? post.tagsDe : post.tags)
+    : post.tags;
+
+  // Fetch related posts based on shared tags (up to 3)
+  let relatedPosts = [];
+  if (postTags && postTags.length > 0) {
+    const tagsField = locale === 'de' ? 'tagsDe' : 'tags';
+    relatedPosts = await client.fetch(
+      `*[_type == "blogPost" && _id != $postId && count((${tagsField})[@ in $tags]) > 0] | order(publishedAt desc) [0...3] {
+        _id,
+        title,
+        slug,
+        slugDe,
+        excerpt,
+        publishedAt
+      }`,
+      { postId: post._id, tags: postTags },
+      { next: { revalidate: 60 } }
+    );
   }
 
   const title = post.title?.[locale] || post.title?.en || '';
@@ -245,21 +269,57 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
             <PortableText value={postContent} components={portableTextComponents} />
           </div>
 
-          {post.tags && post.tags.length > 0 && (
+          {postTags && postTags.length > 0 && (
             <div className={styles.tagsSection}>
               <span className={styles.tagsLabel}>
                 {locale === 'de' ? 'Themen:' : 'Topics:'}
               </span>
               <div className={styles.tagsList}>
-                {post.tags.map((tag) => (
+                {postTags.map((tag) => (
                   <Link
                     key={tag}
-                    href={`${blogHref}?tag=${encodeURIComponent(tag)}`}
+                    href={`${blogHref}?tags=${encodeURIComponent(tag)}`}
                     className={styles.tag}
                   >
                     {tag}
                   </Link>
                 ))}
+              </div>
+            </div>
+          )}
+
+          {relatedPosts.length > 0 && (
+            <div className={styles.relatedSection}>
+              <h2 className={styles.relatedHeading}>
+                {locale === 'de' ? 'Ähnliche Beiträge' : 'Related Posts'}
+              </h2>
+              <div className={styles.relatedPosts}>
+                {relatedPosts.map((relatedPost) => {
+                  const relatedTitle = relatedPost.title?.[locale] || relatedPost.title?.en || '';
+                  const relatedExcerpt = relatedPost.excerpt?.[locale] || relatedPost.excerpt?.en || '';
+                  const relatedSlug = locale === 'de'
+                    ? (relatedPost.slugDe?.current || relatedPost.slug?.current)
+                    : relatedPost.slug?.current;
+                  const relatedHref = `${blogHref}/${relatedSlug}`;
+                  const relatedDate = new Date(relatedPost.publishedAt).toLocaleDateString(
+                    locale === 'de' ? 'de-DE' : 'en-US',
+                    { year: 'numeric', month: 'short' }
+                  );
+
+                  return (
+                    <article key={relatedPost._id} className={styles.relatedCard}>
+                      <time className={styles.relatedDate}>{relatedDate}</time>
+                      <Link href={relatedHref} className={styles.relatedTitleLink}>
+                        <h3 className={styles.relatedTitle}>{relatedTitle}</h3>
+                      </Link>
+                      {relatedExcerpt && (
+                        <p className={styles.relatedExcerpt}>
+                          {truncateText(relatedExcerpt, 100)}
+                        </p>
+                      )}
+                    </article>
+                  );
+                })}
               </div>
             </div>
           )}
