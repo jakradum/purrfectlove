@@ -16,6 +16,7 @@ export const metadata = {
     canonical: 'https://purrfectlove.org/de',
     languages: {
       'en': 'https://purrfectlove.org',
+      'de': 'https://purrfectlove.org/de',
     },
   },
   other: {

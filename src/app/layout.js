@@ -1,4 +1,5 @@
 import { Outfit, Lora } from 'next/font/google';
+import { headers } from 'next/headers';
 import "./globals.css";
 
 const outfit = Outfit({
@@ -70,9 +71,14 @@ export const metadata = {
   },
 };
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  // Detect locale from the URL path via x-pathname header (set by middleware)
+  const headersList = await headers();
+  const pathname = headersList.get('x-pathname') || '';
+  const locale = pathname.startsWith('/de') ? 'de' : 'en';
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <body className={`${outfit.variable} ${lora.variable}`}>
         {children}
       </body>
