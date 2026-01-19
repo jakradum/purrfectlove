@@ -20,25 +20,41 @@ function extractPlainText(blocks) {
     .slice(0, 3000);
 }
 
+// Fixed MECE tag categories - exactly 7 options
+const ALLOWED_TAGS = [
+  'adoption',      // Adoption process, tips, what to expect
+  'cat-care',      // General care, grooming, daily routines
+  'cat-health',    // Health, medical, veterinary, nutrition
+  'cat-behavior',  // Behavior, training, understanding cats
+  'rescue-stories', // Success stories, rescue journeys
+  'foster-care',   // Fostering information and experiences
+  'community'      // Events, volunteers, organization news
+];
+
 // Generate tags using OpenAI
 async function generateTags(title, content) {
   const openaiApiKey = process.env.OPENAI_API_KEY;
   if (!openaiApiKey) return null;
 
-  const prompt = `You are a content tagger for a cat rescue organization's blog. Generate 3-6 MECE (Mutually Exclusive, Collectively Exhaustive) tags for this blog post.
+  const prompt = `You are a content tagger for a cat rescue organization's blog. Categorize this blog post using ONLY tags from this fixed list:
 
-Tags should be:
-- Lowercase, hyphenated (e.g., "cat-health", "adoption-tips")
-- Relevant to cat rescue, adoption, and cat care topics
-- Specific enough to be useful for filtering
-- From these general categories when applicable: cat-health, cat-behavior, adoption, rescue-stories, cat-care, indoor-cats, nutrition, veterinary, community, foster-care
+ALLOWED TAGS (pick 1-3 that best fit):
+- adoption: Adoption process, tips, preparing for adoption, what to expect
+- cat-care: General care, grooming, litter, daily routines, supplies
+- cat-health: Health issues, medical care, veterinary visits, nutrition, vaccinations
+- cat-behavior: Understanding cat behavior, training, socialization
+- rescue-stories: Success stories, rescue journeys, happy endings
+- foster-care: Fostering cats, temporary care, foster experiences
+- community: Events, volunteers, organization news, partnerships
+
+IMPORTANT: Only use tags from this exact list. Do not create new tags.
 
 Title: ${title}
 
 Content excerpt:
 ${content}
 
-Return ONLY a JSON array of tag strings, no explanation. Example: ["cat-health", "indoor-cats", "cat-care"]`;
+Return ONLY a JSON array with 1-3 tags from the allowed list. Example: ["adoption", "cat-behavior"]`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -75,7 +91,9 @@ Return ONLY a JSON array of tag strings, no explanation. Example: ["cat-health",
     const tags = JSON.parse(tagsText);
 
     if (Array.isArray(tags) && tags.every(t => typeof t === 'string')) {
-      return tags.slice(0, 6);
+      // Filter to only allowed tags and limit to 3
+      const validTags = tags.filter(t => ALLOWED_TAGS.includes(t)).slice(0, 3);
+      return validTags.length > 0 ? validTags : null;
     }
     return null;
   } catch (error) {
@@ -89,16 +107,16 @@ export async function POST(request) {
   // TODO: Re-enable or delete this endpoint after use
 
   try {
-    // Fetch all blog posts without tags
+    // Fetch ALL blog posts for retagging with fixed categories
     const posts = await sanityClient.fetch(
-      `*[_type == "blogPost" && (!defined(tags) || count(tags) == 0)] {
+      `*[_type == "blogPost"] {
         _id,
         title,
         content
       }`
     );
 
-    console.log(`Found ${posts.length} posts without tags`);
+    console.log(`Found ${posts.length} posts to retag`);
 
     const results = [];
 
@@ -163,6 +181,7 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     service: 'bulk-tag-posts',
-    version: '5-fix-json'
+    version: '6-mece-7-tags',
+    allowedTags: ALLOWED_TAGS
   });
 }
