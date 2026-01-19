@@ -1,4 +1,5 @@
 // src/components/BlogPage.jsx
+import { Suspense } from 'react';
 import styles from './BlogPage.module.css';
 import { client } from '@/sanity/lib/client';
 import Breadcrumb from '@/components/Breadcrumb';
@@ -46,11 +47,13 @@ export default async function BlogPage({ locale = 'en' }) {
           <p className={styles.subheading}>{blogContent.subheading}</p>
         </header>
 
-        <BlogPageClient
-          posts={posts}
-          locale={locale}
-          blogContent={blogContent}
-        />
+        <Suspense fallback={<div className={styles.posts} />}>
+          <BlogPageClient
+            posts={posts}
+            locale={locale}
+            blogContent={blogContent}
+          />
+        </Suspense>
 
         <Breadcrumb items={breadcrumbItems} />
       </div>
