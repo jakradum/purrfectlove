@@ -31,7 +31,18 @@ const ALLOWED_TAGS = [
   'community'      // Events, volunteers, organization news
 ];
 
-// Generate tags using OpenAI
+// German translations of tags
+const ALLOWED_TAGS_DE = [
+  'adoption',           // Same in German
+  'katzenpflege',       // cat-care
+  'katzengesundheit',   // cat-health
+  'katzenverhalten',    // cat-behavior
+  'rettungsgeschichten', // rescue-stories
+  'pflegestelle',       // foster-care
+  'gemeinschaft'        // community
+];
+
+// Generate tags using OpenAI for English content
 async function generateTags(title, content) {
   const openaiApiKey = process.env.OPENAI_API_KEY;
   if (!openaiApiKey) return null;
@@ -102,6 +113,77 @@ Return ONLY a JSON array with 1-3 tags from the allowed list. Example: ["adoptio
   }
 }
 
+// Generate German tags using OpenAI
+async function generateTagsDe(title, content) {
+  const openaiApiKey = process.env.OPENAI_API_KEY;
+  if (!openaiApiKey) return null;
+
+  const prompt = `Du bist ein Content-Tagger für den Blog einer Katzenrettungsorganisation. Kategorisiere diesen Blogbeitrag NUR mit Tags aus dieser festen Liste:
+
+ERLAUBTE TAGS (wähle 1-3, die am besten passen):
+- adoption: Adoptionsprozess, Tipps, Vorbereitung auf Adoption
+- katzenpflege: Allgemeine Pflege, Fellpflege, Katzenklo, tägliche Routinen
+- katzengesundheit: Gesundheitsprobleme, medizinische Versorgung, Tierarztbesuche, Ernährung, Impfungen
+- katzenverhalten: Katzenverhalten verstehen, Training, Sozialisierung
+- rettungsgeschichten: Erfolgsgeschichten, Rettungsreisen, Happy Ends
+- pflegestelle: Katzen in Pflege nehmen, vorübergehende Betreuung
+- gemeinschaft: Veranstaltungen, Freiwillige, Organisationsneuigkeiten
+
+WICHTIG: Verwende NUR Tags aus dieser Liste. Erstelle keine neuen Tags.
+
+Titel: ${title}
+
+Inhalt:
+${content}
+
+Antworte NUR mit einem JSON-Array mit 1-3 Tags aus der erlaubten Liste. Beispiel: ["adoption", "katzenverhalten"]`;
+
+  try {
+    const response = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${openaiApiKey}`,
+      },
+      body: JSON.stringify({
+        model: 'gpt-4o-mini',
+        messages: [
+          { role: 'system', content: 'Du bist ein hilfreicher Assistent, der Blog-Tags generiert. Antworte immer nur mit gültigem JSON.' },
+          { role: 'user', content: prompt }
+        ],
+        temperature: 0.3,
+        max_tokens: 150,
+      }),
+    });
+
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error (DE):', response.status, errorText);
+      return null;
+    }
+
+    const data = await response.json();
+    let tagsText = data.choices[0]?.message?.content?.trim();
+
+    // Remove markdown code blocks if present
+    if (tagsText.startsWith('```')) {
+      tagsText = tagsText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
+    }
+
+    const tags = JSON.parse(tagsText);
+
+    if (Array.isArray(tags) && tags.every(t => typeof t === 'string')) {
+      // Filter to only allowed German tags and limit to 3
+      const validTags = tags.filter(t => ALLOWED_TAGS_DE.includes(t)).slice(0, 3);
+      return validTags.length > 0 ? validTags : null;
+    }
+    return null;
+  } catch (error) {
+    console.error('Error generating German tags:', error);
+    return null;
+  }
+}
+
 export async function POST(request) {
   // Temporarily disabled auth for one-time bulk run
   // TODO: Re-enable or delete this endpoint after use
@@ -112,7 +194,8 @@ export async function POST(request) {
       `*[_type == "blogPost"] {
         _id,
         title,
-        content
+        content,
+        language
       }`
     );
 
@@ -121,16 +204,19 @@ export async function POST(request) {
     const results = [];
 
     for (const post of posts) {
-      // Try multiple title/content structures
-      const title = post.title?.en || post.title?.de || post.title || '';
-      let contentText = extractPlainText(post.content?.en) || extractPlainText(post.content?.de);
+      // Get English content
+      const titleEn = post.title?.en || '';
+      const contentEn = extractPlainText(post.content?.en);
 
-      // If no localized content, try direct content field
-      if (!contentText && post.content) {
-        contentText = extractPlainText(post.content);
-      }
+      // Get German content
+      const titleDe = post.title?.de || '';
+      const contentDe = extractPlainText(post.content?.de);
 
-      if (!title && !contentText) {
+      // Check if post has any content
+      const hasEnglishContent = titleEn || contentEn;
+      const hasGermanContent = titleDe || contentDe;
+
+      if (!hasEnglishContent && !hasGermanContent) {
         results.push({
           _id: post._id,
           status: 'skipped',
@@ -140,29 +226,45 @@ export async function POST(request) {
         continue;
       }
 
-      // Use title as fallback content if no body
-      const textForTags = contentText || title;
+      let tags = null;
+      let tagsDe = null;
 
-      const tags = await generateTags(title || 'Untitled', textForTags);
+      // Generate English tags if there's English content
+      if (hasEnglishContent && post.language !== 'de') {
+        const textForTags = contentEn || titleEn;
+        tags = await generateTags(titleEn || 'Untitled', textForTags);
+        // Small delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
 
-      if (tags) {
+      // Generate German tags if there's German content
+      if (hasGermanContent && post.language !== 'en') {
+        const textForTagsDe = contentDe || titleDe;
+        tagsDe = await generateTagsDe(titleDe || 'Ohne Titel', textForTagsDe);
+        // Small delay to avoid rate limits
+        await new Promise(resolve => setTimeout(resolve, 500));
+      }
+
+      // Update the document with both tag fields
+      const updateFields = {};
+      if (tags) updateFields.tags = tags;
+      if (tagsDe) updateFields.tagsDe = tagsDe;
+
+      if (Object.keys(updateFields).length > 0) {
         await sanityClient.patch(post._id)
-          .set({ tags })
+          .set(updateFields)
           .commit();
 
-        results.push({ _id: post._id, status: 'success', tags });
-        console.log(`Tagged post ${post._id}:`, tags);
+        results.push({ _id: post._id, status: 'success', tags, tagsDe });
+        console.log(`Tagged post ${post._id}:`, { tags, tagsDe });
       } else {
         results.push({
           _id: post._id,
           status: 'failed',
-          reason: 'tag generation failed',
-          debug: { titleLen: title?.length, contentLen: textForTags?.length }
+          reason: 'tag generation failed for both languages',
+          debug: { hasEnglishContent, hasGermanContent }
         });
       }
-
-      // Small delay to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     return NextResponse.json({
@@ -181,7 +283,8 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     service: 'bulk-tag-posts',
-    version: '6-mece-7-tags',
-    allowedTags: ALLOWED_TAGS
+    version: '7-bilingual-tags',
+    allowedTags: ALLOWED_TAGS,
+    allowedTagsDe: ALLOWED_TAGS_DE
   });
 }

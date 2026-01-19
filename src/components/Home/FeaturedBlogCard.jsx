@@ -2,7 +2,7 @@
 import Link from 'next/link';
 import styles from './FeaturedBlogCard.module.css';
 
-export default function FeaturedBlogCard({ post, locale, readMoreText }) {
+export default function FeaturedBlogCard({ post, locale, readMoreText, variant = 'home' }) {
   const title = post.title?.[locale] || post.title?.en || '';
   const excerpt = post.excerpt?.[locale] || post.excerpt?.en || '';
   const slug = locale === 'de'
@@ -18,8 +18,13 @@ export default function FeaturedBlogCard({ post, locale, readMoreText }) {
     }
   );
 
+  // Use blog variant for blog listing page (no circles, left-aligned)
+  const cardClassName = variant === 'blog'
+    ? `${styles.card} ${styles.blogVariant}`
+    : styles.card;
+
   return (
-    <article className={styles.card}>
+    <article className={cardClassName}>
       <div className={styles.content}>
         <time className={styles.date}>{formattedDate}</time>
         <Link href={href} className={styles.titleLink}>

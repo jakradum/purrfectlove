@@ -112,6 +112,28 @@
   width: 100%;
 }
 
+/* Blog page variant - no circles, left-aligned */
+.blogVariant::before {
+  display: none;
+}
+
+.blogVariant .content {
+  align-items: flex-start;
+  text-align: left;
+  min-height: auto;
+  padding: 1rem;
+}
+
+.blogVariant .title {
+  max-width: none;
+  -webkit-line-clamp: 3;
+}
+
+.blogVariant .excerpt {
+  max-width: none;
+  -webkit-line-clamp: 3;
+}
+
 @media (max-width: 768px) {
   .card {
     padding: 0.5rem 0.25rem;
@@ -138,5 +160,17 @@
 
   .readMore {
     font-size: 0.6875rem;
+  }
+
+  .blogVariant .content {
+    padding: 0.75rem;
+  }
+
+  .blogVariant .title {
+    max-width: none;
+  }
+
+  .blogVariant .excerpt {
+    max-width: none;
   }
 }

@@ -20,6 +20,7 @@ export default async function BlogPage({ locale = 'en' }) {
       excerpt,
       publishedAt,
       tags,
+      tagsDe,
       featuredImage {
         asset-> {
           _id,

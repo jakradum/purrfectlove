@@ -1,32 +1,35 @@
 'use client';
 
-import { useState, useEffect } from 'react';
 import styles from './TagFilter.module.css';
 
-export default function TagFilter({ allTags, selectedTag, onTagSelect, locale }) {
-  const clearText = locale === 'de' ? 'Alle' : 'All';
+export default function TagFilter({ allTags, selectedTags, onTagSelect, onClearAll, locale, getTagLabel }) {
+  const clearAllText = locale === 'de' ? 'Alle löschen' : 'Clear all';
 
   if (!allTags || allTags.length === 0) {
     return null;
   }
 
+  const hasSelectedTags = selectedTags && selectedTags.length > 0;
+
   return (
     <div className={styles.filterContainer}>
-      <button
-        className={`${styles.tag} ${!selectedTag ? styles.active : ''}`}
-        onClick={() => onTagSelect(null)}
-      >
-        {clearText}
-      </button>
       {allTags.map((tag) => (
         <button
           key={tag}
-          className={`${styles.tag} ${selectedTag === tag ? styles.active : ''}`}
+          className={`${styles.tag} ${selectedTags.includes(tag) ? styles.active : ''}`}
           onClick={() => onTagSelect(tag)}
         >
-          {tag}
+          {getTagLabel ? getTagLabel(tag) : tag}
         </button>
       ))}
+      {hasSelectedTags && (
+        <button
+          className={styles.clearAll}
+          onClick={onClearAll}
+        >
+          {clearAllText}
+        </button>
+      )}
     </div>
   );
 }
