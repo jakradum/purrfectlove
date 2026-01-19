@@ -75,9 +75,9 @@ Return ONLY a JSON array of tag strings, no explanation. Example: ["cat-health",
 }
 
 export async function POST(request) {
-  // Simple auth check - require a secret key
+  // Simple auth check - use dedicated secret or fallback
   const authHeader = request.headers.get('authorization');
-  const expectedKey = process.env.SANITY_API_TOKEN?.slice(0, 20); // Use first 20 chars as simple auth
+  const expectedKey = process.env.BULK_TAG_SECRET || 'purrfect-bulk-tag-2024';
 
   if (!authHeader || authHeader !== `Bearer ${expectedKey}`) {
     return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
