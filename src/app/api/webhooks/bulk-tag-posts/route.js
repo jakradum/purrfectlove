@@ -58,7 +58,11 @@ Return ONLY a JSON array of tag strings, no explanation. Example: ["cat-health",
       }),
     });
 
-    if (!response.ok) return null;
+    if (!response.ok) {
+      const errorText = await response.text();
+      console.error('OpenAI API error:', response.status, errorText);
+      return null;
+    }
 
     const data = await response.json();
     const tagsText = data.choices[0]?.message?.content?.trim();
@@ -93,15 +97,29 @@ export async function POST(request) {
     const results = [];
 
     for (const post of posts) {
-      const title = post.title?.en || post.title?.de || '';
-      const contentText = extractPlainText(post.content?.en) || extractPlainText(post.content?.de);
+      // Try multiple title/content structures
+      const title = post.title?.en || post.title?.de || post.title || '';
+      let contentText = extractPlainText(post.content?.en) || extractPlainText(post.content?.de);
 
-      if (!title || !contentText) {
-        results.push({ _id: post._id, status: 'skipped', reason: 'no content' });
+      // If no localized content, try direct content field
+      if (!contentText && post.content) {
+        contentText = extractPlainText(post.content);
+      }
+
+      if (!title && !contentText) {
+        results.push({
+          _id: post._id,
+          status: 'skipped',
+          reason: 'no content',
+          debug: { hasTitle: !!post.title, hasContent: !!post.content }
+        });
         continue;
       }
 
-      const tags = await generateTags(title, contentText);
+      // Use title as fallback content if no body
+      const textForTags = contentText || title;
+
+      const tags = await generateTags(title || 'Untitled', textForTags);
 
       if (tags) {
         await sanityClient.patch(post._id)
@@ -111,11 +129,16 @@ export async function POST(request) {
         results.push({ _id: post._id, status: 'success', tags });
         console.log(`Tagged post ${post._id}:`, tags);
       } else {
-        results.push({ _id: post._id, status: 'failed', reason: 'tag generation failed' });
+        results.push({
+          _id: post._id,
+          status: 'failed',
+          reason: 'tag generation failed',
+          debug: { titleLen: title?.length, contentLen: textForTags?.length }
+        });
       }
 
       // Small delay to avoid rate limits
-      await new Promise(resolve => setTimeout(resolve, 500));
+      await new Promise(resolve => setTimeout(resolve, 1000));
     }
 
     return NextResponse.json({
@@ -134,6 +157,6 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     service: 'bulk-tag-posts',
-    version: '3-noauth'
+    version: '4-debug'
   });
 }
