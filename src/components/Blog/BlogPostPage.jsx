@@ -106,11 +106,15 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
     : post.tags;
 
   // Fetch related posts based on shared tags (up to 3)
+  // Filter by language to ensure posts have content in the current locale
   let relatedPosts = [];
   if (postTags && postTags.length > 0) {
     const tagsField = locale === 'de' ? 'tagsDe' : 'tags';
+    const languageFilter = locale === 'de'
+      ? '(language == "de" || language == "both")'
+      : '(language == "en" || language == "both" || !defined(language))';
     relatedPosts = await client.fetch(
-      `*[_type == "blogPost" && _id != $postId && count((${tagsField})[@ in $tags]) > 0] | order(publishedAt desc) [0...3] {
+      `*[_type == "blogPost" && _id != $postId && ${languageFilter} && count((${tagsField})[@ in $tags]) > 0] | order(publishedAt desc) [0...3] {
         _id,
         title,
         slug,
