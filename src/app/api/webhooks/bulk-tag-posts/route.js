@@ -139,6 +139,6 @@ export async function GET() {
   return NextResponse.json({
     status: 'ok',
     service: 'bulk-tag-posts',
-    usage: 'POST with Authorization: Bearer <first-20-chars-of-sanity-token>'
+    version: '2'
   });
 }
