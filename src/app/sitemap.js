@@ -1,7 +1,7 @@
 import { client } from '@/sanity/lib/client';
 
 export default async function sitemap() {
-  const baseUrl = 'https://purrfectlove.org';
+  const baseUrl = 'https://www.purrfectlove.org';
 
   // Static pages for English
   const staticPagesEN = [
@@ -31,26 +31,37 @@ export default async function sitemap() {
   let blogPosts = [];
   try {
     const posts = await client.fetch(`
-      *[_type == "post" && defined(slug.current)] {
+      *[_type == "blogPost" && defined(slug.current)] {
         "slug": slug.current,
+        "slugDe": slugDe.current,
+        language,
         _updatedAt
       }
     `);
 
-    blogPosts = posts.flatMap((post) => [
-      {
-        url: `${baseUrl}/guides/blog/${post.slug}`,
-        lastModified: new Date(post._updatedAt),
-        changeFrequency: 'monthly',
-        priority: 0.6,
-      },
-      {
-        url: `${baseUrl}/de/guides/blog/${post.slug}`,
-        lastModified: new Date(post._updatedAt),
-        changeFrequency: 'monthly',
-        priority: 0.6,
-      },
-    ]);
+    blogPosts = posts.flatMap((post) => {
+      const entries = [];
+      // Add English URL if post has English content
+      if (post.language === 'en' || post.language === 'both' || !post.language) {
+        entries.push({
+          url: `${baseUrl}/guides/blog/${post.slug}`,
+          lastModified: new Date(post._updatedAt),
+          changeFrequency: 'monthly',
+          priority: 0.6,
+        });
+      }
+      // Add German URL if post has German content
+      if (post.language === 'de' || post.language === 'both') {
+        const deSlug = post.slugDe || post.slug;
+        entries.push({
+          url: `${baseUrl}/de/guides/blog/${deSlug}`,
+          lastModified: new Date(post._updatedAt),
+          changeFrequency: 'monthly',
+          priority: 0.6,
+        });
+      }
+      return entries;
+    });
   } catch (error) {
     console.error('Error fetching blog posts for sitemap:', error);
   }
