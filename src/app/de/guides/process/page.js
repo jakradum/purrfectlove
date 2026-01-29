@@ -5,10 +5,10 @@ export const metadata = {
   title: 'Adoptionsprozess - Purrfect Love',
   description: 'Erfahren Sie, wie unser Adoptionsprozess funktioniert. Von der Bewerbung bis zur Abholung Ihrer neuen Katze.',
   alternates: {
-    canonical: 'https://purrfectlove.org/de/guides/process',
+    canonical: 'https://www.purrfectlove.org/de/guides/process',
     languages: {
-      'en': 'https://purrfectlove.org/guides/process',
-      'de': 'https://purrfectlove.org/de/guides/process',
+      'en': 'https://www.purrfectlove.org/guides/process',
+      'de': 'https://www.purrfectlove.org/de/guides/process',
     },
   },
 };

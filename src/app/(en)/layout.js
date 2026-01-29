@@ -10,13 +10,13 @@ export const metadata = {
     title: 'Purrfect Love India | Cat Adoption Bangalore',
     description: 'Adopt a cat in Bangalore! Find your purrfect companion.',
     locale: 'en_IN',
-    url: 'https://purrfectlove.org',
+    url: 'https://www.purrfectlove.org',
   },
   alternates: {
-    canonical: 'https://purrfectlove.org',
+    canonical: 'https://www.purrfectlove.org',
     languages: {
-      'en': 'https://purrfectlove.org',
-      'de': 'https://purrfectlove.org/de',
+      'en': 'https://www.purrfectlove.org',
+      'de': 'https://www.purrfectlove.org/de',
     },
   },
   other: {

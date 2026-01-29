@@ -5,10 +5,10 @@ export const metadata = {
   title: 'Kontakt - Purrfect Love',
   description: 'Nehmen Sie Kontakt mit Purrfect Love auf. Wir freuen uns, von Ihnen zu hören - über Katzenadoption, Freiwilligenarbeit oder Fragen.',
   alternates: {
-    canonical: 'https://purrfectlove.org/de/contact',
+    canonical: 'https://www.purrfectlove.org/de/contact',
     languages: {
-      'en': 'https://purrfectlove.org/contact',
-      'de': 'https://purrfectlove.org/de/contact',
+      'en': 'https://www.purrfectlove.org/contact',
+      'de': 'https://www.purrfectlove.org/de/contact',
     },
   },
 };

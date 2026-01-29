@@ -5,10 +5,10 @@ export const metadata = {
   title: 'The First Days with Your New Cat - Purrfect Love',
   description: 'A complete guide to helping your new cat settle into their forever home. Learn what to expect in the first 3 weeks after adoption.',
   alternates: {
-    canonical: 'https://purrfectlove.org/guides/onboarding',
+    canonical: 'https://www.purrfectlove.org/guides/onboarding',
     languages: {
-      'en': 'https://purrfectlove.org/guides/onboarding',
-      'de': 'https://purrfectlove.org/de/guides/onboarding',
+      'en': 'https://www.purrfectlove.org/guides/onboarding',
+      'de': 'https://www.purrfectlove.org/de/guides/onboarding',
     },
   },
 };

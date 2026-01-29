@@ -5,10 +5,10 @@ export const metadata = {
   title: 'FAQ - Purrfect Love',
   description: 'Häufig gestellte Fragen zur Adoption einer Katze von Purrfect Love. Erfahren Sie mehr über Voraussetzungen, Gebühren und den Prozess.',
   alternates: {
-    canonical: 'https://purrfectlove.org/de/guides/faqs',
+    canonical: 'https://www.purrfectlove.org/de/guides/faqs',
     languages: {
-      'en': 'https://purrfectlove.org/guides/faqs',
-      'de': 'https://purrfectlove.org/de/guides/faqs',
+      'en': 'https://www.purrfectlove.org/guides/faqs',
+      'de': 'https://www.purrfectlove.org/de/guides/faqs',
     },
   },
 };

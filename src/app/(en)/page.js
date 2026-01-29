@@ -4,8 +4,8 @@ const organizationSchema = {
   '@context': 'https://schema.org',
   '@type': 'Organization',
   name: 'Purrfect Love',
-  url: 'https://purrfectlove.org',
-  logo: 'https://purrfectlove.org/logo-hero.png',
+  url: 'https://www.purrfectlove.org',
+  logo: 'https://www.purrfectlove.org/logo-hero.png',
   description: 'A cat adoption and rehab collective based in Bangalore and Stuttgart. We rescue, rehabilitate, and rehome cats, connecting them with loving forever homes.',
   sameAs: [
     'https://www.instagram.com/purrfectlove.bangalore/',
@@ -41,11 +41,11 @@ export const metadata = {
   openGraph: {
     title: 'Purrfect Love | Cat Adoption in Bangalore & Stuttgart',
     description: 'Adopt a cat from Purrfect Love. We rescue, rehabilitate, and rehome cats in Bangalore and Stuttgart.',
-    url: 'https://purrfectlove.org',
+    url: 'https://www.purrfectlove.org',
     siteName: 'Purrfect Love',
     images: [
       {
-        url: 'https://purrfectlove.org/logo-hero.png',
+        url: 'https://www.purrfectlove.org/logo-hero.png',
         width: 1200,
         height: 630,
         alt: 'Purrfect Love - Cat Adoption',
@@ -58,13 +58,13 @@ export const metadata = {
     card: 'summary_large_image',
     title: 'Purrfect Love | Cat Adoption in Bangalore & Stuttgart',
     description: 'Adopt a cat from Purrfect Love. We rescue, rehabilitate, and rehome cats.',
-    images: ['https://purrfectlove.org/logo-hero.png'],
+    images: ['https://www.purrfectlove.org/logo-hero.png'],
   },
   alternates: {
-    canonical: 'https://purrfectlove.org',
+    canonical: 'https://www.purrfectlove.org',
     languages: {
-      'en': 'https://purrfectlove.org',
-      'de': 'https://purrfectlove.org/de',
+      'en': 'https://www.purrfectlove.org',
+      'de': 'https://www.purrfectlove.org/de',
     },
   },
 };

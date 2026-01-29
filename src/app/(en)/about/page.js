@@ -5,10 +5,10 @@ export const metadata = {
   title: 'About Us - Purrfect Love',
   description: 'Meet the passionate team behind Purrfect Love. We rescue, rehabilitate, and rehome cats in Bangalore and Stuttgart.',
   alternates: {
-    canonical: 'https://purrfectlove.org/about',
+    canonical: 'https://www.purrfectlove.org/about',
     languages: {
-      'en': 'https://purrfectlove.org/about',
-      'de': 'https://purrfectlove.org/de/about',
+      'en': 'https://www.purrfectlove.org/about',
+      'de': 'https://www.purrfectlove.org/de/about',
     },
   },
 };

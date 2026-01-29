@@ -5,10 +5,10 @@ export const metadata = {
   title: 'Die ersten Tage mit Ihrer neuen Katze - Purrfect Love',
   description: 'Ein vollständiger Leitfaden, um Ihrer neuen Katze zu helfen, sich in ihrem neuen Zuhause einzuleben. Erfahren Sie, was Sie in den ersten 3 Wochen erwarten können.',
   alternates: {
-    canonical: 'https://purrfectlove.org/de/guides/onboarding',
+    canonical: 'https://www.purrfectlove.org/de/guides/onboarding',
     languages: {
-      'en': 'https://purrfectlove.org/guides/onboarding',
-      'de': 'https://purrfectlove.org/de/guides/onboarding',
+      'en': 'https://www.purrfectlove.org/guides/onboarding',
+      'de': 'https://www.purrfectlove.org/de/guides/onboarding',
     },
   },
 };

@@ -7,10 +7,10 @@ export const metadata = {
   title: 'Adopt a Cat - Purrfect Love',
   description: 'Meet our cats available for adoption. All cats are neutered, vaccinated, and ready for their forever homes.',
   alternates: {
-    canonical: 'https://purrfectlove.org/adopt',
+    canonical: 'https://www.purrfectlove.org/adopt',
     languages: {
-      'en': 'https://purrfectlove.org/adopt',
-      'de': 'https://purrfectlove.org/de/adopt',
+      'en': 'https://www.purrfectlove.org/adopt',
+      'de': 'https://www.purrfectlove.org/de/adopt',
     },
   },
 };

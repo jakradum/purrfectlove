@@ -10,13 +10,13 @@ export const metadata = {
     title: 'Purrfect Love Deutschland | Katzen Adoption Stuttgart',
     description: 'Adoptiere eine Katze in Stuttgart! Finde deinen perfekten Begleiter.',
     locale: 'de_DE',
-    url: 'https://purrfectlove.org/de',
+    url: 'https://www.purrfectlove.org/de',
   },
   alternates: {
-    canonical: 'https://purrfectlove.org/de',
+    canonical: 'https://www.purrfectlove.org/de',
     languages: {
-      'en': 'https://purrfectlove.org',
-      'de': 'https://purrfectlove.org/de',
+      'en': 'https://www.purrfectlove.org',
+      'de': 'https://www.purrfectlove.org/de',
     },
   },
   other: {

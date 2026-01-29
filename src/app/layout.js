@@ -15,7 +15,7 @@ const lora = Lora({
 });
 
 export const metadata = {
-  metadataBase: new URL('https://purrfectlove.org'),
+  metadataBase: new URL('https://www.purrfectlove.org'),
   title: {
     default: "Purrfect Love | Cat Adoption & Rescue in Bangalore & Stuttgart",
     template: "%s | Purrfect Love"
@@ -40,7 +40,7 @@ export const metadata = {
     type: 'website',
     locale: 'en_IN',
     alternateLocale: ['de_DE'],
-    url: 'https://purrfectlove.org',
+    url: 'https://www.purrfectlove.org',
     title: 'Purrfect Love | Cat Adoption & Rescue',
     description: 'Find your purrfect companion! Cat adoption and rescue in Bangalore & Stuttgart.',
     siteName: 'Purrfect Love',
@@ -51,10 +51,10 @@ export const metadata = {
     description: 'Find your purrfect companion! Cat adoption in Bangalore & Stuttgart.',
   },
   alternates: {
-    canonical: 'https://purrfectlove.org',
+    canonical: 'https://www.purrfectlove.org',
     languages: {
-      'en': 'https://purrfectlove.org',
-      'de': 'https://purrfectlove.org/de',
+      'en': 'https://www.purrfectlove.org',
+      'de': 'https://www.purrfectlove.org/de',
     },
   },
   icons: {

@@ -5,10 +5,10 @@ export const metadata = {
   title: 'Über uns - Purrfect Love',
   description: 'Lernen Sie das Team hinter Purrfect Love kennen. Wir retten, rehabilitieren und vermitteln Katzen in Bangalore und Stuttgart.',
   alternates: {
-    canonical: 'https://purrfectlove.org/de/about',
+    canonical: 'https://www.purrfectlove.org/de/about',
     languages: {
-      'en': 'https://purrfectlove.org/about',
-      'de': 'https://purrfectlove.org/de/about',
+      'en': 'https://www.purrfectlove.org/about',
+      'de': 'https://www.purrfectlove.org/de/about',
     },
   },
 };

@@ -5,10 +5,10 @@ export const metadata = {
   title: 'Blog - Purrfect Love',
   description: 'Guides, tips, and stories about cat care from Purrfect Love. Learn how to care for your feline friend.',
   alternates: {
-    canonical: 'https://purrfectlove.org/guides/blog',
+    canonical: 'https://www.purrfectlove.org/guides/blog',
     languages: {
-      'en': 'https://purrfectlove.org/guides/blog',
-      'de': 'https://purrfectlove.org/de/guides/blog',
+      'en': 'https://www.purrfectlove.org/guides/blog',
+      'de': 'https://www.purrfectlove.org/de/guides/blog',
     },
   },
 };

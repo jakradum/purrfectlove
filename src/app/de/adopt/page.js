@@ -7,10 +7,10 @@ export const metadata = {
   title: 'Katze adoptieren - Purrfect Love',
   description: 'Lernen Sie unsere Katzen kennen, die auf ein Zuhause warten. Alle Katzen sind kastriert, geimpft und bereit für ihr neues Zuhause.',
   alternates: {
-    canonical: 'https://purrfectlove.org/de/adopt',
+    canonical: 'https://www.purrfectlove.org/de/adopt',
     languages: {
-      'en': 'https://purrfectlove.org/adopt',
-      'de': 'https://purrfectlove.org/de/adopt',
+      'en': 'https://www.purrfectlove.org/adopt',
+      'de': 'https://www.purrfectlove.org/de/adopt',
     },
   },
 };
