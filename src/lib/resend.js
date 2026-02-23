@@ -90,7 +90,7 @@ const content = {
 }
 
 export async function sendWelcomeEmail({ to, applicantName, applicationId, catName, isOpenToAnyCat, locale = 'en' }) {
-  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://purrfectlove.org'
+  const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.purrfectlove.org'
   const t = content[locale] || content.en
 
   const catInfo = isOpenToAnyCat ? t.catInfoAny : t.catInfoSpecific(catName)

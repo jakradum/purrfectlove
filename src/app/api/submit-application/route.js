@@ -208,10 +208,13 @@ export async function POST(request) {
       catName,
       isOpenToAnyCat,
       locale: body.locale || 'en'
-    }).catch(err => console.error('Failed to send welcome email:', err))
+    }).then(result => {
+      if (!result.success) console.error('Failed to send welcome email:', result.error)
+      else console.log('Welcome email sent to applicant:', result.id)
+    }).catch(err => console.error('Welcome email error:', err))
 
     // Send notification email to support (non-blocking)
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://purrfectlove.org'
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.purrfectlove.org'
     const sanityStudioUrl = `${siteUrl}/studio/structure/application;${result._id}`
 
     const colors = {
@@ -295,11 +298,11 @@ export async function POST(request) {
     resend.emails.send({
       from: 'Purrfect Love <no-reply@purrfectlove.org>',
       to: ['support@purrfectlove.org'],
-      cc: ['support@purrfectlove.org'],
       subject: `New adoption application from ${body.applicantName} - ${catDisplayName}`,
       html: notificationHtml
-    }).then(emailResult => {
-      console.log('Adoption notification email sent:', emailResult.data?.id)
+    }).then(({ data, error }) => {
+      if (error) console.error('Failed to send adoption notification email:', error)
+      else console.log('Adoption notification email sent:', data?.id)
     }).catch(err => {
       console.error('Failed to send adoption notification email:', err)
     })
