@@ -25,6 +25,7 @@ export default async function sitemap() {
     { url: `${baseUrl}/de/guides/faqs`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.6 },
     { url: `${baseUrl}/de/guides/onboarding`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.6 },
     { url: `${baseUrl}/de/guides/blog`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.7 },
+    { url: `${baseUrl}/de/impressum`, lastModified: new Date(), changeFrequency: 'yearly', priority: 0.3 },
   ];
 
   // Fetch blog posts from Sanity

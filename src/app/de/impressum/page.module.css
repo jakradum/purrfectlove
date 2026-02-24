@@ -1,0 +1,105 @@
+.main {
+  min-height: calc(100vh - 80px);
+  background-color: var(--whisker-cream);
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+
+.heading {
+  font-family: var(--font-outfit);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 700;
+  color: var(--tabby-brown);
+  margin-bottom: 2.5rem;
+  line-height: 1.2;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(200, 92, 63, 0.15);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  font-family: var(--font-outfit);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--hunter-green);
+  margin-bottom: 0.875rem;
+}
+
+.text {
+  font-family: var(--font-lora);
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.note {
+  font-family: var(--font-lora);
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin-top: 0.5rem;
+  font-style: italic;
+}
+
+.link {
+  color: var(--tabby-brown);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+.boardList {
+  display: flex;
+  flex-direction: column;
+  gap: 1.25rem;
+}
+
+.boardMember {
+  padding-left: 1rem;
+  border-left: 3px solid var(--paw-pink);
+}
+
+.boardRole {
+  font-family: var(--font-outfit);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  margin: 0 0 0.2rem;
+}
+
+.boardName {
+  font-family: var(--font-outfit);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text-dark);
+  margin: 0 0 0.2rem;
+}
+
+.boardContact {
+  font-family: var(--font-lora);
+  font-size: 0.9rem;
+  color: var(--text-light);
+  margin: 0;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 2rem 1.25rem 4rem;
+  }
+}
