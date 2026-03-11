@@ -34,8 +34,7 @@ const content = {
     faqsLink: "FAQs",
     orText: "or learn more about our",
     processLink: "adoption process",
-    questionsText: "Have questions? Simply reply to this email or reach out through our",
-    contactLink: "contact page",
+    questionsText: "Have questions? Email us at",
     signoff: "With whiskers and purrs,",
     team: "The Purrfect Love Team",
     location: "Bangalore • Stuttgart",
@@ -76,8 +75,7 @@ const content = {
     faqsLink: "FAQs",
     orText: "ansehen oder mehr über unseren",
     processLink: "Adoptionsprozess",
-    questionsText: "Hast du Fragen? Antworte einfach auf diese E-Mail oder kontaktiere uns über unsere",
-    contactLink: "Kontaktseite",
+    questionsText: "Hast du Fragen? Schreib uns an",
     signoff: "Mit Schnurrern und Pfötchen,",
     team: "Das Purrfect Love Team",
     location: "Bangalore • Stuttgart",
@@ -178,7 +176,7 @@ export async function sendWelcomeEmail({ to, applicantName, applicationId, catNa
               </p>
 
               <p style="margin: 24px 0 0 0; font-size: 16px; line-height: 1.7; color: #4A4A4A;">
-                ${t.questionsText} <a href="${siteUrl}${t.contactUrl}" style="color: #C85C3F; text-decoration: none;">${t.contactLink}</a>.
+                ${t.questionsText} <a href="mailto:support@purrfectlove.org" style="color: #C85C3F; text-decoration: none;">support@purrfectlove.org</a>.
               </p>
 
               <p style="margin: 32px 0 0 0; font-size: 16px; color: #4A4A4A;">
@@ -228,7 +226,7 @@ ${t.steps.map((step, i) => `${i + 1}. ${step.title} - ${step.description}`).join
 ${t.learnMore} ${t.faqsLink}: ${siteUrl}${t.faqsUrl}
 ${t.orText} ${t.processLink}: ${siteUrl}${t.processUrl}
 
-${t.questionsText} ${t.contactLink}: ${siteUrl}${t.contactUrl}
+${t.questionsText} support@purrfectlove.org
 
 ${t.signoff}
 ${t.team}
@@ -244,7 +242,6 @@ ${t.disclaimer}
       from: 'Purrfect Love <no-reply@purrfectlove.org>',
       replyTo: 'support@purrfectlove.org',
       to: [to],
-      cc: ['support@purrfectlove.org'],
       subject: t.subject(applicationId),
       html,
       text
