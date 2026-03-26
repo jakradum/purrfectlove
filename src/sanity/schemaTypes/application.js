@@ -1,6 +1,7 @@
 import {DuplicateNotice} from '../components/DuplicateNotice'
 import {CatAdoptedNotice} from '../components/CatAdoptedNotice'
 import {OpenToAnyCatNotice} from '../components/OpenToAnyCatNotice'
+import {SendContractButton} from '../components/SendContractButton'
 
 // Helper to check if application is marked as duplicate
 const isMarkedAsDuplicate = ({parent}) => !!parent?.isDuplicateOf
@@ -348,6 +349,26 @@ export default {
       fieldset: 'officialUse',
       hidden: ({parent}) => parent?.status !== 'returned',
       readOnly: isMarkedAsDuplicate
+    },
+
+    // ADOPTION CONTRACT
+    {
+      name: 'sendContractButton',
+      title: 'Send Adoption Contract',
+      type: 'string',
+      fieldset: 'officialUse',
+      readOnly: false,
+      components: {
+        field: SendContractButton
+      }
+    },
+    {
+      name: 'contractSentAt',
+      title: 'Contract Last Sent',
+      type: 'datetime',
+      fieldset: 'officialUse',
+      readOnly: true,
+      hidden: ({parent}) => !parent?.contractSentAt
     },
 
     // FOLLOW UP
