@@ -96,6 +96,7 @@
       "fields": {
         "name": "Vollständiger Name",
         "age": "Ihr Alter",
+        "parentApproved": "Ich habe elterliche Zustimmung zur Adoption",
         "email": "E-Mail",
         "phone": "Telefonnummer",
         "phonePlaceholder": "Handynummer",

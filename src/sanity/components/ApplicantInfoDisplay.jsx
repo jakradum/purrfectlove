@@ -493,7 +493,22 @@ export function ApplicantInfoDisplay(props) {
 
       <div style={styles.row}>
         <span style={styles.label}>Age:</span>
-        <span style={styles.value}>{doc.applicantAge ? `${doc.applicantAge} years` : '—'}</span>
+        <span style={styles.value}>
+          {doc.applicantAge ? `${doc.applicantAge} years` : '—'}
+          {doc.applicantAge < 18 && (
+            <span style={{
+              marginLeft: '8px',
+              fontSize: '0.75rem',
+              backgroundColor: doc.parentApproved ? '#22c55e' : '#ef4444',
+              color: '#fff',
+              padding: '1px 7px',
+              borderRadius: '3px',
+              fontWeight: 600
+            }}>
+              {doc.parentApproved ? 'Parent approved' : 'No parental approval'}
+            </span>
+          )}
+        </span>
       </div>
 
       <div style={styles.row}>

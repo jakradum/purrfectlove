@@ -109,9 +109,15 @@ export async function POST(request) {
 
     // 4a. AGE VALIDATION
     const applicantAge = parseInt(body.age, 10)
-    if (!body.age || isNaN(applicantAge) || applicantAge < 18 || applicantAge > 90) {
+    if (!body.age || isNaN(applicantAge) || applicantAge < 10 || applicantAge > 90) {
       return Response.json(
-        { error: 'You must be between 18 and 90 years old to adopt.' },
+        { error: 'Applicant age must be between 10 and 90.' },
+        { status: 400 }
+      )
+    }
+    if (applicantAge < 18 && !body.parentApproved) {
+      return Response.json(
+        { error: 'Parental approval is required for applicants under 18.' },
         { status: 400 }
       )
     }
@@ -210,6 +216,7 @@ export async function POST(request) {
       email: body.email.toLowerCase(),
       phone: body.phone,
       applicantAge,
+      parentApproved: applicantAge < 18 ? (body.parentApproved === true) : undefined,
       address: body.address || '',
       housingType: body.housingType || '',
       hasOtherPets: body.hasOtherPets || false,

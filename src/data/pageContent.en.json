@@ -95,6 +95,7 @@
       "fields": {
         "name": "Full Name",
         "age": "Your Age",
+        "parentApproved": "I have parental approval to adopt",
         "email": "Email",
         "phone": "Phone Number",
         "phonePlaceholder": "10-digit mobile number",

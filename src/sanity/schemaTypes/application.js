@@ -52,6 +52,13 @@ export default {
       hidden: true
     },
     {
+      name: 'parentApproved',
+      title: 'Parental Approval',
+      type: 'boolean',
+      readOnly: true,
+      hidden: true
+    },
+    {
       name: 'address',
       title: 'Address',
       type: 'text',

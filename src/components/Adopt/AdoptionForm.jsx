@@ -7,6 +7,7 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
   const [formData, setFormData] = useState({
     applicantName: '',
     age: '',
+    parentApproved: false,
     email: '',
     phone: '',
     address: '',
@@ -202,12 +203,28 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
                 value={formData.age}
                 onChange={handleChange}
                 required
-                min="18"
+                min="10"
                 max="90"
                 className={styles.input}
               />
             </div>
           </div>
+
+          {parseInt(formData.age, 10) < 18 && formData.age !== '' && (
+            <div className={styles.formGroup}>
+              <label className={styles.checkboxLabel}>
+                <input
+                  type="checkbox"
+                  name="parentApproved"
+                  checked={formData.parentApproved}
+                  onChange={handleChange}
+                  className={styles.checkbox}
+                  required
+                />
+                <span>{content.form.fields.parentApproved} *</span>
+              </label>
+            </div>
+          )}
 
           <div className={styles.formGroup}>
             <label className={styles.label}>
