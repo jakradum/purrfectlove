@@ -149,15 +149,56 @@ export async function POST(request) {
       )
     }
     
-    // 7. GENERATE UNIQUE APPLICATION ID
+    // 7. DUPLICATE & AVAILABILITY CHECKS
+    if (!isOpenToAnyCat && body.catId) {
+      // Check if cat is already adopted
+      const catStatus = await serverClient.fetch(
+        `*[_type == "cat" && _id == $catId][0]{
+          adoptedOverride,
+          "hasAdoptedApplication": count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0
+        }`,
+        { catId: body.catId }
+      )
+      if (catStatus?.adoptedOverride || catStatus?.hasAdoptedApplication) {
+        return Response.json(
+          { error: 'This cat has already been adopted. Please consider applying for another cat.' },
+          { status: 409 }
+        )
+      }
+
+      // Check if this email already has an active (non-rejected, non-duplicate) application for the same cat
+      const existingApplication = await serverClient.fetch(
+        `*[_type == "application" && email == $email && cat._ref == $catId && status != "rejected" && !defined(isDuplicateOf)][0]{
+          applicationId, submittedAt, status
+        }`,
+        { email: body.email.toLowerCase(), catId: body.catId }
+      )
+      if (existingApplication) {
+        return Response.json(
+          { error: `You already have an active application for this cat (Application #${existingApplication.applicationId}). Our team will be in touch soon.` },
+          { status: 409 }
+        )
+      }
+    }
+
+    // Check for any prior applications from this email (all cats) for the support notification
+    const priorApplications = await serverClient.fetch(
+      `*[_type == "application" && email == $email && !defined(isDuplicateOf)] | order(submittedAt desc) {
+        applicationId, submittedAt, status, "catName": cat.name, isOpenToAnyCat
+      }`,
+      { email: body.email.toLowerCase() }
+    )
+    const isReturningApplicant = priorApplications.length > 0
+
+    // 8. GENERATE UNIQUE APPLICATION ID
     const applicationId = await generateUniqueId()
 
-    // 8. CREATE APPLICATION IN SANITY
+    // 9. CREATE APPLICATION IN SANITY
     const applicationData = {
       _type: 'application',
       applicationId,
       applicantName: body.applicantName,
-      email: body.email,
+      email: body.email.toLowerCase(),
       phone: body.phone,
       address: body.address || '',
       housingType: body.housingType || '',
@@ -200,18 +241,17 @@ export async function POST(request) {
       }
     }
 
-    // Send welcome email to applicant (non-blocking)
-    sendWelcomeEmail({
-      to: body.email,
+    // Send welcome email to applicant
+    const welcomeResult = await sendWelcomeEmail({
+      to: body.email.toLowerCase(),
       applicantName: body.applicantName,
       applicationId,
       catName,
       isOpenToAnyCat,
       locale: body.locale || 'en'
-    }).then(result => {
-      if (!result.success) console.error('Failed to send welcome email:', result.error)
-      else console.log('Welcome email sent to applicant:', result.id)
-    }).catch(err => console.error('Welcome email error:', err))
+    })
+    if (!welcomeResult.success) console.error('Failed to send welcome email:', welcomeResult.error)
+    else console.log('Welcome email sent to applicant:', welcomeResult.id)
 
     // Send notification email to support (non-blocking)
     const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://www.purrfectlove.org'
@@ -230,6 +270,29 @@ export async function POST(request) {
     const whyAdoptPreview = body.whyAdopt.length > 150
       ? body.whyAdopt.substring(0, 150) + '...'
       : body.whyAdopt
+
+    const returningApplicantBanner = isReturningApplicant ? `
+          <tr>
+            <td style="padding: 0 32px 0 32px;">
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
+                <tr>
+                  <td style="background-color: #FEF3C7; border-left: 4px solid #F59E0B; border-radius: 8px; padding: 16px 20px;">
+                    <p style="margin: 0 0 8px 0; font-size: 14px; font-family: 'Outfit', sans-serif; color: #92400E; font-weight: 700; text-transform: uppercase; letter-spacing: 1px;">⚠ Returning Applicant</p>
+                    <p style="margin: 0 0 8px 0; font-size: 14px; font-family: 'Lora', Georgia, serif; color: #92400E;">This person has applied ${priorApplications.length} time${priorApplications.length === 1 ? '' : 's'} before.</p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      ${priorApplications.slice(0, 5).map(a => `
+                      <tr>
+                        <td style="font-size: 13px; font-family: 'Lora', Georgia, serif; color: #78350F; padding: 2px 0;">
+                          #${a.applicationId} — ${a.isOpenToAnyCat ? 'Any Cat' : (a.catName || 'Unknown')} — <strong>${a.status}</strong> — ${new Date(a.submittedAt).toLocaleDateString('en-US', { dateStyle: 'medium' })}
+                        </td>
+                      </tr>`).join('')}
+                      ${priorApplications.length > 5 ? `<tr><td style="font-size: 13px; font-family: 'Lora', Georgia, serif; color: #78350F; padding: 4px 0;">...and ${priorApplications.length - 5} more</td></tr>` : ''}
+                    </table>
+                  </td>
+                </tr>
+              </table>
+            </td>
+          </tr>` : ''
 
     const notificationHtml = `
 <!DOCTYPE html>
@@ -250,6 +313,7 @@ export async function POST(request) {
               <p style="margin: 8px 0 0 0; font-size: 14px; color: ${colors.whiskerCream}; font-family: 'Lora', Georgia, serif;">New Adoption Application</p>
             </td>
           </tr>
+          ${returningApplicantBanner}
           <tr>
             <td style="padding: 40px 32px;">
               <h2 style="margin: 0 0 24px 0; font-family: 'Outfit', 'Trebuchet MS', sans-serif; font-size: 24px; color: ${colors.hunterGreen}; font-weight: 600;">You have a new applicant to adopt ${catDisplayName}</h2>
@@ -295,18 +359,15 @@ export async function POST(request) {
 </body>
 </html>`
 
-    resend.emails.send({
+    const { data: notifData, error: notifError } = await resend.emails.send({
       from: 'Purrfect Love <no-reply@purrfectlove.org>',
       replyTo: `${body.applicantName} <${body.email}>`,
       to: ['support@purrfectlove.org'],
       subject: `New adoption application from ${body.applicantName} - ${catDisplayName}`,
       html: notificationHtml
-    }).then(({ data, error }) => {
-      if (error) console.error('Failed to send adoption notification email:', error)
-      else console.log('Adoption notification email sent:', data?.id)
-    }).catch(err => {
-      console.error('Failed to send adoption notification email:', err)
     })
+    if (notifError) console.error('Failed to send adoption notification email:', notifError)
+    else console.log('Adoption notification email sent:', notifData?.id)
 
     console.log('Application created successfully:', result._id)
     return Response.json({
