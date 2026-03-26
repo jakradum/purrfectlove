@@ -1,4 +1,7 @@
+import fs from 'fs'
+import path from 'path'
 import { createClient } from '@sanity/client'
+import imageUrlBuilder from '@sanity/image-url'
 import { Resend } from 'resend'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createElement } from 'react'
@@ -11,8 +14,31 @@ const serverClient = createClient({
   dataset: process.env.NEXT_PUBLIC_SANITY_DATASET,
   token: process.env.SANITY_API_TOKEN,
   apiVersion: '2024-01-01',
-  useCdn: false
+  useCdn: false,
 })
+
+const urlBuilder = imageUrlBuilder(serverClient)
+
+// Cached logo data URL (read once per cold start)
+let _logoDataUrl = null
+function getLogoDataUrl() {
+  if (_logoDataUrl) return _logoDataUrl
+  try {
+    const logoPath = path.join(process.cwd(), 'public', 'logo.png')
+    const logoBuffer = fs.readFileSync(logoPath)
+    _logoDataUrl = `data:image/png;base64,${logoBuffer.toString('base64')}`
+  } catch {
+    _logoDataUrl = null
+  }
+  return _logoDataUrl
+}
+
+const AGE_LABELS = {
+  kitten: 'Kitten (0–6 months)',
+  young: 'Young (6 months – 2 years)',
+  adult: 'Adult (2–7 years)',
+  senior: 'Senior (7+ years)',
+}
 
 export async function POST(request) {
   try {
@@ -22,7 +48,6 @@ export async function POST(request) {
       return Response.json({ error: 'Document ID required' }, { status: 400 })
     }
 
-    // Handle both published and draft IDs
     const cleanId = documentId.replace(/^drafts\./, '')
 
     const application = await serverClient.fetch(
@@ -30,11 +55,25 @@ export async function POST(request) {
         applicationId,
         applicantName,
         email,
+        phone,
+        address,
         submittedAt,
         isOpenToAnyCat,
-        "catName": select(
-          isOpenToAnyCat == true && defined(reassignToCat) => reassignToCat->name,
-          isOpenToAnyCat != true => cat->name,
+        "cat": select(
+          isOpenToAnyCat != true => cat->{
+            name,
+            age,
+            ageMonths,
+            gender,
+            "photoAsset": photos[0].asset
+          },
+          defined(reassignToCat) => reassignToCat->{
+            name,
+            age,
+            ageMonths,
+            gender,
+            "photoAsset": photos[0].asset
+          },
           null
         )
       }`,
@@ -45,28 +84,53 @@ export async function POST(request) {
       return Response.json({ error: 'Application not found' }, { status: 404 })
     }
 
-    if (!application.catName) {
+    if (!application.cat?.name) {
       return Response.json(
-        { error: 'Cat not assigned to this application. If the applicant is open to any cat, please use "Redirect to New Cat" to assign one first.' },
+        { error: 'Cat not assigned to this application. For "open to any cat" applications, use "Redirect to New Cat" to assign one first.' },
         { status: 400 }
       )
     }
 
+    const cat = application.cat
+    const catName = cat.name
+
+    // Build cat photo URL (400×400 crop from Sanity CDN)
+    let catPhotoUrl = null
+    if (cat.photoAsset?._ref) {
+      catPhotoUrl = urlBuilder
+        .image({ asset: cat.photoAsset })
+        .width(400).height(400).fit('crop').url()
+    }
+
+    // Age label
+    let catAge = AGE_LABELS[cat.age] || null
+    if (cat.ageMonths) {
+      catAge = `${cat.ageMonths} month${cat.ageMonths === 1 ? '' : 's'} (${AGE_LABELS[cat.age] || cat.age})`
+    }
+
+    const logoDataUrl = getLogoDataUrl()
     const date = new Date().toLocaleDateString('en-IN', {
-      day: 'numeric', month: 'long', year: 'numeric'
+      day: 'numeric', month: 'long', year: 'numeric',
     })
 
     // Generate PDF
     const pdfBuffer = await renderToBuffer(
       createElement(AdoptionContractPDF, {
         applicantName: application.applicantName,
-        catName: application.catName,
+        applicantEmail: application.email,
+        applicantPhone: application.phone || '',
+        applicantAddress: application.address || '',
+        catName,
         applicationId: application.applicationId,
         date,
+        catPhotoUrl,
+        logoDataUrl,
+        catAge,
+        catGender: cat.gender,
       })
     )
 
-    // Build email HTML (consistent with existing email style)
+    // Email HTML
     const colors = {
       hunterGreen: '#2C5F4F',
       tabbyBrown: '#C85C3F',
@@ -100,26 +164,25 @@ export async function POST(request) {
                 Hey ${application.applicantName},
               </p>
               <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.7; color: ${colors.textDark};">
-                Your adoption application has been reviewed. We're so excited you're taking <strong>${application.catName}</strong> home! 🐱
+                Your adoption application has been reviewed. We're so excited you're taking <strong>${catName}</strong> home! 🐱
               </p>
               <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: ${colors.textLight};">
-                Please find your adoption contract attached to this email. Read through it carefully, sign both copies, and send one back to us at
+                Please find your adoption contract attached. Read through it carefully, sign both copies, and send one back to us at
                 <a href="mailto:support@purrfectlove.org" style="color: ${colors.tabbyBrown}; text-decoration: none;">support@purrfectlove.org</a>.
               </p>
-
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 28px 0;">
                 <tr>
                   <td style="background-color: ${colors.whiskerCream}; border-left: 4px solid ${colors.hunterGreen}; border-radius: 8px; padding: 18px 20px;">
                     <p style="margin: 0 0 6px 0; font-size: 13px; font-family: 'Outfit', sans-serif; color: ${colors.textLight}; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Your Adoption Details</p>
-                    <p style="margin: 0 0 4px 0; font-size: 15px; font-family: 'Outfit', sans-serif; color: ${colors.textDark};"><strong>Cat:</strong> ${application.catName}</p>
+                    <p style="margin: 0 0 4px 0; font-size: 15px; font-family: 'Outfit', sans-serif; color: ${colors.textDark};"><strong>Cat:</strong> ${catName}</p>
                     <p style="margin: 0 0 4px 0; font-size: 15px; font-family: 'Outfit', sans-serif; color: ${colors.textDark};"><strong>Application ID:</strong> #${application.applicationId}</p>
                     <p style="margin: 0; font-size: 15px; font-family: 'Outfit', sans-serif; color: ${colors.textDark};"><strong>Date:</strong> ${date}</p>
                   </td>
                 </tr>
               </table>
-
               <p style="margin: 0; font-size: 14px; line-height: 1.7; color: ${colors.textLight};">
-                Have questions? Email us at <a href="mailto:support@purrfectlove.org" style="color: ${colors.tabbyBrown}; text-decoration: none;">support@purrfectlove.org</a>
+                Have questions? Reply to this email or reach us at
+                <a href="mailto:support@purrfectlove.org" style="color: ${colors.tabbyBrown}; text-decoration: none;">support@purrfectlove.org</a>.
               </p>
             </td>
           </tr>
@@ -136,34 +199,19 @@ export async function POST(request) {
 </body>
 </html>`
 
-    const emailText = `Hey ${application.applicantName},
-
-Your adoption application has been reviewed. We're so excited you're taking ${application.catName} home!
-
-Please find your adoption contract attached. Read through it, sign both copies, and send one back to us at support@purrfectlove.org.
-
-Adoption Details:
-  Cat: ${application.catName}
-  Application ID: #${application.applicationId}
-  Date: ${date}
-
-Have questions? Email us at support@purrfectlove.org
-
-— Purrfect Love`
-
     const { data, error } = await resend.emails.send({
-      from: 'Purrfect Love <no-reply@purrfectlove.org>',
+      from: 'Purrfect Love <support@purrfectlove.org>',
       replyTo: 'support@purrfectlove.org',
       to: [application.email],
-      subject: `Your Adoption Contract for ${application.catName} – Purrfect Love`,
+      subject: `Your Adoption Contract for ${catName} – Purrfect Love`,
       html: emailHtml,
-      text: emailText,
+      text: `Hey ${application.applicantName},\n\nYour adoption application has been reviewed. We're so excited you're taking ${catName} home!\n\nPlease find your adoption contract attached. Read through it, sign both copies, and send one back to support@purrfectlove.org.\n\nCat: ${catName}\nApplication ID: #${application.applicationId}\nDate: ${date}\n\n— Purrfect Love`,
       attachments: [
         {
           filename: `Adoption_Contract_${application.applicationId}.pdf`,
           content: pdfBuffer,
-        }
-      ]
+        },
+      ],
     })
 
     if (error) {
@@ -171,7 +219,7 @@ Have questions? Email us at support@purrfectlove.org
       return Response.json({ error: error.message }, { status: 500 })
     }
 
-    // Record that contract was sent
+    // Record contractSentAt on the published document
     await serverClient
       .patch(cleanId)
       .set({ contractSentAt: new Date().toISOString() })
