@@ -6,6 +6,7 @@ import styles from './AdoptionForm.module.css';
 export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, locale = 'en' }) {
   const [formData, setFormData] = useState({
     applicantName: '',
+    age: '',
     email: '',
     phone: '',
     address: '',
@@ -187,6 +188,22 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
                 onChange={handleChange}
                 required
                 placeholder={content.form.fields.phonePlaceholder}
+                className={styles.input}
+              />
+            </div>
+
+            <div className={styles.formGroup}>
+              <label className={styles.label}>
+                {content.form.fields.age} *
+              </label>
+              <input
+                type="number"
+                name="age"
+                value={formData.age}
+                onChange={handleChange}
+                required
+                min="18"
+                max="90"
                 className={styles.input}
               />
             </div>

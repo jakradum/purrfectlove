@@ -45,6 +45,13 @@ export default {
       hidden: true
     },
     {
+      name: 'applicantAge',
+      title: 'Age',
+      type: 'number',
+      readOnly: true,
+      hidden: true
+    },
+    {
       name: 'address',
       title: 'Address',
       type: 'text',

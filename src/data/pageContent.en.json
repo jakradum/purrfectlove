@@ -94,6 +94,7 @@
       "subtitle": "Fill out this form and we'll get back to you within 24-48 hours.",
       "fields": {
         "name": "Full Name",
+        "age": "Your Age",
         "email": "Email",
         "phone": "Phone Number",
         "phonePlaceholder": "10-digit mobile number",

@@ -95,6 +95,7 @@
       "subtitle": "Füllen Sie dieses Formular aus und wir melden uns innerhalb von 24-48 Stunden bei Ihnen.",
       "fields": {
         "name": "Vollständiger Name",
+        "age": "Ihr Alter",
         "email": "E-Mail",
         "phone": "Telefonnummer",
         "phonePlaceholder": "Handynummer",

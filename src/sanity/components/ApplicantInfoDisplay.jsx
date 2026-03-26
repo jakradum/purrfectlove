@@ -492,6 +492,11 @@ export function ApplicantInfoDisplay(props) {
       </div>
 
       <div style={styles.row}>
+        <span style={styles.label}>Age:</span>
+        <span style={styles.value}>{doc.applicantAge ? `${doc.applicantAge} years` : '—'}</span>
+      </div>
+
+      <div style={styles.row}>
         <span style={styles.label}>Name:</span>
         <span style={styles.value}>
           {doc.applicantName || '—'}
