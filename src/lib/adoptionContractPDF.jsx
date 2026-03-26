@@ -15,6 +15,7 @@ const s = StyleSheet.create({
     fontFamily: 'Helvetica',
     fontSize: 10,
     color: DK,
+    backgroundColor: CR,
   },
 
   // ── HEADER ──────────────────────────────────────────────
@@ -75,7 +76,7 @@ const s = StyleSheet.create({
 
   // ── CALLOUT ─────────────────────────────────────────────
   callout: {
-    backgroundColor: CR,
+    backgroundColor: '#FFFFFF',
     borderLeftWidth: 3, borderLeftColor: G, borderLeftStyle: 'solid',
     padding: 10, marginTop: 6, marginBottom: 6,
     fontSize: 10, lineHeight: 1.65, color: DK,
