@@ -3,6 +3,14 @@ import { verifyToken } from '@/lib/careAuth';
 
 export async function middleware(request) {
   const pathname = request.nextUrl.pathname;
+  const host = request.headers.get('host') || '';
+
+  // Rewrite care.purrfectlove.org/* → /care/* internally
+  if (host === 'care.purrfectlove.org' && !pathname.startsWith('/care') && !pathname.startsWith('/api')) {
+    const url = request.nextUrl.clone();
+    url.pathname = pathname === '/' ? '/care' : `/care${pathname}`;
+    return NextResponse.rewrite(url);
+  }
 
   // Care portal auth protection (EN: /care/*, DE: /de/care/*)
   const isDeCarePath = pathname.startsWith('/de/care') && !pathname.startsWith('/de/care/login')
