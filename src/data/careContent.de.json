@@ -1,0 +1,116 @@
+{
+  "nav": {
+    "title": "Katzensitting",
+    "findSitters": "Sitter finden",
+    "offerToSit": "Sitting anbieten",
+    "profile": "Mein Profil",
+    "logout": "Abmelden"
+  },
+  "login": {
+    "title": "Mitglieder-Login",
+    "subtitle": "Gib deine E-Mail-Adresse ein, um einen Einmal-Code zu erhalten.",
+    "emailLabel": "E-Mail-Adresse",
+    "emailPlaceholder": "deine@email.de",
+    "sendCode": "Login-Code senden",
+    "sending": "Wird gesendet...",
+    "codeSent": "Überprüfe deine E-Mails",
+    "codeSentSubtitle": "Wir haben einen 6-stelligen Code gesendet an",
+    "codeLabel": "Code eingeben",
+    "codePlaceholder": "123456",
+    "verify": "Anmelden",
+    "verifying": "Wird überprüft...",
+    "resend": "Code erneut senden",
+    "notMember": "Noch kein Mitglied? Schreib uns an",
+    "errors": {
+      "emailRequired": "Bitte gib deine E-Mail-Adresse ein",
+      "invalidEmail": "Bitte gib eine gültige E-Mail-Adresse ein",
+      "codeRequired": "Bitte gib den 6-stelligen Code ein",
+      "invalidCode": "Ungültiger oder abgelaufener Code. Bitte erneut versuchen."
+    }
+  },
+  "marketplace": {
+    "title": "Katzensitting-Netzwerk",
+    "subtitle": "Finde zuverlässige Sitter oder biete Mitgliedern deine Hilfe an.",
+    "myStatus": "Mein Status",
+    "iCanSit": "Ich kann sitten",
+    "iNeedSitting": "Ich brauche einen Sitter",
+    "tabs": {
+      "findSitters": "Sitter finden",
+      "offerToSit": "Sitting anbieten"
+    },
+    "search": {
+      "locationLabel": "Dein Standort",
+      "locationPlaceholder": "Gib dein Gebiet ein",
+      "datesLabel": "Benötigte Daten",
+      "radiusLabel": "Suchradius",
+      "radiusUnit": "km",
+      "search": "Suchen"
+    },
+    "card": {
+      "distance": "km entfernt",
+      "maxCats": "Kann bis zu",
+      "cats": "Katzen sitten",
+      "canHandle": "Kann umgehen mit",
+      "contactEmail": "E-Mail",
+      "contactWhatsapp": "WhatsApp",
+      "viewProfile": "Profil ansehen"
+    },
+    "noResults": "Keine Sitter im Umkreis von {radius} km gefunden. Versuche den Suchradius zu erweitern.",
+    "noNeedResults": "Keine Mitglieder, die im Umkreis von {radius} km einen Sitter suchen."
+  },
+  "profile": {
+    "title": "Mein Profil",
+    "readOnly": "Kontaktiere den Team-Admin, um diese Informationen zu aktualisieren.",
+    "sections": {
+      "account": "Kontoinformationen",
+      "about": "Über mich",
+      "home": "Mein Zuhause",
+      "myCats": "Meine Katzen",
+      "availability": "Meine Verfügbarkeit",
+      "sittingCapabilities": "Sitting-Fähigkeiten",
+      "status": "Mein Status"
+    },
+    "fields": {
+      "name": "Anzeigename",
+      "bio": "Bio",
+      "bioHint": "Maximal 250 Zeichen",
+      "contactPreference": "Bevorzugte Kontaktmethode",
+      "contactEmail": "E-Mail",
+      "contactWhatsapp": "WhatsApp",
+      "bedrooms": "Schlafzimmer",
+      "householdSize": "Haushaltsgröße",
+      "alwaysAvailable": "Ich bin immer verfügbar zum Sitten",
+      "unavailableDates": "Tage, an denen ich nicht verfügbar bin",
+      "availableRanges": "Verfügbare Zeiträume",
+      "addRange": "+ Zeitraum hinzufügen",
+      "removeRange": "Entfernen",
+      "maxCats": "Max. Katzen, die ich sitten kann",
+      "feedingTypes": "Ich kann umgehen mit",
+      "behavioralTraits": "Erfahrung mit",
+      "canSit": "Ich kann Katzen anderer Mitglieder sitten",
+      "needsSitting": "Ich suche einen Sitter",
+      "addCat": "+ Katze hinzufügen",
+      "removeCat": "Entfernen",
+      "catName": "Name",
+      "catAge": "Alter (Jahre)",
+      "catPersonality": "Persönlichkeit",
+      "catDiet": "Ernährung"
+    },
+    "tags": {
+      "shy": "Schüchtern",
+      "energetic": "Energisch",
+      "senior": "Senior",
+      "specialNeeds": "Besondere Bedürfnisse",
+      "wet": "Nassfutter",
+      "dry": "Trockenfutter",
+      "medication": "Medikamente",
+      "specialDiet": "Spezialdiät"
+    },
+    "save": "Änderungen speichern",
+    "saving": "Wird gespeichert...",
+    "saved": "Gespeichert!",
+    "errors": {
+      "saveFailed": "Speichern fehlgeschlagen. Bitte erneut versuchen."
+    }
+  }
+}

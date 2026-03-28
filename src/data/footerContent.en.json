@@ -16,7 +16,8 @@
       { "href": "/guides/process", "label": "Process" },
       { "href": "/guides/faqs", "label": "FAQs" },
       { "href": "/about", "label": "About" },
-      { "href": "/contact", "label": "Contact" }
+      { "href": "/contact", "label": "Contact" },
+      { "href": "https://care.purrfectlove.org", "label": "Cat Sitting" }
     ]
   },
   "social": {

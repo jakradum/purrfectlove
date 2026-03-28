@@ -1,0 +1,116 @@
+{
+  "nav": {
+    "title": "Cat Sitting",
+    "findSitters": "Find Sitters",
+    "offerToSit": "Offer to Sit",
+    "profile": "My Profile",
+    "logout": "Log Out"
+  },
+  "login": {
+    "title": "Member Login",
+    "subtitle": "Enter your email to receive a one-time login code.",
+    "emailLabel": "Email Address",
+    "emailPlaceholder": "your@email.com",
+    "sendCode": "Send Login Code",
+    "sending": "Sending...",
+    "codeSent": "Check your email",
+    "codeSentSubtitle": "We sent a 6-digit code to",
+    "codeLabel": "Enter Code",
+    "codePlaceholder": "123456",
+    "verify": "Log In",
+    "verifying": "Verifying...",
+    "resend": "Resend code",
+    "notMember": "Not a member yet? Email us at",
+    "errors": {
+      "emailRequired": "Please enter your email address",
+      "invalidEmail": "Please enter a valid email address",
+      "codeRequired": "Please enter the 6-digit code",
+      "invalidCode": "Invalid or expired code. Please try again."
+    }
+  },
+  "marketplace": {
+    "title": "Cat Sitting Network",
+    "subtitle": "Find trusted sitters or offer to help fellow members.",
+    "myStatus": "My Status",
+    "iCanSit": "I can sit",
+    "iNeedSitting": "I need sitting",
+    "tabs": {
+      "findSitters": "Find Sitters",
+      "offerToSit": "Offer to Sit"
+    },
+    "search": {
+      "locationLabel": "Your location",
+      "locationPlaceholder": "Enter your area",
+      "datesLabel": "Dates needed",
+      "radiusLabel": "Search radius",
+      "radiusUnit": "km",
+      "search": "Search"
+    },
+    "card": {
+      "distance": "km away",
+      "maxCats": "Can sit up to",
+      "cats": "cats",
+      "canHandle": "Can handle",
+      "contactEmail": "Email",
+      "contactWhatsapp": "WhatsApp",
+      "viewProfile": "View Profile"
+    },
+    "noResults": "No sitters found within {radius}km. Try expanding your search radius.",
+    "noNeedResults": "No members looking for sitting within {radius}km."
+  },
+  "profile": {
+    "title": "My Profile",
+    "readOnly": "Contact your team admin to update this information.",
+    "sections": {
+      "account": "Account Info",
+      "about": "About Me",
+      "home": "My Home",
+      "myCats": "My Cats",
+      "availability": "My Availability",
+      "sittingCapabilities": "Sitting Capabilities",
+      "status": "My Status"
+    },
+    "fields": {
+      "name": "Display Name",
+      "bio": "Bio",
+      "bioHint": "250 characters max",
+      "contactPreference": "Preferred Contact",
+      "contactEmail": "Email",
+      "contactWhatsapp": "WhatsApp",
+      "bedrooms": "Bedrooms",
+      "householdSize": "Household Size",
+      "alwaysAvailable": "I'm always available to sit",
+      "unavailableDates": "Dates I'm unavailable",
+      "availableRanges": "Available date ranges",
+      "addRange": "+ Add dates",
+      "removeRange": "Remove",
+      "maxCats": "Max cats I can sit",
+      "feedingTypes": "I can handle",
+      "behavioralTraits": "Comfortable with",
+      "canSit": "I can sit other members' cats",
+      "needsSitting": "I'm looking for a sitter",
+      "addCat": "+ Add a cat",
+      "removeCat": "Remove",
+      "catName": "Name",
+      "catAge": "Age (years)",
+      "catPersonality": "Personality",
+      "catDiet": "Diet"
+    },
+    "tags": {
+      "shy": "Shy",
+      "energetic": "Energetic",
+      "senior": "Senior",
+      "specialNeeds": "Special Needs",
+      "wet": "Wet food",
+      "dry": "Dry food",
+      "medication": "Medication",
+      "specialDiet": "Special diet"
+    },
+    "save": "Save Changes",
+    "saving": "Saving...",
+    "saved": "Saved!",
+    "errors": {
+      "saveFailed": "Failed to save. Please try again."
+    }
+  }
+}

@@ -7,6 +7,8 @@ import processStep from './processStep'
 import blogPost from './blogPost'
 import contactMessage from './contactMessage'
 import siteSettings from './siteSettings'
+import catSitter from './catSitter'
+import otpCode from './otpCode'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -22,6 +24,8 @@ export const schema = {
     processStep,
     blogPost,
     contactMessage,
-    siteSettings
+    siteSettings,
+    catSitter,
+    otpCode,
   ]
 }

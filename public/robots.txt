@@ -8,5 +8,8 @@ Allow: /
 Disallow: /studio
 Disallow: /studio/
 
+# Block cat sitting portal from indexing
+Disallow: /care/
+
 # Sitemap location
 Sitemap: https://purrfectlove.org/sitemap.xml
