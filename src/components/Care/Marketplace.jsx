@@ -69,7 +69,6 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [resultsStale, setResultsStale] = useState(false);
-  const [contactFilter, setContactFilter] = useState('email');
   // Store date-filtered sitters with distances; distance threshold applied live via radius
   const [fetchedSitters, setFetchedSitters] = useState([]);
 
@@ -127,9 +126,8 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     if (!searched) return null;
     return fetchedSitters
       .filter((s) => s._distance == null || s._distance <= radius)
-      .filter((s) => !s.contactPreference || s.contactPreference === contactFilter)
-      .sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
-  }, [searched, fetchedSitters, radius, contactFilter]);
+.sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
+  }, [searched, fetchedSitters, radius]);
 
   // canSit=true → find people who need sitting; needsSitting=true → find available sitters
   const apiQueryType = canSit ? 'needsSitting' : 'canSit';
@@ -235,31 +233,6 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 </span>
               </div>
             )}
-            <div className={styles.searchField}>
-              <label className={styles.searchLabel}>Contact via</label>
-              <div className={styles.contactFilterGroup}>
-                <label className={styles.contactFilterOption}>
-                  <input
-                    type="radio"
-                    name="contactFilter"
-                    value="email"
-                    checked={contactFilter === 'email'}
-                    onChange={() => setContactFilter('email')}
-                  />
-                  Email
-                </label>
-                <label className={styles.contactFilterOption}>
-                  <input
-                    type="radio"
-                    name="contactFilter"
-                    value="whatsapp"
-                    checked={contactFilter === 'whatsapp'}
-                    onChange={() => setContactFilter('whatsapp')}
-                  />
-                  WhatsApp
-                </label>
-              </div>
-            </div>
             <button className={styles.searchBtn} onClick={handleSearch} disabled={searching}>
               {searching ? <span className={styles.spinner} /> : t.search.search}
             </button>

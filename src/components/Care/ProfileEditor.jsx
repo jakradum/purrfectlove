@@ -301,10 +301,16 @@ export default function ProfileEditor({ initialData }) {
         </div>
         <div className={styles.formGroup}>
           <label className={styles.profileLabel}>{t.fields.contactPreference}</label>
-          <select className={styles.profileSelect} value={form.contactPreference} onChange={(e) => update('contactPreference', e.target.value)}>
-            <option value="email">{t.fields.contactEmail}</option>
-            <option value="whatsapp">{t.fields.contactWhatsapp}</option>
-          </select>
+          <div className={styles.contactFilterGroup}>
+            <label className={styles.contactFilterOption}>
+              <input type="radio" name="contactPreference" value="email" checked={form.contactPreference === 'email'} onChange={() => update('contactPreference', 'email')} />
+              {t.fields.contactEmail}
+            </label>
+            <label className={styles.contactFilterOption}>
+              <input type="radio" name="contactPreference" value="whatsapp" checked={form.contactPreference === 'whatsapp'} onChange={() => update('contactPreference', 'whatsapp')} />
+              {t.fields.contactWhatsapp}
+            </label>
+          </div>
         </div>
       </div>
 
