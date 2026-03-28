@@ -23,7 +23,7 @@ function TagList({ items }) {
 
 export default function SitterProfile({ sitter }) {
   const {
-    name, neighborhood, bio, email, phone, contactPreference,
+    name, location, bio, email, phone, contactPreference,
     bedrooms, householdSize, cats, maxCats, feedingTypes, behavioralTraits,
     canSit, needsSitting,
   } = sitter;
@@ -37,7 +37,7 @@ export default function SitterProfile({ sitter }) {
 
       <div className={styles.profileDetailCard}>
         <h1 className={styles.profileDetailName}>{displayName}</h1>
-        {neighborhood && <p className={styles.profileDetailNeighborhood}>{neighborhood}</p>}
+        {location?.name && <p className={styles.profileDetailNeighborhood}>{location.name}</p>}
         {bio && <p className={styles.profileDetailBio}>{bio}</p>}
 
         <div className={styles.contactActions}>

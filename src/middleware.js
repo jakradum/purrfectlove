@@ -4,23 +4,22 @@ import { verifyToken } from '@/lib/careAuth';
 export async function middleware(request) {
   const pathname = request.nextUrl.pathname;
 
-  // Care portal auth protection
-  if (
-    pathname.startsWith('/care') &&
-    !pathname.startsWith('/care/login') &&
+  // Care portal auth protection (EN: /care/*, DE: /de/care/*)
+  const isDeCarePath = pathname.startsWith('/de/care') && !pathname.startsWith('/de/care/login')
+  const isEnCarePath = pathname.startsWith('/care') && !pathname.startsWith('/care/login')
+  const isProtectedCarePath = (isDeCarePath || isEnCarePath) &&
     !pathname.startsWith('/api/care/send-otp') &&
     !pathname.startsWith('/api/care/verify-otp')
-  ) {
+
+  if (isProtectedCarePath) {
     const token = request.cookies.get('care-auth')?.value;
-    if (!token) {
-      const loginUrl = new URL('/care/login', request.url);
-      return NextResponse.redirect(loginUrl);
-    }
+    const loginUrl = pathname.startsWith('/de/')
+      ? new URL('/de/care/login', request.url)
+      : new URL('/care/login', request.url)
+
+    if (!token) return NextResponse.redirect(loginUrl)
     const payload = await verifyToken(token);
-    if (!payload) {
-      const loginUrl = new URL('/care/login', request.url);
-      return NextResponse.redirect(loginUrl);
-    }
+    if (!payload) return NextResponse.redirect(loginUrl)
   }
 
   // Clone the request headers and add the pathname

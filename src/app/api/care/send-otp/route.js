@@ -45,9 +45,9 @@ export async function POST(request) {
       )
     }
 
-    // Check if email is a verified member
+    // Check if email belongs to any member added by the team
     const sitter = await serverClient.fetch(
-      `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id }`,
+      `*[_type == "catSitter" && email == $email][0]{ _id }`,
       { email: emailLower }
     )
 

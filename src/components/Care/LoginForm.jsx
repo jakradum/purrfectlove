@@ -7,8 +7,9 @@ import styles from './Care.module.css';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 
-export default function LoginForm({ locale = 'en' }) {
+export default function LoginForm({ locale = 'en', loginRedirect }) {
   const t = locale === 'de' ? contentDE.login : contentEN.login;
+  const redirect = loginRedirect || (locale === 'de' ? '/de/care' : '/care');
   const router = useRouter();
 
   const [step, setStep] = useState('email'); // 'email' | 'code'
@@ -73,7 +74,7 @@ export default function LoginForm({ locale = 'en' }) {
         setError(data.error || t.errors.invalidCode);
         return;
       }
-      router.push('/care');
+      router.push(redirect);
       router.refresh();
     } catch {
       setError('Network error. Please try again.');

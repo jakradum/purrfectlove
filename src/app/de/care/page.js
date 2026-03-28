@@ -12,24 +12,17 @@ const serverClient = createClient({
   useCdn: false,
 });
 
-export const metadata = {
-  title: 'Cat Sitting Network | Purrfect Love',
-};
+export const metadata = { title: 'Katzensitting Netzwerk | Purrfect Love' };
 
-export default async function CarePage() {
+export default async function DeCarePage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('care-auth')?.value;
 
-  if (!token) {
-    redirect('/care/login');
-  }
+  if (!token) redirect('/de/care/login');
 
   const payload = await verifyToken(token);
-  if (!payload) {
-    redirect('/care/login');
-  }
+  if (!payload) redirect('/de/care/login');
 
-  // Fetch current user's profile (just the toggles needed for initial state)
   let profile = null;
   try {
     profile = await serverClient.fetch(
@@ -42,6 +35,7 @@ export default async function CarePage() {
 
   return (
     <Marketplace
+      locale="de"
       initialCanSit={profile?.canSit ?? false}
       initialNeedsSitting={profile?.needsSitting ?? false}
       userName={payload.name || profile?.name || ''}

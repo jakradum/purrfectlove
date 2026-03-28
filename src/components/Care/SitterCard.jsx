@@ -21,7 +21,7 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
   const tagLabels = TAG_LABELS[locale] || TAG_LABELS.en;
 
   const {
-    _id, name, neighborhood, bio, contactPreference, email, phone,
+    _id, name, location, bio, contactPreference, email, phone,
     maxCats, feedingTypes, behavioralTraits, cats, _distance,
   } = sitter;
 
@@ -40,7 +40,7 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
       <div className={styles.cardHeader}>
         <div>
           <h3 className={styles.cardName}>{displayName}</h3>
-          {neighborhood && <p className={styles.cardNeighborhood}>{neighborhood}</p>}
+          {location?.name && <p className={styles.cardNeighborhood}>{location.name}</p>}
         </div>
         {_distance !== undefined && (
           <span className={styles.distanceBadge}>

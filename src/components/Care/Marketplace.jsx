@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback, useRef } from 'react';
+import { useState, useMemo } from 'react';
 import Link from 'next/link';
 import styles from './Care.module.css';
 import SitterCard from './SitterCard';
@@ -54,114 +54,86 @@ function isAvailableForDates(sitter, startDate, endDate) {
   return false;
 }
 
-// Geocode a location string via browser Geocoding API or Google if available
-async function geocodeLocation(locationStr) {
-  const key = process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY;
-  if (key) {
-    const res = await fetch(
-      `https://maps.googleapis.com/maps/api/geocode/json?address=${encodeURIComponent(locationStr)}&key=${key}`
-    );
-    const data = await res.json();
-    if (data.results && data.results[0]) {
-      const { lat, lng } = data.results[0].geometry.location;
-      return { lat, lng };
-    }
-    return null;
-  }
-  return null;
-}
 
-export default function Marketplace({ initialCanSit, initialNeedsSitting, userName }) {
-  const locale = 'en'; // Could be derived from URL if needed
+export default function Marketplace({ initialCanSit, initialNeedsSitting, userName, userLocation, locale: localeProp }) {
+  const locale = localeProp || 'en';
   const t = locale === 'de' ? contentDE.marketplace : contentEN.marketplace;
 
   const [canSit, setCanSit] = useState(initialCanSit);
   const [needsSitting, setNeedsSitting] = useState(initialNeedsSitting);
-  const [activeTab, setActiveTab] = useState('findSitters');
 
   // Search state
-  const [locationInput, setLocationInput] = useState('');
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [radius, setRadius] = useState(10);
   const [searching, setSearching] = useState(false);
-  const [results, setResults] = useState(null);
   const [searched, setSearched] = useState(false);
-
-  const debounceRef = useRef(null);
+  const [resultsStale, setResultsStale] = useState(false);
+  const [contactFilter, setContactFilter] = useState('email');
+  // Store date-filtered sitters with distances; distance threshold applied live via radius
+  const [fetchedSitters, setFetchedSitters] = useState([]);
 
   const handleToggle = async (field, value) => {
-    if (field === 'canSit') setCanSit(value);
-    else setNeedsSitting(value);
+    // Mutually exclusive — turning one on turns the other off, but both can be off
+    const newCanSit = field === 'canSit' ? value : (value ? false : canSit);
+    const newNeedsSitting = field === 'needsSitting' ? value : (value ? false : needsSitting);
+
+    setCanSit(newCanSit);
+    setNeedsSitting(newNeedsSitting);
+    if (searched) setResultsStale(true);
+    else { setFetchedSitters([]); setSearched(false); }
 
     try {
       await fetch('/api/care/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ [field]: value }),
+        body: JSON.stringify({ canSit: newCanSit, needsSitting: newNeedsSitting }),
       });
     } catch (err) {
       console.error('Failed to update status:', err);
-      // Revert
-      if (field === 'canSit') setCanSit(!value);
-      else setNeedsSitting(!value);
+      setCanSit(initialCanSit);
+      setNeedsSitting(initialNeedsSitting);
     }
   };
 
   const handleSearch = async () => {
     setSearching(true);
     setSearched(true);
+    setResultsStale(false);
 
     try {
-      const type = activeTab === 'findSitters' ? 'canSit' : 'needsSitting';
-      const res = await fetch(`/api/care/sitters?type=${type}`);
-      if (!res.ok) {
-        setResults([]);
-        return;
-      }
+      const res = await fetch(`/api/care/sitters?type=${apiQueryType}`);
+      if (!res.ok) { setFetchedSitters([]); return; }
+
       let sitters = await res.json();
-
-      // Filter by dates
-      sitters = sitters.filter((s) => isAvailableForDates(s, startDate, endDate));
-
-      // Filter by distance if location provided
-      if (locationInput) {
-        let userCoords = null;
-
-        if (process.env.NEXT_PUBLIC_GOOGLE_MAPS_KEY) {
-          userCoords = await geocodeLocation(locationInput);
-        } else {
-          // Try browser geolocation as fallback, but show all if no coords
-          userCoords = null;
-        }
-
-        if (userCoords) {
-          sitters = sitters
-            .map((s) => {
-              if (!s.location?.lat || !s.location?.lng) return null;
-              const dist = haversine(userCoords.lat, userCoords.lng, s.location.lat, s.location.lng);
-              return dist <= radius ? { ...s, _distance: dist } : null;
-            })
-            .filter(Boolean)
-            .sort((a, b) => a._distance - b._distance);
-        }
-        // If no geocoding available, show all filtered by dates
+      // Attach distance to every sitter that has coords
+      if (userLocation?.lat != null && userLocation?.lng != null) {
+        sitters = sitters.map((s) => {
+          if (s.location?.lat == null || s.location?.lng == null) return s;
+          return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) };
+        });
       }
-
-      setResults(sitters);
+      setFetchedSitters(sitters.filter((s) => isAvailableForDates(s, startDate, endDate)));
     } catch (err) {
       console.error('Search error:', err);
-      setResults([]);
+      setFetchedSitters([]);
     } finally {
       setSearching(false);
     }
   };
 
-  const showFindSitters = canSit || (!canSit && !needsSitting);
-  const showOfferToSit = needsSitting || (!canSit && !needsSitting);
-  const showTabs = canSit && needsSitting;
+  // Apply radius threshold live — no new fetch needed
+  const results = useMemo(() => {
+    if (!searched) return null;
+    return fetchedSitters
+      .filter((s) => s._distance == null || s._distance <= radius)
+      .filter((s) => !s.contactPreference || s.contactPreference === contactFilter)
+      .sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
+  }, [searched, fetchedSitters, radius, contactFilter]);
 
-  const currentType = showTabs ? activeTab : canSit ? 'findSitters' : 'offerToSit';
+  // canSit=true → find people who need sitting; needsSitting=true → find available sitters
+  const apiQueryType = canSit ? 'needsSitting' : 'canSit';
+  const currentType = canSit ? 'offerToSit' : 'findSitters';
 
   const noResultsText =
     currentType === 'findSitters'
@@ -218,36 +190,8 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
         </div>
       ) : (
         <>
-          {/* Tabs */}
-          {showTabs && (
-            <div className={styles.tabs}>
-              <button
-                className={`${styles.tab} ${activeTab === 'findSitters' ? styles.tabActive : ''}`}
-                onClick={() => { setActiveTab('findSitters'); setResults(null); setSearched(false); }}
-              >
-                {t.tabs.findSitters}
-              </button>
-              <button
-                className={`${styles.tab} ${activeTab === 'offerToSit' ? styles.tabActive : ''}`}
-                onClick={() => { setActiveTab('offerToSit'); setResults(null); setSearched(false); }}
-              >
-                {t.tabs.offerToSit}
-              </button>
-            </div>
-          )}
-
           {/* Search bar */}
           <div className={styles.searchBar}>
-            <div className={styles.searchField}>
-              <label className={styles.searchLabel}>{t.search.locationLabel}</label>
-              <input
-                type="text"
-                className={styles.searchInput}
-                placeholder={t.search.locationPlaceholder}
-                value={locationInput}
-                onChange={(e) => setLocationInput(e.target.value)}
-              />
-            </div>
             <div className={styles.searchField}>
               <label className={styles.searchLabel}>{t.search.datesLabel} (from)</label>
               <input
@@ -266,41 +210,87 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
+            {userLocation?.lat != null ? (
+              <div className={styles.searchField}>
+                <label className={styles.searchLabel}>
+                  {t.search.radiusLabel}: {radius} {t.search.radiusUnit}
+                </label>
+                <input
+                  type="range"
+                  min={5}
+                  max={40}
+                  step={5}
+                  value={radius}
+                  onChange={(e) => setRadius(Number(e.target.value))}
+                  className={styles.squigglySlider}
+                />
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                  Move slider to adjust search area · from {userLocation.name || 'your location'}
+                </span>
+              </div>
+            ) : (
+              <div className={styles.searchField}>
+                <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
+                  <a href="/care/profile" style={{ color: 'var(--hunter-green)' }}>Add your location</a> to enable distance filtering
+                </span>
+              </div>
+            )}
             <div className={styles.searchField}>
-              <label className={styles.searchLabel}>
-                {t.search.radiusLabel}: {radius} {t.search.radiusUnit}
-              </label>
-              <input
-                type="range"
-                min={5}
-                max={40}
-                step={5}
-                value={radius}
-                onChange={(e) => setRadius(Number(e.target.value))}
-                style={{ width: '100%' }}
-              />
+              <label className={styles.searchLabel}>Contact via</label>
+              <div className={styles.contactFilterGroup}>
+                <label className={styles.contactFilterOption}>
+                  <input
+                    type="radio"
+                    name="contactFilter"
+                    value="email"
+                    checked={contactFilter === 'email'}
+                    onChange={() => setContactFilter('email')}
+                  />
+                  Email
+                </label>
+                <label className={styles.contactFilterOption}>
+                  <input
+                    type="radio"
+                    name="contactFilter"
+                    value="whatsapp"
+                    checked={contactFilter === 'whatsapp'}
+                    onChange={() => setContactFilter('whatsapp')}
+                  />
+                  WhatsApp
+                </label>
+              </div>
             </div>
             <button className={styles.searchBtn} onClick={handleSearch} disabled={searching}>
-              {searching ? '...' : t.search.search}
+              {searching ? <span className={styles.spinner} /> : t.search.search}
             </button>
           </div>
 
           {/* Results */}
           {results !== null && (
-            results.length === 0 ? (
-              <div className={styles.noResults}>{noResultsText}</div>
-            ) : (
-              <div className={styles.sitterGrid}>
-                {results.map((sitter) => (
-                  <SitterCard
-                    key={sitter._id}
-                    sitter={sitter}
-                    type={currentType}
-                    locale={locale}
-                  />
-                ))}
-              </div>
-            )
+            <div className={styles.resultsWrapper}>
+              {resultsStale && (
+                <div className={styles.resultsStaleOverlay}>
+                  <span className={styles.staleMsg}>Your status changed — search again to update results</span>
+                  <button className={styles.searchBtn} onClick={handleSearch} disabled={searching}>
+                    {searching ? '...' : 'Search again'}
+                  </button>
+                </div>
+              )}
+              {results.length === 0 ? (
+                <div className={styles.noResults}>{noResultsText}</div>
+              ) : (
+                <div className={styles.sitterGrid}>
+                  {results.map((sitter) => (
+                    <SitterCard
+                      key={sitter._id}
+                      sitter={sitter}
+                      type={currentType}
+                      locale={locale}
+                    />
+                  ))}
+                </div>
+              )}
+            </div>
           )}
         </>
       )}

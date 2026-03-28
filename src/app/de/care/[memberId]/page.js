@@ -20,23 +20,23 @@ export async function generateMetadata({ params }) {
       { id: memberId }
     );
     return {
-      title: sitter?.name ? `${sitter.name} | Cat Sitting Network` : 'Member Profile | Cat Sitting Network',
+      title: sitter?.name ? `${sitter.name} | Katzensitting Netzwerk` : 'Mitgliedsprofil | Katzensitting Netzwerk',
     };
   } catch {
-    return { title: 'Member Profile | Cat Sitting Network' };
+    return { title: 'Mitgliedsprofil | Katzensitting Netzwerk' };
   }
 }
 
-export default async function MemberProfilePage({ params }) {
+export default async function DeMemberProfilePage({ params }) {
   const { memberId } = await params;
 
   const cookieStore = await cookies();
   const token = cookieStore.get('care-auth')?.value;
 
-  if (!token) redirect('/care/login');
+  if (!token) redirect('/de/care/login');
 
   const payload = await verifyToken(token);
-  if (!payload) redirect('/care/login');
+  if (!payload) redirect('/de/care/login');
 
   let sitter = null;
   try {
@@ -54,5 +54,5 @@ export default async function MemberProfilePage({ params }) {
 
   if (!sitter) notFound();
 
-  return <SitterProfile sitter={sitter} />;
+  return <SitterProfile locale="de" sitter={sitter} />;
 }

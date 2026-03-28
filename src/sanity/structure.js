@@ -139,6 +139,43 @@ export const structure = (S) =>
             )
         ),
 
+      // === CAT SITTING PORTAL ===
+      S.listItem()
+        .title('Cat Sitting Portal')
+        .icon(() => '🏠')
+        .child(
+          S.list()
+            .title('Cat Sitting Portal')
+            .items([
+              S.listItem()
+                .title('All Members')
+                .icon(() => '👤')
+                .child(
+                  S.documentTypeList('catSitter')
+                    .title('All Members')
+                    .defaultOrdering([{ field: 'name', direction: 'asc' }])
+                ),
+              S.listItem()
+                .title('Verified Members')
+                .icon(() => '✅')
+                .child(
+                  S.documentTypeList('catSitter')
+                    .title('Verified Members')
+                    .filter('_type == "catSitter" && memberVerified == true')
+                    .defaultOrdering([{ field: 'name', direction: 'asc' }])
+                ),
+              S.listItem()
+                .title('Pending Verification')
+                .icon(() => '⏳')
+                .child(
+                  S.documentTypeList('catSitter')
+                    .title('Pending Verification')
+                    .filter('_type == "catSitter" && (memberVerified == false || !defined(memberVerified))')
+                    .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
+                ),
+            ])
+        ),
+
       // === SITE SETTINGS ===
       S.listItem()
         .title('Site Settings')
