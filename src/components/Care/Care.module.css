@@ -1203,3 +1203,80 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* ====== Inbox layout ====== */
+.inboxLayout { display: grid; grid-template-columns: 300px 1fr; height: calc(100vh - 80px); gap: 0; background: #fff; border-radius: 16px; overflow: hidden; box-shadow: 0 2px 12px rgba(44,95,79,0.08); }
+.threadSidebar { border-right: 1px solid rgba(44,95,79,0.1); overflow-y: auto; }
+.threadSidebarHeader { padding: 1.25rem 1.25rem 0.75rem; border-bottom: 1px solid rgba(44,95,79,0.08); display: flex; justify-content: space-between; align-items: center; }
+.threadItem { padding: 1rem 1.25rem; cursor: pointer; border-bottom: 1px solid rgba(44,95,79,0.06); transition: background 0.15s; }
+.threadItem:hover, .threadItemActive { background: rgba(44,95,79,0.05); }
+.threadItemActive { background: rgba(44,95,79,0.08) !important; border-left: 3px solid var(--hunter-green); }
+.threadName { font-weight: 600; font-size: 0.9rem; color: var(--text-dark); }
+.threadPreview { font-size: 0.8rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; margin-top: 0.2rem; }
+.threadMeta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.3rem; }
+.threadTime { font-size: 0.72rem; color: var(--text-light); }
+.unreadBadge { background: var(--tabby-brown); color: #fff; border-radius: 10px; padding: 1px 7px; font-size: 0.7rem; font-weight: 700; }
+.threadPane { display: flex; flex-direction: column; }
+.threadHeader { padding: 1rem 1.5rem; border-bottom: 1px solid rgba(44,95,79,0.08); display: flex; align-items: center; gap: 1rem; }
+.threadHeaderName { font-size: 1.05rem; font-weight: 700; color: var(--text-dark); }
+.threadHeaderActions { margin-left: auto; display: flex; gap: 0.5rem; }
+.messagesArea { flex: 1; overflow-y: auto; padding: 1.5rem; display: flex; flex-direction: column; gap: 0.75rem; }
+.msgBubble { max-width: 70%; padding: 0.65rem 1rem; border-radius: 12px; font-size: 0.875rem; line-height: 1.6; }
+.msgBubbleOut { align-self: flex-end; background: var(--hunter-green); color: #fff; border-bottom-right-radius: 3px; }
+.msgBubbleIn { align-self: flex-start; background: #f0f4f2; color: var(--text-dark); border-bottom-left-radius: 3px; }
+.msgMeta { font-size: 0.7rem; opacity: 0.65; margin-top: 0.25rem; }
+.msgActions { display: flex; gap: 0.5rem; margin-top: 0.25rem; }
+.spamBtn { font-size: 0.7rem; color: #ef4444; background: none; border: none; cursor: pointer; padding: 0; }
+.composeArea { border-top: 1px solid rgba(44,95,79,0.08); padding: 1rem 1.5rem; }
+.composeTextarea { width: 100%; border: 1.5px solid rgba(44,95,79,0.2); border-radius: 8px; padding: 0.75rem; font-size: 0.875rem; font-family: var(--font-lora); resize: none; box-sizing: border-box; }
+.composeTextarea:focus { outline: none; border-color: var(--hunter-green); }
+.composeMeta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.5rem; }
+.composeCounters { font-size: 0.72rem; color: var(--text-light); }
+.composeCounterOver { color: #ef4444; }
+.composeDisclaimer { font-size: 0.7rem; color: var(--text-light); font-style: italic; margin-top: 0.35rem; }
+.noThreadMsg { flex: 1; display: flex; align-items: center; justify-content: center; color: var(--text-light); font-size: 0.9rem; }
+.noMessages { text-align: center; padding: 3rem 1rem; color: var(--text-light); }
+
+/* ====== Stars ====== */
+.starRow { display: flex; gap: 0.25rem; }
+.star { font-size: 1.5rem; cursor: pointer; color: #ddd; transition: color 0.1s; }
+.starFilled { color: #f59e0b; }
+
+/* ====== Modal ====== */
+.modalOverlay { position: fixed; inset: 0; background: rgba(0,0,0,0.35); display: flex; align-items: center; justify-content: center; z-index: 100; }
+.modal { background: #fff; border-radius: 16px; padding: 2rem; max-width: 420px; width: 90%; box-shadow: 0 8px 32px rgba(0,0,0,0.15); }
+.modalTitle { font-size: 1.1rem; font-weight: 700; color: var(--text-dark); margin: 0 0 1rem; }
+.modalActions { display: flex; gap: 0.75rem; justify-content: flex-end; margin-top: 1.5rem; }
+
+/* ====== Admin ====== */
+.adminGrid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 1rem; margin-bottom: 2rem; }
+.statCard { background: #fff; border-radius: 12px; padding: 1.25rem; box-shadow: 0 2px 8px rgba(44,95,79,0.07); text-align: center; }
+.statNum { font-size: 2rem; font-weight: 700; color: var(--hunter-green); font-family: var(--font-outfit); }
+.statLabel { font-size: 0.8rem; color: var(--text-light); margin-top: 0.25rem; }
+.adminTable { width: 100%; border-collapse: collapse; font-size: 0.875rem; }
+.adminTable th { text-align: left; padding: 0.75rem; border-bottom: 2px solid rgba(44,95,79,0.1); font-family: var(--font-outfit); font-size: 0.75rem; text-transform: uppercase; letter-spacing: 0.05em; color: var(--text-light); }
+.adminTable td { padding: 0.75rem; border-bottom: 1px solid rgba(44,95,79,0.06); }
+.dangerBtn { padding: 0.35rem 0.75rem; background: #ef4444; color: #fff; border: none; border-radius: 6px; font-size: 0.75rem; cursor: pointer; }
+.dangerBtn:hover { background: #dc2626; }
+
+/* ====== Contact privacy ====== */
+.contactPrivacySection { margin-top: 1.5rem; }
+.privacyHelp { font-size: 0.8rem; color: var(--text-light); line-height: 1.6; margin-top: 0.5rem; }
+
+/* ====== Feedback display ====== */
+.feedbackSummary { display: flex; align-items: center; gap: 1rem; margin-bottom: 1rem; }
+.feedbackAvg { font-size: 1.5rem; font-weight: 700; color: var(--text-dark); }
+.feedbackCount { font-size: 0.85rem; color: var(--text-light); }
+.feedbackComment { background: #f8f8f6; border-radius: 8px; padding: 0.75rem 1rem; font-size: 0.875rem; color: var(--text-dark); line-height: 1.6; margin-bottom: 0.5rem; font-style: italic; }
+
+/* ====== Send message CTA on profile ====== */
+.sendMsgBtn { display: inline-block; padding: 0.65rem 1.5rem; background: var(--hunter-green); color: var(--whisker-cream); border-radius: 8px; text-decoration: none; font-weight: 600; font-size: 0.9rem; font-family: var(--font-outfit); }
+
+/* ====== Inbox mobile responsive ====== */
+@media (max-width: 700px) {
+  .inboxLayout { grid-template-columns: 1fr; height: auto; min-height: calc(100vh - 80px); }
+  .threadSidebar { border-right: none; border-bottom: 1px solid rgba(44,95,79,0.1); }
+  .inboxLayout.showThread .threadSidebar { display: none; }
+  .inboxLayout.showThread .threadPane { display: flex; }
+  .inboxLayout:not(.showThread) .threadPane { display: none; }
+}

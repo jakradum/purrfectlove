@@ -1,0 +1,68 @@
+{
+  "inbox": {
+    "title": "Inbox",
+    "noMessages": "No messages yet. Members you connect with will appear here.",
+    "compose": "New Message",
+    "shareContact": "Share My Contact Info",
+    "blockUser": "Block User",
+    "reportSpam": "Report as Spam",
+    "disclaimer": "Messages are not private. Admins can read for moderation. Don't share sensitive information.",
+    "sending": "Sending\u2026",
+    "send": "Send",
+    "messagePlaceholder": "Write your message\u2026",
+    "charCount": "{chars} / 3200 characters",
+    "wordCount": "{words} / 200 words",
+    "limitError": "Message too long. Max 200 words or 3200 characters.",
+    "markRead": "Mark as read",
+    "unread": "Unread",
+    "you": "You",
+    "noThread": "Select a conversation to read messages."
+  },
+  "feedback": {
+    "title": "Leave Feedback",
+    "fulfilled": "Did {name} follow through as agreed?",
+    "yes": "Yes",
+    "no": "No",
+    "rating": "Overall rating",
+    "comment": "Additional comments (optional)",
+    "commentPlaceholder": "Share your experience\u2026",
+    "submit": "Submit Feedback",
+    "submitted": "Feedback submitted. Thank you!",
+    "avgRating": "{rating} \u2605 ({count} reviews)",
+    "fulfillmentRate": "{rate}% requests fulfilled"
+  },
+  "contact": {
+    "hideEmailLabel": "Hide email from profile",
+    "hideWhatsAppLabel": "Hide WhatsApp from profile",
+    "hideHelp": "Your contact info is visible by default. If both are hidden, members message you through the inbox instead.",
+    "shareTitle": "Share contact with {name}?",
+    "shareEmail": "Share my email",
+    "shareWhatsApp": "Share my WhatsApp",
+    "shareConfirm": "Share",
+    "sharedEmail": "You shared your email with {name}",
+    "sharedWhatsApp": "You shared your WhatsApp with {name}",
+    "receivedEmail": "{name} shared their email with you",
+    "receivedWhatsApp": "{name} shared their WhatsApp with you"
+  },
+  "block": {
+    "confirmTitle": "Block {name}?",
+    "confirmText": "They won't be able to message you. This cannot be undone.",
+    "reason": "Reason",
+    "confirm": "Block",
+    "cancel": "Cancel",
+    "blocked": "User blocked."
+  },
+  "admin": {
+    "title": "Admin Dashboard",
+    "members": "Members",
+    "spamReports": "Spam Reports",
+    "scoreAdjust": "Score Adjustments",
+    "blockHistory": "Block History",
+    "todayStats": "Today's Activity",
+    "search": "Search members\u2026",
+    "adjustScore": "Adjust Score",
+    "ban": "Ban",
+    "dismiss": "Dismiss",
+    "deductPoints": "Deduct Points"
+  }
+}

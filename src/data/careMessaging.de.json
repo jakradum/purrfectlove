@@ -1,0 +1,68 @@
+{
+  "inbox": {
+    "title": "Posteingang",
+    "noMessages": "Noch keine Nachrichten. Mitglieder, mit denen du in Kontakt trittst, erscheinen hier.",
+    "compose": "Neue Nachricht",
+    "shareContact": "Meine Kontaktdaten teilen",
+    "blockUser": "Benutzer blockieren",
+    "reportSpam": "Als Spam melden",
+    "disclaimer": "Nachrichten sind nicht privat. Admins k\u00f6nnen sie zur Moderation lesen. Teile keine sensiblen Informationen.",
+    "sending": "Wird gesendet\u2026",
+    "send": "Senden",
+    "messagePlaceholder": "Schreibe deine Nachricht\u2026",
+    "charCount": "{chars} / 3200 Zeichen",
+    "wordCount": "{words} / 200 W\u00f6rter",
+    "limitError": "Nachricht zu lang. Maximal 200 W\u00f6rter oder 3200 Zeichen.",
+    "markRead": "Als gelesen markieren",
+    "unread": "Ungelesen",
+    "you": "Du",
+    "noThread": "W\u00e4hle ein Gespr\u00e4ch aus, um Nachrichten zu lesen."
+  },
+  "feedback": {
+    "title": "Bewertung hinterlassen",
+    "fulfilled": "Hat {name} die Vereinbarung eingehalten?",
+    "yes": "Ja",
+    "no": "Nein",
+    "rating": "Gesamtbewertung",
+    "comment": "Zus\u00e4tzliche Kommentare (optional)",
+    "commentPlaceholder": "Teile deine Erfahrung\u2026",
+    "submit": "Bewertung absenden",
+    "submitted": "Bewertung eingereicht. Danke!",
+    "avgRating": "{rating} \u2605 ({count} Bewertungen)",
+    "fulfillmentRate": "{rate}% Anfragen erf\u00fcllt"
+  },
+  "contact": {
+    "hideEmailLabel": "E-Mail im Profil verbergen",
+    "hideWhatsAppLabel": "WhatsApp im Profil verbergen",
+    "hideHelp": "Deine Kontaktdaten sind standardm\u00e4\u00dfig sichtbar. Wenn beides verborgen ist, k\u00f6nnen Mitglieder dir \u00fcber den Posteingang schreiben.",
+    "shareTitle": "Kontakt mit {name} teilen?",
+    "shareEmail": "Meine E-Mail teilen",
+    "shareWhatsApp": "Mein WhatsApp teilen",
+    "shareConfirm": "Teilen",
+    "sharedEmail": "Du hast deine E-Mail mit {name} geteilt",
+    "sharedWhatsApp": "Du hast dein WhatsApp mit {name} geteilt",
+    "receivedEmail": "{name} hat seine/ihre E-Mail mit dir geteilt",
+    "receivedWhatsApp": "{name} hat sein/ihr WhatsApp mit dir geteilt"
+  },
+  "block": {
+    "confirmTitle": "{name} blockieren?",
+    "confirmText": "Diese Person kann dir keine Nachrichten mehr senden. Dies kann nicht r\u00fcckg\u00e4ngig gemacht werden.",
+    "reason": "Grund",
+    "confirm": "Blockieren",
+    "cancel": "Abbrechen",
+    "blocked": "Benutzer blockiert."
+  },
+  "admin": {
+    "title": "Admin-Dashboard",
+    "members": "Mitglieder",
+    "spamReports": "Spam-Meldungen",
+    "scoreAdjust": "Punkteanpassungen",
+    "blockHistory": "Blockierungsverlauf",
+    "todayStats": "Heutige Aktivit\u00e4t",
+    "search": "Mitglieder suchen\u2026",
+    "adjustScore": "Punkte anpassen",
+    "ban": "Sperren",
+    "dismiss": "Verwerfen",
+    "deductPoints": "Punkte abziehen"
+  }
+}

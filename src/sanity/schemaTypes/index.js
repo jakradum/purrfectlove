@@ -9,6 +9,10 @@ import contactMessage from './contactMessage'
 import siteSettings from './siteSettings'
 import catSitter from './catSitter'
 import otpCode from './otpCode'
+import message from './message'
+import blockedUser from './blockedUser'
+import contactShare from './contactShare'
+import sittingFeedback from './sittingFeedback'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -27,5 +31,9 @@ export const schema = {
     siteSettings,
     catSitter,
     otpCode,
+    message,
+    blockedUser,
+    contactShare,
+    sittingFeedback,
   ]
 }

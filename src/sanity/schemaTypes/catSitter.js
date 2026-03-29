@@ -8,6 +8,24 @@ export default {
     { name: 'phone', title: 'Phone (used for login — format: +91XXXXXXXXXX)', type: 'string', validation: Rule => Rule.required() },
     { name: 'memberVerified', title: 'Member Verified', type: 'boolean', initialValue: false },
     { name: 'addedBy', title: 'Added By', type: 'reference', to: [{ type: 'teamMember' }], options: { disableNew: true } },
+    { name: 'hideEmail', title: 'Hide Email from Profile', type: 'boolean', initialValue: false },
+    { name: 'hideWhatsApp', title: 'Hide WhatsApp from Profile', type: 'boolean', initialValue: false },
+    { name: 'isAdmin', title: 'Is Admin', type: 'boolean', initialValue: false },
+    { name: 'memberScore', title: 'Member Score', type: 'number', initialValue: 100, readOnly: true },
+    {
+      name: 'scoreHistory',
+      title: 'Score History',
+      type: 'array',
+      readOnly: true,
+      of: [{
+        type: 'object',
+        fields: [
+          { name: 'change', type: 'number' },
+          { name: 'reason', type: 'string' },
+          { name: 'timestamp', type: 'datetime' },
+        ],
+      }],
+    },
     { name: 'locale', title: 'Locale', type: 'string', options: { list: [{ title: 'English (India)', value: 'en' }, { title: 'German (Germany)', value: 'de' }] }, initialValue: 'en' },
 
     // Member-set fields (read-only in Studio — members edit via portal)

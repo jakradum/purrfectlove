@@ -176,6 +176,58 @@ export const structure = (S) =>
             ])
         ),
 
+      // === MESSAGING ===
+      S.listItem()
+        .title('Messaging')
+        .icon(() => '💬')
+        .child(
+          S.list()
+            .title('Messaging')
+            .items([
+              S.listItem()
+                .title('All Messages')
+                .icon(() => '📨')
+                .child(
+                  S.documentTypeList('message')
+                    .title('All Messages')
+                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                ),
+              S.listItem()
+                .title('Spam Reports')
+                .icon(() => '🚩')
+                .child(
+                  S.documentTypeList('message')
+                    .title('Spam Reports')
+                    .filter('_type == "message" && markedAsSpam == true')
+                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                ),
+              S.listItem()
+                .title('Blocked Users')
+                .icon(() => '🚫')
+                .child(
+                  S.documentTypeList('blockedUser')
+                    .title('Blocked Users')
+                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                ),
+              S.listItem()
+                .title('Contact Shares')
+                .icon(() => '📇')
+                .child(
+                  S.documentTypeList('contactShare')
+                    .title('Contact Shares')
+                    .defaultOrdering([{ field: 'sharedAt', direction: 'desc' }])
+                ),
+              S.listItem()
+                .title('Feedback')
+                .icon(() => '⭐')
+                .child(
+                  S.documentTypeList('sittingFeedback')
+                    .title('Feedback')
+                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                ),
+            ])
+        ),
+
       // === SITE SETTINGS ===
       S.listItem()
         .title('Site Settings')

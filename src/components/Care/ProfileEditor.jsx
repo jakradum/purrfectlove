@@ -84,6 +84,8 @@ function formFromData(data) {
     behavioralTraits: data.behavioralTraits || [],
     canSit: data.canSit ?? false,
     needsSitting: data.needsSitting ?? false,
+    hideEmail: data.hideEmail ?? false,
+    hideWhatsApp: data.hideWhatsApp ?? false,
   };
 }
 
@@ -235,8 +237,44 @@ export default function ProfileEditor({ initialData }) {
         {/* Read-only account info */}
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>{t.sections.account}</h2>
-          <ReadField label="Email" value={initialData.email} />
-          <ReadField label="Phone" value={initialData.phone} />
+          {initialData.email && (
+            <div className={styles.readField}>
+              <span className={styles.readFieldLabel}>Email</span>
+              <span className={styles.readFieldValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {initialData.email}
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', marginTop: 0 }}
+                  onClick={() => navigator.clipboard.writeText(initialData.email)}
+                >
+                  Copy
+                </button>
+              </span>
+            </div>
+          )}
+          {initialData.phone && (
+            <div className={styles.readField}>
+              <span className={styles.readFieldLabel}>Phone</span>
+              <span className={styles.readFieldValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                {initialData.phone}
+                <button
+                  type="button"
+                  className={styles.btnSecondary}
+                  style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', marginTop: 0 }}
+                  onClick={() => navigator.clipboard.writeText(initialData.phone)}
+                >
+                  Copy
+                </button>
+              </span>
+            </div>
+          )}
+          {/* Contact privacy summary */}
+          <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-light)' }}>
+            {form.hideEmail && <span style={{ display: 'block' }}>Email hidden from profile</span>}
+            {form.hideWhatsApp && <span style={{ display: 'block' }}>WhatsApp hidden from profile</span>}
+            {!form.hideEmail && !form.hideWhatsApp && <span>Contact info visible to members</span>}
+          </div>
         </div>
 
         {/* Home */}
@@ -470,6 +508,32 @@ export default function ProfileEditor({ initialData }) {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
           <Toggle checked={form.canSit} onChange={(v) => handleStatusToggle('canSit', v)} label={t.fields.canSit} />
           <Toggle checked={form.needsSitting} onChange={(v) => handleStatusToggle('needsSitting', v)} label={t.fields.needsSitting} />
+        </div>
+      </div>
+
+      {/* Contact Privacy */}
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>Contact Privacy</h2>
+        <div className={styles.contactPrivacySection}>
+          <label className={styles.checkboxLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
+            <input
+              type="checkbox"
+              checked={form.hideEmail}
+              onChange={(e) => update('hideEmail', e.target.checked)}
+            />
+            Hide email from profile
+          </label>
+          <label className={styles.checkboxLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <input
+              type="checkbox"
+              checked={form.hideWhatsApp}
+              onChange={(e) => update('hideWhatsApp', e.target.checked)}
+            />
+            Hide WhatsApp/phone from profile
+          </label>
+          <p className={styles.privacyHelp}>
+            Your contact info is visible by default. If both are hidden, members message you through the inbox instead.
+          </p>
         </div>
       </div>
 
