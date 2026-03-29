@@ -12,14 +12,14 @@ export default function DeCareLayout({ children }) {
   return (
     <>
       <Navbar locale="de" siteUrl="https://purrfectlove.org" />
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
-        <Sidebar locale="de" basePath="/de/care" />
-        <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          {children}
-          <div style={{ marginTop: 'auto' }}>
-            <Footer locale="de" siteUrl="https://purrfectlove.org" />
-          </div>
-        </main>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
+        <div style={{ display: 'flex', flex: 1 }}>
+          <Sidebar locale="de" basePath="/de/care" />
+          <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px' }}>
+            {children}
+          </main>
+        </div>
+        <Footer locale="de" siteUrl="https://purrfectlove.org" />
       </div>
     </>
   );

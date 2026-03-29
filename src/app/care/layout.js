@@ -12,14 +12,14 @@ export default function CareLayout({ children }) {
   return (
     <>
       <Navbar locale="en" siteUrl="https://purrfectlove.org" />
-      <div style={{ display: 'flex', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
-        <Sidebar locale="en" basePath="" />
-        <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px', minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
-          {children}
-          <div style={{ marginTop: 'auto' }}>
-            <Footer locale="en" siteUrl="https://purrfectlove.org" />
-          </div>
-        </main>
+      <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
+        <div style={{ display: 'flex', flex: 1 }}>
+          <Sidebar locale="en" basePath="" />
+          <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px' }}>
+            {children}
+          </main>
+        </div>
+        <Footer locale="en" siteUrl="https://purrfectlove.org" />
       </div>
     </>
   );
