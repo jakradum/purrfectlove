@@ -74,6 +74,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
 
   // Restore state from sessionStorage on mount
   useEffect(() => {
+    console.log('[Marketplace] userLocation:', userLocation);
     try {
       const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
       if (saved) {
@@ -81,9 +82,17 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
         if (saved.endDate) setEndDate(saved.endDate);
         if (saved.radius) setRadius(saved.radius);
         if (saved.fetchedSitters?.length) {
-          setFetchedSitters(saved.fetchedSitters);
+          // Re-apply distances in case they weren't calculated when originally cached
+          let sitters = saved.fetchedSitters;
+          if (userLocation?.lat != null && userLocation?.lng != null) {
+            sitters = sitters.map((s) => {
+              if (s.location?.lat == null || s.location?.lng == null) return s;
+              return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) * 1.1 };
+            });
+          }
+          setFetchedSitters(sitters);
           setSearched(true);
-          setVisibleCount(saved.fetchedSitters.length);
+          setVisibleCount(sitters.length);
         }
       }
     } catch { /* sessionStorage unavailable */ }
