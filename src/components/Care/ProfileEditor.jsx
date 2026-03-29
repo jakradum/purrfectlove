@@ -463,17 +463,10 @@ export default function ProfileEditor({ initialData }) {
             <p className={styles.hint}>Coordinates will be resolved when you save.</p>
           )}
         </div>
-        <details className={styles.infoBlurb}>
-          <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem' }}>What is a Plus Code?</summary>
-          <p style={{ marginTop: '0.5rem' }}>It&apos;s a short address Google Maps uses for any location. To get yours:</p>
-          <ol style={{ margin: '0.5rem 0 0 1.2rem', padding: 0, lineHeight: 1.8 }}>
-            <li>Open <strong>Google Maps</strong> on your phone</li>
-            <li>Long-press on your building/area to drop a pin</li>
-            <li>Tap the pin info at the bottom — the Plus Code appears (e.g. <em>VHQ2+FH</em>)</li>
-            <li>Tap the Plus Code → tap <strong>Copy</strong>, then paste it here with the city name</li>
-          </ol>
-          <p style={{ marginTop: '0.5rem' }}>A full Plus Code (like <em>7J4VVHQ2+FH</em>) auto-fills coordinates instantly. A short code with city (like <em>VHQ2+FH Bengaluru</em>) is resolved when you save.</p>
-        </details>
+        <p className={styles.hint}>
+          Find your apartment&apos;s Plus Code here —{' '}
+          <a href="https://plus.codes/map" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--hunter-green)' }}>plus.codes/map</a>
+        </p>
       </div>
 
       {/* Account Info (read-only) */}
