@@ -19,7 +19,9 @@ export default function DeCareLayout({ children }) {
             {children}
           </main>
         </div>
-        <Footer locale="de" siteUrl="https://purrfectlove.org" />
+        <div style={{ position: 'relative', zIndex: 2 }}>
+          <Footer locale="de" siteUrl="https://purrfectlove.org" />
+        </div>
       </div>
     </>
   );

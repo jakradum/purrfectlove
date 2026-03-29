@@ -19,7 +19,9 @@ export default function CareLayout({ children }) {
             {children}
           </main>
         </div>
-        <Footer locale="en" siteUrl="https://purrfectlove.org" />
+        <div style={{ position: 'relative', zIndex: 2 }}>
+          <Footer locale="en" siteUrl="https://purrfectlove.org" />
+        </div>
       </div>
     </>
   );

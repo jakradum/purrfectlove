@@ -2,7 +2,15 @@
 .sidebar {
   width: 200px;
   flex-shrink: 0;
-  background: #F6F4F0;
+  background: linear-gradient(
+    to bottom,
+    #F6F4F0 0%,
+    #F6F4F0 48%,
+    rgba(246, 244, 240, 0.88) 62%,
+    rgba(246, 244, 240, 0.55) 78%,
+    rgba(246, 244, 240, 0.15) 92%,
+    transparent 100%
+  );
   border-right: 1px solid rgba(0, 0, 0, 0.07);
   display: flex;
   flex-direction: column;
@@ -10,8 +18,21 @@
   padding: 0 0 1.5rem;
   position: sticky;
   top: 0;
-  height: 100%;
-  overflow-y: auto;
+  height: 100vh;
+  z-index: 1;
+}
+
+.sidebar::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 55%;
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
+  pointer-events: none;
+  z-index: -1;
 }
 
 .nav {
