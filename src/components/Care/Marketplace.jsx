@@ -66,6 +66,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [searchError, setSearchError] = useState('');
+  const [debugInfo, setDebugInfo] = useState('');
   const [resultsStale, setResultsStale] = useState(false);
   const [fetchedSitters, setFetchedSitters] = useState([]);
 
@@ -155,15 +156,16 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
 
     try {
       const res = await fetch(`/api/care/sitters?type=${apiQueryType}`);
-      console.log('[Search] status:', res.status, 'type:', apiQueryType, 'userLocation:', userLocation);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
-        setSearchError(`Error ${res.status}: ${err.error || 'Failed to load results'}`);
+        const msg = `API error ${res.status}: ${err.error || 'unknown'}`;
+        setSearchError(msg);
+        setDebugInfo(`type=${apiQueryType} status=${res.status}`);
         return;
       }
 
       let sitters = await res.json();
-      console.log('[Search] raw sitters:', sitters.length);
+      const rawCount = sitters.length;
       if (userLocation?.lat != null && userLocation?.lng != null) {
         sitters = sitters.map((s) => {
           if (s.location?.lat == null || s.location?.lng == null) return s;
@@ -171,7 +173,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
         });
       }
       const filtered = sitters.filter((s) => isAvailableForDates(s, startDate, endDate));
-      console.log('[Search] after date filter:', filtered.length, 'radius:', radius);
+      setDebugInfo(`type=${apiQueryType} | API: ${rawCount} | date-filtered: ${filtered.length} | loc: ${userLocation ? `${userLocation.lat?.toFixed(2)},${userLocation.lng?.toFixed(2)}` : 'none'}`);
       setFetchedSitters(filtered);
       animateCards(filtered.length);
     } catch (err) {
@@ -297,6 +299,11 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
               {searching ? <span className={styles.spinner} /> : t.search.search}
             </button>
           </div>
+          {debugInfo && (
+            <p style={{ fontSize: '0.72rem', color: '#888', marginTop: '0.5rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
+              {debugInfo}
+            </p>
+          )}
 
           {/* Results */}
           {searched && (
