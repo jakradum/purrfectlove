@@ -37,16 +37,28 @@ export async function POST(request) {
 
     await sanity.delete(otpDoc._id)
 
-    const sitter = await sanity.fetch(
-      `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name }`,
-      { phone, phoneSpaced }
-    )
+    const [catSitter, teamMember] = await Promise.all([
+      sanity.fetch(
+        `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name }`,
+        { phone, phoneSpaced }
+      ),
+      sanity.fetch(
+        `*[_type == "teamMember" && (phone == $phone || phone == $phoneSpaced)][0]{ _id, name }`,
+        { phone, phoneSpaced }
+      ),
+    ])
 
-    if (!sitter) {
+    const account = catSitter || teamMember
+    if (!account) {
       return Response.json({ error: 'Account not found or not verified' }, { status: 403 })
     }
 
-    const token = await signToken({ phone, sitterId: sitter._id, name: sitter.name || '' })
+    const token = await signToken({
+      phone,
+      sitterId: account._id,
+      name: account.name || '',
+      isTeamMember: !catSitter && !!teamMember,
+    })
 
     const isProduction = process.env.NODE_ENV === 'production'
     const maxAge = 90 * 24 * 3600

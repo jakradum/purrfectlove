@@ -96,6 +96,16 @@ export default defineType({
       type: 'number',
       description: 'Position in the team grid (1 = first)',
       validation: Rule => Rule.required()
+    }),
+    defineField({
+      name: 'phone',
+      title: 'Phone (care portal login only)',
+      type: 'string',
+      description: 'Used only for authentication on care.purrfectlove.org — never displayed on the main site.',
+      validation: Rule => Rule.regex(/^\+[1-9]\d{1,14}$/, {
+        name: 'E.164 format',
+        invert: false
+      }).error('Must be in E.164 format: +[country code][number] (e.g. +919876543210)')
     })
   ],
   preview: {

@@ -45,12 +45,19 @@ export async function POST(request) {
       return Response.json({ error: 'Invalid phone number. Use E.164 format (e.g. +91XXXXXXXXXX).' }, { status: 400 })
     }
 
-    // Check member exists — match regardless of whether team stored with or without space
-    const sitter = await sanity.fetch(
-      `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id }`,
-      { phone, phoneSpaced }
-    )
-    if (!sitter) {
+    // Check catSitter OR teamMember — match regardless of spacing in stored number
+    const [catSitter, teamMember] = await Promise.all([
+      sanity.fetch(
+        `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id }`,
+        { phone, phoneSpaced }
+      ),
+      sanity.fetch(
+        `*[_type == "teamMember" && (phone == $phone || phone == $phoneSpaced)][0]{ _id }`,
+        { phone, phoneSpaced }
+      ),
+    ])
+
+    if (!catSitter && !teamMember) {
       return Response.json({ error: 'Phone number not found. Contact support@purrfectlove.org to join.' }, { status: 403 })
     }
 
