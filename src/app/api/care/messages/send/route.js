@@ -143,7 +143,7 @@ export async function POST(request) {
     return Response.json({ success: true, messageId: newMessage._id })
   } catch (error) {
     console.error('messages/send error:', error)
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
+    return Response.json({ error: 'Internal server error', detail: error?.message || String(error) }, { status: 500 })
   }
 }
 
