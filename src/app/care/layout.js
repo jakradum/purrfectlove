@@ -1,5 +1,6 @@
 import Navbar from '@/components/navbar';
 import Sidebar from '@/components/Care/Sidebar';
+import Footer from '@/components/Footer';
 
 export const metadata = {
   title: 'Cat Sitting Network | Purrfect Love',
@@ -15,6 +16,7 @@ export default function CareLayout({ children }) {
         <Sidebar locale="en" basePath="" />
         <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px' }}>
           {children}
+          <Footer locale="en" siteUrl="https://purrfectlove.org" />
         </main>
       </div>
     </>

@@ -9,11 +9,16 @@ import styles from './Footer.module.css';
 import footerContentEN from '@/data/footerContent.en.json';
 import footerContentDE from '@/data/footerContent.de.json';
 
-export default function Footer({ locale = 'en' }) {
+export default function Footer({ locale = 'en', siteUrl = '' }) {
   const pathname = usePathname();
   const content = locale === 'de' ? footerContentDE : footerContentEN;
   const currentYear = new Date().getFullYear();
   const copyright = content.copyright.replace('{year}', currentYear);
+
+  const resolveHref = (href) => {
+    if (href.startsWith('http')) return href;
+    return siteUrl + href;
+  };
 
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
@@ -56,6 +61,9 @@ export default function Footer({ locale = 'en' }) {
 
   // Get language switcher hrefs that preserve current page
   const getLanguageHref = (targetLocale) => {
+    if (siteUrl) {
+      return targetLocale === 'de' ? `${siteUrl}/de` : siteUrl || '/';
+    }
     if (targetLocale === 'de') {
       if (pathname.startsWith('/de')) return pathname;
       return `/de${pathname === '/' ? '' : pathname}`;
@@ -84,7 +92,7 @@ export default function Footer({ locale = 'en' }) {
           <ul className={styles.linkList}>
             {content.quickLinks.links.map((link) => (
               <li key={link.href}>
-                <Link href={link.href} className={styles.link}>
+                <Link href={resolveHref(link.href)} className={styles.link}>
                   {link.label}
                 </Link>
               </li>
