@@ -10,7 +10,7 @@ export const metadata = {
 export default function DeCareLayout({ children }) {
   return (
     <>
-      <Navbar locale="de" />
+      <Navbar locale="de" siteUrl="https://purrfectlove.org" />
       <div style={{ display: 'flex', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
         <Sidebar locale="de" basePath="/de/care" />
         <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px' }}>

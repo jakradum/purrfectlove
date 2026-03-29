@@ -8,7 +8,7 @@ import styles from './Navbar.module.css';
 import menuItemsEN from '@/data/menuItems.en.json';
 import menuItemsDE from '@/data/menuItems.de.json';
 
-export default function Navbar({ locale = 'en' }) {
+export default function Navbar({ locale = 'en', siteUrl = '' }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -27,18 +27,26 @@ export default function Navbar({ locale = 'en' }) {
 
   // Get language switcher hrefs that preserve current page
   const getLanguageHref = (targetLocale) => {
+    // On care subdomain (siteUrl set), language switch goes to main site
+    if (siteUrl) {
+      return targetLocale === 'de' ? `${siteUrl}/de` : siteUrl || '/';
+    }
     if (targetLocale === 'de') {
-      // Switch to German: add /de prefix if not already there
       if (pathname.startsWith('/de')) return pathname;
       return `/de${pathname === '/' ? '' : pathname}`;
     } else {
-      // Switch to English: remove /de prefix
       if (pathname.startsWith('/de')) {
         const withoutDe = pathname.replace(/^\/de/, '');
         return withoutDe || '/';
       }
       return pathname;
     }
+  };
+
+  // Resolve a nav link href: external links pass through, others get siteUrl prefix
+  const resolveHref = (href, external) => {
+    if (external || href.startsWith('http')) return href;
+    return siteUrl + href;
   };
 
   // Detect user's likely region based on timezone
@@ -95,7 +103,7 @@ export default function Navbar({ locale = 'en' }) {
     <nav className={`${styles.navbar} ${isVisible ? styles.visible : styles.hidden}`}>
       <div className={styles.container}>
         <div className={styles.navContent}>
-          <Link href={locale === 'de' ? '/de' : '/'} className={styles.logo}>
+          <Link href={resolveHref(locale === 'de' ? '/de' : '/')} className={styles.logo}>
             <Image src="/logo.svg" alt="Purrfect Love" width={180} height={60} className={styles.logoImage} />
           </Link>
 
@@ -119,7 +127,7 @@ export default function Navbar({ locale = 'en' }) {
                         {link.children.map((child) => (
                           <Link
                             key={child.href}
-                            href={child.href}
+                            href={resolveHref(child.href, child.external)}
                             className={styles.dropdownItem}
                             onClick={() => setOpenDropdown(null)}
                           >
@@ -130,7 +138,7 @@ export default function Navbar({ locale = 'en' }) {
                     )}
                   </div>
                 ) : (
-                  <Link key={link.href} href={link.href} className={styles.navLink}>
+                  <Link key={link.href} href={resolveHref(link.href, link.external)} className={styles.navLink}>
                     {link.label}
                   </Link>
                 )
@@ -148,7 +156,7 @@ export default function Navbar({ locale = 'en' }) {
               ))}
             </div>
 
-            <Link href={cta.href} className={styles.cta}>
+            <Link href={resolveHref(cta.href)} className={styles.cta}>
               {cta.label}
             </Link>
           </div>
@@ -192,7 +200,7 @@ export default function Navbar({ locale = 'en' }) {
                       {link.children.map((child) => (
                         <Link
                           key={child.href}
-                          href={child.href}
+                          href={resolveHref(child.href, child.external)}
                           onClick={handleClose}
                           className={styles.mobileSubmenuLink}
                         >
@@ -205,7 +213,7 @@ export default function Navbar({ locale = 'en' }) {
               ) : (
                 <Link
                   key={link.href}
-                  href={link.href}
+                  href={resolveHref(link.href, link.external)}
                   onClick={handleClose}
                   className={styles.mobileNavLink}
                   style={{ animationDelay: `${index * 0.05}s` }}
@@ -227,7 +235,7 @@ export default function Navbar({ locale = 'en' }) {
             </div>
 
             <Link
-              href={cta.href}
+              href={resolveHref(cta.href)}
               onClick={handleClose}
               className={styles.mobileCta}
               style={{ animationDelay: `${(navLinks.length + 1) * 0.05}s` }}
