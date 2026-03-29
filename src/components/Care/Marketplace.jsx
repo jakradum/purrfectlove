@@ -62,7 +62,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [radius, setRadius] = useState(10);
+  const [radius, setRadius] = useState(25);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [resultsStale, setResultsStale] = useState(false);
@@ -267,7 +267,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 <input
                   type="range"
                   min={5}
-                  max={40}
+                  max={100}
                   step={5}
                   value={radius}
                   onChange={(e) => setRadius(Number(e.target.value))}
