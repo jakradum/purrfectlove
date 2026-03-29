@@ -16,7 +16,7 @@ export const metadata = { title: 'Mein Profil | Katzensitting Netzwerk' };
 
 export default async function DeProfilePage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('care-auth')?.value;
+  const token = cookieStore.get('auth_token')?.value;
 
   if (!token) redirect('/de/care/login');
 

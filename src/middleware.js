@@ -20,7 +20,7 @@ export async function middleware(request) {
     !pathname.startsWith('/api/care/verify-otp')
 
   if (isProtectedCarePath) {
-    const token = request.cookies.get('care-auth')?.value;
+    const token = request.cookies.get('auth_token')?.value;
     const loginUrl = pathname.startsWith('/de/')
       ? new URL('/de/care/login', request.url)
       : new URL('/care/login', request.url)

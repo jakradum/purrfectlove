@@ -18,7 +18,7 @@ export const metadata = {
 
 export default async function ProfilePage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('care-auth')?.value;
+  const token = cookieStore.get('auth_token')?.value;
 
   if (!token) redirect('/care/login');
 

@@ -4,47 +4,39 @@ import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import styles from './Care.module.css';
-import contentEN from '@/data/careContent.en.json';
-import contentDE from '@/data/careContent.de.json';
+
+const COUNTRY_CODES = [
+  { label: '🇮🇳 +91', value: '+91' },
+  { label: '🇩🇪 +49', value: '+49' },
+];
 
 export default function LoginForm({ locale = 'en', loginRedirect }) {
-  const t = locale === 'de' ? contentDE.login : contentEN.login;
   const redirect = loginRedirect || (locale === 'de' ? '/de/care' : '/care');
   const router = useRouter();
 
-  const [step, setStep] = useState('email'); // 'email' | 'code'
-  const [email, setEmail] = useState('');
+  const [step, setStep] = useState('phone');
+  const [countryCode, setCountryCode] = useState('+91');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  const fullPhone = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
 
   const handleSendCode = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (!email) {
-      setError(t.errors.emailRequired);
-      return;
-    }
-    if (!emailRegex.test(email)) {
-      setError(t.errors.invalidEmail);
-      return;
-    }
+    if (!phoneNumber) { setError('Please enter your phone number.'); return; }
 
     setLoading(true);
     try {
       const res = await fetch('/api/care/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ phone: fullPhone }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || t.errors.invalidCode);
-        return;
-      }
+      if (!res.ok) { setError(data.error || 'Failed to send code.'); return; }
       setStep('code');
     } catch {
       setError('Network error. Please try again.');
@@ -56,24 +48,17 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   const handleVerify = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (!code || code.length < 6) {
-      setError(t.errors.codeRequired);
-      return;
-    }
+    if (!code || code.length < 6) { setError('Please enter the 6-digit code.'); return; }
 
     setLoading(true);
     try {
       const res = await fetch('/api/care/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email, code }),
+        body: JSON.stringify({ phone: fullPhone, code }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || t.errors.invalidCode);
-        return;
-      }
+      if (!res.ok) { setError(data.error || 'Invalid code.'); return; }
       router.push(redirect);
       router.refresh();
     } catch {
@@ -91,12 +76,10 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
       const res = await fetch('/api/care/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email }),
+        body: JSON.stringify({ phone: fullPhone }),
       });
       const data = await res.json();
-      if (!res.ok) {
-        setError(data.error || 'Failed to resend. Please try again.');
-      }
+      if (!res.ok) setError(data.error || 'Failed to resend. Please try again.');
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -108,52 +91,67 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
     <div className={styles.pageNarrow}>
       <div className={styles.loginCard}>
         <div className={styles.loginHeader}>
-          <Image
-            src="/logo.svg"
-            alt="Purrfect Love"
-            width={140}
-            height={46}
-            className={styles.logo}
-          />
-          <h1 className={styles.loginTitle}>{t.title}</h1>
-          <p className={styles.loginSubtitle}>{t.subtitle}</p>
+          <Image src="/logo.svg" alt="Purrfect Love" width={140} height={46} className={styles.logo} />
+          <h1 className={styles.loginTitle}>
+            {locale === 'de' ? 'Mitgliederbereich' : 'Member Login'}
+          </h1>
+          <p className={styles.loginSubtitle}>
+            {locale === 'de' ? 'Melde dich mit deiner Handynummer an.' : 'Sign in with your phone number.'}
+          </p>
         </div>
 
-        {step === 'email' ? (
+        {step === 'phone' ? (
           <form onSubmit={handleSendCode}>
             <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="email">
-                {t.emailLabel}
+              <label className={styles.label} htmlFor="phone">
+                {locale === 'de' ? 'Handynummer' : 'Phone number'}
               </label>
-              <input
-                id="email"
-                type="email"
-                className={styles.input}
-                placeholder={t.emailPlaceholder}
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-                disabled={loading}
-                autoComplete="email"
-                autoFocus
-              />
+              <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <select
+                  value={countryCode}
+                  onChange={(e) => setCountryCode(e.target.value)}
+                  className={styles.input}
+                  style={{ width: '110px', flexShrink: 0 }}
+                  disabled={loading}
+                >
+                  {COUNTRY_CODES.map((c) => (
+                    <option key={c.value} value={c.value}>{c.label}</option>
+                  ))}
+                </select>
+                <input
+                  id="phone"
+                  type="tel"
+                  className={styles.input}
+                  placeholder="9876543210"
+                  value={phoneNumber}
+                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                  disabled={loading}
+                  autoComplete="tel-national"
+                  autoFocus
+                  inputMode="numeric"
+                />
+              </div>
             </div>
             {error && <div className={styles.error}>{error}</div>}
             <button type="submit" className={styles.btn} disabled={loading}>
-              {loading ? t.sending : t.sendCode}
+              {loading ? (locale === 'de' ? 'Wird gesendet…' : 'Sending…') : (locale === 'de' ? 'Code senden' : 'Send code')}
             </button>
           </form>
         ) : (
           <form onSubmit={handleVerify}>
             <div className={styles.codeSentBox}>
-              <p className={styles.codeSentTitle}>{t.codeSent}</p>
+              <p className={styles.codeSentTitle}>
+                {locale === 'de' ? 'Code gesendet' : 'Code sent'}
+              </p>
               <p className={styles.codeSentSubtitle}>
-                {t.codeSentSubtitle}{' '}
-                <span className={styles.emailHighlight}>{email}</span>
+                {locale === 'de' ? 'Wir haben einen Code an' : 'We sent a code to'}{' '}
+                <span className={styles.emailHighlight}>{fullPhone}</span>{' '}
+                {locale === 'de' ? 'per SMS gesendet.' : 'via SMS.'}
               </p>
             </div>
             <div className={styles.formGroup}>
               <label className={styles.label} htmlFor="code">
-                {t.codeLabel}
+                {locale === 'de' ? '6-stelliger Code' : '6-digit code'}
               </label>
               <input
                 id="code"
@@ -162,7 +160,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                 pattern="[0-9]*"
                 maxLength={6}
                 className={`${styles.input} ${styles.inputLarge}`}
-                placeholder={t.codePlaceholder}
+                placeholder="123456"
                 value={code}
                 onChange={(e) => setCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
                 disabled={loading}
@@ -172,23 +170,21 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
             </div>
             {error && <div className={styles.error}>{error}</div>}
             <button type="submit" className={styles.btn} disabled={loading}>
-              {loading ? t.verifying : t.verify}
+              {loading ? (locale === 'de' ? 'Wird geprüft…' : 'Verifying…') : (locale === 'de' ? 'Bestätigen' : 'Verify')}
             </button>
             <div className={styles.resendRow}>
-              <button
-                type="button"
-                className={styles.resendBtn}
-                onClick={handleResend}
-                disabled={loading}
-              >
-                {t.resend}
+              <button type="button" className={styles.resendBtn} onClick={handleResend} disabled={loading}>
+                {locale === 'de' ? 'Code erneut senden' : 'Resend code'}
+              </button>
+              <button type="button" className={styles.resendBtn} onClick={() => { setStep('phone'); setError(''); setCode(''); }} disabled={loading}>
+                {locale === 'de' ? 'Nummer ändern' : 'Change number'}
               </button>
             </div>
           </form>
         )}
 
         <p className={styles.notMember}>
-          {t.notMember}{' '}
+          {locale === 'de' ? 'Noch kein Mitglied?' : 'Not a member?'}{' '}
           <a href="mailto:support@purrfectlove.org" className={styles.supportLink}>
             support@purrfectlove.org
           </a>

@@ -25,6 +25,7 @@
     "react-dom": "^19.2.1",
     "resend": "^6.6.0",
     "sanity": "^4.10.2",
-    "styled-components": "^6.1.19"
+    "styled-components": "^6.1.19",
+    "twilio": "^5.13.1"
   }
 }

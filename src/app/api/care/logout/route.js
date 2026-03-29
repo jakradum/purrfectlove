@@ -3,7 +3,7 @@ export async function POST() {
     status: 200,
     headers: {
       'Content-Type': 'application/json',
-      'Set-Cookie': 'care-auth=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0',
+      'Set-Cookie': 'auth_token=; HttpOnly; Path=/; SameSite=Lax; Max-Age=0',
     },
   })
 }

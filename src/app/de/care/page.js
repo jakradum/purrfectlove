@@ -16,7 +16,7 @@ export const metadata = { title: 'Katzensitting Netzwerk | Purrfect Love' };
 
 export default async function DeCarePage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('care-auth')?.value;
+  const token = cookieStore.get('auth_token')?.value;
 
   if (!token) redirect('/de/care/login');
 

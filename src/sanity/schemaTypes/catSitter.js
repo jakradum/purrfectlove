@@ -5,7 +5,7 @@ export default {
   fields: [
     // Team-set fields
     { name: 'email', title: 'Email', type: 'string', validation: Rule => Rule.required().email() },
-    { name: 'phone', title: 'Phone', type: 'string' },
+    { name: 'phone', title: 'Phone (used for login — format: +91XXXXXXXXXX)', type: 'string', validation: Rule => Rule.required() },
     { name: 'memberVerified', title: 'Member Verified', type: 'boolean', initialValue: false },
     { name: 'addedBy', title: 'Added By', type: 'reference', to: [{ type: 'teamMember' }], options: { disableNew: true } },
     { name: 'locale', title: 'Locale', type: 'string', options: { list: [{ title: 'English (India)', value: 'en' }, { title: 'German (Germany)', value: 'de' }] }, initialValue: 'en' },

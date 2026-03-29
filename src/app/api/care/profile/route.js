@@ -53,7 +53,7 @@ const serverClient = createClient({
 async function getAuth(request) {
   // Try cookie from request headers first
   const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/care-auth=([^;]+)/)
+  const match = cookieHeader.match(/auth_token=([^;]+)/)
   const token = match ? match[1] : null
   if (!token) return null
   return verifyToken(token)
