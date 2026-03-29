@@ -1,39 +1,70 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import styles from './Care.module.css';
 
 const COUNTRY_CODES = [
-  { label: '🇮🇳 +91', value: '+91' },
-  { label: '🇩🇪 +49', value: '+49' },
+  { label: '🇮🇳 +91', value: '+91', country: 'IN' },
+  { label: '🇩🇪 +49', value: '+49', country: 'DE' },
+  { label: '🇬🇧 +44', value: '+44', country: 'GB' },
+  { label: '🇺🇸 +1',  value: '+1',  country: 'US' },
 ];
 
 export default function LoginForm({ locale = 'en', loginRedirect }) {
   const redirect = loginRedirect || (locale === 'de' ? '/de/care' : '/');
   const router = useRouter();
 
-  const [step, setStep] = useState('phone');
+  const [step, setStep] = useState('identifier');
+  const [mode, setMode] = useState(null); // null = detecting, 'phone' | 'email'
   const [countryCode, setCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
+  const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
+  // Auto-detect location on mount
+  useEffect(() => {
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .then(data => {
+        if (data.country_code === 'IN') {
+          setMode('phone');
+          setCountryCode('+91');
+        } else {
+          setMode('email');
+          const match = COUNTRY_CODES.find(c => c.country === data.country_code);
+          if (match) setCountryCode(match.value);
+        }
+      })
+      .catch(() => setMode('phone')); // fallback to phone if geo fails
+  }, []);
+
   const fullPhone = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
+  const identifier = mode === 'phone' ? fullPhone : email.trim().toLowerCase();
+  const sentTo = mode === 'phone' ? fullPhone : email.trim();
 
   const handleSendCode = async (e) => {
     e.preventDefault();
     setError('');
-    if (!phoneNumber) { setError('Please enter your phone number.'); return; }
+
+    if (mode === 'phone' && !phoneNumber) {
+      setError(locale === 'de' ? 'Bitte Handynummer eingeben.' : 'Please enter your phone number.');
+      return;
+    }
+    if (mode === 'email' && !email.trim()) {
+      setError(locale === 'de' ? 'Bitte E-Mail-Adresse eingeben.' : 'Please enter your email address.');
+      return;
+    }
 
     setLoading(true);
     try {
       const res = await fetch('/api/care/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: fullPhone }),
+        body: JSON.stringify({ identifier, type: mode }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to send code.'); return; }
@@ -48,14 +79,17 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   const handleVerify = async (e) => {
     e.preventDefault();
     setError('');
-    if (!code || code.length < 6) { setError('Please enter the 6-digit code.'); return; }
+    if (!code || code.length < 6) {
+      setError(locale === 'de' ? 'Bitte den 6-stelligen Code eingeben.' : 'Please enter the 6-digit code.');
+      return;
+    }
 
     setLoading(true);
     try {
       const res = await fetch('/api/care/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: fullPhone, code }),
+        body: JSON.stringify({ identifier, type: mode, code }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Invalid code.'); return; }
@@ -76,7 +110,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
       const res = await fetch('/api/care/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ phone: fullPhone }),
+        body: JSON.stringify({ identifier, type: mode }),
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || 'Failed to resend. Please try again.');
@@ -87,6 +121,25 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
     }
   };
 
+  const toggleMode = () => {
+    setMode(m => m === 'phone' ? 'email' : 'phone');
+    setError('');
+    setPhoneNumber('');
+    setEmail('');
+  };
+
+  const subtitle = mode === 'phone'
+    ? (locale === 'de' ? 'Melde dich mit deiner Handynummer an.' : 'Sign in with your phone number.')
+    : (locale === 'de' ? 'Melde dich mit deiner E-Mail-Adresse an.' : 'Sign in with your email address.');
+
+  const toggleLabel = mode === 'phone'
+    ? (locale === 'de' ? 'E-Mail stattdessen verwenden' : 'Use email instead')
+    : (locale === 'de' ? 'Telefon stattdessen verwenden' : 'Use phone instead');
+
+  const sentVia = mode === 'phone'
+    ? (locale === 'de' ? 'per SMS' : 'via SMS')
+    : (locale === 'de' ? 'per E-Mail' : 'via email');
+
   return (
     <div className={styles.pageNarrow}>
       <div className={styles.loginCard}>
@@ -95,47 +148,80 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
           <h1 className={styles.loginTitle}>
             {locale === 'de' ? 'Mitgliederbereich' : 'Member Login'}
           </h1>
-          <p className={styles.loginSubtitle}>
-            {locale === 'de' ? 'Melde dich mit deiner Handynummer an.' : 'Sign in with your phone number.'}
-          </p>
+          {mode !== null && (
+            <p className={styles.loginSubtitle}>{subtitle}</p>
+          )}
         </div>
 
-        {step === 'phone' ? (
+        {mode === null ? (
+          <div style={{ textAlign: 'center', padding: '2rem 0', color: '#888' }}>
+            {locale === 'de' ? 'Wird geladen…' : 'Loading…'}
+          </div>
+        ) : step === 'identifier' ? (
           <form onSubmit={handleSendCode}>
-            <div className={styles.formGroup}>
-              <label className={styles.label} htmlFor="phone">
-                {locale === 'de' ? 'Handynummer' : 'Phone number'}
-              </label>
-              <div style={{ display: 'flex', gap: '0.5rem' }}>
-                <select
-                  value={countryCode}
-                  onChange={(e) => setCountryCode(e.target.value)}
-                  className={styles.input}
-                  style={{ width: '110px', flexShrink: 0 }}
-                  disabled={loading}
-                >
-                  {COUNTRY_CODES.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
+            {mode === 'phone' ? (
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="phone">
+                  {locale === 'de' ? 'Handynummer' : 'Phone number'}
+                </label>
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <select
+                    value={countryCode}
+                    onChange={(e) => setCountryCode(e.target.value)}
+                    className={styles.input}
+                    style={{ width: '110px', flexShrink: 0 }}
+                    disabled={loading}
+                  >
+                    {COUNTRY_CODES.map((c) => (
+                      <option key={c.value} value={c.value}>{c.label}</option>
+                    ))}
+                  </select>
+                  <input
+                    id="phone"
+                    type="tel"
+                    className={styles.input}
+                    placeholder="9876543210"
+                    value={phoneNumber}
+                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                    disabled={loading}
+                    autoComplete="tel-national"
+                    autoFocus
+                    inputMode="numeric"
+                  />
+                </div>
+              </div>
+            ) : (
+              <div className={styles.formGroup}>
+                <label className={styles.label} htmlFor="email">
+                  {locale === 'de' ? 'E-Mail-Adresse' : 'Email address'}
+                </label>
                 <input
-                  id="phone"
-                  type="tel"
+                  id="email"
+                  type="email"
                   className={styles.input}
-                  placeholder="9876543210"
-                  value={phoneNumber}
-                  onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
+                  placeholder="you@example.com"
+                  value={email}
+                  onChange={(e) => setEmail(e.target.value)}
                   disabled={loading}
-                  autoComplete="tel-national"
+                  autoComplete="email"
                   autoFocus
-                  inputMode="numeric"
                 />
               </div>
-            </div>
+            )}
+
             {error && <div className={styles.error}>{error}</div>}
+
             <button type="submit" className={styles.btn} disabled={loading}>
-              {loading ? (locale === 'de' ? 'Wird gesendet…' : 'Sending…') : (locale === 'de' ? 'Code senden' : 'Send code')}
+              {loading
+                ? (locale === 'de' ? 'Wird gesendet…' : 'Sending…')
+                : (locale === 'de' ? 'Code senden' : 'Send code')}
             </button>
+
+            <div className={styles.resendRow}>
+              <button type="button" className={styles.resendBtn} onClick={toggleMode} disabled={loading}>
+                {toggleLabel}
+              </button>
+            </div>
           </form>
         ) : (
           <form onSubmit={handleVerify}>
@@ -145,10 +231,11 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
               </p>
               <p className={styles.codeSentSubtitle}>
                 {locale === 'de' ? 'Wir haben einen Code an' : 'We sent a code to'}{' '}
-                <span className={styles.emailHighlight}>{fullPhone}</span>{' '}
-                {locale === 'de' ? 'per SMS gesendet.' : 'via SMS.'}
+                <span className={styles.emailHighlight}>{sentTo}</span>{' '}
+                {sentVia}{locale === 'de' ? ' gesendet.' : '.'}
               </p>
             </div>
+
             <div className={styles.formGroup}>
               <label className={styles.label} htmlFor="code">
                 {locale === 'de' ? '6-stelliger Code' : '6-digit code'}
@@ -168,16 +255,28 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                 autoFocus
               />
             </div>
+
             {error && <div className={styles.error}>{error}</div>}
+
             <button type="submit" className={styles.btn} disabled={loading}>
-              {loading ? (locale === 'de' ? 'Wird geprüft…' : 'Verifying…') : (locale === 'de' ? 'Bestätigen' : 'Verify')}
+              {loading
+                ? (locale === 'de' ? 'Wird geprüft…' : 'Verifying…')
+                : (locale === 'de' ? 'Bestätigen' : 'Verify')}
             </button>
+
             <div className={styles.resendRow}>
               <button type="button" className={styles.resendBtn} onClick={handleResend} disabled={loading}>
                 {locale === 'de' ? 'Code erneut senden' : 'Resend code'}
               </button>
-              <button type="button" className={styles.resendBtn} onClick={() => { setStep('phone'); setError(''); setCode(''); }} disabled={loading}>
-                {locale === 'de' ? 'Nummer ändern' : 'Change number'}
+              <button
+                type="button"
+                className={styles.resendBtn}
+                onClick={() => { setStep('identifier'); setError(''); setCode(''); }}
+                disabled={loading}
+              >
+                {mode === 'phone'
+                  ? (locale === 'de' ? 'Nummer ändern' : 'Change number')
+                  : (locale === 'de' ? 'E-Mail ändern' : 'Change email')}
               </button>
             </div>
           </form>

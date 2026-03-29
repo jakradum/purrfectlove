@@ -9,22 +9,40 @@ const sanity = createClient({
   useCdn: false,
 })
 
+function phoneVariants(raw) {
+  const norm = raw.replace(/\s+/g, '')
+  const spaced = norm.replace(/^(\+\d{2})(\d)/, '$1 $2')
+  return { norm, spaced }
+}
+
 export async function POST(request) {
   try {
-    const { phone: rawPhone, code } = await request.json()
+    const { identifier: rawIdentifier, type, code } = await request.json()
 
-    if (!rawPhone || !code) {
-      return Response.json({ error: 'Phone and code are required' }, { status: 400 })
+    if (!rawIdentifier || !type || !code || !['phone', 'email'].includes(type)) {
+      return Response.json({ error: 'identifier, type, and code are required' }, { status: 400 })
     }
 
-    // Normalize to match how send-otp stored the OTP (always space-free)
-    const phone = rawPhone.replace(/\s+/g, '')
-    const phoneSpaced = phone.replace(/^(\+\d{2})(\d)/, '$1 $2')
+    let identifier
+    if (type === 'phone') {
+      identifier = rawIdentifier.replace(/\s+/g, '')
+    } else {
+      identifier = rawIdentifier.trim().toLowerCase()
+    }
 
-    const otpDoc = await sanity.fetch(
-      `*[_type == "otpCode" && phone == $phone && code == $code][0]{ _id, expiresAt }`,
-      { phone, code }
-    )
+    // Look up OTP
+    let otpDoc
+    if (type === 'phone') {
+      otpDoc = await sanity.fetch(
+        `*[_type == "otpCode" && phone == $identifier && code == $code][0]{ _id, expiresAt }`,
+        { identifier, code }
+      )
+    } else {
+      otpDoc = await sanity.fetch(
+        `*[_type == "otpCode" && email == $identifier && code == $code][0]{ _id, expiresAt }`,
+        { identifier, code }
+      )
+    }
 
     if (!otpDoc) {
       return Response.json({ error: 'Invalid code' }, { status: 400 })
@@ -37,16 +55,33 @@ export async function POST(request) {
 
     await sanity.delete(otpDoc._id)
 
-    const [catSitter, teamMember] = await Promise.all([
-      sanity.fetch(
-        `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name }`,
-        { phone, phoneSpaced }
-      ),
-      sanity.fetch(
-        `*[_type == "teamMember" && (phone == $phone || phone == $phoneSpaced)][0]{ _id, name }`,
-        { phone, phoneSpaced }
-      ),
-    ])
+    // Find the account
+    let catSitter, teamMember
+
+    if (type === 'phone') {
+      const { norm: phone, spaced: phoneSpaced } = phoneVariants(rawIdentifier)
+      ;[catSitter, teamMember] = await Promise.all([
+        sanity.fetch(
+          `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name }`,
+          { phone, phoneSpaced }
+        ),
+        sanity.fetch(
+          `*[_type == "teamMember" && (phone == $phone || phone == $phoneSpaced)][0]{ _id, name }`,
+          { phone, phoneSpaced }
+        ),
+      ])
+    } else {
+      ;[catSitter, teamMember] = await Promise.all([
+        sanity.fetch(
+          `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name }`,
+          { email: identifier }
+        ),
+        sanity.fetch(
+          `*[_type == "teamMember" && email == $email][0]{ _id, name }`,
+          { email: identifier }
+        ),
+      ])
+    }
 
     const account = catSitter || teamMember
     if (!account) {
@@ -54,7 +89,8 @@ export async function POST(request) {
     }
 
     const token = await signToken({
-      phone,
+      identifier,
+      identifierType: type,
       sitterId: account._id,
       name: account.name || '',
       isTeamMember: !catSitter && !!teamMember,

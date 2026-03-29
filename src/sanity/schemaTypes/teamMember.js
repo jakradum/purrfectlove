@@ -106,6 +106,13 @@ export default defineType({
         name: 'E.164 format',
         invert: false
       }).error('Must be in E.164 format: +[country code][number] (e.g. +919876543210)')
+    }),
+    defineField({
+      name: 'email',
+      title: 'Email (care portal login only)',
+      type: 'string',
+      description: 'Used for email OTP login on care.purrfectlove.org — for team members outside India.',
+      validation: Rule => Rule.email().error('Must be a valid email address')
     })
   ],
   preview: {
