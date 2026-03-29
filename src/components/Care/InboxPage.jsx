@@ -56,7 +56,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
   // New compose target (when URL has ?to= but no thread exists yet)
   const [composeTarget, setComposeTarget] = useState(null) // { _id, name }
 
-  const messagesEndRef = useRef(null)
+  const messagesAreaRef = useRef(null)
   const prevPartnerRef = useRef(null)
   const prevMsgCountRef = useRef(0)
 
@@ -118,7 +118,8 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
     const newMessageFromMe = !partnerChanged && msgCount > prevMsgCountRef.current && lastMsg?.from?._id === currentUserId
 
     if (partnerChanged || newMessageFromMe) {
-      messagesEndRef.current?.scrollIntoView({ behavior: partnerChanged ? 'auto' : 'smooth' })
+      const el = messagesAreaRef.current
+      if (el) el.scrollTop = el.scrollHeight
     }
 
     prevPartnerRef.current = activePartnerId
@@ -299,7 +300,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
               </div>
 
               {/* Messages area */}
-              <div className={styles.messagesArea}>
+              <div className={styles.messagesArea} ref={messagesAreaRef}>
                 {activeThread?.messages.filter(msg => msg.from && msg.to).map(msg => {
                   const isOutgoing = msg.from._id === currentUserId
                   return (
@@ -338,7 +339,6 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
                     {shareNotes[activePartnerId]}
                   </div>
                 )}
-                <div ref={messagesEndRef} />
               </div>
 
               {/* Compose area */}
