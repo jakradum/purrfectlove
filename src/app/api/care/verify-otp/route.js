@@ -11,11 +11,15 @@ const sanity = createClient({
 
 export async function POST(request) {
   try {
-    const { phone, code } = await request.json()
+    const { phone: rawPhone, code } = await request.json()
 
-    if (!phone || !code) {
+    if (!rawPhone || !code) {
       return Response.json({ error: 'Phone and code are required' }, { status: 400 })
     }
+
+    // Normalize to match how send-otp stored the OTP (always space-free)
+    const phone = rawPhone.replace(/\s+/g, '')
+    const phoneSpaced = phone.replace(/^(\+\d{2})(\d)/, '$1 $2')
 
     const otpDoc = await sanity.fetch(
       `*[_type == "otpCode" && phone == $phone && code == $code][0]{ _id, expiresAt }`,
@@ -34,8 +38,8 @@ export async function POST(request) {
     await sanity.delete(otpDoc._id)
 
     const sitter = await sanity.fetch(
-      `*[_type == "catSitter" && phone == $phone && memberVerified == true][0]{ _id, name }`,
-      { phone }
+      `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name }`,
+      { phone, phoneSpaced }
     )
 
     if (!sitter) {

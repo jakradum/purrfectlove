@@ -27,18 +27,28 @@ function checkRateLimit(phone) {
   return true
 }
 
+// Strip all whitespace and produce both normalized and spaced variants
+// so we match "+919945029549" and "+91 9945029549" stored in Sanity
+function phoneVariants(raw) {
+  const norm = raw.replace(/\s+/g, '')
+  const spaced = norm.replace(/^(\+\d{2})(\d)/, '$1 $2')
+  return { norm, spaced }
+}
+
 export async function POST(request) {
   try {
-    const { phone } = await request.json()
+    const { phone: rawPhone } = await request.json()
+
+    const { norm: phone, spaced: phoneSpaced } = phoneVariants(rawPhone || '')
 
     if (!phone || !/^\+\d{10,15}$/.test(phone)) {
       return Response.json({ error: 'Invalid phone number. Use E.164 format (e.g. +91XXXXXXXXXX).' }, { status: 400 })
     }
 
-    // Check member exists
+    // Check member exists — match regardless of whether team stored with or without space
     const sitter = await sanity.fetch(
-      `*[_type == "catSitter" && phone == $phone && memberVerified == true][0]{ _id }`,
-      { phone }
+      `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id }`,
+      { phone, phoneSpaced }
     )
     if (!sitter) {
       return Response.json({ error: 'Phone number not found. Contact support@purrfectlove.org to join.' }, { status: 403 })
