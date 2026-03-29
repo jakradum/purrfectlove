@@ -65,6 +65,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const [radius, setRadius] = useState(25);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
+  const [searchError, setSearchError] = useState('');
   const [resultsStale, setResultsStale] = useState(false);
   const [fetchedSitters, setFetchedSitters] = useState([]);
 
@@ -147,15 +148,22 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const handleSearch = async () => {
     setSearching(true);
     setSearched(true);
+    setSearchError('');
     setResultsStale(false);
     setFetchedSitters([]);
     setVisibleCount(0);
 
     try {
       const res = await fetch(`/api/care/sitters?type=${apiQueryType}`);
-      if (!res.ok) { setFetchedSitters([]); return; }
+      console.log('[Search] status:', res.status, 'type:', apiQueryType, 'userLocation:', userLocation);
+      if (!res.ok) {
+        const err = await res.json().catch(() => ({}));
+        setSearchError(`Error ${res.status}: ${err.error || 'Failed to load results'}`);
+        return;
+      }
 
       let sitters = await res.json();
+      console.log('[Search] raw sitters:', sitters.length);
       if (userLocation?.lat != null && userLocation?.lng != null) {
         sitters = sitters.map((s) => {
           if (s.location?.lat == null || s.location?.lng == null) return s;
@@ -163,11 +171,12 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
         });
       }
       const filtered = sitters.filter((s) => isAvailableForDates(s, startDate, endDate));
+      console.log('[Search] after date filter:', filtered.length, 'radius:', radius);
       setFetchedSitters(filtered);
       animateCards(filtered.length);
     } catch (err) {
       console.error('Search error:', err);
-      setFetchedSitters([]);
+      setSearchError('Network error. Please try again.');
     } finally {
       setSearching(false);
     }
@@ -305,6 +314,8 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 <div className={styles.searchingSpinner}>
                   <span className={styles.spinner} />
                 </div>
+              ) : searchError ? (
+                <div className={styles.noResults} style={{ color: '#ef4444' }}>{searchError}</div>
               ) : results !== null && results.length === 0 ? (
                 <div className={styles.noResults}>{noResultsText}</div>
               ) : results !== null ? (
