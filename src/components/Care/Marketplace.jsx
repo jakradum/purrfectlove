@@ -170,7 +170,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
           </label>
           <span className={styles.toggleLabel}>{t.iNeedSitting}</span>
         </div>
-        <Link href="/care/profile" style={{ marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--hunter-green)' }}>
+        <Link href="/profile" style={{ marginLeft: 'auto', fontSize: '0.85rem', color: 'var(--hunter-green)' }}>
           Edit profile →
         </Link>
       </div>
@@ -178,13 +178,15 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
       {/* If neither set, show prompt */}
       {!canSit && !needsSitting ? (
         <div className={styles.statusPrompt}>
-          <p className={styles.statusPromptTitle}>Set your status to get started</p>
+          <p className={styles.statusPromptTitle}>Enable a status to get started</p>
           <p className={styles.statusPromptText}>
-            Enable &quot;I can sit&quot; to find cats that need a sitter, or &quot;I need sitting&quot; to find sitters for your cats. You can enable both!
+            Toggle &quot;I can sit&quot; above to find cats that need a sitter, or &quot;I need sitting&quot; to find sitters for your cats. You cannot enable both at the same time.
           </p>
-          <Link href="/care/profile" className={styles.profileLink}>
-            Set up my profile
-          </Link>
+          {!userName && (
+            <Link href="/profile" className={styles.profileLink}>
+              Complete your profile first
+            </Link>
+          )}
         </div>
       ) : (
         <>
@@ -229,7 +231,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
             ) : (
               <div className={styles.searchField}>
                 <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
-                  <a href="/care/profile" style={{ color: 'var(--hunter-green)' }}>Add your location</a> to enable distance filtering
+                  <a href="/profile" style={{ color: 'var(--hunter-green)' }}>Add your location</a> to enable distance filtering
                 </span>
               </div>
             )}

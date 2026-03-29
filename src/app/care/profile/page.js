@@ -20,10 +20,10 @@ export default async function ProfilePage() {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
 
-  if (!token) redirect('/care/login');
+  if (!token) redirect('/login');
 
   const payload = await verifyToken(token);
-  if (!payload) redirect('/care/login');
+  if (!payload) redirect('/login');
 
   let profile = null;
   try {
@@ -35,7 +35,7 @@ export default async function ProfilePage() {
     console.error('Failed to fetch profile:', err);
   }
 
-  if (!profile) redirect('/care/login');
+  if (!profile) redirect('/login');
 
   return <ProfileEditor initialData={profile} />;
 }

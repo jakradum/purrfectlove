@@ -11,7 +11,7 @@ const COUNTRY_CODES = [
 ];
 
 export default function LoginForm({ locale = 'en', loginRedirect }) {
-  const redirect = loginRedirect || (locale === 'de' ? '/de/care' : '/care');
+  const redirect = loginRedirect || (locale === 'de' ? '/de/care' : '/');
   const router = useRouter();
 
   const [step, setStep] = useState('phone');

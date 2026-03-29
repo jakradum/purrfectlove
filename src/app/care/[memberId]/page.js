@@ -34,10 +34,10 @@ export default async function MemberProfilePage({ params }) {
   const cookieStore = await cookies();
   const token = cookieStore.get('auth_token')?.value;
 
-  if (!token) redirect('/care/login');
+  if (!token) redirect('/login');
 
   const payload = await verifyToken(token);
-  if (!payload) redirect('/care/login');
+  if (!payload) redirect('/login');
 
   let sitter = null;
   let feedbacks = [];
@@ -65,14 +65,20 @@ export default async function MemberProfilePage({ params }) {
 
   if (!sitter) notFound();
 
+  // Respect hide flags — mask contact info before rendering
+  const sitterForDisplay = {
+    ...sitter,
+    email: sitter.hideEmail ? null : sitter.email,
+    phone: sitter.hideWhatsApp ? null : sitter.phone,
+  };
   const contactHidden = sitter.hideEmail && sitter.hideWhatsApp;
 
   return (
     <>
-      <SitterProfile sitter={sitter} />
+      <SitterProfile sitter={sitterForDisplay} />
       {contactHidden && (
         <div style={{ padding: '0 1.5rem 1rem' }}>
-          <a href={`/care/inbox?to=${sitter._id}`} className="sendMsgBtn" style={{
+          <a href={`/inbox?to=${sitter._id}`} style={{
             display: 'inline-block',
             padding: '0.65rem 1.5rem',
             background: 'var(--hunter-green)',

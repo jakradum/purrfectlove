@@ -12,10 +12,10 @@ export default async function InboxPageRoute() {
   const cookieStore = await cookies()
   const token = cookieStore.get('auth_token')?.value
 
-  if (!token) redirect('/care/login')
+  if (!token) redirect('/login')
 
   const payload = await verifyToken(token)
-  if (!payload) redirect('/care/login')
+  if (!payload) redirect('/login')
 
   return (
     <Suspense>

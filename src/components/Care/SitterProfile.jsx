@@ -33,7 +33,7 @@ export default function SitterProfile({ sitter }) {
 
   return (
     <div className={styles.page}>
-      <Link href="/care" className={styles.backLink}>← Back to network</Link>
+      <Link href="/" className={styles.backLink}>← Back to network</Link>
 
       <div className={styles.profileDetailCard}>
         <h1 className={styles.profileDetailName}>{displayName}</h1>

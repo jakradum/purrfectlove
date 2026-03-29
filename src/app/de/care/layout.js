@@ -1,5 +1,4 @@
-import Navbar from '@/components/navbar';
-import Footer from '@/components/Footer';
+import CareNavbar from '@/components/Care/CareNavbar';
 
 export const metadata = {
   title: 'Katzensitting Netzwerk | Purrfect Love',
@@ -10,9 +9,8 @@ export const metadata = {
 export default function DeCareLayout({ children }) {
   return (
     <>
-      <Navbar locale="de" />
-      <div style={{ minHeight: '100vh' }}>{children}</div>
-      <Footer locale="de" />
+      <CareNavbar locale="de" />
+      <div style={{ minHeight: '100vh', backgroundColor: '#B4D3D9' }}>{children}</div>
     </>
   );
 }

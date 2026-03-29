@@ -209,7 +209,7 @@ export default function ProfileEditor({ initialData }) {
       <div className={styles.profilePage}>
         <div className={styles.profileHeader}>
           <div>
-            <Link href="/care" className={styles.backLink}>← Back to network</Link>
+            <Link href="/" className={styles.backLink}>← Back to network</Link>
             <h1 className={styles.pageTitle}>{form.name || 'My Profile'}</h1>
           </div>
           <button

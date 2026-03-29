@@ -21,12 +21,12 @@ export default async function CarePage() {
   const token = cookieStore.get('auth_token')?.value;
 
   if (!token) {
-    redirect('/care/login');
+    redirect('/login');
   }
 
   const payload = await verifyToken(token);
   if (!payload) {
-    redirect('/care/login');
+    redirect('/login');
   }
 
   // Fetch current user's profile (just the toggles needed for initial state)

@@ -95,7 +95,7 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
         ) : null}
 
         <Link
-          href={`/care/${_id}`}
+          href={`/${_id}`}
           className={`${styles.cardBtn} ${styles.cardBtnOutline}`}
         >
           {t.viewProfile}
