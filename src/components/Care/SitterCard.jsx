@@ -1,6 +1,7 @@
 'use client';
 
 import Link from 'next/link';
+import Image from 'next/image';
 import styles from './Care.module.css';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
@@ -22,7 +23,7 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
 
   const {
     _id, name, location, bio, contactPreference, email, phone,
-    hideEmail, hideWhatsApp,
+    hideEmail, hideWhatsApp, siteAdmin, photoUrl,
     maxCats, feedingTypes, behavioralTraits, cats, _distance,
   } = sitter;
 
@@ -41,9 +42,27 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
   return (
     <div className={styles.card}>
       <div className={styles.cardHeader}>
-        <div>
-          <h3 className={styles.cardName}>{displayName}</h3>
-          {location?.name && <p className={styles.cardNeighborhood}>{location.name}</p>}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          {photoUrl && (
+            <Image
+              src={photoUrl}
+              alt={displayName}
+              width={44}
+              height={44}
+              style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
+            />
+          )}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <h3 className={styles.cardName} style={{ margin: 0 }}>{displayName}</h3>
+              {siteAdmin && (
+                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--hunter-green)', background: 'rgba(44,95,79,0.1)', borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
+                  Site Admin
+                </span>
+              )}
+            </div>
+            {location?.name && <p className={styles.cardNeighborhood}>{location.name}</p>}
+          </div>
         </div>
         {_distance !== undefined && (
           <span className={styles.distanceBadge}>
