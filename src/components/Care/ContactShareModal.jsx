@@ -11,6 +11,7 @@ export default function ContactShareModal({ partnerName, partnerId, locale = 'en
   const [shareWhatsApp, setShareWhatsApp] = useState(false)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [success, setSuccess] = useState('')
 
   const handleShare = async () => {
     if (!shareEmail && !shareWhatsApp) {
@@ -34,8 +35,12 @@ export default function ContactShareModal({ partnerName, partnerId, locale = 'en
         return
       }
 
+      const parts = []
+      if (shareEmail) parts.push('email')
+      if (shareWhatsApp) parts.push('WhatsApp')
+      setSuccess(`Contact info shared with ${partnerName}! They can now reach you via ${parts.join(' and ')}.`)
       onShared?.({ shareEmail, shareWhatsApp })
-      onClose?.()
+      setTimeout(() => onClose?.(), 2000)
     } catch {
       setError('Failed to share. Please try again.')
     } finally {
@@ -68,6 +73,9 @@ export default function ContactShareModal({ partnerName, partnerId, locale = 'en
           {t.shareWhatsApp}
         </label>
 
+        {success && (
+          <p style={{ color: '#16a34a', fontSize: '0.85rem', marginTop: '0.75rem', lineHeight: 1.5 }}>{success}</p>
+        )}
         {error && (
           <p style={{ color: '#ef4444', fontSize: '0.8rem', marginTop: '0.75rem' }}>{error}</p>
         )}

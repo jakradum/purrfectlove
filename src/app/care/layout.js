@@ -1,19 +1,22 @@
-import CareNavbar from '@/components/Care/CareNavbar';
+import Navbar from '@/components/navbar';
+import Sidebar from '@/components/Care/Sidebar';
 
 export const metadata = {
   title: 'Cat Sitting Network | Purrfect Love',
   description: 'Find trusted cat sitters or offer to sit for fellow Purrfect Love members.',
-  robots: {
-    index: false,
-    follow: false,
-  },
+  robots: { index: false, follow: false },
 };
 
 export default function CareLayout({ children }) {
   return (
     <>
-      <CareNavbar locale="en" />
-      <div style={{ minHeight: '100vh', backgroundColor: '#B4D3D9' }}>{children}</div>
+      <Navbar locale="en" />
+      <div style={{ display: 'flex', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
+        <Sidebar locale="en" basePath="" />
+        <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px' }}>
+          {children}
+        </main>
+      </div>
     </>
   );
 }

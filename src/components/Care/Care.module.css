@@ -1280,3 +1280,24 @@
   .inboxLayout.showThread .threadPane { display: flex; }
   .inboxLayout:not(.showThread) .threadPane { display: none; }
 }
+
+/* ====== Profile + general mobile responsive ====== */
+@media (max-width: 768px) {
+  .profilePage { padding: 1rem; }
+  .profileHeader { flex-direction: column; align-items: flex-start; gap: 0.75rem; }
+  .section { padding: 1rem; }
+  .fieldRow { grid-template-columns: 1fr; }
+  .catCard { padding: 1rem; }
+  .dateRangeRow { flex-direction: column; gap: 0.5rem; }
+  .saveBar { flex-direction: column; gap: 0.75rem; align-items: stretch; }
+  .saveBtn, .cancelBtn, .editBtn, .addBtn { min-height: 44px; font-size: 0.9rem; }
+  .profileInput, .profileTextarea { min-height: 44px; font-size: 16px; } /* 16px prevents iOS zoom */
+  .checkboxLabel { min-height: 40px; display: flex; align-items: center; }
+  .pageWide { padding: 1rem; }
+  .statusCard { padding: 1rem; }
+  .searchBar { padding: 1rem; gap: 0.75rem; }
+  .btn { min-height: 44px; }
+  .card { padding: 1rem; }
+  .cardActions { flex-direction: column; }
+  .cardBtn { width: 100%; text-align: center; }
+}

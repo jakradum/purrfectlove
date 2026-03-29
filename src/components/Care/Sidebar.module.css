@@ -1,0 +1,143 @@
+/* ── Desktop sidebar ── */
+.sidebar {
+  width: 200px;
+  flex-shrink: 0;
+  background: var(--hunter-green);
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  padding: 1.5rem 0;
+  position: sticky;
+  top: 0;
+  height: 100vh;
+  overflow-y: auto;
+}
+
+.nav {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+  padding: 0 0.75rem;
+}
+
+.link {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.7rem 0.875rem;
+  border-radius: 8px;
+  color: rgba(246, 244, 240, 0.75);
+  text-decoration: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  transition: background 0.15s, color 0.15s;
+}
+
+.link:hover {
+  background: rgba(255, 255, 255, 0.1);
+  color: #fff;
+}
+
+.linkActive {
+  background: rgba(255, 255, 255, 0.15);
+  color: #fff;
+}
+
+.iconWrap {
+  position: relative;
+  display: flex;
+  align-items: center;
+  flex-shrink: 0;
+}
+
+.badge {
+  position: absolute;
+  top: -6px;
+  right: -8px;
+  background: #ef4444;
+  color: #fff;
+  border-radius: 10px;
+  font-size: 0.6rem;
+  font-weight: 700;
+  padding: 1px 5px;
+  line-height: 1.4;
+  min-width: 16px;
+  text-align: center;
+}
+
+.label {
+  white-space: nowrap;
+  overflow: hidden;
+}
+
+.logoutBtn {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0.75rem;
+  padding: 0.7rem 0.875rem;
+  border-radius: 8px;
+  color: rgba(246, 244, 240, 0.6);
+  background: none;
+  border: none;
+  font-size: 0.9rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  width: calc(100% - 1.5rem);
+  text-align: left;
+}
+
+.logoutBtn:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: rgba(246, 244, 240, 0.9);
+}
+
+/* ── Mobile bottom nav ── */
+.bottomNav {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .sidebar {
+    display: none;
+  }
+
+  .bottomNav {
+    display: flex;
+    position: fixed;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: var(--hunter-green);
+    border-top: 1px solid rgba(255, 255, 255, 0.1);
+    z-index: 100;
+    padding: 0.25rem 0 env(safe-area-inset-bottom, 0.25rem);
+  }
+
+  .bottomLink {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 0.2rem;
+    padding: 0.5rem 0.25rem;
+    color: rgba(246, 244, 240, 0.65);
+    text-decoration: none;
+    font-size: 0.65rem;
+    font-weight: 500;
+    background: none;
+    border: none;
+    cursor: pointer;
+    transition: color 0.15s;
+  }
+
+  .bottomLink:hover,
+  .bottomLinkActive {
+    color: #fff;
+  }
+
+  .bottomLabel {
+    font-size: 0.65rem;
+  }
+}

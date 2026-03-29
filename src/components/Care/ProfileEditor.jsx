@@ -8,10 +8,10 @@ import styles from './Care.module.css';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 
-const PERSONALITY_OPTIONS = ['shy', 'energetic', 'senior', 'special needs'];
+const PERSONALITY_OPTIONS = ['shy', 'energetic', 'special needs']; // 'senior' is auto-calculated from age
 const DIET_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
 const FEEDING_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
-const BEHAVIORAL_OPTIONS = ['shy', 'energetic', 'senior', 'special needs'];
+const BEHAVIORAL_OPTIONS = ['shy', 'energetic', 'senior', 'special needs']; // sitter traits keep senior
 
 const TAG_LABELS = {
   shy: 'Shy', energetic: 'Energetic', senior: 'Senior', 'special needs': 'Special Needs',
@@ -107,6 +107,7 @@ export default function ProfileEditor({ initialData }) {
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [privacySaving, setPrivacySaving] = useState(false);
 
   const olc = new OpenLocationCode();
 
@@ -193,9 +194,42 @@ export default function ProfileEditor({ initialData }) {
     setIsEditing(false);
   };
 
+  // Auto-save just the privacy toggles without entering edit mode
+  const handlePrivacyToggle = async (field, value) => {
+    const newForm = { ...form, [field]: value };
+    setForm(newForm);
+    setPrivacySaving(true);
+    try {
+      await fetch('/api/care/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ [field]: value }),
+      });
+      savedForm.current = { ...savedForm.current, [field]: value };
+    } catch { /* silent — toggle will revert on next save */ }
+    setPrivacySaving(false);
+  };
+
   // Cats helpers
   const addCat = () => update('cats', [...form.cats, { name: '', age: '', personality: [], diet: [] }]);
-  const updateCat = (idx, field, value) => update('cats', form.cats.map((c, i) => i === idx ? { ...c, [field]: value } : c));
+  const updateCat = (idx, field, value) => {
+    const updated = form.cats.map((c, i) => {
+      if (i !== idx) return c;
+      const next = { ...c, [field]: value };
+      // Auto-apply senior tag based on age
+      if (field === 'age') {
+        const age = Number(value);
+        const personality = next.personality || [];
+        if (age >= 10 && !personality.includes('senior')) {
+          next.personality = [...personality, 'senior'];
+        } else if (age < 10 && personality.includes('senior')) {
+          next.personality = personality.filter((p) => p !== 'senior');
+        }
+      }
+      return next;
+    });
+    update('cats', updated);
+  };
   const removeCat = (idx) => update('cats', form.cats.filter((_, i) => i !== idx));
 
   // Date range helpers
@@ -269,11 +303,30 @@ export default function ProfileEditor({ initialData }) {
               </span>
             </div>
           )}
-          {/* Contact privacy summary */}
-          <div style={{ marginTop: '0.75rem', fontSize: '0.8rem', color: 'var(--text-light)' }}>
-            {form.hideEmail && <span style={{ display: 'block' }}>Email hidden from profile</span>}
-            {form.hideWhatsApp && <span style={{ display: 'block' }}>WhatsApp hidden from profile</span>}
-            {!form.hideEmail && !form.hideWhatsApp && <span>Contact info visible to members</span>}
+          {/* Contact privacy — always-visible toggles with auto-save */}
+          <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(44,95,79,0.08)', paddingTop: '0.75rem' }}>
+            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
+              Contact Visibility {privacySaving && <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>Saving…</span>}
+            </p>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-dark)', cursor: 'pointer', marginBottom: '0.4rem' }}>
+              <input
+                type="checkbox"
+                checked={!form.hideEmail}
+                onChange={(e) => handlePrivacyToggle('hideEmail', !e.target.checked)}
+              />
+              Show email on profile
+            </label>
+            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-dark)', cursor: 'pointer', marginBottom: '0.4rem' }}>
+              <input
+                type="checkbox"
+                checked={!form.hideWhatsApp}
+                onChange={(e) => handlePrivacyToggle('hideWhatsApp', !e.target.checked)}
+              />
+              Show WhatsApp on profile
+            </label>
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.25rem', lineHeight: 1.5 }}>
+              Your contact info is visible by default. If both are hidden, members message you via the inbox.
+            </p>
           </div>
         </div>
 
@@ -294,9 +347,10 @@ export default function ProfileEditor({ initialData }) {
               <div key={i} className={styles.readCatRow}>
                 <strong>{cat.name || `Cat ${i + 1}`}</strong>
                 {cat.age ? ` — ${cat.age} yrs` : ''}
-                {cat.personality?.length > 0 && (
+                {Number(cat.age) >= 10 && <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--text-light)' }}>🐱 Senior</span>}
+                {cat.personality?.filter((p) => p !== 'senior').length > 0 && (
                   <div className={styles.tags} style={{ marginTop: '0.3rem' }}>
-                    {cat.personality.map((p) => <span key={p} className={`${styles.tag} ${styles.tagGreen}`}>{tagMap[p] || p}</span>)}
+                    {cat.personality.filter((p) => p !== 'senior').map((p) => <span key={p} className={`${styles.tag} ${styles.tagGreen}`}>{tagMap[p] || p}</span>)}
                   </div>
                 )}
               </div>
@@ -373,8 +427,9 @@ export default function ProfileEditor({ initialData }) {
             <p className={styles.hint}>Coordinates will be resolved when you save.</p>
           )}
         </div>
-        <div className={styles.infoBlurb}>
-          <p><strong>What is a Plus Code?</strong> It&apos;s a short address Google Maps uses for any location. To get yours:</p>
+        <details className={styles.infoBlurb}>
+          <summary style={{ cursor: 'pointer', fontWeight: 600, fontSize: '0.875rem' }}>What is a Plus Code?</summary>
+          <p style={{ marginTop: '0.5rem' }}>It&apos;s a short address Google Maps uses for any location. To get yours:</p>
           <ol style={{ margin: '0.5rem 0 0 1.2rem', padding: 0, lineHeight: 1.8 }}>
             <li>Open <strong>Google Maps</strong> on your phone</li>
             <li>Long-press on your building/area to drop a pin</li>
@@ -382,7 +437,7 @@ export default function ProfileEditor({ initialData }) {
             <li>Tap the Plus Code → tap <strong>Copy</strong>, then paste it here with the city name</li>
           </ol>
           <p style={{ marginTop: '0.5rem' }}>A full Plus Code (like <em>7J4VVHQ2+FH</em>) auto-fills coordinates instantly. A short code with city (like <em>VHQ2+FH Bengaluru</em>) is resolved when you save.</p>
-        </div>
+        </details>
       </div>
 
       {/* Account Info (read-only) */}
@@ -412,6 +467,7 @@ export default function ProfileEditor({ initialData }) {
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.householdSize}</label>
             <input type="number" min={1} max={20} className={styles.profileInput} value={form.householdSize} onChange={(e) => update('householdSize', e.target.value)} placeholder="e.g. 2" />
+            <p className={styles.hint}>Number of people living in your home</p>
           </div>
         </div>
       </div>
@@ -433,6 +489,9 @@ export default function ProfileEditor({ initialData }) {
               <div className={styles.formGroup}>
                 <label className={styles.profileLabel}>{t.fields.catAge}</label>
                 <input type="number" min={0} max={30} className={styles.profileInput} value={cat.age || ''} onChange={(e) => updateCat(idx, 'age', e.target.value)} placeholder="e.g. 3" />
+                {Number(cat.age) >= 10 && (
+                  <p className={styles.hint}>🐱 Senior cat (10+ yrs) — tagged automatically</p>
+                )}
               </div>
             </div>
             <div className={styles.formGroup}>

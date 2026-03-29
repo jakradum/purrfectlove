@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import styles from './Care.module.css'
@@ -47,6 +47,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
 
   // Modals
   const [showShareModal, setShowShareModal] = useState(false)
+  const [shareNotes, setShareNotes] = useState({}) // { partnerId: 'message' }
   const [showBlockConfirm, setShowBlockConfirm] = useState(false)
   const [blockReason, setBlockReason] = useState('Other')
   const [blockLoading, setBlockLoading] = useState(false)
@@ -56,6 +57,8 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
   const [composeTarget, setComposeTarget] = useState(null) // { _id, name }
 
   const messagesEndRef = useRef(null)
+  const prevPartnerRef = useRef(null)
+  const prevMsgCountRef = useRef(0)
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -101,10 +104,22 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
     }
   }, [preselectedTo, loading, threads])
 
-  // Scroll to bottom when thread changes
-  useEffect(() => {
-    messagesEndRef.current?.scrollIntoView({ behavior: 'smooth' })
-  }, [activePartnerId, threads])
+  // Scroll to bottom only when: (1) switching to a new thread, (2) new message sent by current user
+  useLayoutEffect(() => {
+    if (!activePartnerId) return
+    const msgs = activeThread?.messages || []
+    const msgCount = msgs.length
+    const partnerChanged = prevPartnerRef.current !== activePartnerId
+    const lastMsg = msgs[msgCount - 1]
+    const newMessageFromMe = !partnerChanged && msgCount > prevMsgCountRef.current && lastMsg?.from?._id === currentUserId
+
+    if (partnerChanged || newMessageFromMe) {
+      messagesEndRef.current?.scrollIntoView({ behavior: partnerChanged ? 'auto' : 'smooth' })
+    }
+
+    prevPartnerRef.current = activePartnerId
+    prevMsgCountRef.current = msgCount
+  }, [activePartnerId, activeThread?.messages?.length, currentUserId])
 
   const activeThread = threads.find(t => t.partnerId === activePartnerId)
   const activePartnerName = activeThread?.partnerName || composeTarget?.name || ''
@@ -317,6 +332,11 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
                   </p>
                 )}
 
+                {shareNotes[activePartnerId] && (
+                  <div style={{ textAlign: 'center', fontSize: '0.75rem', color: 'var(--text-light)', fontStyle: 'italic', padding: '0.25rem 0' }}>
+                    {shareNotes[activePartnerId]}
+                  </div>
+                )}
                 <div ref={messagesEndRef} />
               </div>
 
@@ -374,7 +394,12 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
           partnerId={activePartnerId}
           locale={locale}
           onClose={() => setShowShareModal(false)}
-          onShared={() => setShowShareModal(false)}
+          onShared={({ shareEmail, shareWhatsApp }) => {
+            const parts = [shareEmail && 'email', shareWhatsApp && 'WhatsApp'].filter(Boolean).join(' and ')
+            const note = `You shared your ${parts} with ${activePartnerName}`
+            setShareNotes((prev) => ({ ...prev, [activePartnerId]: note }))
+            setShowShareModal(false)
+          }}
         />
       )}
 
