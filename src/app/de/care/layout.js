@@ -15,11 +15,11 @@ export default function DeCareLayout({ children }) {
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
         <div style={{ display: 'flex', flex: 1 }}>
           <Sidebar locale="de" basePath="/de/care" />
-          <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px' }}>
-            {children}
+          <main style={{ flex: 1, minWidth: 0 }}>
+            <div style={{ paddingBottom: '80px' }}>{children}</div>
+            <Footer locale="de" siteUrl="https://purrfectlove.org" />
           </main>
         </div>
-        <Footer locale="de" siteUrl="https://purrfectlove.org" />
       </div>
     </>
   );
