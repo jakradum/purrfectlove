@@ -2,7 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@sanity/client';
 import { verifyToken } from '@/lib/careAuth';
-import { isProfileComplete, COMPLETENESS_FIELDS } from '@/lib/profileComplete';
+import { isProfileComplete } from '@/lib/profileComplete';
 import Marketplace from '@/components/Care/Marketplace';
 import IncompleteProfileGate from '@/components/Care/IncompleteProfileGate';
 
@@ -36,7 +36,7 @@ export default async function CarePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location { lat, lng, name }, ${COMPLETENESS_FIELDS} }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, canSit, needsSitting, location { lat, lng, name } }`,
       { id: payload.sitterId }
     );
   } catch (err) {

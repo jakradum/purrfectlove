@@ -61,14 +61,13 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
                 </span>
               )}
             </div>
-            {location?.name && <p className={styles.cardNeighborhood}>{location.name}</p>}
+            {_distance !== undefined ? (
+              <p className={styles.cardNeighborhood}>{_distance.toFixed(1)} {t.distance}</p>
+            ) : location?.name ? (
+              <p className={styles.cardNeighborhood}>{location.name}</p>
+            ) : null}
           </div>
         </div>
-        {_distance !== undefined && (
-          <span className={styles.distanceBadge}>
-            {_distance.toFixed(1)} {t.distance}
-          </span>
-        )}
       </div>
 
       {bio && <p className={styles.cardBio}>{bio}</p>}
