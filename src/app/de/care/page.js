@@ -28,7 +28,7 @@ export default async function DeCarePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location { lat, lng, name } }`,
       { id: payload.sitterId }
     );
   } catch (err) {

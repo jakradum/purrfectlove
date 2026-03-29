@@ -36,7 +36,7 @@ export default async function CarePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location, ${COMPLETENESS_FIELDS} }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location { lat, lng, name }, ${COMPLETENESS_FIELDS} }`,
       { id: payload.sitterId }
     );
   } catch (err) {
