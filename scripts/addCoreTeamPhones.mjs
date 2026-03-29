@@ -16,13 +16,14 @@ const client = createClient({
 
 // Note: teamMember.name is a plain string field (not localized)
 const coreTeamPhones = [
-  { name: 'Lucia',    phone: '+4915253432348' },
-  { name: 'Anushka',  phone: '+918971264636'  },
-  { name: 'Besly',    phone: '+447360057361'  },
-  { name: 'Devraj',   phone: '+919632351325'  },
-  { name: 'Devyani',  phone: '+917259046945'  },
-  { name: 'Alma',     phone: '+919916122979'  },
-  { name: 'Lavanya',  phone: '+917045357021'  },
+  { name: 'Lucia Flamini',         phone: '+4915253432348' },
+  { name: 'Anushka Bhattacharya',  phone: '+918971264636'  },
+  { name: 'Besly Anu Varghese',    phone: '+447360057361'  },
+  { name: 'Alma Francis',          phone: '+919916122979'  },
+  { name: 'Lavanya Jayashankar',   phone: '+917045357021'  },
+  // Devraj and Devyani not yet in Sanity — add their teamMember records first
+  // { name: 'Devraj ???',   phone: '+919632351325' },
+  // { name: 'Devyani ???',  phone: '+917259046945' },
 ];
 
 async function addPhoneNumbers() {
