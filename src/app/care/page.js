@@ -2,7 +2,9 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@sanity/client';
 import { verifyToken } from '@/lib/careAuth';
+import { isProfileComplete, COMPLETENESS_FIELDS } from '@/lib/profileComplete';
 import Marketplace from '@/components/Care/Marketplace';
+import IncompleteProfileGate from '@/components/Care/IncompleteProfileGate';
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -29,15 +31,18 @@ export default async function CarePage() {
     redirect('/login');
   }
 
-  // Fetch current user's profile (just the toggles needed for initial state)
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location, ${COMPLETENESS_FIELDS} }`,
       { id: payload.sitterId }
     );
   } catch (err) {
     console.error('Failed to fetch profile for marketplace:', err);
+  }
+
+  if (!isProfileComplete(profile)) {
+    return <IncompleteProfileGate />;
   }
 
   return (
