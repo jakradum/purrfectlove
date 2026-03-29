@@ -5,7 +5,7 @@ export default {
   fields: [
     // Team-set fields
     { name: 'email', title: 'Email', type: 'string', readOnly: true, description: 'Set by member via profile — do not edit manually', validation: Rule => Rule.email() },
-    { name: 'phone', title: 'Phone (used for login — format: +91XXXXXXXXXX)', type: 'string', readOnly: ({ value }) => !!value, description: 'Enter on creation. Cannot be changed once saved.' },
+    { name: 'phone', title: 'Phone (used for login — format: +91XXXXXXXXXX)', type: 'string', description: 'Format: +91XXXXXXXXXX or +49XXXXXXXXXX' },
     { name: 'memberVerified', title: 'Member Verified', type: 'boolean', initialValue: false },
     { name: 'addedBy', title: 'Added By', type: 'reference', to: [{ type: 'teamMember' }], options: { disableNew: true } },
     { name: 'hideEmail', title: 'Hide Email from Profile', type: 'boolean', initialValue: false, readOnly: true, description: 'Managed by member via portal privacy settings' },
