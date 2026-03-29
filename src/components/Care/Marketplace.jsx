@@ -150,7 +150,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
       if (userLocation?.lat != null && userLocation?.lng != null) {
         sitters = sitters.map((s) => {
           if (s.location?.lat == null || s.location?.lng == null) return s;
-          return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) };
+          return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) * 1.1 };
         });
       }
       const filtered = sitters.filter((s) => isAvailableForDates(s, startDate, endDate));
