@@ -12,6 +12,8 @@ const serverClient = createClient({
   useCdn: false,
 });
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = { title: 'Katzensitting Netzwerk | Purrfect Love' };
 
 export default async function DeCarePage() {

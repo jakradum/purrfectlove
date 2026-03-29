@@ -506,6 +506,24 @@
   cursor: pointer;
 }
 
+.searchingSpinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 4rem 1rem;
+}
+
+.searchingSpinner .spinner {
+  width: 28px;
+  height: 28px;
+  border: 3px solid rgba(44, 95, 79, 0.15);
+  border-top-color: var(--hunter-green);
+}
+
+.cardPopIn {
+  will-change: opacity, transform;
+}
+
 .sitterGrid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));

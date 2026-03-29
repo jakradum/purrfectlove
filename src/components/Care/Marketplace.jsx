@@ -1,11 +1,13 @@
 'use client';
 
-import { useState, useMemo } from 'react';
+import { useState, useMemo, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import styles from './Care.module.css';
 import SitterCard from './SitterCard';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
+
+const STORAGE_KEY = 'care_marketplace_state';
 
 // Haversine distance in km
 function haversine(lat1, lon1, lat2, lon2) {
@@ -28,7 +30,6 @@ function isAvailableForDates(sitter, startDate, endDate) {
   const end = endDate ? new Date(endDate) : null;
 
   if (sitter.alwaysAvailable) {
-    // Check no unavailable dates fall in range
     if (!start || !end) return true;
     const unavail = sitter.unavailableDates || [];
     for (const d of unavail) {
@@ -38,7 +39,6 @@ function isAvailableForDates(sitter, startDate, endDate) {
     return true;
   }
 
-  // Check date range overlaps with available ranges
   const ranges = sitter.availableDates || [];
   if (ranges.length === 0) return false;
 
@@ -46,14 +46,12 @@ function isAvailableForDates(sitter, startDate, endDate) {
     const rangeStart = range.start ? new Date(range.start) : null;
     const rangeEnd = range.end ? new Date(range.end) : null;
     if (!rangeStart || !rangeEnd) continue;
-
     const overlapStart = !start || rangeStart <= end;
     const overlapEnd = !end || rangeEnd >= start;
     if (overlapStart && overlapEnd) return true;
   }
   return false;
 }
-
 
 export default function Marketplace({ initialCanSit, initialNeedsSitting, userName, userLocation, locale: localeProp }) {
   const locale = localeProp || 'en';
@@ -62,18 +60,60 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const [canSit, setCanSit] = useState(initialCanSit);
   const [needsSitting, setNeedsSitting] = useState(initialNeedsSitting);
 
-  // Search state
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [radius, setRadius] = useState(10);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [resultsStale, setResultsStale] = useState(false);
-  // Store date-filtered sitters with distances; distance threshold applied live via radius
   const [fetchedSitters, setFetchedSitters] = useState([]);
 
+  // Track which card indices have been revealed for the pop-in animation
+  const [visibleCount, setVisibleCount] = useState(0);
+  const animFrameRef = useRef(null);
+
+  // Restore state from sessionStorage on mount
+  useEffect(() => {
+    try {
+      const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
+      if (saved) {
+        if (saved.startDate) setStartDate(saved.startDate);
+        if (saved.endDate) setEndDate(saved.endDate);
+        if (saved.radius) setRadius(saved.radius);
+        if (saved.fetchedSitters?.length) {
+          setFetchedSitters(saved.fetchedSitters);
+          setSearched(true);
+          setVisibleCount(saved.fetchedSitters.length);
+        }
+      }
+    } catch { /* sessionStorage unavailable */ }
+  }, []);
+
+  // Persist state to sessionStorage whenever search results or filters change
+  useEffect(() => {
+    if (!searched) return;
+    try {
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({
+        startDate, endDate, radius, fetchedSitters,
+      }));
+    } catch { /* ignore */ }
+  }, [startDate, endDate, radius, fetchedSitters, searched]);
+
+  // Pop-in animation: reveal cards one by one when results arrive
+  function animateCards(count) {
+    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
+    setVisibleCount(0);
+    let i = 0;
+    const step = () => {
+      i++;
+      setVisibleCount(i);
+      if (i < count) animFrameRef.current = requestAnimationFrame(step);
+    };
+    // slight initial delay so the grid has mounted
+    animFrameRef.current = requestAnimationFrame(step);
+  }
+
   const handleToggle = async (field, value) => {
-    // Mutually exclusive — turning one on turns the other off, but both can be off
     const newCanSit = field === 'canSit' ? value : (value ? false : canSit);
     const newNeedsSitting = field === 'needsSitting' ? value : (value ? false : needsSitting);
 
@@ -99,20 +139,23 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     setSearching(true);
     setSearched(true);
     setResultsStale(false);
+    setFetchedSitters([]);
+    setVisibleCount(0);
 
     try {
       const res = await fetch(`/api/care/sitters?type=${apiQueryType}`);
       if (!res.ok) { setFetchedSitters([]); return; }
 
       let sitters = await res.json();
-      // Attach distance to every sitter that has coords
       if (userLocation?.lat != null && userLocation?.lng != null) {
         sitters = sitters.map((s) => {
           if (s.location?.lat == null || s.location?.lng == null) return s;
           return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) };
         });
       }
-      setFetchedSitters(sitters.filter((s) => isAvailableForDates(s, startDate, endDate)));
+      const filtered = sitters.filter((s) => isAvailableForDates(s, startDate, endDate));
+      setFetchedSitters(filtered);
+      animateCards(filtered.length);
     } catch (err) {
       console.error('Search error:', err);
       setFetchedSitters([]);
@@ -121,15 +164,13 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     }
   };
 
-  // Apply radius threshold live — no new fetch needed
   const results = useMemo(() => {
     if (!searched) return null;
     return fetchedSitters
       .filter((s) => s._distance == null || s._distance <= radius)
-.sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
+      .sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
   }, [searched, fetchedSitters, radius]);
 
-  // canSit=true → find people who need sitting; needsSitting=true → find available sitters
   const apiQueryType = canSit ? 'needsSitting' : 'canSit';
   const currentType = canSit ? 'offerToSit' : 'findSitters';
 
@@ -175,7 +216,6 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
         </Link>
       </div>
 
-      {/* If neither set, show prompt */}
       {!canSit && !needsSitting ? (
         <div className={styles.statusPrompt}>
           <p className={styles.statusPromptTitle}>Enable a status to get started</p>
@@ -241,7 +281,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
           </div>
 
           {/* Results */}
-          {results !== null && (
+          {searched && (
             <div className={styles.resultsWrapper}>
               {resultsStale && (
                 <div className={styles.resultsStaleOverlay}>
@@ -251,20 +291,30 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                   </button>
                 </div>
               )}
-              {results.length === 0 ? (
+
+              {searching ? (
+                <div className={styles.searchingSpinner}>
+                  <span className={styles.spinner} />
+                </div>
+              ) : results !== null && results.length === 0 ? (
                 <div className={styles.noResults}>{noResultsText}</div>
-              ) : (
+              ) : results !== null ? (
                 <div className={styles.sitterGrid}>
-                  {results.map((sitter) => (
-                    <SitterCard
+                  {results.map((sitter, i) => (
+                    <div
                       key={sitter._id}
-                      sitter={sitter}
-                      type={currentType}
-                      locale={locale}
-                    />
+                      className={styles.cardPopIn}
+                      style={{
+                        opacity: i < visibleCount ? 1 : 0,
+                        transform: i < visibleCount ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
+                        transition: 'opacity 0.25s ease, transform 0.25s ease',
+                      }}
+                    >
+                      <SitterCard sitter={sitter} type={currentType} locale={locale} />
+                    </div>
                   ))}
                 </div>
-              )}
+              ) : null}
             </div>
           )}
         </>

@@ -14,6 +14,8 @@ const serverClient = createClient({
   useCdn: false,
 });
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'Cat Sitting Network | Purrfect Love',
 };
