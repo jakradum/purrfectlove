@@ -128,12 +128,16 @@ export async function POST(request) {
 
     if (recipient?.hideEmail && recipient?.hideWhatsApp && recipient?.email) {
       const senderName = sender?.name || payload.name || 'A member'
-      await resend.emails.send({
-        from: 'Purrfect Love <noreply@purrfectlove.org>',
-        to: recipient.email,
-        subject: `New message from ${senderName} on Catsitters`,
-        html: buildNotificationEmail(senderName, recipient.name || 'there'),
-      })
+      try {
+        await resend.emails.send({
+          from: 'Purrfect Love <noreply@purrfectlove.org>',
+          to: recipient.email,
+          subject: `New message from ${senderName} on Catsitters`,
+          html: buildNotificationEmail(senderName, recipient.name || 'there'),
+        })
+      } catch (emailErr) {
+        console.error('Email notification failed (message still saved):', emailErr)
+      }
     }
 
     return Response.json({ success: true, messageId: newMessage._id })

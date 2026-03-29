@@ -22,8 +22,11 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
 
   const {
     _id, name, location, bio, contactPreference, email, phone,
+    hideEmail, hideWhatsApp,
     maxCats, feedingTypes, behavioralTraits, cats, _distance,
   } = sitter;
+
+  const bothHidden = hideEmail && hideWhatsApp;
 
   const displayName = name || 'Member';
   const traits = type === 'findSitters'
@@ -76,7 +79,14 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
       )}
 
       <div className={styles.cardActions}>
-        {contactPreference === 'whatsapp' && whatsappNumber ? (
+        {bothHidden ? (
+          <Link
+            href={`/inbox?to=${_id}`}
+            className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}
+          >
+            Send Message
+          </Link>
+        ) : contactPreference === 'whatsapp' && whatsappNumber ? (
           <a
             href={`https://wa.me/${whatsappNumber}`}
             target="_blank"

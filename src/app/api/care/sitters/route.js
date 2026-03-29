@@ -30,13 +30,19 @@ export async function GET(request) {
     let query
     if (type === 'needsSitting') {
       query = `*[_type == "catSitter" && needsSitting == true && memberVerified == true]{
-        _id, name, location, bio, contactPreference, email, phone,
+        _id, name, location, bio, contactPreference,
+        "email": select(hideEmail == true => null, email),
+        "phone": select(hideWhatsApp == true => null, phone),
+        hideEmail, hideWhatsApp,
         cats, availableDates, alwaysAvailable, unavailableDates, maxCats,
         feedingTypes, behavioralTraits
       }`
     } else {
       query = `*[_type == "catSitter" && canSit == true && memberVerified == true]{
-        _id, name, location, bio, contactPreference, email, phone,
+        _id, name, location, bio, contactPreference,
+        "email": select(hideEmail == true => null, email),
+        "phone": select(hideWhatsApp == true => null, phone),
+        hideEmail, hideWhatsApp,
         maxCats, feedingTypes, behavioralTraits, availableDates, alwaysAvailable, unavailableDates
       }`
     }
