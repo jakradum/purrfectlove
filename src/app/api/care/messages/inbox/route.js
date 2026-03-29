@@ -50,8 +50,9 @@ export async function GET(request) {
       { id: sitterId }
     )
 
-    // Exclude messages involving blocked users
+    // Exclude messages with missing references or involving blocked users
     const filtered = messages.filter(msg => {
+      if (!msg.from || !msg.to) return false
       const otherId = msg.from._id === sitterId ? msg.to._id : msg.from._id
       return !blockedSet.has(otherId)
     })

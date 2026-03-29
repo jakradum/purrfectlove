@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback, useLayoutEffect } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 import styles from './Care.module.css'
@@ -60,6 +60,10 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
   const prevPartnerRef = useRef(null)
   const prevMsgCountRef = useRef(0)
 
+  // Derived state — must be declared before the scroll useEffect below
+  const activeThread = threads.find(t => t.partnerId === activePartnerId)
+  const activePartnerName = activeThread?.partnerName || composeTarget?.name || ''
+
   const fetchInbox = useCallback(async () => {
     try {
       const res = await fetch('/api/care/messages/inbox')
@@ -105,7 +109,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
   }, [preselectedTo, loading, threads])
 
   // Scroll to bottom only when: (1) switching to a new thread, (2) new message sent by current user
-  useLayoutEffect(() => {
+  useEffect(() => {
     if (!activePartnerId) return
     const msgs = activeThread?.messages || []
     const msgCount = msgs.length
@@ -121,14 +125,11 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
     prevMsgCountRef.current = msgCount
   }, [activePartnerId, activeThread?.messages?.length, currentUserId])
 
-  const activeThread = threads.find(t => t.partnerId === activePartnerId)
-  const activePartnerName = activeThread?.partnerName || composeTarget?.name || ''
-
   // Mark messages as read when opening a thread
   useEffect(() => {
     if (!activeThread) return
     const unread = activeThread.messages.filter(
-      m => m.to._id === currentUserId && !m.read
+      m => m.to?._id === currentUserId && !m.read
     )
     for (const msg of unread) {
       fetch(`/api/care/messages/${msg._id}/read`, { method: 'PATCH' }).catch(() => {})
@@ -299,7 +300,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
 
               {/* Messages area */}
               <div className={styles.messagesArea}>
-                {activeThread?.messages.map(msg => {
+                {activeThread?.messages.filter(msg => msg.from && msg.to).map(msg => {
                   const isOutgoing = msg.from._id === currentUserId
                   return (
                     <div key={msg._id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOutgoing ? 'flex-end' : 'flex-start' }}>
