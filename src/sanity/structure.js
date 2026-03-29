@@ -1,5 +1,6 @@
 import {ApplicantInfoDisplay} from './components/ApplicantInfoDisplay'
 import {ContactMessageDisplay} from './components/ContactMessageDisplay'
+import {MemberMessageLog} from './components/MemberMessageLog'
 
 export const structure = (S) =>
   S.list()
@@ -154,6 +155,15 @@ export const structure = (S) =>
                   S.documentTypeList('catSitter')
                     .title('All Members')
                     .defaultOrdering([{ field: 'name', direction: 'asc' }])
+                    .child((documentId) =>
+                      S.document()
+                        .documentId(documentId)
+                        .schemaType('catSitter')
+                        .views([
+                          S.view.form().title('Profile'),
+                          S.view.component(MemberMessageLog).title('Messages'),
+                        ])
+                    )
                 ),
               S.listItem()
                 .title('Verified Members')
@@ -163,6 +173,15 @@ export const structure = (S) =>
                     .title('Verified Members')
                     .filter('_type == "catSitter" && memberVerified == true')
                     .defaultOrdering([{ field: 'name', direction: 'asc' }])
+                    .child((documentId) =>
+                      S.document()
+                        .documentId(documentId)
+                        .schemaType('catSitter')
+                        .views([
+                          S.view.form().title('Profile'),
+                          S.view.component(MemberMessageLog).title('Messages'),
+                        ])
+                    )
                 ),
               S.listItem()
                 .title('Pending Verification')
@@ -172,6 +191,15 @@ export const structure = (S) =>
                     .title('Pending Verification')
                     .filter('_type == "catSitter" && (memberVerified == false || !defined(memberVerified))')
                     .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
+                    .child((documentId) =>
+                      S.document()
+                        .documentId(documentId)
+                        .schemaType('catSitter')
+                        .views([
+                          S.view.form().title('Profile'),
+                          S.view.component(MemberMessageLog).title('Messages'),
+                        ])
+                    )
                 ),
             ])
         ),
@@ -184,14 +212,6 @@ export const structure = (S) =>
           S.list()
             .title('Messaging')
             .items([
-              S.listItem()
-                .title('All Messages')
-                .icon(() => '📨')
-                .child(
-                  S.documentTypeList('message')
-                    .title('All Messages')
-                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
-                ),
               S.listItem()
                 .title('Spam Reports')
                 .icon(() => '🚩')
