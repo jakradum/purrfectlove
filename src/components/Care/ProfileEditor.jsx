@@ -28,6 +28,23 @@ function PencilIcon() {
   );
 }
 
+function CopyIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+      <rect x="9" y="9" width="13" height="13" rx="2" ry="2" />
+      <path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1" />
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+      <polyline points="20 6 9 17 4 12" />
+    </svg>
+  );
+}
+
 function ReadField({ label, value }) {
   if (!value && value !== 0) return null;
   return (
@@ -108,6 +125,8 @@ export default function ProfileEditor({ initialData }) {
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [privacySaving, setPrivacySaving] = useState(false);
+  const [copiedField, setCopiedField] = useState(null);
+  const [locationError, setLocationError] = useState('');
 
   const olc = new OpenLocationCode();
 
@@ -118,12 +137,26 @@ export default function ProfileEditor({ initialData }) {
     setSaveError('');
   };
 
+  const handleCopy = (text, field) => {
+    navigator.clipboard.writeText(text).then(() => {
+      setCopiedField(field);
+      setTimeout(() => setCopiedField(null), 2000);
+    });
+  };
+
   const handleLocationChange = (raw) => {
     setLocationInput(raw);
+    setLocationError('');
     const trimmed = raw.trim();
     if (!trimmed) { update('location', null); return; }
 
     const token = trimmed.split(/\s+/)[0];
+    if (!token.includes('+') || !olc.isValid(token)) {
+      setLocationError('Enter a valid Plus Code (e.g. VHQ2+FH or 8J4VVH Q2+FH)');
+      update('location', null);
+      return;
+    }
+
     if (token.includes('+') && olc.isValid(token) && olc.isFull(token)) {
       try {
         const decoded = olc.decode(token);
@@ -135,7 +168,7 @@ export default function ProfileEditor({ initialData }) {
         return;
       } catch { /* fall through */ }
     }
-    // Short code or plain text — server will resolve coords on save
+    // Short Plus Code with city — server will resolve coords on save
     update('location', { name: trimmed });
   };
 
@@ -274,15 +307,15 @@ export default function ProfileEditor({ initialData }) {
           {initialData.email && (
             <div className={styles.readField}>
               <span className={styles.readFieldLabel}>Email</span>
-              <span className={styles.readFieldValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {initialData.email}
+              <span className={styles.readFieldValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{initialData.email}</span>
                 <button
                   type="button"
-                  className={styles.btnSecondary}
-                  style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', marginTop: 0 }}
-                  onClick={() => navigator.clipboard.writeText(initialData.email)}
+                  title="Copy email"
+                  style={{ flexShrink: 0, padding: '0.3rem', background: 'none', border: '1px solid rgba(44,95,79,0.25)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: copiedField === 'email' ? 'var(--hunter-green)' : 'var(--text-light)' }}
+                  onClick={() => handleCopy(initialData.email, 'email')}
                 >
-                  Copy
+                  {copiedField === 'email' ? <CheckIcon /> : <CopyIcon />}
                 </button>
               </span>
             </div>
@@ -290,15 +323,15 @@ export default function ProfileEditor({ initialData }) {
           {initialData.phone && (
             <div className={styles.readField}>
               <span className={styles.readFieldLabel}>Phone</span>
-              <span className={styles.readFieldValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                {initialData.phone}
+              <span className={styles.readFieldValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
+                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{initialData.phone}</span>
                 <button
                   type="button"
-                  className={styles.btnSecondary}
-                  style={{ padding: '0.2rem 0.6rem', fontSize: '0.75rem', marginTop: 0 }}
-                  onClick={() => navigator.clipboard.writeText(initialData.phone)}
+                  title="Copy phone"
+                  style={{ flexShrink: 0, padding: '0.3rem', background: 'none', border: '1px solid rgba(44,95,79,0.25)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: copiedField === 'phone' ? 'var(--hunter-green)' : 'var(--text-light)' }}
+                  onClick={() => handleCopy(initialData.phone, 'phone')}
                 >
-                  Copy
+                  {copiedField === 'phone' ? <CheckIcon /> : <CopyIcon />}
                 </button>
               </span>
             </div>
@@ -410,20 +443,23 @@ export default function ProfileEditor({ initialData }) {
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Location</h2>
         <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>Plus Code or Area</label>
+          <label className={styles.profileLabel}>Plus Code</label>
           <input
             type="text"
             className={styles.profileInput}
             value={locationInput}
             onChange={(e) => handleLocationChange(e.target.value)}
-            placeholder="e.g. VHQ2+FH Bengaluru"
+            placeholder="e.g. VHQ2+FH Bengaluru or 8J4VVH Q2+FH"
           />
-          {form.location?.lat != null && (
+          {locationError && (
+            <p className={styles.hint} style={{ color: '#ef4444' }}>{locationError}</p>
+          )}
+          {!locationError && form.location?.lat != null && (
             <p className={styles.hint} style={{ fontFamily: 'monospace' }}>
               📍 {form.location.lat}, {form.location.lng}
             </p>
           )}
-          {form.location?.name && form.location.lat == null && (
+          {!locationError && form.location?.name && form.location.lat == null && (
             <p className={styles.hint}>Coordinates will be resolved when you save.</p>
           )}
         </div>
