@@ -39,8 +39,9 @@ function isAvailableForDates(sitter, startDate, endDate) {
     return true;
   }
 
+  // If sitter hasn't configured any availability dates, show them regardless of date filter
   const ranges = sitter.availableDates || [];
-  if (ranges.length === 0) return false;
+  if (ranges.length === 0) return true;
 
   for (const range of ranges) {
     const rangeStart = range.start ? new Date(range.start) : null;
@@ -173,7 +174,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
         });
       }
       const filtered = sitters.filter((s) => isAvailableForDates(s, startDate, endDate));
-      setDebugInfo(`type=${apiQueryType} | API: ${rawCount} | date-filtered: ${filtered.length} | loc: ${userLocation ? `${userLocation.lat?.toFixed(2)},${userLocation.lng?.toFixed(2)}` : 'none'}`);
+      setDebugInfo(`type=${apiQueryType} | API: ${rawCount} | date-filtered: ${filtered.length} | loc: ${userLocation ? `${userLocation.lat?.toFixed(2)},${userLocation.lng?.toFixed(2)}` : 'none'} | dates: "${startDate}"→"${endDate}"`);
       setFetchedSitters(filtered);
       animateCards(filtered.length);
     } catch (err) {
