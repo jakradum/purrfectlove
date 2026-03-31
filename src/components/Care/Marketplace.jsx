@@ -22,6 +22,13 @@ function haversine(lat1, lon1, lat2, lon2) {
   return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a));
 }
 
+// Road-distance multiplier based on user's city
+// Bangalore: 1.5 (dense grid with traffic), Stuttgart: 1.3 (more direct roads)
+function roadMultiplier(lat) {
+  if (lat != null && lat > 8 && lat < 20) return 1.5; // India / Bangalore latitude band
+  return 1.3; // Europe default
+}
+
 // Check if a sitter is available for a date range
 function isAvailableForDates(sitter, startDate, endDate) {
   if (!startDate && !endDate) return true;
@@ -90,7 +97,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
           if (userLocation?.lat != null && userLocation?.lng != null) {
             sitters = sitters.map((s) => {
               if (s.location?.lat == null || s.location?.lng == null) return s;
-              return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) * 1.3 };
+              return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) * roadMultiplier(userLocation.lat) };
             });
           }
           setFetchedSitters(sitters);
@@ -170,7 +177,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
       if (userLocation?.lat != null && userLocation?.lng != null) {
         sitters = sitters.map((s) => {
           if (s.location?.lat == null || s.location?.lng == null) return s;
-          return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) * 1.3 };
+          return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) * roadMultiplier(userLocation.lat) };
         });
       }
       const filtered = sitters.filter((s) => isAvailableForDates(s, startDate, endDate));
