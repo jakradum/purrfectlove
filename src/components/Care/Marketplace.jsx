@@ -443,9 +443,9 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 <input
                   ref={sliderRef}
                   type="range"
-                  min={3}
-                  max={25}
-                  step={1}
+                  min={1.5}
+                  max={20}
+                  step={0.5}
                   value={radius}
                   onChange={(e) => datesSelected && handleRadiusChange(Number(e.target.value))}
                   className={styles.squigglySlider}
