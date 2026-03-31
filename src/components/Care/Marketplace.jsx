@@ -99,7 +99,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
-  const [radius, setRadius] = useState(25);
+  const [radius, setRadius] = useState(10);
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
   const [searchError, setSearchError] = useState('');
@@ -129,8 +129,8 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const updateSliderTrack = useCallback((val) => {
     const el = sliderRef.current;
     if (!el) return;
-    const min = Number(el.min) || 5;
-    const max = Number(el.max) || 100;
+    const min = Number(el.min) || 3;
+    const max = Number(el.max) || 25;
     const pct = ((val - min) / (max - min)) * 100;
     el.style.background = `linear-gradient(to right, var(--tabby-brown) ${pct}%, #d1d5db ${pct}%)`;
   }, []);
@@ -411,6 +411,17 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 onChange={(e) => setEndDate(e.target.value)}
               />
             </div>
+            {datesSelected && (
+              <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '0.25rem' }}>
+                <button
+                  type="button"
+                  onClick={() => { setStartDate(''); setEndDate(''); }}
+                  style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.8rem', color: 'var(--text-light)', textDecoration: 'underline', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                >
+                  Clear dates
+                </button>
+              </div>
+            )}
             {userLocation?.lat != null ? (
               <div
                 className={styles.searchField}
@@ -422,9 +433,9 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 <input
                   ref={sliderRef}
                   type="range"
-                  min={5}
-                  max={100}
-                  step={5}
+                  min={3}
+                  max={25}
+                  step={1}
                   value={radius}
                   onChange={(e) => datesSelected && handleRadiusChange(Number(e.target.value))}
                   className={styles.squigglySlider}

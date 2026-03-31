@@ -22,14 +22,14 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en', ava
   const tagLabels = TAG_LABELS[locale] || TAG_LABELS.en;
 
   const {
-    _id, name, location, bio, contactPreference, email, phone,
+    _id, name, username, location, bio, contactPreference, email, phone,
     hideEmail, hideWhatsApp, siteAdmin, photoUrl,
     maxHomesPerDay, feedingTypes, behavioralTraits, cats, _distance,
   } = sitter;
 
   const bothHidden = hideEmail && hideWhatsApp;
 
-  const displayName = name || 'Member';
+  const displayName = username || name || 'Member';
   const traits = type === 'findSitters'
     ? (behavioralTraits || [])
     : [];

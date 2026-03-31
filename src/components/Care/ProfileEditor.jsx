@@ -211,10 +211,15 @@ export default function ProfileEditor({ initialData }) {
   const [privacySaving, setPrivacySaving] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [locationError, setLocationError] = useState('');
-  const [showDeleteModal, setShowDeleteModal] = useState(false);
-  const [deleteLoading, setDeleteLoading] = useState(false);
+  const [showDeletionModal, setShowDeletionModal] = useState(false);
+  const [deletionReason, setDeletionReason] = useState('');
+  const [deletionSubmitting, setDeletionSubmitting] = useState(false);
+  const [deletionDone, setDeletionDone] = useState(false);
   const [newsletterOptOut, setNewsletterOptOut] = useState(!!initialData.newsletterOptOut);
   const [newsletterSaving, setNewsletterSaving] = useState(false);
+  const [username, setUsername] = useState(initialData.username || '');
+  const [usernameRegenerated, setUsernameRegenerated] = useState(!!initialData.usernameRegenerated);
+  const [regenLoading, setRegenLoading] = useState(false);
 
   const olc = new OpenLocationCode();
 
@@ -367,7 +372,12 @@ export default function ProfileEditor({ initialData }) {
         <div className={styles.profileHeader} style={{ alignItems: 'flex-start' }}>
           <div>
             <Link href="/" className={styles.backLink}>← Back to network</Link>
-            <h1 className={styles.pageTitle}>{form.name || 'My Profile'}</h1>
+            <h1 className={styles.pageTitle}>{username || form.name || 'My Profile'}</h1>
+            {username && form.name && (
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
+                Your community username · real name only visible to you
+              </p>
+            )}
           </div>
         </div>
 
@@ -383,6 +393,14 @@ export default function ProfileEditor({ initialData }) {
             <PencilIcon /> Edit
           </button>
         </div>
+
+        {/* Availability — shown first */}
+        {(form.canSit || form.alwaysAvailable || form.availableDates?.length > 0) && (
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
+            <AvailabilityCalendar form={form} updatedAt={initialData._updatedAt} />
+          </div>
+        )}
 
         {/* About */}
         <div className={styles.section}>
@@ -486,14 +504,6 @@ export default function ProfileEditor({ initialData }) {
           </div>
         )}
 
-        {/* Availability */}
-        {(form.canSit || form.alwaysAvailable || form.availableDates?.length > 0) && (
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
-            <AvailabilityCalendar form={form} updatedAt={initialData._updatedAt} />
-          </div>
-        )}
-
         {/* Status */}
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>{t.sections.status}</h2>
@@ -502,6 +512,37 @@ export default function ProfileEditor({ initialData }) {
             {form.needsSitting && <span className={`${styles.tag} ${styles.tagBrown}`}>I need sitting</span>}
             {!form.canSit && !form.needsSitting && <span className={styles.readFieldValue} style={{ color: '#aaa' }}>Not active</span>}
           </div>
+        </div>
+
+        {/* Username */}
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Your username</h2>
+          <p style={{ fontSize: '0.9rem', color: 'var(--text-dark)', marginBottom: '0.4rem', fontWeight: 600 }}>
+            {username || <span style={{ color: '#aaa' }}>Generating…</span>}
+          </p>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', lineHeight: 1.5, marginBottom: '0.75rem' }}>
+            This is how other members see you. Your real name is never shown publicly.
+          </p>
+          {!usernameRegenerated && (
+            <button
+              type="button"
+              disabled={regenLoading}
+              onClick={async () => {
+                setRegenLoading(true);
+                try {
+                  const res = await fetch('/api/care/regenerate-username', { method: 'POST' });
+                  const data = await res.json();
+                  if (data.username) { setUsername(data.username); setUsernameRegenerated(true); }
+                } catch { /* silent */ } finally { setRegenLoading(false); }
+              }}
+              style={{ fontSize: '0.8rem', color: 'var(--hunter-green)', background: 'none', border: '1px solid var(--hunter-green)', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', opacity: regenLoading ? 0.6 : 1 }}
+            >
+              {regenLoading ? 'Regenerating…' : 'Regenerate username'}
+            </button>
+          )}
+          {usernameRegenerated && (
+            <p style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Username has been regenerated (one-time only).</p>
+          )}
         </div>
 
         {/* Newsletter & emails */}
@@ -538,85 +579,89 @@ export default function ProfileEditor({ initialData }) {
           </div>
         </div>
 
-        {/* Delete account */}
+        {/* Request account deletion */}
         <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '0.5rem' }}>
           <button
             type="button"
-            onClick={() => setShowDeleteModal(true)}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: '0.8rem',
-              color: '#999',
-              cursor: 'pointer',
-              textDecoration: 'none',
-              padding: '0.25rem 0.5rem',
-            }}
+            onClick={() => setShowDeletionModal(true)}
+            style={{ background: 'none', border: 'none', fontSize: '0.8rem', color: '#999', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
             onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
             onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
           >
-            Delete my account
+            Request account deletion
           </button>
         </div>
 
-        {/* Delete account confirmation modal */}
-        {showDeleteModal && (
+        {/* Deletion request modal */}
+        {showDeletionModal && (
           <div
-            style={{
-              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
-              zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
-            }}
-            onClick={() => setShowDeleteModal(false)}
+            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
+            onClick={() => !deletionSubmitting && setShowDeletionModal(false)}
           >
             <div
-              style={{
-                background: '#fff', borderRadius: '12px', padding: '2rem',
-                maxWidth: '400px', width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
-              }}
+              style={{ background: '#fff', borderRadius: '12px', padding: '2rem', maxWidth: '420px', width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
               onClick={(e) => e.stopPropagation()}
             >
-              <h2 style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '1.1rem', marginBottom: '0.75rem' }}>
-                Delete your account?
-              </h2>
-              <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                This will permanently delete your profile and all your data. This cannot be undone.
-              </p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                <button
-                  type="button"
-                  onClick={() => setShowDeleteModal(false)}
-                  disabled={deleteLoading}
-                  style={{
-                    padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #ddd',
-                    background: 'transparent', color: 'var(--text-dark)', fontFamily: 'inherit',
-                    fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
-                  }}
-                >
-                  Cancel
-                </button>
-                <button
-                  type="button"
-                  disabled={deleteLoading}
-                  onClick={async () => {
-                    setDeleteLoading(true);
-                    try {
-                      await fetch('/api/care/delete-account', { method: 'POST' });
-                      router.push('/care/login');
-                      router.refresh();
-                    } catch {
-                      setDeleteLoading(false);
-                    }
-                  }}
-                  style={{
-                    padding: '0.5rem 1rem', borderRadius: '8px', border: 'none',
-                    background: '#dc2626', color: '#fff', fontFamily: 'inherit',
-                    fontSize: '0.9rem', fontWeight: 600, cursor: deleteLoading ? 'not-allowed' : 'pointer',
-                    opacity: deleteLoading ? 0.7 : 1,
-                  }}
-                >
-                  {deleteLoading ? 'Deleting…' : 'Delete account'}
-                </button>
-              </div>
+              {deletionDone ? (
+                <>
+                  <h2 style={{ fontWeight: 700, color: 'var(--hunter-green)', fontSize: '1.1rem', marginBottom: '0.75rem' }}>Request received</h2>
+                  <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                    We've received your request and will delete your account within 48 hours.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={() => setShowDeletionModal(false)}
+                    style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #ddd', background: 'transparent', color: 'var(--text-dark)', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+                  >
+                    Close
+                  </button>
+                </>
+              ) : (
+                <>
+                  <h2 style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Request account deletion</h2>
+                  <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.875rem', marginBottom: '1rem' }}>
+                    We'll delete your account within 48 hours. Please tell us why you're leaving.
+                  </p>
+                  <textarea
+                    rows={4}
+                    placeholder="Reason for leaving (min 20 characters)"
+                    value={deletionReason}
+                    onChange={(e) => setDeletionReason(e.target.value)}
+                    style={{ width: '100%', borderRadius: '8px', border: '1.5px solid #ddd', padding: '0.6rem 0.75rem', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical', boxSizing: 'border-box', marginBottom: '1rem' }}
+                  />
+                  {deletionReason.trim().length > 0 && deletionReason.trim().length < 20 && (
+                    <p style={{ fontSize: '0.75rem', color: '#dc2626', marginBottom: '0.75rem' }}>Please enter at least 20 characters.</p>
+                  )}
+                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                    <button
+                      type="button"
+                      onClick={() => setShowDeletionModal(false)}
+                      disabled={deletionSubmitting}
+                      style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #ddd', background: 'transparent', color: 'var(--text-dark)', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
+                    >
+                      Cancel
+                    </button>
+                    <button
+                      type="button"
+                      disabled={deletionSubmitting || deletionReason.trim().length < 20}
+                      onClick={async () => {
+                        setDeletionSubmitting(true);
+                        try {
+                          const res = await fetch('/api/care/request-deletion', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ reason: deletionReason }),
+                          });
+                          if (res.ok) setDeletionDone(true);
+                        } catch { /* silent */ } finally { setDeletionSubmitting(false); }
+                      }}
+                      style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: '#dc2626', color: '#fff', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 600, cursor: (deletionSubmitting || deletionReason.trim().length < 20) ? 'not-allowed' : 'pointer', opacity: (deletionSubmitting || deletionReason.trim().length < 20) ? 0.6 : 1 }}
+                    >
+                      {deletionSubmitting ? 'Submitting…' : 'Submit request'}
+                    </button>
+                  </div>
+                </>
+              )}
             </div>
           </div>
         )}

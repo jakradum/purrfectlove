@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { signToken } from '@/lib/careAuth'
 import { Resend } from 'resend'
+import { generateUniqueUsername } from '@/lib/generateUsername'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -184,7 +185,7 @@ export async function POST(request) {
       const { norm: phone, spaced: phoneSpaced } = phoneVariants(rawIdentifier)
       ;[catSitter, teamMember] = await Promise.all([
         sanity.fetch(
-          `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
+          `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, username }`,
           { phone, phoneSpaced }
         ),
         sanity.fetch(
@@ -195,7 +196,7 @@ export async function POST(request) {
     } else {
       ;[catSitter, teamMember] = await Promise.all([
         sanity.fetch(
-          `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
+          `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, username }`,
           { email: identifier }
         ),
         sanity.fetch(
@@ -208,7 +209,7 @@ export async function POST(request) {
     // If teamMember matched but no catSitter did, find their linked catSitter by name
     if (!catSitter && teamMember) {
       catSitter = await sanity.fetch(
-        `*[_type == "catSitter" && name == $name && siteAdmin == true && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
+        `*[_type == "catSitter" && name == $name && siteAdmin == true && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, username }`,
         { name: teamMember.name }
       )
     }
@@ -248,6 +249,17 @@ export async function POST(request) {
           console.error('welcome email error:', err)
           // Non-fatal — don't block login
         }
+      }
+    }
+
+    // Auto-generate username if catSitter has none
+    if (catSitter && !catSitter.username) {
+      try {
+        const username = await generateUniqueUsername(sanity)
+        await sanity.patch(catSitter._id).set({ username }).commit()
+      } catch (err) {
+        console.error('username generation error:', err)
+        // Non-fatal
       }
     }
 

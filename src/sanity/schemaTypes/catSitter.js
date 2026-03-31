@@ -98,13 +98,24 @@ export default {
     // Email preferences
     { name: 'welcomeSent', title: 'Welcome Email Sent', type: 'boolean', initialValue: false, description: 'Set to true after first login welcome email is sent. Never send again.' },
     { name: 'newsletterOptOut', title: 'Newsletter Opt-Out', type: 'boolean', initialValue: false, description: 'Set to true when member unsubscribes from community emails.' },
+
+    // Username (anonymous display name)
+    { name: 'username', title: 'Username', type: 'string', description: 'Auto-generated three-word anonymous display name (e.g. FluffyWhiskerPurrs). Shown in the portal instead of real name.' },
+    { name: 'usernameRegenerated', title: 'Username Regenerated', type: 'boolean', initialValue: false, description: 'Set to true after member uses their one-time username regeneration.' },
+
+    // Deletion request
+    { name: 'deletionRequested', title: 'Deletion Requested', type: 'boolean', initialValue: false, description: '⚠ Member has requested account deletion. Delete promptly and log a deletedAccount record.' },
+    { name: 'deletionReason', title: 'Deletion Reason', type: 'text', rows: 3 },
+    { name: 'deletionRequestedAt', title: 'Deletion Requested At', type: 'datetime' },
   ],
   preview: {
-    select: { title: 'name', subtitle: 'email', verified: 'memberVerified', admin: 'siteAdmin', media: 'photo' },
-    prepare({ title, subtitle, verified, admin, media }) {
+    select: { title: 'name', username: 'username', subtitle: 'email', verified: 'memberVerified', admin: 'siteAdmin', deletionRequested: 'deletionRequested', media: 'photo' },
+    prepare({ title, username, subtitle, verified, admin, deletionRequested, media }) {
       const status = verified ? '✓ Verified' : '⏳ Pending'
-      const adminTag = admin ? ' · 🛡 Site Admin' : ''
-      return { title: title || subtitle || 'Unknown', subtitle: `${status}${adminTag} · ${subtitle || ''}`, media }
+      const adminTag = admin ? ' · 🛡 Admin' : ''
+      const deletionTag = deletionRequested ? ' · 🔴 DELETION REQUESTED' : ''
+      const displayName = username ? `${username} (${title || 'no name'})` : (title || subtitle || 'Unknown')
+      return { title: displayName + deletionTag, subtitle: `${status}${adminTag} · ${subtitle || ''}`, media }
     }
   }
 }

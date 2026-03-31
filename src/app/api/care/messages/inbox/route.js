@@ -44,8 +44,8 @@ export async function GET(request) {
     const messages = await serverClient.fetch(
       `*[_type == "message" && (from._ref == $id || to._ref == $id)] | order(createdAt desc) {
         _id, body, read, readAt, markedAsSpam, createdAt,
-        from -> { _id, name },
-        to -> { _id, name }
+        from -> { _id, name, username },
+        to -> { _id, name, username }
       }`,
       { id: sitterId }
     )
@@ -61,7 +61,8 @@ export async function GET(request) {
     const threadsMap = new Map()
     for (const msg of filtered) {
       const partnerId = msg.from._id === sitterId ? msg.to._id : msg.from._id
-      const partnerName = msg.from._id === sitterId ? msg.to.name : msg.from.name
+      const partner = msg.from._id === sitterId ? msg.to : msg.from
+      const partnerName = partner.username || partner.name
 
       if (!threadsMap.has(partnerId)) {
         threadsMap.set(partnerId, {

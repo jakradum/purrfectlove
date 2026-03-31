@@ -14,6 +14,7 @@ import blockedUser from './blockedUser'
 import contactShare from './contactShare'
 import sittingFeedback from './sittingFeedback'
 import membershipRequest from './membershipRequest'
+import deletedAccount from './deletedAccount'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -37,5 +38,6 @@ export const schema = {
     contactShare,
     sittingFeedback,
     membershipRequest,
+    deletedAccount,
   ]
 }
