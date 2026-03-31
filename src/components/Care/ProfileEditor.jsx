@@ -211,6 +211,8 @@ export default function ProfileEditor({ initialData }) {
   const [privacySaving, setPrivacySaving] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [locationError, setLocationError] = useState('');
+  const [showDeleteModal, setShowDeleteModal] = useState(false);
+  const [deleteLoading, setDeleteLoading] = useState(false);
 
   const olc = new OpenLocationCode();
 
@@ -499,6 +501,89 @@ export default function ProfileEditor({ initialData }) {
             {!form.canSit && !form.needsSitting && <span className={styles.readFieldValue} style={{ color: '#aaa' }}>Not active</span>}
           </div>
         </div>
+
+        {/* Delete account */}
+        <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '0.5rem' }}>
+          <button
+            type="button"
+            onClick={() => setShowDeleteModal(true)}
+            style={{
+              background: 'none',
+              border: 'none',
+              fontSize: '0.8rem',
+              color: '#999',
+              cursor: 'pointer',
+              textDecoration: 'none',
+              padding: '0.25rem 0.5rem',
+            }}
+            onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
+            onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
+          >
+            Delete my account
+          </button>
+        </div>
+
+        {/* Delete account confirmation modal */}
+        {showDeleteModal && (
+          <div
+            style={{
+              position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)',
+              zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center',
+            }}
+            onClick={() => setShowDeleteModal(false)}
+          >
+            <div
+              style={{
+                background: '#fff', borderRadius: '12px', padding: '2rem',
+                maxWidth: '400px', width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.18)',
+              }}
+              onClick={(e) => e.stopPropagation()}
+            >
+              <h2 style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '1.1rem', marginBottom: '0.75rem' }}>
+                Delete your account?
+              </h2>
+              <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
+                This will permanently delete your profile and all your data. This cannot be undone.
+              </p>
+              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowDeleteModal(false)}
+                  disabled={deleteLoading}
+                  style={{
+                    padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #ddd',
+                    background: 'transparent', color: 'var(--text-dark)', fontFamily: 'inherit',
+                    fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer',
+                  }}
+                >
+                  Cancel
+                </button>
+                <button
+                  type="button"
+                  disabled={deleteLoading}
+                  onClick={async () => {
+                    setDeleteLoading(true);
+                    try {
+                      await fetch('/api/care/delete-account', { method: 'POST' });
+                      router.push('/care/login');
+                      router.refresh();
+                    } catch {
+                      setDeleteLoading(false);
+                    }
+                  }}
+                  style={{
+                    padding: '0.5rem 1rem', borderRadius: '8px', border: 'none',
+                    background: '#dc2626', color: '#fff', fontFamily: 'inherit',
+                    fontSize: '0.9rem', fontWeight: 600, cursor: deleteLoading ? 'not-allowed' : 'pointer',
+                    opacity: deleteLoading ? 0.7 : 1,
+                  }}
+                >
+                  {deleteLoading ? 'Deleting…' : 'Delete account'}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
       </div>
     );
   }

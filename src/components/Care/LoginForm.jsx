@@ -245,6 +245,23 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                 : (locale === 'de' ? 'Code senden' : 'Send code')}
             </button>
 
+            {locale === 'de' ? (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', textAlign: 'center', marginTop: '0.75rem', lineHeight: 1.5 }}>
+                Mit dem Fortfahren stimmst du unserer{' '}
+                <a href="/de/care/privacy" style={{ color: 'var(--hunter-green)', textDecoration: 'underline' }}>
+                  Datenschutzerklärung
+                </a>{' '}
+                zu.
+              </p>
+            ) : (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', textAlign: 'center', marginTop: '0.75rem', lineHeight: 1.5 }}>
+                By continuing, you agree to our{' '}
+                <a href="/care/privacy" style={{ color: 'var(--hunter-green)', textDecoration: 'underline' }}>
+                  Privacy Policy
+                </a>
+              </p>
+            )}
+
           </form>
         ) : (
           <form onSubmit={handleVerify}>
