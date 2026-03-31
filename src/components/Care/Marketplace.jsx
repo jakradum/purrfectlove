@@ -26,10 +26,10 @@ function haversine(lat1, lon1, lat2, lon2) {
 }
 
 // Road-distance multiplier based on user's city
-// Bangalore: 1.5 (dense grid with traffic), Stuttgart: 1.3 (more direct roads)
+// Bangalore: 1.45 (dense grid with traffic), Stuttgart: 1.45 (more direct roads)
 function roadMultiplier(lat) {
-  if (lat != null && lat > 8 && lat < 20) return 1.5; // India / Bangalore latitude band
-  return 1.3; // Europe default
+  if (lat != null && lat > 8 && lat < 20) return 1.45; // India / Bangalore latitude band
+  return 1.45; // Europe default
 }
 
 // Whether a sitter has configured any availability data
