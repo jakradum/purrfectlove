@@ -22,6 +22,7 @@ async function isDeletionPending(sitterId) {
     });
     if (!res.ok) return false;
     const data = await res.json();
+    console.log('[middleware] deletionRequested fetch:', { sitterId, result: data.result });
     return data.result === true;
   } catch {
     return false;
