@@ -30,17 +30,19 @@ export async function POST(request) {
       identifier = rawIdentifier.trim().toLowerCase()
     }
 
-    // Look up OTP
+    const MAX_ATTEMPTS = 5
+
+    // Fetch OTP record by identifier only (not by code) so we can track failed attempts
     let otpDoc
     if (type === 'phone') {
       otpDoc = await sanity.fetch(
-        `*[_type == "otpCode" && phone == $identifier && code == $code][0]{ _id, expiresAt }`,
-        { identifier, code }
+        `*[_type == "otpCode" && phone == $identifier][0]{ _id, code, expiresAt, attempts }`,
+        { identifier }
       )
     } else {
       otpDoc = await sanity.fetch(
-        `*[_type == "otpCode" && email == $identifier && code == $code][0]{ _id, expiresAt }`,
-        { identifier, code }
+        `*[_type == "otpCode" && email == $identifier][0]{ _id, code, expiresAt, attempts }`,
+        { identifier }
       )
     }
 
@@ -51,6 +53,18 @@ export async function POST(request) {
     if (new Date(otpDoc.expiresAt) < new Date()) {
       await sanity.delete(otpDoc._id)
       return Response.json({ error: 'Code expired. Request a new one.' }, { status: 400 })
+    }
+
+    if (otpDoc.code !== code) {
+      const attempts = (otpDoc.attempts || 0) + 1
+      if (attempts >= MAX_ATTEMPTS) {
+        await sanity.delete(otpDoc._id)
+        await new Promise(r => setTimeout(r, 1000))
+        return Response.json({ error: 'Too many attempts, request a new code.' }, { status: 429 })
+      }
+      await sanity.patch(otpDoc._id).set({ attempts }).commit()
+      await new Promise(r => setTimeout(r, 1000))
+      return Response.json({ error: 'Invalid code' }, { status: 400 })
     }
 
     await sanity.delete(otpDoc._id)

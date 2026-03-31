@@ -27,6 +27,13 @@ export default {
       type: 'datetime',
       validation: Rule => Rule.required(),
     },
+    {
+      name: 'attempts',
+      title: 'Failed Attempts',
+      type: 'number',
+      description: 'Incremented on each wrong code guess. Record deleted at 5.',
+      initialValue: 0,
+    },
   ],
   preview: {
     select: { phone: 'phone', email: 'email', subtitle: 'expiresAt' },
