@@ -53,7 +53,7 @@ function computeCompletion(form) {
   if (!form.location?.lat || !form.location?.lng) required.push('Location (Plus Code)');
 
   if (form.canSit) {
-    if (!form.maxCats) required.push('Max cats you can sit');
+    if (!form.maxHomesPerDay) required.push('Homes you can visit per day');
     if (!form.feedingTypes?.length) required.push('Feeding types you can handle');
     if (!form.behavioralTraits?.length) required.push('Cat behaviors you\'re comfortable with');
     if (!form.alwaysAvailable && !form.availableDates?.length) required.push('Availability dates');
@@ -179,7 +179,7 @@ function formFromData(data) {
     alwaysAvailable: data.alwaysAvailable ?? false,
     unavailableDates: data.unavailableDates || [],
     availableDates: data.availableDates || [],
-    maxCats: data.maxCats ?? '',
+    maxHomesPerDay: data.maxHomesPerDay ?? '',
     feedingTypes: data.feedingTypes || [],
     behavioralTraits: data.behavioralTraits || [],
     canSit: data.canSit ?? false,
@@ -277,7 +277,7 @@ export default function ProfileEditor({ initialData }) {
           ...form,
           bedrooms: form.bedrooms !== '' ? Number(form.bedrooms) : undefined,
           householdSize: form.householdSize !== '' ? Number(form.householdSize) : undefined,
-          maxCats: form.maxCats !== '' ? Number(form.maxCats) : undefined,
+          maxHomesPerDay: form.maxHomesPerDay !== '' ? Number(form.maxHomesPerDay) : undefined,
           cats: form.cats.map((cat) => ({
             ...cat,
             age: cat.age !== '' && cat.age !== undefined ? Number(cat.age) : undefined,
@@ -530,16 +530,21 @@ export default function ProfileEditor({ initialData }) {
       </div>
 
       {/* Location */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Location <span style={{ color: '#e53e3e', fontWeight: 400 }}>*</span></h2>
+      <div className={styles.section} style={!form.location?.lat ? { borderColor: 'rgba(239,68,68,0.4)', borderWidth: '1px', borderStyle: 'solid', borderRadius: '12px' } : {}}>
+        <h2 className={styles.sectionTitle} style={!form.location?.lat ? { color: '#ef4444' } : {}}>
+          Location <span style={{ fontWeight: 400 }}>*</span>
+        </h2>
         <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>Plus Code <span style={{ color: '#e53e3e' }}>*</span></label>
+          <label className={styles.profileLabel} style={!form.location?.lat ? { color: '#ef4444' } : {}}>
+            Plus Code <span style={{ color: '#ef4444' }}>*</span>
+          </label>
           <input
             type="text"
             className={styles.profileInput}
             value={locationInput}
             onChange={(e) => handleLocationChange(e.target.value)}
             placeholder="e.g. GV3C+9X"
+            style={!form.location?.lat ? { borderColor: '#ef4444' } : {}}
           />
           {locationError && (
             <p className={styles.hint} style={{ color: '#ef4444' }}>{locationError}</p>
@@ -635,14 +640,38 @@ export default function ProfileEditor({ initialData }) {
         {form.alwaysAvailable ? (
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.unavailableDates}</label>
-            <p className={styles.hint}>Dates when you are NOT available (one per line)</p>
-            <textarea
-              className={styles.profileTextarea}
-              value={(form.unavailableDates || []).join('\n')}
-              onChange={(e) => update('unavailableDates', e.target.value.split('\n').map((d) => d.trim()).filter(Boolean))}
-              placeholder="YYYY-MM-DD"
-              rows={4}
+            <p className={styles.hint}>Pick each date you won&apos;t be available.</p>
+            <input
+              type="date"
+              className={styles.profileInput}
+              value=""
+              min={new Date().toISOString().split('T')[0]}
+              onChange={(e) => {
+                const val = e.target.value;
+                if (val && !(form.unavailableDates || []).includes(val)) {
+                  update('unavailableDates', [...(form.unavailableDates || []), val].sort());
+                }
+                e.target.value = '';
+              }}
+              style={{ maxWidth: '180px' }}
             />
+            {(form.unavailableDates || []).length > 0 && (
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.6rem' }}>
+                {(form.unavailableDates || []).map((d) => (
+                  <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(200,92,63,0.1)', border: '1px solid rgba(200,92,63,0.25)', borderRadius: '6px', padding: '0.2rem 0.5rem 0.2rem 0.65rem', fontSize: '0.8rem', color: 'var(--text-dark)' }}>
+                    {d}
+                    <button
+                      type="button"
+                      onClick={() => update('unavailableDates', (form.unavailableDates || []).filter((x) => x !== d))}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 0.15rem', lineHeight: 1, color: '#c85c3f', fontSize: '1rem', fontWeight: 700 }}
+                      title="Remove date"
+                    >
+                      ×
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         ) : (
           <div className={styles.formGroup}>
@@ -666,8 +695,9 @@ export default function ProfileEditor({ initialData }) {
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>{t.sections.sittingCapabilities}</h2>
         <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>{t.fields.maxCats}</label>
-          <input type="number" min={1} max={20} className={styles.profileInput} value={form.maxCats} onChange={(e) => update('maxCats', e.target.value)} placeholder="e.g. 2" style={{ maxWidth: '140px' }} />
+          <label className={styles.profileLabel}>{t.fields.maxHomesPerDay}</label>
+          <input type="number" min={1} max={5} className={styles.profileInput} value={form.maxHomesPerDay} onChange={(e) => update('maxHomesPerDay', e.target.value)} placeholder="e.g. 2" style={{ maxWidth: '140px' }} />
+          <p className={styles.hint}>For planning multiple visits in one day</p>
         </div>
         <div className={styles.formGroup}>
           <label className={styles.profileLabel}>{t.fields.feedingTypes}</label>

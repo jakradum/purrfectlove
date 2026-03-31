@@ -24,7 +24,7 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
   const {
     _id, name, location, bio, contactPreference, email, phone,
     hideEmail, hideWhatsApp, siteAdmin, photoUrl,
-    maxCats, feedingTypes, behavioralTraits, cats, _distance,
+    maxHomesPerDay, feedingTypes, behavioralTraits, cats, _distance,
   } = sitter;
 
   const bothHidden = hideEmail && hideWhatsApp;
@@ -73,9 +73,9 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
       {bio && <p className={styles.cardBio}>{bio}</p>}
 
       {/* For sitters: show capabilities */}
-      {type === 'findSitters' && maxCats && (
+      {type === 'findSitters' && maxHomesPerDay && (
         <p className={styles.cardMeta}>
-          {t.maxCats} <strong>{maxCats}</strong> {t.cats}
+          {t.maxCats} <strong>{maxHomesPerDay}</strong> {t.cats}
         </p>
       )}
 

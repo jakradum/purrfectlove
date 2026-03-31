@@ -43,7 +43,7 @@ export default async function DeMemberProfilePage({ params }) {
     sitter = await serverClient.fetch(
       `*[_type == "catSitter" && _id == $id && memberVerified == true][0]{
         _id, name, location, bio, email, phone, contactPreference,
-        bedrooms, householdSize, cats, maxCats, feedingTypes, behavioralTraits,
+        bedrooms, householdSize, cats, maxHomesPerDay, feedingTypes, behavioralTraits,
         canSit, needsSitting, alwaysAvailable, availableDates
       }`,
       { id: memberId }

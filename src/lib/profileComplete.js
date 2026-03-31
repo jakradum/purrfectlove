@@ -10,10 +10,9 @@
 export function isProfileComplete(profile) {
   return !!(
     profile?.name?.trim() &&
-    profile?.email?.trim() &&
     profile?.location?.lat
   )
 }
 
 /** Fields to fetch when checking profile completeness */
-export const COMPLETENESS_FIELDS = `name, email, "location": location { lat }`
+export const COMPLETENESS_FIELDS = `name, "location": location { lat }`

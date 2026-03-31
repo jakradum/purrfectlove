@@ -24,7 +24,7 @@ function TagList({ items }) {
 export default function SitterProfile({ sitter }) {
   const {
     name, location, bio, email, phone, contactPreference,
-    bedrooms, householdSize, cats, maxCats, feedingTypes, behavioralTraits,
+    bedrooms, householdSize, cats, maxHomesPerDay, feedingTypes, behavioralTraits,
     canSit, needsSitting,
   } = sitter;
 
@@ -119,11 +119,11 @@ export default function SitterProfile({ sitter }) {
       {canSit && (
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>Sitting Capabilities</h2>
-          {maxCats && (
+          {maxHomesPerDay && (
             <div className={styles.formGroup}>
               <div className={styles.detailItem}>
-                <span className={styles.detailItemLabel}>Max cats</span>
-                <span className={styles.detailItemValue}>{maxCats}</span>
+                <span className={styles.detailItemLabel}>Homes per day</span>
+                <span className={styles.detailItemValue}>{maxHomesPerDay}</span>
               </div>
             </div>
           )}

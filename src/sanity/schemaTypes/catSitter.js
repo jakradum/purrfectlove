@@ -87,7 +87,7 @@ export default {
     },
 
     // Sitter capabilities
-    { name: 'maxCats', title: 'Max Cats I Can Sit', type: 'number', readOnly: true },
+    { name: 'maxHomesPerDay', title: 'Max Homes Per Day (Visits)', type: 'number', readOnly: true },
     { name: 'feedingTypes', title: 'Can Feed', type: 'array', readOnly: true, of: [{ type: 'string' }], options: { list: ['wet', 'dry', 'medication', 'special diet'] } },
     { name: 'behavioralTraits', title: 'Comfortable With', type: 'array', readOnly: true, of: [{ type: 'string' }], options: { list: ['shy', 'energetic', 'senior', 'special needs'] } },
 

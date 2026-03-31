@@ -46,7 +46,7 @@ export default async function MemberProfilePage({ params }) {
       serverClient.fetch(
         `*[_type == "catSitter" && _id == $id && memberVerified == true][0]{
           _id, name, location, bio, email, phone, contactPreference,
-          bedrooms, householdSize, cats, maxCats, feedingTypes, behavioralTraits,
+          bedrooms, householdSize, cats, maxHomesPerDay, feedingTypes, behavioralTraits,
           canSit, needsSitting, alwaysAvailable, availableDates,
           hideEmail, hideWhatsApp
         }`,

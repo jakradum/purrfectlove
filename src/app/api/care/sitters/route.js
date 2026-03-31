@@ -35,7 +35,7 @@ export async function GET(request) {
         "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
         hideEmail, hideWhatsApp,
-        cats, availableDates, alwaysAvailable, unavailableDates, maxCats,
+        cats, availableDates, alwaysAvailable, unavailableDates, maxHomesPerDay,
         feedingTypes, behavioralTraits
       }`
     } else {
@@ -45,7 +45,7 @@ export async function GET(request) {
         "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
         hideEmail, hideWhatsApp,
-        maxCats, feedingTypes, behavioralTraits, availableDates, alwaysAvailable, unavailableDates
+        maxHomesPerDay, feedingTypes, behavioralTraits, availableDates, alwaysAvailable, unavailableDates
       }`
     }
 
