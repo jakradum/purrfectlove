@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { OpenLocationCode } from 'open-location-code';
@@ -221,6 +221,20 @@ export default function ProfileEditor({ initialData }) {
   const [username, setUsername] = useState(initialData.username || '');
   const [usernameRegenerated, setUsernameRegenerated] = useState(!!initialData.usernameRegenerated);
   const [regenLoading, setRegenLoading] = useState(false);
+
+  const PLUS_CODE_PLACEHOLDERS = [
+    'e.g. 7J4V+XH Bangalore, India',
+    'e.g. GV3C+9X Stuttgart, Germany',
+  ];
+  const [locationPlaceholder, setLocationPlaceholder] = useState(PLUS_CODE_PLACEHOLDERS[0]);
+  useEffect(() => {
+    let idx = 0;
+    const interval = setInterval(() => {
+      idx = (idx + 1) % PLUS_CODE_PLACEHOLDERS.length;
+      setLocationPlaceholder(PLUS_CODE_PLACEHOLDERS[idx]);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, []);
 
   const olc = new OpenLocationCode();
 
@@ -730,7 +744,7 @@ export default function ProfileEditor({ initialData }) {
             className={styles.profileInput}
             value={locationInput}
             onChange={(e) => handleLocationChange(e.target.value)}
-            placeholder="e.g. GV3C+9X"
+            placeholder={locationPlaceholder}
             style={!form.location?.lat ? { borderColor: '#ef4444' } : {}}
           />
           {locationError && (
