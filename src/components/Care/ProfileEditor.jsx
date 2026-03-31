@@ -152,12 +152,12 @@ export default function ProfileEditor({ initialData }) {
 
     const token = trimmed.split(/\s+/)[0];
     if (!token.includes('+') || !olc.isValid(token)) {
-      setLocationError('Enter a valid Plus Code (e.g. VHQ2+FH or 8J4VVH Q2+FH)');
+      setLocationError('Enter a valid full Plus Code (e.g. 7J4VVHQ2+FH) from plus.codes/map');
       update('location', null);
       return;
     }
 
-    if (token.includes('+') && olc.isValid(token) && olc.isFull(token)) {
+    if (olc.isFull(token)) {
       try {
         const decoded = olc.decode(token);
         update('location', {
@@ -168,8 +168,10 @@ export default function ProfileEditor({ initialData }) {
         return;
       } catch { /* fall through */ }
     }
-    // Short Plus Code with city — server will resolve coords on save
-    update('location', { name: trimmed });
+
+    // Short code — cannot decode without a reference; ask for full code
+    setLocationError('This looks like a short code. Please use the full code from plus.codes/map (e.g. 7J4VVHQ2+FH)');
+    update('location', null);
   };
 
   const handleStatusToggle = (field, value) => {
@@ -449,7 +451,7 @@ export default function ProfileEditor({ initialData }) {
             className={styles.profileInput}
             value={locationInput}
             onChange={(e) => handleLocationChange(e.target.value)}
-            placeholder="e.g. VHQ2+FH Bengaluru or 8J4VVH Q2+FH"
+            placeholder="e.g. GV3C+9X"
           />
           {locationError && (
             <p className={styles.hint} style={{ color: '#ef4444' }}>{locationError}</p>
@@ -464,7 +466,7 @@ export default function ProfileEditor({ initialData }) {
           )}
         </div>
         <p className={styles.hint}>
-          Find your apartment&apos;s Plus Code here —{' '}
+          Find your apartment&apos;s Plus Code here:{' '}
           <a href="https://plus.codes/map" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--hunter-green)' }}>plus.codes/map</a>
         </p>
       </div>

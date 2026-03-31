@@ -9,7 +9,7 @@ export default function IncompleteProfileGate() {
           Complete your profile to join the community
         </h2>
         <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-          Finish all the mandatory fields — this will help us help you!
+          Finish all the mandatory fields, this will help us help you!
         </p>
         <Link href="/profile" className={styles.btn} style={{ display: 'inline-flex', alignItems: 'center', justifyContent: 'center', width: 'auto', padding: '0.6rem 1.5rem', textDecoration: 'none' }}>
           Set up profile
