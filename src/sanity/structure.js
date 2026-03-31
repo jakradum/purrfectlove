@@ -1,6 +1,7 @@
 import {ApplicantInfoDisplay} from './components/ApplicantInfoDisplay'
 import {ContactMessageDisplay} from './components/ContactMessageDisplay'
 import {MemberMessageLog} from './components/MemberMessageLog'
+import {DeletionRequestedActions} from './components/DeletionRequestedActions'
 
 export const structure = (S) =>
   S.list()
@@ -198,6 +199,24 @@ export const structure = (S) =>
                         .views([
                           S.view.form().title('Profile'),
                           S.view.component(MemberMessageLog).title('Messages'),
+                        ])
+                    )
+                ),
+              S.listItem()
+                .title('Deletion Requested')
+                .icon(() => '🔴')
+                .child(
+                  S.documentTypeList('catSitter')
+                    .title('Deletion Requested')
+                    .filter('_type == "catSitter" && deletionRequested == true')
+                    .defaultOrdering([{ field: 'deletionRequestedAt', direction: 'desc' }])
+                    .child((documentId) =>
+                      S.document()
+                        .documentId(documentId)
+                        .schemaType('catSitter')
+                        .views([
+                          S.view.form().title('Profile (read-only)'),
+                          S.view.component(DeletionRequestedActions).title('Deletion Actions'),
                         ])
                     )
                 ),

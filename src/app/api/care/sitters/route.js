@@ -29,23 +29,23 @@ export async function GET(request) {
 
     let query
     if (type === 'needsSitting') {
-      query = `*[_type == "catSitter" && needsSitting == true && memberVerified == true && defined(name) && defined(location.lat)]{
+      query = `*[_type == "catSitter" && needsSitting == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
         _id, name, username, location, bio, contactPreference, siteAdmin,
         "email": select(hideEmail == true => null, email),
         "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
         hideEmail, hideWhatsApp,
-        cats, availableDates, alwaysAvailable, unavailableDates, maxHomesPerDay,
+        cats, availableDates, alwaysAvailable, unavailableDates, unavailableRanges, maxHomesPerDay,
         feedingTypes, behavioralTraits
       }`
     } else {
-      query = `*[_type == "catSitter" && canSit == true && memberVerified == true && defined(name) && defined(location.lat)]{
+      query = `*[_type == "catSitter" && canSit == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
         _id, name, username, location, bio, contactPreference, siteAdmin,
         "email": select(hideEmail == true => null, email),
         "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
         hideEmail, hideWhatsApp,
-        maxHomesPerDay, feedingTypes, behavioralTraits, availableDates, alwaysAvailable, unavailableDates
+        maxHomesPerDay, feedingTypes, behavioralTraits, availableDates, alwaysAvailable, unavailableDates, unavailableRanges
       }`
     }
 

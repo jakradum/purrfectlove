@@ -227,12 +227,24 @@ export async function POST(request) {
       isTeamMember: !catSitter && !!teamMember,
     })
 
+    // Auto-generate username if catSitter has none (must happen before welcome email)
+    let resolvedUsername = catSitter?.username || null
+    if (catSitter && !catSitter.username) {
+      try {
+        resolvedUsername = await generateUniqueUsername(sanity)
+        await sanity.patch(catSitter._id).set({ username: resolvedUsername }).commit()
+      } catch (err) {
+        console.error('username generation error:', err)
+        // Non-fatal
+      }
+    }
+
     // Send welcome email on first login (catSitters only, not pure teamMembers)
     if (catSitter && !catSitter.welcomeSent) {
       const recipientEmail = catSitter.email || (type === 'email' ? identifier : null)
       if (recipientEmail && process.env.NODE_ENV === 'production') {
         const locale = catSitter.locale || 'en'
-        const firstName = (catSitter.name || '').split(' ')[0] || 'there'
+        const firstName = resolvedUsername || (catSitter.name || '').split(' ')[0] || 'there'
         const unsubUrl = `https://care.purrfectlove.org/api/care/unsubscribe?id=${catSitter._id}`
         const isDE = locale === 'de'
         try {
@@ -249,17 +261,6 @@ export async function POST(request) {
           console.error('welcome email error:', err)
           // Non-fatal — don't block login
         }
-      }
-    }
-
-    // Auto-generate username if catSitter has none
-    if (catSitter && !catSitter.username) {
-      try {
-        const username = await generateUniqueUsername(sanity)
-        await sanity.patch(catSitter._id).set({ username }).commit()
-      } catch (err) {
-        console.error('username generation error:', err)
-        // Non-fatal
       }
     }
 

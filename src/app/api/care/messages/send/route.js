@@ -71,6 +71,15 @@ export async function POST(request) {
 
     const sitterId = payload.sitterId
 
+    // Block deletion-pending accounts from sending messages
+    const senderDoc = await serverClient.fetch(
+      `*[_type == "catSitter" && _id == $id][0]{ deletionRequested }`,
+      { id: sitterId }
+    )
+    if (senderDoc?.deletionRequested) {
+      return Response.json({ error: 'Your account is pending deletion. You cannot send messages during this time.' }, { status: 403 })
+    }
+
     // Check rate limits
     const dailyCount = getRecentTimestamps(dailyMsgMap, sitterId).length
     if (dailyCount >= 10) {

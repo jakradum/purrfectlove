@@ -45,6 +45,16 @@ function isAvailableForDates(sitter, startDate, endDate) {
   const end = new Date(endDate);
 
   if (sitter.alwaysAvailable) {
+    // Check new range-based blocked periods
+    const ranges = sitter.unavailableRanges || [];
+    for (const r of ranges) {
+      if (!r.start || !r.end) continue;
+      const rStart = new Date(r.start);
+      const rEnd = new Date(r.end);
+      // Overlap: blocked range overlaps the requested dates
+      if (rStart <= end && rEnd >= start) return false;
+    }
+    // Legacy single-date list fallback
     const unavail = sitter.unavailableDates || [];
     for (const d of unavail) {
       const date = new Date(d);

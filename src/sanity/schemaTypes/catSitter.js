@@ -69,7 +69,23 @@ export default {
 
     // Availability
     { name: 'alwaysAvailable', title: 'Always Available', type: 'boolean', initialValue: false, readOnly: true },
-    { name: 'unavailableDates', title: 'Unavailable Dates', type: 'array', readOnly: true, of: [{ type: 'date' }], hidden: ({ parent }) => !parent?.alwaysAvailable },
+    { name: 'unavailableDates', title: 'Unavailable Dates (legacy)', type: 'array', readOnly: true, of: [{ type: 'date' }], hidden: ({ parent }) => !parent?.alwaysAvailable, description: 'Legacy single-date list. New UI uses unavailableRanges.' },
+    {
+      name: 'unavailableRanges',
+      title: 'Unavailable Ranges',
+      type: 'array',
+      readOnly: true,
+      of: [{
+        type: 'object',
+        fields: [
+          { name: 'start', title: 'Unavailable From', type: 'date' },
+          { name: 'end', title: 'Unavailable Until', type: 'date' },
+        ],
+        preview: { select: { start: 'start', end: 'end' }, prepare({ start, end }) { return { title: `${start || '?'} → ${end || '?'}` } } }
+      }],
+      hidden: ({ parent }) => !parent?.alwaysAvailable,
+      description: 'Date ranges when the member is not available, despite alwaysAvailable being true.'
+    },
     {
       name: 'availableDates',
       title: 'Available Date Ranges',
@@ -107,6 +123,7 @@ export default {
     { name: 'deletionRequested', title: 'Deletion Requested', type: 'boolean', initialValue: false, description: '⚠ Member has requested account deletion. Delete promptly and log a deletedAccount record.' },
     { name: 'deletionReason', title: 'Deletion Reason', type: 'text', rows: 3 },
     { name: 'deletionRequestedAt', title: 'Deletion Requested At', type: 'datetime' },
+    { name: 'confirmationSentAt', title: 'Deletion Confirmation Email Sent At', type: 'datetime', description: 'Timestamp when the deletion confirmation email was sent to the member.' },
   ],
   preview: {
     select: { title: 'name', username: 'username', subtitle: 'email', verified: 'memberVerified', admin: 'siteAdmin', deletionRequested: 'deletionRequested', media: 'photo' },

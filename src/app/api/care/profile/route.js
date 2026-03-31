@@ -94,7 +94,7 @@ export async function PATCH(request) {
     // Only allow member-editable fields
     const allowedFields = [
       'name', 'location', 'contactPreference', 'bio', 'bedrooms', 'householdSize',
-      'cats', 'alwaysAvailable', 'unavailableDates', 'availableDates',
+      'cats', 'alwaysAvailable', 'unavailableDates', 'unavailableRanges', 'availableDates',
       'maxHomesPerDay', 'feedingTypes', 'behavioralTraits', 'canSit', 'needsSitting',
       'hideEmail', 'hideWhatsApp', 'newsletterOptOut',
     ]

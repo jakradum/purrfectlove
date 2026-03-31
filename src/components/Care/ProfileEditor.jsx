@@ -178,7 +178,8 @@ function formFromData(data) {
     householdSize: data.householdSize ?? '',
     cats: data.cats || [],
     alwaysAvailable: data.alwaysAvailable ?? false,
-    unavailableDates: data.unavailableDates || [],
+    unavailableDates: data.unavailableDates || [], // legacy single-date array, kept for backwards compat
+    unavailableRanges: data.unavailableRanges || [],
     availableDates: data.availableDates || [],
     maxHomesPerDay: data.maxHomesPerDay ?? '',
     feedingTypes: data.feedingTypes || [],
@@ -367,13 +368,19 @@ export default function ProfileEditor({ initialData }) {
 
   // ── READ MODE ──────────────────────────────────────────────────────────────
   if (!isEditing) {
+    const deletionPending = !!initialData.deletionRequested;
     return (
       <div className={styles.profilePage}>
+        {deletionPending && (
+          <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1.25rem', color: '#b91c1c', fontSize: '0.9rem', lineHeight: 1.6 }}>
+            <strong>Your deletion request is pending.</strong> Your account will be removed within 48 hours. You cannot use the network during this time.
+          </div>
+        )}
         <div className={styles.profileHeader} style={{ alignItems: 'flex-start' }}>
           <div>
             <Link href="/" className={styles.backLink}>← Back to network</Link>
-            <h1 className={styles.pageTitle}>{username || form.name || 'My Profile'}</h1>
-            {username && form.name && (
+            <h1 className={styles.pageTitle}>{username ? `${username} — you` : (form.name || 'My Profile')}</h1>
+            {username && (
               <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
                 Your community username · real name only visible to you
               </p>
@@ -383,16 +390,18 @@ export default function ProfileEditor({ initialData }) {
 
         <CompletionIndicator form={form} onEdit={() => setIsEditing(true)} />
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '1rem 0' }}>
-          <button
-            type="button"
-            className={styles.editBtn}
-            onClick={() => setIsEditing(true)}
-            title="Edit profile"
-          >
-            <PencilIcon /> Edit
-          </button>
-        </div>
+        {!deletionPending && (
+          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '1rem 0' }}>
+            <button
+              type="button"
+              className={styles.editBtn}
+              onClick={() => setIsEditing(true)}
+              title="Edit profile"
+            >
+              <PencilIcon /> Edit
+            </button>
+          </div>
+        )}
 
         {/* Availability — shown first */}
         {(form.canSit || form.alwaysAvailable || form.availableDates?.length > 0) && (
@@ -619,8 +628,11 @@ export default function ProfileEditor({ initialData }) {
               ) : (
                 <>
                   <h2 style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Request account deletion</h2>
+                  <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
+                    Once submitted, your profile will be immediately locked — you won't be able to edit it, send messages, or appear in the marketplace. Your account will be permanently deleted within 48 hours.
+                  </p>
                   <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.875rem', marginBottom: '1rem' }}>
-                    We'll delete your account within 48 hours. Please tell us why you're leaving.
+                    Please tell us why you're leaving.
                   </p>
                   <textarea
                     rows={4}
@@ -814,39 +826,51 @@ export default function ProfileEditor({ initialData }) {
         </div>
         {form.alwaysAvailable ? (
           <div className={styles.formGroup}>
-            <label className={styles.profileLabel}>{t.fields.unavailableDates}</label>
-            <p className={styles.hint}>Pick each date you won&apos;t be available.</p>
-            <input
-              type="date"
-              className={styles.profileInput}
-              value=""
-              min={new Date().toISOString().split('T')[0]}
-              onChange={(e) => {
-                const val = e.target.value;
-                if (val && !(form.unavailableDates || []).includes(val)) {
-                  update('unavailableDates', [...(form.unavailableDates || []), val].sort());
-                }
-                e.target.value = '';
-              }}
-              style={{ maxWidth: '180px' }}
-            />
-            {(form.unavailableDates || []).length > 0 && (
-              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.4rem', marginTop: '0.6rem' }}>
-                {(form.unavailableDates || []).map((d) => (
-                  <span key={d} style={{ display: 'inline-flex', alignItems: 'center', gap: '0.25rem', background: 'rgba(200,92,63,0.1)', border: '1px solid rgba(200,92,63,0.25)', borderRadius: '6px', padding: '0.2rem 0.5rem 0.2rem 0.65rem', fontSize: '0.8rem', color: 'var(--text-dark)' }}>
-                    {d}
-                    <button
-                      type="button"
-                      onClick={() => update('unavailableDates', (form.unavailableDates || []).filter((x) => x !== d))}
-                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: '0 0 0 0.15rem', lineHeight: 1, color: '#c85c3f', fontSize: '1rem', fontWeight: 700 }}
-                      title="Remove date"
-                    >
-                      ×
-                    </button>
-                  </span>
-                ))}
-              </div>
-            )}
+            <label className={styles.profileLabel}>Blocked date ranges</label>
+            <p className={styles.hint}>Add ranges when you won&apos;t be available. Both dates required per range.</p>
+            <div className={styles.dateRangeList}>
+              {(form.unavailableRanges || []).map((range, idx) => (
+                <div key={idx} className={styles.dateRangeRow}>
+                  <input
+                    type="date"
+                    className={styles.profileInput}
+                    placeholder="Unavailable from"
+                    value={range.start || ''}
+                    onChange={(e) => {
+                      const updated = (form.unavailableRanges || []).map((r, i) => i === idx ? { ...r, start: e.target.value } : r);
+                      update('unavailableRanges', updated);
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <span>→</span>
+                  <input
+                    type="date"
+                    className={styles.profileInput}
+                    placeholder="Unavailable until"
+                    value={range.end || ''}
+                    onChange={(e) => {
+                      const updated = (form.unavailableRanges || []).map((r, i) => i === idx ? { ...r, end: e.target.value } : r);
+                      update('unavailableRanges', updated);
+                    }}
+                    style={{ flex: 1 }}
+                  />
+                  <button
+                    type="button"
+                    className={styles.removeBtnSmall}
+                    onClick={() => update('unavailableRanges', (form.unavailableRanges || []).filter((_, i) => i !== idx))}
+                  >
+                    Remove
+                  </button>
+                </div>
+              ))}
+            </div>
+            <button
+              type="button"
+              className={styles.addBtn}
+              onClick={() => update('unavailableRanges', [...(form.unavailableRanges || []), { start: '', end: '' }])}
+            >
+              + Add blocked range
+            </button>
           </div>
         ) : (
           <div className={styles.formGroup}>
