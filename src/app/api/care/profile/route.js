@@ -25,20 +25,29 @@ async function resolveLocation(name) {
   if (codeToken.includes('+') && olc.isValid(codeToken)) {
     if (olc.isFull(codeToken)) {
       const decoded = olc.decode(codeToken)
-      return { lat: parseFloat(decoded.latitudeCenter.toFixed(6)), lng: parseFloat(decoded.longitudeCenter.toFixed(6)) }
+      // Normalise the stored name to just the full code (drop any trailing text)
+      return {
+        fullCode: codeToken.toUpperCase(),
+        lat: parseFloat(decoded.latitudeCenter.toFixed(6)),
+        lng: parseFloat(decoded.longitudeCenter.toFixed(6)),
+      }
     }
-    // Short code — geocode city part as reference
+    // Short code — geocode the locality part as a reference point
     const cityPart = parts.slice(1).join(' ')
     if (cityPart) {
       const ref = await geocodeCity(cityPart)
       if (ref) {
         const fullCode = olc.recoverNearest(codeToken, ref.lat, ref.lng)
         const decoded = olc.decode(fullCode)
-        return { lat: parseFloat(decoded.latitudeCenter.toFixed(6)), lng: parseFloat(decoded.longitudeCenter.toFixed(6)) }
+        return {
+          fullCode: fullCode.toUpperCase(),
+          lat: parseFloat(decoded.latitudeCenter.toFixed(6)),
+          lng: parseFloat(decoded.longitudeCenter.toFixed(6)),
+        }
       }
     }
   }
-  // Plain text — try geocoding the whole string
+  // Plain text — try geocoding the whole string (no fullCode to surface)
   return geocodeCity(trimmed)
 }
 
@@ -106,11 +115,20 @@ export async function PATCH(request) {
       }
     }
 
-    // Resolve location coords if name is set but coords are missing
+    // Resolve location coords if name is set but coords are missing.
+    // Also normalise location.name to the full global Plus Code when resolved.
     if (patch.location?.name && (patch.location.lat == null || patch.location.lng == null)) {
       try {
-        const coords = await resolveLocation(patch.location.name)
-        if (coords) patch.location = { ...patch.location, ...coords }
+        const resolved = await resolveLocation(patch.location.name)
+        if (resolved) {
+          patch.location = {
+            ...patch.location,
+            lat: resolved.lat,
+            lng: resolved.lng,
+            // Overwrite name with the canonical full code when available
+            ...(resolved.fullCode ? { name: resolved.fullCode } : {}),
+          }
+        }
       } catch {
         // proceed without coords
       }

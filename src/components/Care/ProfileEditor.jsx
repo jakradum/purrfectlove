@@ -252,24 +252,34 @@ export default function ProfileEditor({ initialData }) {
     });
   };
 
+  function getCountryFromPhone(phone) {
+    if (!phone) return null;
+    if (phone.startsWith('+91')) return 'India';
+    if (phone.startsWith('+49')) return 'Germany';
+    return null;
+  }
+
   const handleLocationChange = (raw) => {
     setLocationInput(raw);
     setLocationError('');
     const trimmed = raw.trim();
     if (!trimmed) { update('location', null); return; }
 
-    const token = trimmed.split(/\s+/)[0];
+    const parts = trimmed.split(/\s+/);
+    const token = parts[0];
+
     if (!token.includes('+') || !olc.isValid(token)) {
-      setLocationError('Enter a valid full Plus Code (e.g. 7J4VVHQ2+FH) from plus.codes/map');
+      setLocationError('Enter a valid Plus Code from plus.codes/map (e.g. 7J4VVHQ2+FC or VHQ2+FC Bangalore, India)');
       update('location', null);
       return;
     }
 
     if (olc.isFull(token)) {
+      // Full global code — decode immediately on the client
       try {
         const decoded = olc.decode(token);
         update('location', {
-          name: trimmed,
+          name: token.toUpperCase(), // store just the normalised code
           lat: parseFloat(decoded.latitudeCenter.toFixed(6)),
           lng: parseFloat(decoded.longitudeCenter.toFixed(6)),
         });
@@ -277,9 +287,18 @@ export default function ProfileEditor({ initialData }) {
       } catch { /* fall through */ }
     }
 
-    // Short code — cannot decode without a reference; ask for full code
-    setLocationError('This looks like a short code. Please use the full code from plus.codes/map (e.g. 7J4VVHQ2+FH)');
-    update('location', null);
+    // Short code — needs a reference locality to recover the full code.
+    // If no locality was provided, auto-append the user's country from their phone prefix.
+    const locality = parts.slice(1).join(' ').trim();
+    let nameToStore;
+    if (locality) {
+      nameToStore = trimmed; // e.g. "VHQ2+FC Bangalore, India"
+    } else {
+      const country = getCountryFromPhone(initialData.phone);
+      nameToStore = country ? `${token} ${country}` : token;
+    }
+    // Store without coords — server will geocode and recover the full code on save
+    update('location', { name: nameToStore, lat: null, lng: null });
   };
 
   const handleStatusToggle = (field, value) => {
@@ -751,12 +770,19 @@ export default function ProfileEditor({ initialData }) {
             <p className={styles.hint} style={{ color: '#ef4444' }}>{locationError}</p>
           )}
           {!locationError && form.location?.lat != null && (
-            <p className={styles.hint} style={{ fontFamily: 'monospace' }}>
-              📍 {form.location.lat}, {form.location.lng}
-            </p>
+            <>
+              {olc.isValid(form.location.name) && olc.isFull(form.location.name) && (
+                <p className={styles.hint} style={{ color: 'var(--text-light)', fontFamily: 'monospace' }}>
+                  Resolved to: {form.location.name}
+                </p>
+              )}
+              <p className={styles.hint} style={{ fontFamily: 'monospace' }}>
+                📍 {form.location.lat}, {form.location.lng}
+              </p>
+            </>
           )}
           {!locationError && form.location?.name && form.location.lat == null && (
-            <p className={styles.hint}>Coordinates will be resolved when you save.</p>
+            <p className={styles.hint}>Will resolve to full code on save.</p>
           )}
         </div>
         <p className={styles.hint}>
