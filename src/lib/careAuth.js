@@ -1,6 +1,9 @@
 import { SignJWT, jwtVerify } from 'jose'
 
-const secret = new TextEncoder().encode(process.env.JWT_SECRET || 'dev-secret-change-in-prod')
+if (!process.env.JWT_SECRET) {
+  throw new Error('JWT_SECRET environment variable is not set')
+}
+const secret = new TextEncoder().encode(process.env.JWT_SECRET)
 
 export async function signToken(payload) {
   return new SignJWT(payload)
