@@ -132,10 +132,6 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
     ? (locale === 'de' ? 'Melde dich mit deiner Handynummer an.' : 'Sign in with your phone number.')
     : (locale === 'de' ? 'Melde dich mit deiner E-Mail-Adresse an.' : 'Sign in with your email address.');
 
-  const toggleLabel = mode === 'phone'
-    ? (locale === 'de' ? 'E-Mail stattdessen verwenden' : 'Use email instead')
-    : (locale === 'de' ? 'Telefon stattdessen verwenden' : 'Use phone instead');
-
   const sentVia = mode === 'phone'
     ? (locale === 'de' ? 'per SMS' : 'via SMS')
     : (locale === 'de' ? 'per E-Mail' : 'via email');
@@ -159,6 +155,38 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
           </div>
         ) : step === 'identifier' ? (
           <form onSubmit={handleSendCode}>
+            {/* Mode tabs */}
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+              <button
+                type="button"
+                onClick={() => { setMode('phone'); setError(''); setEmail(''); }}
+                disabled={loading}
+                style={{
+                  flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1.5px solid',
+                  cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, fontFamily: 'inherit',
+                  borderColor: mode === 'phone' ? 'var(--hunter-green)' : '#ddd',
+                  background: mode === 'phone' ? 'var(--hunter-green)' : 'transparent',
+                  color: mode === 'phone' ? '#fff' : '#666',
+                }}
+              >
+                {locale === 'de' ? 'Telefon' : 'Phone'}
+              </button>
+              <button
+                type="button"
+                onClick={() => { setMode('email'); setError(''); setPhoneNumber(''); }}
+                disabled={loading}
+                style={{
+                  flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1.5px solid',
+                  cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, fontFamily: 'inherit',
+                  borderColor: mode === 'email' ? 'var(--hunter-green)' : '#ddd',
+                  background: mode === 'email' ? 'var(--hunter-green)' : 'transparent',
+                  color: mode === 'email' ? '#fff' : '#666',
+                }}
+              >
+                {locale === 'de' ? 'E-Mail' : 'Email'}
+              </button>
+            </div>
+
             {mode === 'phone' ? (
               <div className={styles.formGroup}>
                 <label className={styles.label} htmlFor="phone">
@@ -217,11 +245,6 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                 : (locale === 'de' ? 'Code senden' : 'Send code')}
             </button>
 
-            <div className={styles.resendRow}>
-              <button type="button" className={styles.resendBtn} onClick={toggleMode} disabled={loading}>
-                {toggleLabel}
-              </button>
-            </div>
           </form>
         ) : (
           <form onSubmit={handleVerify}>
