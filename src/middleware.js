@@ -6,23 +6,27 @@ export async function middleware(request) {
   const host = request.headers.get('host') || '';
   const isCareDomain = host === 'care.purrfectlove.org';
 
+  // Public paths that never require authentication
+  const PUBLIC_PREFIXES = [
+    '/care/login', '/care/privacy', '/care/join',
+    '/de/care/login', '/de/care/privacy', '/de/care/join',
+    '/api/care/send-otp', '/api/care/verify-otp', '/api/care/join',
+    // Subdomain equivalents (before the /care rewrite is applied)
+    '/login', '/privacy', '/join',
+  ];
+
+  const isPublic = PUBLIC_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
+
   // Care portal auth protection
   let isProtectedCarePath = false;
   let loginUrl;
 
   if (isCareDomain) {
-    // On subdomain, protect all paths except /login, /privacy, and OTP endpoints
-    const isLoginPath = pathname === '/login';
-    const isPrivacyPath = pathname === '/privacy';
-    const isJoinPath = pathname === '/join';
-    const isOtpPath = pathname.startsWith('/api/care/send-otp') || pathname.startsWith('/api/care/verify-otp') || pathname.startsWith('/api/care/join');
-    isProtectedCarePath = !isLoginPath && !isPrivacyPath && !isJoinPath && !isOtpPath;
+    isProtectedCarePath = !isPublic;
     loginUrl = new URL('/login', request.url);
   } else {
-    // On main domain, protect /care/* and /de/care/* except login, privacy, and OTP endpoints
-    const isDeCarePath = pathname.startsWith('/de/care') && !pathname.startsWith('/de/care/login') && !pathname.startsWith('/de/care/privacy') && !pathname.startsWith('/de/care/join');
-    const isEnCarePath = pathname.startsWith('/care') && !pathname.startsWith('/care/login') && !pathname.startsWith('/care/privacy') && !pathname.startsWith('/care/join');
-    isProtectedCarePath = (isDeCarePath || isEnCarePath) &&
+    const isCareRoute = pathname.startsWith('/care') || pathname.startsWith('/de/care');
+    isProtectedCarePath = isCareRoute && !isPublic &&
       !pathname.startsWith('/api/care/send-otp') &&
       !pathname.startsWith('/api/care/verify-otp') &&
       !pathname.startsWith('/api/care/join');
