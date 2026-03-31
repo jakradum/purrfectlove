@@ -194,6 +194,12 @@ export async function POST(request) {
     }
     await sanity.create(otpDoc)
 
+    // In development, skip external sends and log the OTP to the terminal
+    if (process.env.NODE_ENV !== 'production') {
+      console.log(`\n[DEV] OTP for ${identifier}: ${otp}\n`)
+      return Response.json({ success: true })
+    }
+
     // Send OTP
     if (type === 'phone') {
       const twilioClient = twilio(process.env.TWILIO_ACCOUNT_SID, process.env.TWILIO_AUTH_TOKEN)
