@@ -21,7 +21,9 @@ export async function POST(request) {
 
     // Fetch the document — must be a deletion-requested catSitter
     const doc = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id && deletionRequested == true][0]{ _id, email, username, name }`,
+      `*[_type == "catSitter" && _id == $id && deletionRequested == true][0]{
+        _id, email, username, name, deletionReason
+      }`,
       { id: documentId }
     )
 
@@ -29,18 +31,16 @@ export async function POST(request) {
       return Response.json({ error: 'Document not found or deletion not requested' }, { status: 404 })
     }
 
-    if (!doc.email) {
-      return Response.json({ error: 'Member has no email on file' }, { status: 422 })
-    }
-
     const displayName = doc.username || doc.name || 'there'
 
-    await resend.emails.send({
-      from: 'Purrfect Love <no-reply@purrfectlove.org>',
-      replyTo: 'support@purrfectlove.org',
-      to: [doc.email],
-      subject: 'Your Purrfect Love Community account has been deleted',
-      html: `<!DOCTYPE html>
+    // Step 1: Send confirmation email (non-fatal if no email on file)
+    if (doc.email) {
+      await resend.emails.send({
+        from: 'Purrfect Love <no-reply@purrfectlove.org>',
+        replyTo: 'support@purrfectlove.org',
+        to: [doc.email],
+        subject: 'Your Purrfect Love Community account has been deleted',
+        html: `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
 <body style="margin:0;padding:0;font-family:Georgia,'Times New Roman',serif;background-color:#FFF8F0;color:#2D2D2D;">
@@ -76,11 +76,20 @@ export async function POST(request) {
   </table>
 </body>
 </html>`,
-      text: `Hi ${displayName},\n\nYour Purrfect Love Community account has been deleted as requested.\n\n– The PL Team`,
+        text: `Hi ${displayName},\n\nYour Purrfect Love Community account has been deleted as requested.\n\n– The PL Team`,
+      })
+    }
+
+    // Step 2: Create deletedAccount audit record (before deleting the doc so we have the data)
+    await serverClient.create({
+      _type: 'deletedAccount',
+      generatedUsername: doc.username || null,
+      deletedAt: new Date().toISOString(),
+      reason: doc.deletionReason || null,
     })
 
-    // Log confirmationSentAt on the document
-    await serverClient.patch(documentId).set({ confirmationSentAt: new Date().toISOString() }).commit()
+    // Step 3: Delete the catSitter document
+    await serverClient.delete(documentId)
 
     return Response.json({ success: true })
   } catch (error) {

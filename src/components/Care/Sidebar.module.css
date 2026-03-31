@@ -93,6 +93,12 @@
   overflow: hidden;
 }
 
+.linkDisabled {
+  opacity: 0.35;
+  cursor: not-allowed;
+  pointer-events: none;
+}
+
 .logoutBtn {
   display: flex;
   align-items: center;
@@ -166,5 +172,11 @@
 
   .bottomLabel {
     font-size: 0.65rem;
+  }
+
+  .bottomLinkDisabled {
+    opacity: 0.35;
+    cursor: not-allowed;
+    pointer-events: none;
   }
 }

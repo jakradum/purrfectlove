@@ -10,6 +10,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
   const pathname = usePathname();
   const router = useRouter();
   const [unreadCount, setUnreadCount] = useState(0);
+  const [deletionPending, setDeletionPending] = useState(false);
 
   useEffect(() => {
     let cancelled = false;
@@ -25,6 +26,13 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
     fetchUnread();
     const interval = setInterval(fetchUnread, 30000);
     return () => { cancelled = true; clearInterval(interval); };
+  }, []);
+
+  useEffect(() => {
+    fetch('/api/care/profile')
+      .then(r => r.ok ? r.json() : null)
+      .then(data => { if (data?.deletionRequested) setDeletionPending(true); })
+      .catch(() => {});
   }, []);
 
   const handleLogout = async () => {
@@ -46,8 +54,8 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
     : { network: 'Get Care', inbox: 'Inbox', profile: 'Profile', logout: 'Log out' };
 
   const links = [
-    { path: '', icon: LayoutGrid, label: t.network },
-    { path: '/inbox', icon: MessageSquare, label: t.inbox, badge: unreadCount },
+    { path: '', icon: LayoutGrid, label: t.network, lockable: true },
+    { path: '/inbox', icon: MessageSquare, label: t.inbox, badge: unreadCount, lockable: true },
     { path: '/profile', icon: User, label: t.profile },
   ];
 
@@ -56,19 +64,37 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
       {/* Desktop sidebar */}
       <aside className={styles.sidebar}>
         <nav className={styles.nav}>
-          {links.map(({ path, icon: Icon, label, badge }) => (
-            <Link
-              key={path}
-              href={`${basePath}${path}` || '/'}
-              className={`${styles.link} ${isActive(path) ? styles.linkActive : ''}`}
-            >
-              <span className={styles.iconWrap}>
-                <Icon size={20} strokeWidth={1.75} />
-                {badge > 0 && <span className={styles.badge}>{badge > 9 ? '9+' : badge}</span>}
-              </span>
-              <span className={styles.label}>{label}</span>
-            </Link>
-          ))}
+          {links.map(({ path, icon: Icon, label, badge, lockable }) => {
+            const disabled = deletionPending && lockable;
+            const active = isActive(path);
+            if (disabled) {
+              return (
+                <span
+                  key={path}
+                  className={`${styles.link} ${styles.linkDisabled}`}
+                  title="Your account is pending deletion"
+                >
+                  <span className={styles.iconWrap}>
+                    <Icon size={20} strokeWidth={1.75} />
+                  </span>
+                  <span className={styles.label}>{label}</span>
+                </span>
+              );
+            }
+            return (
+              <Link
+                key={path}
+                href={`${basePath}${path}` || '/'}
+                className={`${styles.link} ${active ? styles.linkActive : ''}`}
+              >
+                <span className={styles.iconWrap}>
+                  <Icon size={20} strokeWidth={1.75} />
+                  {badge > 0 && <span className={styles.badge}>{badge > 9 ? '9+' : badge}</span>}
+                </span>
+                <span className={styles.label}>{label}</span>
+              </Link>
+            );
+          })}
         </nav>
         <button onClick={handleLogout} className={styles.logoutBtn}>
           <LogOut size={20} strokeWidth={1.75} />
@@ -78,19 +104,35 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
 
       {/* Mobile bottom nav — hidden on login/join */}
       <nav className={`${styles.bottomNav} ${isAuthPage ? styles.bottomNavHidden : ''}`}>
-        {links.map(({ path, icon: Icon, label, badge }) => (
-          <Link
-            key={path}
-            href={`${basePath}${path}` || '/'}
-            className={`${styles.bottomLink} ${isActive(path) ? styles.bottomLinkActive : ''}`}
-          >
-            <span className={styles.iconWrap}>
-              <Icon size={22} strokeWidth={1.75} />
-              {badge > 0 && <span className={styles.badge}>{badge > 9 ? '9+' : badge}</span>}
-            </span>
-            <span className={styles.bottomLabel}>{label}</span>
-          </Link>
-        ))}
+        {links.map(({ path, icon: Icon, label, badge, lockable }) => {
+          const disabled = deletionPending && lockable;
+          const active = isActive(path);
+          if (disabled) {
+            return (
+              <span
+                key={path}
+                className={`${styles.bottomLink} ${styles.bottomLinkDisabled}`}
+                title="Your account is pending deletion"
+              >
+                <Icon size={22} strokeWidth={1.75} />
+                <span className={styles.bottomLabel}>{label}</span>
+              </span>
+            );
+          }
+          return (
+            <Link
+              key={path}
+              href={`${basePath}${path}` || '/'}
+              className={`${styles.bottomLink} ${active ? styles.bottomLinkActive : ''}`}
+            >
+              <span className={styles.iconWrap}>
+                <Icon size={22} strokeWidth={1.75} />
+                {badge > 0 && <span className={styles.badge}>{badge > 9 ? '9+' : badge}</span>}
+              </span>
+              <span className={styles.bottomLabel}>{label}</span>
+            </Link>
+          );
+        })}
         <button onClick={handleLogout} className={styles.bottomLink}>
           <LogOut size={22} strokeWidth={1.75} />
           <span className={styles.bottomLabel}>{t.logout}</span>

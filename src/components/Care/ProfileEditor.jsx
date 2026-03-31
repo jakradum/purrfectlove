@@ -373,12 +373,12 @@ export default function ProfileEditor({ initialData }) {
       <div className={styles.profilePage}>
         {deletionPending && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1.25rem', color: '#b91c1c', fontSize: '0.9rem', lineHeight: 1.6 }}>
-            <strong>Your deletion request is pending.</strong> Your account will be removed within 48 hours. You cannot use the network during this time.
+            <strong>Your deletion request is pending.</strong> Your account will be removed within 48 hours. You cannot use the community during this time.
           </div>
         )}
         <div className={styles.profileHeader} style={{ alignItems: 'flex-start' }}>
           <div>
-            <Link href="/" className={styles.backLink}>← Back to network</Link>
+            <Link href="/" className={styles.backLink}>← Back to community</Link>
             <h1 className={styles.pageTitle}>{username ? `${username} — you` : (form.name || 'My Profile')}</h1>
             {username && (
               <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>

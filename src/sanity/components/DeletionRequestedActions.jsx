@@ -8,7 +8,7 @@ export function DeletionRequestedActions({ document: doc }) {
 
   const documentId = doc?.displayed?._id
 
-  const handleSendEmail = async () => {
+  const handleAction = async () => {
     if (!documentId) return
     setLoading(true)
     setStatus(null)
@@ -20,7 +20,7 @@ export function DeletionRequestedActions({ document: doc }) {
       })
       const data = await res.json()
       if (res.ok) {
-        setStatus({ type: 'success', message: `Confirmation email sent. Timestamp logged.` })
+        setStatus({ type: 'success', message: 'Done. Confirmation email sent, document deleted, audit record created.' })
       } else {
         setStatus({ type: 'error', message: data.error || 'Unknown error' })
       }
@@ -32,32 +32,28 @@ export function DeletionRequestedActions({ document: doc }) {
   }
 
   return (
-    <div style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif', maxWidth: '520px' }}>
-      <h2 style={{ fontSize: '1.1rem', fontWeight: 700, marginBottom: '0.5rem', color: '#b91c1c' }}>
-        Deletion Requested
-      </h2>
-      <p style={{ fontSize: '0.875rem', color: '#555', lineHeight: 1.6, marginBottom: '1.5rem' }}>
-        This member has requested account deletion. Once you have manually deleted the Sanity document,
-        send the confirmation email below so they know the deletion was actioned.
+    <div style={{ padding: '2rem', fontFamily: 'system-ui, sans-serif', maxWidth: '480px' }}>
+      <p style={{ fontSize: '0.9rem', color: '#555', marginBottom: '1.5rem' }}>
+        This member has requested deletion.
       </p>
 
       <button
         type="button"
-        onClick={handleSendEmail}
-        disabled={loading}
+        onClick={handleAction}
+        disabled={loading || status?.type === 'success'}
         style={{
           padding: '0.6rem 1.25rem',
           borderRadius: '8px',
-          background: loading ? '#d1d5db' : '#2C5F4F',
+          background: (loading || status?.type === 'success') ? '#d1d5db' : '#b91c1c',
           color: '#fff',
           border: 'none',
           fontFamily: 'inherit',
           fontSize: '0.9rem',
           fontWeight: 600,
-          cursor: loading ? 'not-allowed' : 'pointer',
+          cursor: (loading || status?.type === 'success') ? 'not-allowed' : 'pointer',
         }}
       >
-        {loading ? 'Sending…' : 'Send deletion confirmation email'}
+        {loading ? 'Processing…' : 'Send confirmation email & delete'}
       </button>
 
       {status && (
