@@ -33,6 +33,8 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
     router.refresh();
   };
 
+  const isAuthPage = pathname.endsWith('/login') || pathname.endsWith('/join');
+
   const isActive = (path) => {
     const full = basePath + path;
     if (path === '') return pathname === basePath || pathname === basePath + '/';
@@ -74,8 +76,8 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
         </button>
       </aside>
 
-      {/* Mobile bottom nav */}
-      <nav className={styles.bottomNav}>
+      {/* Mobile bottom nav — hidden on login/join */}
+      <nav className={`${styles.bottomNav} ${isAuthPage ? styles.bottomNavHidden : ''}`}>
         {links.map(({ path, icon: Icon, label, badge }) => (
           <Link
             key={path}

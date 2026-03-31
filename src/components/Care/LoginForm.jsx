@@ -184,37 +184,29 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
     : (locale === 'de' ? 'per E-Mail' : 'via email');
 
   return (
-    <div className={styles.pageNarrow}>
-      <div className={styles.loginCard}>
-        <div className={styles.loginHeader}>
-          <Image src="/logo.svg" alt="Purrfect Love" width={140} height={46} className={styles.logo} />
-          <h1 className={styles.loginTitle}>
-            {locale === 'de' ? 'Mitgliederbereich' : 'Member Login'}
-          </h1>
-          {mode !== null && (
-            <p className={styles.loginSubtitle}>{subtitle}</p>
-          )}
-        </div>
+    <div className={styles.loginPageWrap}>
+      <div className={styles.loginFormInner}>
+        <Image src="/logo.svg" alt="Purrfect Love" width={120} height={40} className={styles.loginLogo} />
+        <h1 className={styles.loginTitle}>
+          {locale === 'de' ? 'Mitgliederbereich' : 'Member Login'}
+        </h1>
+        {mode !== null && (
+          <p className={styles.loginSubtitle}>{subtitle}</p>
+        )}
 
         {mode === null ? (
-          <div style={{ textAlign: 'center', padding: '2rem 0', color: '#888' }}>
+          <div style={{ padding: '2rem 0', color: '#888' }}>
             {locale === 'de' ? 'Wird geladen…' : 'Loading…'}
           </div>
         ) : step === 'identifier' ? (
           <form onSubmit={handleSendCode}>
-            {/* Mode tabs */}
-            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '1.25rem' }}>
+            {/* Mode toggle */}
+            <div className={styles.loginModeTabs}>
               <button
                 type="button"
                 onClick={() => { setMode('phone'); setError(''); setEmail(''); }}
                 disabled={loading}
-                style={{
-                  flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1.5px solid',
-                  cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, fontFamily: 'inherit',
-                  borderColor: mode === 'phone' ? 'var(--hunter-green)' : '#ddd',
-                  background: mode === 'phone' ? 'var(--hunter-green)' : 'transparent',
-                  color: mode === 'phone' ? '#fff' : '#666',
-                }}
+                className={`${styles.loginModeBtn} ${mode === 'phone' ? styles.loginModeBtnActive : ''}`}
               >
                 {locale === 'de' ? 'Telefon' : 'Phone'}
               </button>
@@ -222,13 +214,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                 type="button"
                 onClick={() => { setMode('email'); setError(''); setPhoneNumber(''); }}
                 disabled={loading}
-                style={{
-                  flex: 1, padding: '0.5rem', borderRadius: '8px', border: '1.5px solid',
-                  cursor: 'pointer', fontSize: '0.875rem', fontWeight: 600, fontFamily: 'inherit',
-                  borderColor: mode === 'email' ? 'var(--hunter-green)' : '#ddd',
-                  background: mode === 'email' ? 'var(--hunter-green)' : 'transparent',
-                  color: mode === 'email' ? '#fff' : '#666',
-                }}
+                className={`${styles.loginModeBtn} ${mode === 'email' ? styles.loginModeBtnActive : ''}`}
               >
                 {locale === 'de' ? 'E-Mail' : 'Email'}
               </button>
@@ -239,7 +225,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                 <label className={styles.label} htmlFor="phone">
                   {locale === 'de' ? 'Handynummer' : 'Phone number'}
                 </label>
-                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                <div className={styles.phoneRow}>
                   <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
                     <select
                       value={countryCode}
@@ -277,7 +263,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                   <input
                     id="phone"
                     type="tel"
-                    className={styles.input}
+                    className={`${styles.input} ${styles.phoneInput}`}
                     placeholder={COUNTRY_CODES.find(c => c.value === countryCode)?.placeholder || ''}
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
@@ -315,22 +301,15 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                 : (locale === 'de' ? 'Code senden' : 'Send code')}
             </button>
 
-            {locale === 'de' ? (
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', textAlign: 'center', marginTop: '0.75rem', lineHeight: 1.5 }}>
-                Mit dem Fortfahren stimmst du unserer{' '}
-                <a href="/de/care/privacy" style={{ color: 'var(--hunter-green)', textDecoration: 'underline' }}>
-                  Datenschutzerklärung
-                </a>{' '}
-                zu.
-              </p>
-            ) : (
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', textAlign: 'center', marginTop: '0.75rem', lineHeight: 1.5 }}>
-                By continuing, you agree to our{' '}
-                <a href="/care/privacy" style={{ color: 'var(--hunter-green)', textDecoration: 'underline' }}>
-                  Privacy Policy
-                </a>
-              </p>
-            )}
+            <p className={styles.loginPrivacy}>
+              {locale === 'de' ? (
+                <>Mit dem Fortfahren stimmst du unserer{' '}
+                  <a href="/de/care/privacy" className={styles.loginPrivacyLink}>Datenschutzerklärung</a>{' '}zu.</>
+              ) : (
+                <>By continuing, you agree to our{' '}
+                  <a href="/care/privacy" className={styles.loginPrivacyLink}>Privacy Policy</a>.</>
+              )}
+            </p>
 
           </form>
         ) : (
