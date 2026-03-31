@@ -494,7 +494,8 @@
   appearance: none;
   width: 100%;
   height: 8px;
-  background: #C85C3F;
+  /* Base: grey track; JS overrides with linear-gradient for filled portion */
+  background: #d1d5db;
   border-radius: 999px;
   border: none;
   outline: none;
@@ -530,9 +531,15 @@
 
 .squigglySlider::-moz-range-track {
   height: 8px;
-  background: #C85C3F;
+  background: #d1d5db;
   border-radius: 999px;
   border: none;
+}
+
+.squigglySlider::-moz-range-progress {
+  height: 8px;
+  background: var(--tabby-brown);
+  border-radius: 999px;
 }
 
 .squigglySlider::-ms-thumb {
@@ -546,10 +553,15 @@
 
 .squigglySlider::-ms-track {
   height: 8px;
-  background: #C85C3F;
+  background: #d1d5db;
   border-radius: 999px;
   border: none;
   color: transparent;
+}
+
+.squigglySlider::-ms-fill-lower {
+  background: var(--tabby-brown);
+  border-radius: 999px;
 }
 
 .resultsWrapper {
@@ -744,6 +756,45 @@
   color: var(--text-light);
   font-size: 1rem;
   line-height: 1.6;
+}
+
+/* Dates-required empty state */
+.datesEmptyState {
+  text-align: center;
+  padding: 4rem 1.5rem 3rem;
+}
+
+.datesEmptyIcon {
+  font-size: 2.75rem;
+  margin-bottom: 1rem;
+}
+
+.datesEmptyHeading {
+  font-size: 1.3rem;
+  font-weight: 700;
+  color: var(--hunter-green);
+  margin: 0 0 0.5rem;
+}
+
+.datesEmptyText {
+  font-size: 0.95rem;
+  color: var(--text-light);
+  margin: 0;
+  line-height: 1.6;
+}
+
+/* Availability unconfirmed badge on sitter card */
+.availUnconfirmedBadge {
+  display: inline-block;
+  font-size: 0.7rem;
+  font-weight: 600;
+  color: #92400e;
+  background: #fef3c7;
+  border: 1px solid #fde68a;
+  border-radius: 4px;
+  padding: 2px 7px;
+  margin-bottom: 0.4rem;
+  letter-spacing: 0.01em;
 }
 
 .statusPrompt {

@@ -244,6 +244,13 @@
 }
 
 /* Mobile Responsive */
+@media (max-width: 768px) {
+  /* Match the bottom nav breakpoint in Sidebar.module.css */
+  .footer {
+    padding-bottom: 65px;
+  }
+}
+
 @media (max-width: 800px) {
   .footer {
     padding: 2rem 1rem 0;

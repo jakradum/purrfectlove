@@ -32,15 +32,19 @@ function roadMultiplier(lat) {
   return 1.3; // Europe default
 }
 
-// Check if a sitter is available for a date range
-function isAvailableForDates(sitter, startDate, endDate) {
-  if (!startDate && !endDate) return true;
+// Whether a sitter has configured any availability data
+function hasAvailabilityData(sitter) {
+  return sitter.alwaysAvailable === true || (sitter.availableDates || []).length > 0;
+}
 
-  const start = startDate ? new Date(startDate) : null;
-  const end = endDate ? new Date(endDate) : null;
+// Check if a sitter is available for a date range.
+// Sitters with no availability data pass through (will get "unconfirmed" badge).
+function isAvailableForDates(sitter, startDate, endDate) {
+  if (!startDate || !endDate) return true;
+  const start = new Date(startDate);
+  const end = new Date(endDate);
 
   if (sitter.alwaysAvailable) {
-    if (!start || !end) return true;
     const unavail = sitter.unavailableDates || [];
     for (const d of unavail) {
       const date = new Date(d);
@@ -49,17 +53,15 @@ function isAvailableForDates(sitter, startDate, endDate) {
     return true;
   }
 
-  // If sitter hasn't configured any availability dates, show them regardless of date filter
   const ranges = sitter.availableDates || [];
+  // No availability data → include them (badge shown separately)
   if (ranges.length === 0) return true;
 
   for (const range of ranges) {
     const rangeStart = range.start ? new Date(range.start) : null;
     const rangeEnd = range.end ? new Date(range.end) : null;
     if (!rangeStart || !rangeEnd) continue;
-    const overlapStart = !start || rangeStart <= end;
-    const overlapEnd = !end || rangeEnd >= start;
-    if (overlapStart && overlapEnd) return true;
+    if (rangeStart <= end && rangeEnd >= start) return true;
   }
   return false;
 }
@@ -121,6 +123,20 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
 
   // Last known result count for sizing the skeleton
   const lastResultCountRef = useRef(1);
+
+  // Slider track fill
+  const sliderRef = useRef(null);
+  const updateSliderTrack = useCallback((val) => {
+    const el = sliderRef.current;
+    if (!el) return;
+    const min = Number(el.min) || 5;
+    const max = Number(el.max) || 100;
+    const pct = ((val - min) / (max - min)) * 100;
+    el.style.background = `linear-gradient(to right, var(--tabby-brown) ${pct}%, #d1d5db ${pct}%)`;
+  }, []);
+
+  // Keep track filled when radius changes
+  useEffect(() => { updateSliderTrack(radius); }, [radius, updateSliderTrack]);
 
   // Restore state from sessionStorage on mount
   useEffect(() => {
@@ -187,6 +203,23 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     };
     animFrameRef.current = requestAnimationFrame(step);
   }
+
+  // Auto-search when both dates selected; reset when dates cleared
+  const prevDatesRef = useRef({ startDate: '', endDate: '' });
+  useEffect(() => {
+    const prev = prevDatesRef.current;
+    prevDatesRef.current = { startDate, endDate };
+    if (startDate && endDate && (canSit || needsSitting)) {
+      // Only auto-search if a date actually changed (not on initial mount restore that already has results)
+      if (prev.startDate !== startDate || prev.endDate !== endDate) {
+        handleSearch();
+      }
+    } else if (!startDate || !endDate) {
+      setSearched(false);
+      setFetchedSitters([]);
+      setDisplayedCount(null);
+    }
+  }, [startDate, endDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Slider change: debounce, show shimmer, update radius, then reveal cards
   const handleRadiusChange = useCallback((newRadius) => {
@@ -259,7 +292,9 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
           return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) * roadMultiplier(userLocation.lat) };
         });
       }
-      const filtered = sitters.filter((s) => isAvailableForDates(s, startDate, endDate));
+      const filtered = sitters
+        .filter((s) => isAvailableForDates(s, startDate, endDate))
+        .map((s) => ({ ...s, _availabilityUnconfirmed: !hasAvailabilityData(s) }));
       setDebugInfo(`type=${apiQueryType} | API: ${rawCount} | date-filtered: ${filtered.length} | loc: ${userLocation ? `${userLocation.lat?.toFixed(2)},${userLocation.lng?.toFixed(2)}` : 'none'} | dates: "${startDate}"→"${endDate}"`);
       setFetchedSitters(filtered);
       animateCards(filtered.length);
@@ -296,6 +331,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     }
   }, [searching]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const datesSelected = !!(startDate && endDate);
   const apiQueryType = canSit ? 'needsSitting' : 'canSit';
   const currentType = canSit ? 'offerToSit' : 'findSitters';
 
@@ -376,21 +412,29 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
               />
             </div>
             {userLocation?.lat != null ? (
-              <div className={styles.searchField}>
-                <label className={styles.searchLabel}>
+              <div
+                className={styles.searchField}
+                title={!datesSelected ? 'Pick dates first' : undefined}
+              >
+                <label className={styles.searchLabel} style={!datesSelected ? { opacity: 0.45 } : {}}>
                   {t.search.radiusLabel}: {radius} {t.search.radiusUnit}
                 </label>
                 <input
+                  ref={sliderRef}
                   type="range"
                   min={5}
                   max={100}
                   step={5}
                   value={radius}
-                  onChange={(e) => handleRadiusChange(Number(e.target.value))}
+                  onChange={(e) => datesSelected && handleRadiusChange(Number(e.target.value))}
                   className={styles.squigglySlider}
+                  disabled={!datesSelected}
+                  style={!datesSelected ? { opacity: 0.35, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
                 />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
-                  Move slider to adjust search area · Your location: {userLocation.name || 'your location'}
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', opacity: !datesSelected ? 0.45 : 1 }}>
+                  {!datesSelected
+                    ? 'Pick dates first to filter by distance'
+                    : `Move slider to adjust search area · ${userLocation.name || 'your location'}`}
                 </span>
               </div>
             ) : (
@@ -400,18 +444,31 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 </span>
               </div>
             )}
-            <button className={styles.searchBtn} onClick={handleSearch} disabled={searching}>
-              {searching ? <span className={styles.spinner} /> : t.search.search}
-            </button>
           </div>
-          {/* Results */}
-          {searched && (
+
+          {/* Empty state — shown until both dates are picked */}
+          {!datesSelected && !searching && (
+            <div className={styles.datesEmptyState}>
+              <div className={styles.datesEmptyIcon}>🗓️</div>
+              <h2 className={styles.datesEmptyHeading}>
+                {locale === 'de' ? 'Wann brauchst du eine Betreuung?' : 'When do you need a sitter?'}
+              </h2>
+              <p className={styles.datesEmptyText}>
+                {locale === 'de'
+                  ? 'Wähle deine Daten aus, um zu sehen, wer verfügbar ist.'
+                  : 'Pick your dates above to see who\'s available.'}
+              </p>
+            </div>
+          )}
+
+          {/* Results — shown once dates are selected */}
+          {(datesSelected || searching) && (
             <div className={styles.resultsWrapper}>
               {resultsStale && (
                 <div className={styles.resultsStaleOverlay}>
-                  <span className={styles.staleMsg}>Your status changed — search again to update results</span>
-                  <button className={styles.searchBtn} onClick={handleSearch} disabled={searching}>
-                    {searching ? '...' : 'Search again'}
+                  <span className={styles.staleMsg}>Your status changed — </span>
+                  <button className={styles.searchBtn} onClick={handleSearch} disabled={searching} style={{ display: 'inline', padding: '0', background: 'none', border: 'none', color: 'var(--hunter-green)', textDecoration: 'underline', cursor: 'pointer', fontSize: 'inherit' }}>
+                    {searching ? '...' : 'search again'}
                   </button>
                 </div>
               )}
@@ -451,7 +508,12 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                           transition: 'opacity 0.25s ease, transform 0.25s ease',
                         }}
                       >
-                        <SitterCard sitter={sitter} type={currentType} locale={locale} />
+                        <SitterCard
+                          sitter={sitter}
+                          type={currentType}
+                          locale={locale}
+                          availabilityUnconfirmed={!!sitter._availabilityUnconfirmed}
+                        />
                       </div>
                     ))}
                   </div>

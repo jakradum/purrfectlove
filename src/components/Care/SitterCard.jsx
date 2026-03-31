@@ -17,7 +17,7 @@ const TAG_LABELS = {
   },
 };
 
-export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
+export default function SitterCard({ sitter, type = 'canSit', locale = 'en', availabilityUnconfirmed = false }) {
   const t = locale === 'de' ? contentDE.marketplace.card : contentEN.marketplace.card;
   const tagLabels = TAG_LABELS[locale] || TAG_LABELS.en;
 
@@ -84,6 +84,12 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
         <p className={styles.cardMeta}>
           {cats.length} cat{cats.length !== 1 ? 's' : ''}: {cats.map((c) => c.name).filter(Boolean).join(', ')}
         </p>
+      )}
+
+      {availabilityUnconfirmed && (
+        <span className={styles.availUnconfirmedBadge}>
+          {locale === 'de' ? 'Verfügbarkeit unbestätigt' : 'Availability unconfirmed'}
+        </span>
       )}
 
       {allTags.length > 0 && (
