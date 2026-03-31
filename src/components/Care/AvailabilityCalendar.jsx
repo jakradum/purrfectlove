@@ -38,7 +38,16 @@ function isUnavailableDate(ymd, unavailableDates) {
 }
 
 export default function AvailabilityCalendar({ form, updatedAt }) {
-  const { alwaysAvailable, availableDates = [], unavailableDates = [] } = form;
+  const {
+    alwaysAvailable,
+    availableDates = [],
+    unavailableDates = [],
+    unavailableRanges = [],
+  } = form;
+
+  // Only use complete ranges (both start and end must be non-empty strings)
+  const validAvailableDates = availableDates.filter(r => r.start && r.end);
+  const validUnavailableRanges = unavailableRanges.filter(r => r.start && r.end);
 
   // Build 14-day strip from today
   const today = new Date();
@@ -54,11 +63,11 @@ export default function AvailabilityCalendar({ form, updatedAt }) {
   // Determine availability for each day
   function isAvailable(ymd) {
     if (alwaysAvailable) {
-      // available unless blocked
-      return !isUnavailableDate(ymd, unavailableDates) && !isInRanges(ymd, []);
+      // Available unless explicitly blocked by a range or legacy single-date entry
+      return !isUnavailableDate(ymd, unavailableDates) && !isInRanges(ymd, validUnavailableRanges);
     } else {
-      // available only if in one of the available date ranges
-      return isInRanges(ymd, availableDates);
+      // Available only if the day falls within one of the configured available ranges
+      return isInRanges(ymd, validAvailableDates);
     }
   }
 
