@@ -222,19 +222,13 @@ export default function ProfileEditor({ initialData }) {
   const [usernameRegenerated, setUsernameRegenerated] = useState(!!initialData.usernameRegenerated);
   const [regenLoading, setRegenLoading] = useState(false);
 
-  const PLUS_CODE_PLACEHOLDERS = [
-    'e.g. 7J4V+XH Bangalore, India',
-    'e.g. GV3C+9X Stuttgart, Germany',
+  const CITY_OPTIONS = [
+    { value: 'Bangalore, India', placeholder: 'e.g. 7J4V+XH' },
+    { value: 'Stuttgart, Germany', placeholder: 'e.g. GV3C+9X' },
   ];
-  const [locationPlaceholder, setLocationPlaceholder] = useState(PLUS_CODE_PLACEHOLDERS[0]);
-  useEffect(() => {
-    let idx = 0;
-    const interval = setInterval(() => {
-      idx = (idx + 1) % PLUS_CODE_PLACEHOLDERS.length;
-      setLocationPlaceholder(PLUS_CODE_PLACEHOLDERS[idx]);
-    }, 3000);
-    return () => clearInterval(interval);
-  }, []);
+  const defaultCity = initialData.locale === 'de' ? 'Stuttgart, Germany' : 'Bangalore, India';
+  const [locationCity, setLocationCity] = useState(defaultCity);
+  const locationPlaceholder = CITY_OPTIONS.find(c => c.value === locationCity)?.placeholder ?? 'e.g. 7J4V+XH';
 
   const olc = new OpenLocationCode();
 
@@ -252,14 +246,7 @@ export default function ProfileEditor({ initialData }) {
     });
   };
 
-  function getCountryFromPhone(phone) {
-    if (!phone) return null;
-    if (phone.startsWith('+91')) return 'India';
-    if (phone.startsWith('+49')) return 'Germany';
-    return null;
-  }
-
-  const handleLocationChange = (raw) => {
+  const handleLocationChange = (raw, city = locationCity) => {
     setLocationInput(raw);
     setLocationError('');
     const trimmed = raw.trim();
@@ -269,7 +256,7 @@ export default function ProfileEditor({ initialData }) {
     const token = parts[0];
 
     if (!token.includes('+') || !olc.isValid(token)) {
-      setLocationError('Enter a valid Plus Code from plus.codes/map (e.g. 7J4VVHQ2+FC or VHQ2+FC Bangalore, India)');
+      setLocationError('Enter a valid Plus Code from plus.codes/map (e.g. 7J4VVHQ2+FC or 7J4V+XH)');
       update('location', null);
       return;
     }
@@ -279,7 +266,7 @@ export default function ProfileEditor({ initialData }) {
       try {
         const decoded = olc.decode(token);
         update('location', {
-          name: token.toUpperCase(), // store just the normalised code
+          name: token.toUpperCase(),
           lat: parseFloat(decoded.latitudeCenter.toFixed(6)),
           lng: parseFloat(decoded.longitudeCenter.toFixed(6)),
         });
@@ -287,18 +274,17 @@ export default function ProfileEditor({ initialData }) {
       } catch { /* fall through */ }
     }
 
-    // Short code — needs a reference locality to recover the full code.
-    // If no locality was provided, auto-append the user's country from their phone prefix.
-    const locality = parts.slice(1).join(' ').trim();
-    let nameToStore;
-    if (locality) {
-      nameToStore = trimmed; // e.g. "VHQ2+FC Bangalore, India"
-    } else {
-      const country = getCountryFromPhone(initialData.phone);
-      nameToStore = country ? `${token} ${country}` : token;
-    }
+    // Short code — always append the selected city as the locality reference.
+    // Any locality typed inline by the user is ignored in favour of the dropdown.
+    const nameToStore = `${token} ${city}`;
     // Store without coords — server will geocode and recover the full code on save
     update('location', { name: nameToStore, lat: null, lng: null });
+  };
+
+  const handleCityChange = (city) => {
+    setLocationCity(city);
+    // Re-process the current input with the new city so location.name stays in sync
+    if (locationInput.trim()) handleLocationChange(locationInput, city);
   };
 
   const handleStatusToggle = (field, value) => {
@@ -754,6 +740,18 @@ export default function ProfileEditor({ initialData }) {
         <h2 className={styles.sectionTitle} style={!form.location?.lat ? { color: '#ef4444' } : {}}>
           Location <span style={{ fontWeight: 400 }}>*</span>
         </h2>
+        <div className={styles.formGroup}>
+          <label className={styles.profileLabel}>City <span style={{ color: '#ef4444' }}>*</span></label>
+          <select
+            className={styles.profileInput}
+            value={locationCity}
+            onChange={(e) => handleCityChange(e.target.value)}
+          >
+            {CITY_OPTIONS.map(({ value }) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
+        </div>
         <div className={styles.formGroup}>
           <label className={styles.profileLabel} style={!form.location?.lat ? { color: '#ef4444' } : {}}>
             Plus Code <span style={{ color: '#ef4444' }}>*</span>
