@@ -3,7 +3,7 @@ import Sidebar from '@/components/Care/Sidebar';
 import Footer from '@/components/Footer';
 
 export const metadata = {
-  title: 'Cat Sitting Network | Purrfect Love',
+  title: 'Purrfect Love Community | Purrfect Love',
   description: 'Find trusted cat sitters or offer to sit for fellow Purrfect Love members.',
   robots: { index: false, follow: false },
 };

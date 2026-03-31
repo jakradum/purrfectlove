@@ -16,7 +16,7 @@ const serverClient = createClient({
 })
 
 export const metadata = {
-  title: 'Inbox | Cat Sitting Network',
+  title: 'Inbox | Purrfect Love Community',
 }
 
 export default async function InboxPageRoute() {

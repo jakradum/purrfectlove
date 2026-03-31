@@ -14,7 +14,7 @@ const serverClient = createClient({
 
 export const dynamic = 'force-dynamic';
 
-export const metadata = { title: 'Katzensitting Netzwerk | Purrfect Love' };
+export const metadata = { title: 'Purrfect Love Community | Purrfect Love' };
 
 export default async function DeCarePage() {
   const cookieStore = await cookies();

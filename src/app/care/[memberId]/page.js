@@ -21,10 +21,10 @@ export async function generateMetadata({ params }) {
       { id: memberId }
     );
     return {
-      title: sitter?.name ? `${sitter.name} | Cat Sitting Network` : 'Member Profile | Cat Sitting Network',
+      title: sitter?.name ? `${sitter.name} | Purrfect Love Community` : 'Member Profile | Purrfect Love Community',
     };
   } catch {
-    return { title: 'Member Profile | Cat Sitting Network' };
+    return { title: 'Member Profile | Purrfect Love Community' };
   }
 }
 

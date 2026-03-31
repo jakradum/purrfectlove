@@ -17,7 +17,7 @@ const serverClient = createClient({
 export const dynamic = 'force-dynamic';
 
 export const metadata = {
-  title: 'Cat Sitting Network | Purrfect Love',
+  title: 'Purrfect Love Community | Purrfect Love',
 };
 
 export default async function CarePage() {

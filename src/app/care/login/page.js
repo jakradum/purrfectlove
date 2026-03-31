@@ -1,8 +1,8 @@
 import LoginForm from '@/components/Care/LoginForm';
 
 export const metadata = {
-  title: 'Member Login | Cat Sitting Network',
-  description: 'Log in to the Purrfect Love cat sitting member portal.',
+  title: 'Member Login | Purrfect Love Community',
+  description: 'Log in to the Purrfect Love Community.',
 };
 
 export default function LoginPage() {

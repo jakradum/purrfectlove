@@ -96,7 +96,7 @@ export async function PATCH(request) {
       'name', 'location', 'contactPreference', 'bio', 'bedrooms', 'householdSize',
       'cats', 'alwaysAvailable', 'unavailableDates', 'availableDates',
       'maxHomesPerDay', 'feedingTypes', 'behavioralTraits', 'canSit', 'needsSitting',
-      'hideEmail', 'hideWhatsApp',
+      'hideEmail', 'hideWhatsApp', 'newsletterOptOut',
     ]
 
     const patch = {}

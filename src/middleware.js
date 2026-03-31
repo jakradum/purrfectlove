@@ -10,7 +10,7 @@ export async function middleware(request) {
   const PUBLIC_PREFIXES = [
     '/care/login', '/care/privacy', '/care/join',
     '/de/care/login', '/de/care/privacy', '/de/care/join',
-    '/api/care/send-otp', '/api/care/verify-otp', '/api/care/join',
+    '/api/care/send-otp', '/api/care/verify-otp', '/api/care/join', '/api/care/unsubscribe',
     // Subdomain equivalents (before the /care rewrite is applied)
     '/login', '/privacy', '/join',
   ];

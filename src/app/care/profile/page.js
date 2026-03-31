@@ -13,7 +13,7 @@ const serverClient = createClient({
 });
 
 export const metadata = {
-  title: 'My Profile | Cat Sitting Network',
+  title: 'My Profile | Purrfect Love Community',
 };
 
 export default async function ProfilePage() {

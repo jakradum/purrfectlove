@@ -94,6 +94,10 @@ export default {
     // Toggles
     { name: 'canSit', title: 'I Can Sit', type: 'boolean', initialValue: false, readOnly: true },
     { name: 'needsSitting', title: 'I Need Sitting', type: 'boolean', initialValue: false, readOnly: true },
+
+    // Email preferences
+    { name: 'welcomeSent', title: 'Welcome Email Sent', type: 'boolean', initialValue: false, description: 'Set to true after first login welcome email is sent. Never send again.' },
+    { name: 'newsletterOptOut', title: 'Newsletter Opt-Out', type: 'boolean', initialValue: false, description: 'Set to true when member unsubscribes from community emails.' },
   ],
   preview: {
     select: { title: 'name', subtitle: 'email', verified: 'memberVerified', admin: 'siteAdmin', media: 'photo' },

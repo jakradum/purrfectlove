@@ -213,6 +213,8 @@ export default function ProfileEditor({ initialData }) {
   const [locationError, setLocationError] = useState('');
   const [showDeleteModal, setShowDeleteModal] = useState(false);
   const [deleteLoading, setDeleteLoading] = useState(false);
+  const [newsletterOptOut, setNewsletterOptOut] = useState(!!initialData.newsletterOptOut);
+  const [newsletterSaving, setNewsletterSaving] = useState(false);
 
   const olc = new OpenLocationCode();
 
@@ -499,6 +501,40 @@ export default function ProfileEditor({ initialData }) {
             {form.canSit && <span className={`${styles.tag} ${styles.tagGreen}`}>I can sit</span>}
             {form.needsSitting && <span className={`${styles.tag} ${styles.tagBrown}`}>I need sitting</span>}
             {!form.canSit && !form.needsSitting && <span className={styles.readFieldValue} style={{ color: '#aaa' }}>Not active</span>}
+          </div>
+        </div>
+
+        {/* Newsletter & emails */}
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>Newsletter &amp; emails</h2>
+          <div className={styles.toggleRow}>
+            <label className={styles.toggle}>
+              <input
+                type="checkbox"
+                checked={!newsletterOptOut}
+                disabled={newsletterSaving}
+                onChange={async (e) => {
+                  const newOptOut = !e.target.checked;
+                  setNewsletterOptOut(newOptOut);
+                  setNewsletterSaving(true);
+                  try {
+                    await fetch('/api/care/profile', {
+                      method: 'PATCH',
+                      headers: { 'Content-Type': 'application/json' },
+                      body: JSON.stringify({ newsletterOptOut: newOptOut }),
+                    });
+                  } catch {
+                    setNewsletterOptOut(!newOptOut); // revert on error
+                  } finally {
+                    setNewsletterSaving(false);
+                  }
+                }}
+              />
+              <span className={styles.toggleSlider} />
+            </label>
+            <span className={styles.toggleLabel}>
+              Receive community emails from Purrfect Love
+            </span>
           </div>
         </div>
 

@@ -20,10 +20,10 @@ export async function generateMetadata({ params }) {
       { id: memberId }
     );
     return {
-      title: sitter?.name ? `${sitter.name} | Katzensitting Netzwerk` : 'Mitgliedsprofil | Katzensitting Netzwerk',
+      title: sitter?.name ? `${sitter.name} | Purrfect Love Community` : 'Mitgliedsprofil | Purrfect Love Community',
     };
   } catch {
-    return { title: 'Mitgliedsprofil | Katzensitting Netzwerk' };
+    return { title: 'Mitgliedsprofil | Purrfect Love Community' };
   }
 }
 

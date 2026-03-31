@@ -12,7 +12,7 @@ const serverClient = createClient({
   useCdn: false,
 });
 
-export const metadata = { title: 'Mein Profil | Katzensitting Netzwerk' };
+export const metadata = { title: 'Mein Profil | Purrfect Love Community' };
 
 export default async function DeProfilePage() {
   const cookieStore = await cookies();

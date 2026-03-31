@@ -53,7 +53,7 @@ function otpEmailHtml(code) {
           <td style="padding:40px 32px;">
             <p style="margin:0 0 16px 0;font-size:16px;line-height:1.7;color:#4A4A4A;">Hello,</p>
             <p style="margin:0 0 24px 0;font-size:16px;line-height:1.7;color:#4A4A4A;">
-              Your verification code for the Purrfect Love Care Portal is:
+              Your verification code for the Purrfect Love Community is:
             </p>
             <table width="100%" cellpadding="0" cellspacing="0" style="margin:0 0 24px 0;">
               <tr>
@@ -92,7 +92,7 @@ function otpEmailHtml(code) {
 function otpEmailText(code) {
   return `Hello,
 
-Your verification code for the Purrfect Love Care Portal is:
+Your verification code for the Purrfect Love Community is:
 
 ${code}
 
