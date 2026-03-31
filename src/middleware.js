@@ -11,15 +11,16 @@ export async function middleware(request) {
   let loginUrl;
 
   if (isCareDomain) {
-    // On subdomain, protect all paths except /login and OTP endpoints
+    // On subdomain, protect all paths except /login, /privacy, and OTP endpoints
     const isLoginPath = pathname === '/login';
+    const isPrivacyPath = pathname === '/privacy';
     const isOtpPath = pathname.startsWith('/api/care/send-otp') || pathname.startsWith('/api/care/verify-otp');
-    isProtectedCarePath = !isLoginPath && !isOtpPath;
+    isProtectedCarePath = !isLoginPath && !isPrivacyPath && !isOtpPath;
     loginUrl = new URL('/login', request.url);
   } else {
-    // On main domain, protect /care/* and /de/care/* except login and OTP endpoints
-    const isDeCarePath = pathname.startsWith('/de/care') && !pathname.startsWith('/de/care/login');
-    const isEnCarePath = pathname.startsWith('/care') && !pathname.startsWith('/care/login');
+    // On main domain, protect /care/* and /de/care/* except login, privacy, and OTP endpoints
+    const isDeCarePath = pathname.startsWith('/de/care') && !pathname.startsWith('/de/care/login') && !pathname.startsWith('/de/care/privacy');
+    const isEnCarePath = pathname.startsWith('/care') && !pathname.startsWith('/care/login') && !pathname.startsWith('/care/privacy');
     isProtectedCarePath = (isDeCarePath || isEnCarePath) &&
       !pathname.startsWith('/api/care/send-otp') &&
       !pathname.startsWith('/api/care/verify-otp');
