@@ -11,7 +11,6 @@ const STORAGE_KEY = 'care_marketplace_state';
 const SHIMMER_MIN_MS = 400;
 const SLIDER_DEBOUNCE_MS = 150;
 // Number of skeleton cards to show while loading
-const SKELETON_COUNT = 4;
 
 // Haversine distance in km
 function haversine(lat1, lon1, lat2, lon2) {
@@ -119,6 +118,9 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   // Debounce slider
   const sliderDebounceRef = useRef(null);
   const pendingRadiusRef = useRef(radius);
+
+  // Last known result count for sizing the skeleton
+  const lastResultCountRef = useRef(1);
 
   // Restore state from sessionStorage on mount
   useEffect(() => {
@@ -279,8 +281,8 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   // Update displayed count + trigger height animation when shimmer ends
   useEffect(() => {
     if (!shimmer && results !== null) {
+      lastResultCountRef.current = results.length || 1;
       setDisplayedCount(results.length);
-      // Defer so the DOM has rendered the new cards before we measure
       requestAnimationFrame(() => animateHeight());
     }
   }, [shimmer, results, animateHeight]);
@@ -288,6 +290,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   // Also animate height on initial search complete
   useEffect(() => {
     if (!searching && searched && results !== null && !shimmer) {
+      lastResultCountRef.current = results.length || 1;
       setDisplayedCount(results.length);
       requestAnimationFrame(() => animateHeight());
     }
@@ -401,12 +404,6 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
               {searching ? <span className={styles.spinner} /> : t.search.search}
             </button>
           </div>
-          {debugInfo && (
-            <p style={{ fontSize: '0.72rem', color: '#888', marginTop: '0.5rem', fontFamily: 'monospace', wordBreak: 'break-all' }}>
-              {debugInfo}
-            </p>
-          )}
-
           {/* Results */}
           {searched && (
             <div className={styles.resultsWrapper}>
@@ -436,7 +433,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                   <div className={styles.noResults} style={{ color: '#ef4444' }}>{searchError}</div>
                 ) : shimmer ? (
                   <div className={styles.sitterGrid}>
-                    {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                    {Array.from({ length: lastResultCountRef.current }).map((_, i) => (
                       <SkeletonCard key={i} />
                     ))}
                   </div>
