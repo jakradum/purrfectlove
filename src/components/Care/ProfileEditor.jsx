@@ -368,7 +368,7 @@ export default function ProfileEditor({ initialData }) {
 
         <CompletionIndicator form={form} onEdit={() => setIsEditing(true)} />
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '1rem 0' }}>
           <button
             type="button"
             className={styles.editBtn}
