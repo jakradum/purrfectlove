@@ -441,9 +441,9 @@ export default function ProfileEditor({ initialData }) {
 
       {/* Location */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Location</h2>
+        <h2 className={styles.sectionTitle}>Location <span style={{ color: '#e53e3e', fontWeight: 400 }}>*</span></h2>
         <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>Plus Code</label>
+          <label className={styles.profileLabel}>Plus Code <span style={{ color: '#e53e3e' }}>*</span></label>
           <input
             type="text"
             className={styles.profileInput}
@@ -503,7 +503,7 @@ export default function ProfileEditor({ initialData }) {
 
       {/* My Cats */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>{t.sections.myCats}</h2>
+        <h2 className={styles.sectionTitle}>{t.sections.myCats} <span style={{ color: '#e53e3e', fontWeight: 400 }}>*</span></h2>
         {form.cats.map((cat, idx) => (
           <div key={idx} className={styles.catCard}>
             <div className={styles.catCardHeader}>
@@ -512,7 +512,7 @@ export default function ProfileEditor({ initialData }) {
             </div>
             <div className={styles.fieldRow}>
               <div className={styles.formGroup}>
-                <label className={styles.profileLabel}>{t.fields.catName}</label>
+                <label className={styles.profileLabel}>{t.fields.catName} <span style={{ color: '#e53e3e' }}>*</span></label>
                 <input type="text" className={styles.profileInput} value={cat.name || ''} onChange={(e) => updateCat(idx, 'name', e.target.value)} placeholder="e.g. Mochi" />
               </div>
               <div className={styles.formGroup}>
