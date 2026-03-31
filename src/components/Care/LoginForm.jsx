@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { useRouter } from 'next/navigation';
 import Image from 'next/image';
 import styles from './Care.module.css';
@@ -16,6 +16,9 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
 
   const [step, setStep] = useState('identifier');
   const [showTooltip, setShowTooltip] = useState(false);
+  const [resendCountdown, setResendCountdown] = useState(0);
+  const tooltipTimerRef = useRef(null);
+  const countdownTimerRef = useRef(null);
   const [mode, setMode] = useState(null); // null = detecting, 'phone' | 'email'
   const [countryCode, setCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -23,6 +26,32 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+
+  // Tooltip: auto-dismiss after 3s and on outside click
+  useEffect(() => {
+    if (!showTooltip) return;
+    tooltipTimerRef.current = setTimeout(() => setShowTooltip(false), 3000);
+    const dismiss = () => setShowTooltip(false);
+    document.addEventListener('click', dismiss, { capture: true, once: true });
+    return () => {
+      clearTimeout(tooltipTimerRef.current);
+      document.removeEventListener('click', dismiss, { capture: true });
+    };
+  }, [showTooltip]);
+
+  // Resend countdown
+  function startResendCountdown() {
+    setResendCountdown(60);
+    clearInterval(countdownTimerRef.current);
+    countdownTimerRef.current = setInterval(() => {
+      setResendCountdown(n => {
+        if (n <= 1) { clearInterval(countdownTimerRef.current); return 0; }
+        return n - 1;
+      });
+    }, 1000);
+  }
+
+  useEffect(() => () => clearInterval(countdownTimerRef.current), []);
 
   // Auto-detect location on mount
   useEffect(() => {
@@ -68,6 +97,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Failed to send code.'); return; }
       setStep('code');
+      startResendCountdown();
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -102,6 +132,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   };
 
   const handleResend = async () => {
+    if (resendCountdown > 0) return;
     setError('');
     setCode('');
     setLoading(true);
@@ -113,6 +144,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || 'Failed to resend. Please try again.');
+      else startResendCountdown();
     } catch {
       setError('Network error. Please try again.');
     } finally {
@@ -206,7 +238,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                     </select>
                     <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
                       <span
-                        onClick={() => setShowTooltip(v => !v)}
+                        onClick={(e) => { e.stopPropagation(); setShowTooltip(v => !v); }}
                         style={{ cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-light)', marginLeft: '0.25rem', userSelect: 'none' }}
                       >
                         ⓘ
@@ -327,19 +359,27 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
             </button>
 
             <div className={styles.resendRow}>
-              <button type="button" className={styles.resendBtn} onClick={handleResend} disabled={loading}>
-                {locale === 'de' ? 'Code erneut senden' : 'Resend code'}
-              </button>
               <button
                 type="button"
                 className={styles.resendBtn}
-                onClick={() => { setStep('identifier'); setError(''); setCode(''); }}
-                disabled={loading}
+                onClick={handleResend}
+                disabled={loading || resendCountdown > 0}
+                style={resendCountdown > 0 ? { opacity: 0.45, cursor: 'default' } : {}}
               >
-                {mode === 'phone'
-                  ? (locale === 'de' ? 'Nummer ändern' : 'Change number')
-                  : (locale === 'de' ? 'E-Mail ändern' : 'Change email')}
+                {resendCountdown > 0
+                  ? (locale === 'de' ? `Erneut senden (${resendCountdown}s)` : `Resend code (${resendCountdown}s)`)
+                  : (locale === 'de' ? 'Code erneut senden' : 'Resend code')}
               </button>
+              {mode === 'phone' && (
+                <button
+                  type="button"
+                  className={styles.resendBtn}
+                  onClick={() => { setStep('identifier'); setError(''); setCode(''); }}
+                  disabled={loading}
+                >
+                  {locale === 'de' ? 'Nummer ändern' : 'Change number'}
+                </button>
+              )}
             </div>
           </form>
         )}
