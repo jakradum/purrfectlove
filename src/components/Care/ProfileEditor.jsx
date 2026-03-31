@@ -45,6 +45,89 @@ function CheckIcon() {
   );
 }
 
+function computeCompletion(form) {
+  const required = [];
+  const optional = [];
+
+  if (!form.name?.trim()) required.push('Display name');
+  if (!form.location?.lat || !form.location?.lng) required.push('Location (Plus Code)');
+
+  if (form.canSit) {
+    if (!form.maxCats) required.push('Max cats you can sit');
+    if (!form.feedingTypes?.length) required.push('Feeding types you can handle');
+    if (!form.behavioralTraits?.length) required.push('Cat behaviors you\'re comfortable with');
+    if (!form.alwaysAvailable && !form.availableDates?.length) required.push('Availability dates');
+  }
+
+  if (form.needsSitting) {
+    if (!form.cats?.length) required.push('At least one cat profile');
+  }
+
+  if (!form.bedrooms) optional.push('Number of bedrooms');
+  if (!form.householdSize) optional.push('Household size');
+
+  const totalRequired = 2 + (form.canSit ? 4 : 0) + (form.needsSitting ? 1 : 0);
+  const totalOptional = 2;
+  const total = totalRequired + totalOptional;
+  const completed = (totalRequired - required.length) + (totalOptional - optional.length);
+  const percent = total > 0 ? Math.round((completed / total) * 100) : 100;
+
+  return { required, optional, completed, total, percent, isComplete: percent === 100 };
+}
+
+function CompletionIndicator({ form, onEdit }) {
+  const { required, optional, completed, total, percent, isComplete } = computeCompletion(form);
+  if (isComplete) return null;
+
+  return (
+    <div style={{ background: '#fff', border: '1px solid rgba(44,95,79,0.12)', borderRadius: '12px', padding: '1.25rem 1.5rem', marginBottom: '0', boxShadow: '0 1px 4px rgba(44,95,79,0.06)' }}>
+      {/* Header row */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', marginBottom: '0.5rem' }}>
+        <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--text-dark)' }}>
+          {completed} of {total} fields complete
+        </span>
+        <span style={{ fontSize: '0.875rem', fontWeight: 700, color: 'var(--hunter-green)' }}>{percent}%</span>
+      </div>
+
+      {/* Progress bar */}
+      <div style={{ background: 'rgba(44,95,79,0.1)', borderRadius: '6px', height: '7px', marginBottom: '1rem', overflow: 'hidden' }}>
+        <div style={{ width: `${percent}%`, height: '100%', background: 'var(--hunter-green)', borderRadius: '6px', transition: 'width 0.4s ease' }} />
+      </div>
+
+      {/* Missing fields */}
+      {required.length > 0 && (
+        <div style={{ marginBottom: optional.length ? '0.75rem' : '1rem' }}>
+          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Required</p>
+          <ul style={{ margin: 0, paddingLeft: '1.1rem', listStyle: 'disc' }}>
+            {required.map((f) => (
+              <li key={f} style={{ fontSize: '0.82rem', color: '#c0392b', lineHeight: 1.7 }}>{f}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      {optional.length > 0 && (
+        <div style={{ marginBottom: '1rem' }}>
+          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Optional to complete</p>
+          <ul style={{ margin: 0, paddingLeft: '1.1rem', listStyle: 'disc' }}>
+            {optional.map((f) => (
+              <li key={f} style={{ fontSize: '0.82rem', color: 'var(--text-light)', lineHeight: 1.7 }}>{f}</li>
+            ))}
+          </ul>
+        </div>
+      )}
+
+      <button
+        type="button"
+        onClick={onEdit}
+        style={{ display: 'inline-flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1.25rem', background: 'var(--hunter-green)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600, fontFamily: 'var(--font-outfit)', cursor: 'pointer' }}
+      >
+        Complete Profile
+      </button>
+    </div>
+  );
+}
+
 function ReadField({ label, value }) {
   if (!value && value !== 0) return null;
   return (
@@ -276,11 +359,16 @@ export default function ProfileEditor({ initialData }) {
   if (!isEditing) {
     return (
       <div className={styles.profilePage}>
-        <div className={styles.profileHeader}>
+        <div className={styles.profileHeader} style={{ alignItems: 'flex-start' }}>
           <div>
             <Link href="/" className={styles.backLink}>← Back to network</Link>
             <h1 className={styles.pageTitle}>{form.name || 'My Profile'}</h1>
           </div>
+        </div>
+
+        <CompletionIndicator form={form} onEdit={() => setIsEditing(true)} />
+
+        <div style={{ display: 'flex', justifyContent: 'flex-end' }}>
           <button
             type="button"
             className={styles.editBtn}
