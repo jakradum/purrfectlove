@@ -385,11 +385,9 @@
   -webkit-appearance: none;
   appearance: none;
   width: 100%;
-  height: 6px;
-  background-image: url("data:image/svg+xml,%3Csvg width='40' height='6' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M0,3 Q5,0 10,3 T20,3 T30,3 T40,3' stroke='%23C85C3F' stroke-width='1.8' fill='none'/%3E%3C/svg%3E");
-  background-repeat: repeat-x;
-  background-position: center;
-  background-color: transparent;
+  height: 8px;
+  background: #C85C3F;
+  border-radius: 999px;
   border: none;
   outline: none;
   cursor: pointer;
@@ -398,10 +396,10 @@
 
 .squigglySlider::-webkit-slider-thumb {
   -webkit-appearance: none;
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--hunter-green);
+  background: #2C5F4F;
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(44,95,79,0.35);
   cursor: pointer;
@@ -409,22 +407,41 @@
 }
 
 .squigglySlider::-webkit-slider-thumb:hover {
-  transform: scale(1.15);
+  transform: scale(1.1);
 }
 
 .squigglySlider::-moz-range-thumb {
-  width: 20px;
-  height: 20px;
+  width: 24px;
+  height: 24px;
   border-radius: 50%;
-  background: var(--hunter-green);
+  background: #2C5F4F;
   border: 2px solid #fff;
   box-shadow: 0 1px 4px rgba(44,95,79,0.35);
   cursor: pointer;
 }
 
 .squigglySlider::-moz-range-track {
-  background: transparent;
+  height: 8px;
+  background: #C85C3F;
+  border-radius: 999px;
   border: none;
+}
+
+.squigglySlider::-ms-thumb {
+  width: 24px;
+  height: 24px;
+  border-radius: 50%;
+  background: #2C5F4F;
+  border: 2px solid #fff;
+  cursor: pointer;
+}
+
+.squigglySlider::-ms-track {
+  height: 8px;
+  background: #C85C3F;
+  border-radius: 999px;
+  border: none;
+  color: transparent;
 }
 
 .resultsWrapper {
@@ -580,7 +597,7 @@
 .card {
   background: #ffffff;
   border-radius: 12px;
-  padding: 1.25rem;
+  padding: 1.5rem 1.25rem;
   width: 100%;
   box-sizing: border-box;
   overflow: hidden;
@@ -669,9 +686,9 @@
 
 .cardActions {
   display: flex;
-  gap: 0.5rem;
+  flex-direction: row;
+  gap: 12px;
   margin-top: auto;
-  flex-wrap: wrap;
   width: 100%;
 }
 
@@ -1321,7 +1338,7 @@
   .statusCard { padding: 1rem; }
   .searchBar { padding: 1rem; gap: 0.75rem; }
   .btn { min-height: 44px; }
-  .card { padding: 1rem; }
-  .cardActions { flex-direction: column; }
+  .card { padding: 1.25rem 1rem; }
+  .cardActions { flex-direction: column; gap: 8px; }
   .cardBtn { width: 100%; text-align: center; }
 }

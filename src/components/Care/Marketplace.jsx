@@ -286,7 +286,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                   className={styles.squigglySlider}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
-                  Move slider to adjust search area · from {userLocation.name || 'your location'}
+                  Move slider to adjust search area · Your location: {userLocation.name || 'your location'}
                 </span>
               </div>
             ) : (

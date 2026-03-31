@@ -102,7 +102,7 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en' }) {
             href={`/inbox?to=${_id}`}
             className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}
           >
-            Send Message
+            Message
           </Link>
         ) : contactPreference === 'whatsapp' && whatsappNumber ? (
           <a

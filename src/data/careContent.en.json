@@ -53,7 +53,7 @@
       "canHandle": "Can handle",
       "contactEmail": "Email",
       "contactWhatsapp": "WhatsApp",
-      "viewProfile": "View Profile"
+      "viewProfile": "Profile"
     },
     "noResults": "No sitters found within {radius}km. Try expanding your search radius.",
     "noNeedResults": "No members looking for sitting within {radius}km."
