@@ -83,6 +83,14 @@ export async function POST(request) {
       ])
     }
 
+    // If teamMember matched but no catSitter did, find their linked catSitter by name
+    if (!catSitter && teamMember) {
+      catSitter = await sanity.fetch(
+        `*[_type == "catSitter" && name == $name && siteAdmin == true && memberVerified == true][0]{ _id, name }`,
+        { name: teamMember.name }
+      )
+    }
+
     const account = catSitter || teamMember
     if (!account) {
       return Response.json({ error: 'Account not found or not verified' }, { status: 403 })
