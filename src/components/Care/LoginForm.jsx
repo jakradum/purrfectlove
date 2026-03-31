@@ -370,16 +370,6 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                   ? (locale === 'de' ? `Erneut senden (${resendCountdown}s)` : `Resend code (${resendCountdown}s)`)
                   : (locale === 'de' ? 'Code erneut senden' : 'Resend code')}
               </button>
-              {mode === 'phone' && (
-                <button
-                  type="button"
-                  className={styles.resendBtn}
-                  onClick={() => { setStep('identifier'); setError(''); setCode(''); }}
-                  disabled={loading}
-                >
-                  {locale === 'de' ? 'Nummer ändern' : 'Change number'}
-                </button>
-              )}
             </div>
           </form>
         )}
