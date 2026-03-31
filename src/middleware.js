@@ -17,6 +17,8 @@ async function isDeletionPending(sitterId) {
     url.searchParams.set('$id', JSON.stringify(sitterId)); // Sanity expects JSON-encoded param value
     const res = await fetch(url.toString(), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
+      cache: 'no-store',
+      next: { revalidate: 0 },
     });
     if (!res.ok) return false;
     const data = await res.json();
