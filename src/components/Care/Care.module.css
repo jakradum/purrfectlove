@@ -1148,6 +1148,102 @@
   font-size: 0.9rem;
 }
 
+/* ====== Availability Calendar ====== */
+
+.availCalendar {
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+.availCalendarHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.availCalendarMode {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  font-style: italic;
+}
+
+.availStrip {
+  display: flex;
+  gap: 4px;
+  overflow-x: auto;
+  padding-bottom: 2px;
+  scrollbar-width: none;
+}
+
+.availStrip::-webkit-scrollbar {
+  display: none;
+}
+
+.availDayCol {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+  flex-shrink: 0;
+}
+
+.availDayInitial {
+  font-size: 0.65rem;
+  font-weight: 600;
+  color: var(--text-light);
+  text-transform: uppercase;
+  line-height: 1;
+  font-family: var(--font-outfit);
+}
+
+.availDaySquare {
+  width: 30px;
+  height: 30px;
+  border-radius: 6px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
+  transition: background 0.15s;
+}
+
+.availDayNum {
+  font-size: 0.72rem;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  line-height: 1;
+}
+
+.availDayGreen {
+  background: rgba(44, 95, 79, 0.15);
+}
+
+.availDayGreen .availDayNum {
+  color: var(--hunter-green);
+}
+
+.availDayGrey {
+  background: rgba(0, 0, 0, 0.05);
+}
+
+.availDayGrey .availDayNum {
+  color: #bbb;
+}
+
+/* Today ring */
+.availDayToday {
+  outline: 2px solid var(--hunter-green);
+  outline-offset: 1px;
+}
+
+.availStaleness {
+  font-size: 0.72rem;
+  color: var(--text-light);
+  margin: 0;
+  line-height: 1.5;
+}
+
 .saveBar {
   position: sticky;
   bottom: 0;

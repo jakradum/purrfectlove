@@ -7,6 +7,7 @@ import { OpenLocationCode } from 'open-location-code';
 import styles from './Care.module.css';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
+import AvailabilityCalendar from './AvailabilityCalendar';
 
 const PERSONALITY_OPTIONS = ['shy', 'energetic', 'special needs']; // 'senior' is auto-calculated from age
 const DIET_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
@@ -478,6 +479,14 @@ export default function ProfileEditor({ initialData }) {
                 )}
               </div>
             ))}
+          </div>
+        )}
+
+        {/* Availability */}
+        {(form.canSit || form.alwaysAvailable || form.availableDates?.length > 0) && (
+          <div className={styles.section}>
+            <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
+            <AvailabilityCalendar form={form} updatedAt={initialData._updatedAt} />
           </div>
         )}
 
