@@ -161,7 +161,7 @@ export async function POST(request) {
 
     if (!catSitter && !teamMember) {
       return Response.json(
-        { error: 'Account not found. Contact support@purrfectlove.org to join.' },
+        { error: 'ACCOUNT_NOT_FOUND' },
         { status: 403 }
       )
     }

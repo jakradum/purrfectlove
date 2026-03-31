@@ -152,6 +152,22 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
     }
   };
 
+  const joinHref = locale === 'de' ? '/de/care/join' : '/care/join';
+  const renderError = (msg) => {
+    if (!msg) return null;
+    if (msg === 'ACCOUNT_NOT_FOUND') {
+      return (
+        <div className={styles.error}>
+          {locale === 'de' ? 'Konto nicht gefunden. ' : 'Account not found. '}
+          <a href={joinHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
+            {locale === 'de' ? 'Mitgliedschaft beantragen' : 'Request membership'}
+          </a>
+        </div>
+      );
+    }
+    return <div className={styles.error}>{msg}</div>;
+  };
+
   const toggleMode = () => {
     setMode(m => m === 'phone' ? 'email' : 'phone');
     setError('');
@@ -291,7 +307,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
               </div>
             )}
 
-            {error && <div className={styles.error}>{error}</div>}
+            {renderError(error)}
 
             <button type="submit" className={styles.btn} disabled={loading}>
               {loading
@@ -350,7 +366,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
               />
             </div>
 
-            {error && <div className={styles.error}>{error}</div>}
+            {renderError(error)}
 
             <button type="submit" className={styles.btn} disabled={loading}>
               {loading
