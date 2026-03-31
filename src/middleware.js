@@ -14,16 +14,18 @@ export async function middleware(request) {
     // On subdomain, protect all paths except /login, /privacy, and OTP endpoints
     const isLoginPath = pathname === '/login';
     const isPrivacyPath = pathname === '/privacy';
-    const isOtpPath = pathname.startsWith('/api/care/send-otp') || pathname.startsWith('/api/care/verify-otp');
-    isProtectedCarePath = !isLoginPath && !isPrivacyPath && !isOtpPath;
+    const isJoinPath = pathname === '/join';
+    const isOtpPath = pathname.startsWith('/api/care/send-otp') || pathname.startsWith('/api/care/verify-otp') || pathname.startsWith('/api/care/join');
+    isProtectedCarePath = !isLoginPath && !isPrivacyPath && !isJoinPath && !isOtpPath;
     loginUrl = new URL('/login', request.url);
   } else {
     // On main domain, protect /care/* and /de/care/* except login, privacy, and OTP endpoints
-    const isDeCarePath = pathname.startsWith('/de/care') && !pathname.startsWith('/de/care/login') && !pathname.startsWith('/de/care/privacy');
-    const isEnCarePath = pathname.startsWith('/care') && !pathname.startsWith('/care/login') && !pathname.startsWith('/care/privacy');
+    const isDeCarePath = pathname.startsWith('/de/care') && !pathname.startsWith('/de/care/login') && !pathname.startsWith('/de/care/privacy') && !pathname.startsWith('/de/care/join');
+    const isEnCarePath = pathname.startsWith('/care') && !pathname.startsWith('/care/login') && !pathname.startsWith('/care/privacy') && !pathname.startsWith('/care/join');
     isProtectedCarePath = (isDeCarePath || isEnCarePath) &&
       !pathname.startsWith('/api/care/send-otp') &&
-      !pathname.startsWith('/api/care/verify-otp');
+      !pathname.startsWith('/api/care/verify-otp') &&
+      !pathname.startsWith('/api/care/join');
     loginUrl = pathname.startsWith('/de/')
       ? new URL('/de/care/login', request.url)
       : new URL('/care/login', request.url);

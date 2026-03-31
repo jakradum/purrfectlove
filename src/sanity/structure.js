@@ -248,6 +248,16 @@ export const structure = (S) =>
             ])
         ),
 
+      // === CARE — MEMBERSHIP REQUESTS ===
+      S.listItem()
+        .title('Care — Membership Requests')
+        .icon(() => '🐾')
+        .child(
+          S.documentTypeList('membershipRequest')
+            .title('Membership Requests')
+            .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
+        ),
+
       // === SITE SETTINGS ===
       S.listItem()
         .title('Site Settings')

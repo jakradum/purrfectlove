@@ -6,10 +6,8 @@ import Image from 'next/image';
 import styles from './Care.module.css';
 
 const COUNTRY_CODES = [
-  { label: '🇮🇳 +91', value: '+91', country: 'IN' },
-  { label: '🇩🇪 +49', value: '+49', country: 'DE' },
-  { label: '🇬🇧 +44', value: '+44', country: 'GB' },
-  { label: '🇺🇸 +1',  value: '+1',  country: 'US' },
+  { label: '🇮🇳 +91', value: '+91', country: 'IN', placeholder: '98765 43210' },
+  { label: '🇩🇪 +49', value: '+49', country: 'DE', placeholder: '151 23456789' },
 ];
 
 export default function LoginForm({ locale = 'en', loginRedirect }) {
@@ -193,22 +191,30 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                   {locale === 'de' ? 'Handynummer' : 'Phone number'}
                 </label>
                 <div style={{ display: 'flex', gap: '0.5rem' }}>
-                  <select
-                    value={countryCode}
-                    onChange={(e) => setCountryCode(e.target.value)}
-                    className={styles.input}
-                    style={{ width: '110px', flexShrink: 0 }}
-                    disabled={loading}
-                  >
-                    {COUNTRY_CODES.map((c) => (
-                      <option key={c.value} value={c.value}>{c.label}</option>
-                    ))}
-                  </select>
+                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
+                    <select
+                      value={countryCode}
+                      onChange={(e) => setCountryCode(e.target.value)}
+                      className={styles.input}
+                      style={{ width: '110px' }}
+                      disabled={loading}
+                    >
+                      {COUNTRY_CODES.map((c) => (
+                        <option key={c.value} value={c.value}>{c.label}</option>
+                      ))}
+                    </select>
+                    <span
+                      title="Purrfect Love Care is currently available in India and Germany only"
+                      style={{ cursor: 'help', fontSize: '0.85rem', color: 'var(--text-light)', marginLeft: '0.25rem' }}
+                    >
+                      ⓘ
+                    </span>
+                  </div>
                   <input
                     id="phone"
                     type="tel"
                     className={styles.input}
-                    placeholder="9876543210"
+                    placeholder={COUNTRY_CODES.find(c => c.value === countryCode)?.placeholder || ''}
                     value={phoneNumber}
                     onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
                     disabled={loading}
@@ -324,8 +330,8 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
 
         <p className={styles.notMember}>
           {locale === 'de' ? 'Noch kein Mitglied?' : 'Not a member?'}{' '}
-          <a href="mailto:support@purrfectlove.org" className={styles.supportLink}>
-            support@purrfectlove.org
+          <a href={locale === 'de' ? '/de/care/join' : '/care/join'} className={styles.supportLink}>
+            {locale === 'de' ? 'Mitgliedschaft beantragen' : 'Request membership'}
           </a>
         </p>
       </div>

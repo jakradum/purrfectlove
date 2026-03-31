@@ -1,0 +1,16 @@
+BANGALORE (raw haversine km - no multiplier),,,,,
+,Pranav Karnad,Rohan Sharma,Sneha Rao,Priya Nair,Arjun Mehta
+Pranav Karnad,0,2.38,4.16,2.93,9.83
+Rohan Sharma,2.38,0,3.49,0.60,7.69
+Sneha Rao,4.16,3.49,0,3.29,6.82
+Priya Nair,2.93,0.60,3.29,0,7.09
+Arjun Mehta,9.83,7.69,6.82,7.09,0
+,,,,,
+,,,,,
+STUTTGART (raw haversine km - no multiplier),,,,,
+,Test DE 1 (Q5FH+XX),Test DE 2 (Q6G4+P7),Test DE 3 (Q5Q7+FR),Test DE 4 (Q5FM+7H),Test DE 5 (Q593+5C)
+Test DE 1 (Q5FH+XX),0,1.90,1.90,0.35,2.08
+Test DE 2 (Q6G4+P7),1.90,0,3.29,1.65,3.95
+Test DE 3 (Q5Q7+FR),1.90,3.29,0,2.23,2.45
+Test DE 4 (Q5FM+7H),0.35,1.65,2.23,0,2.30
+Test DE 5 (Q593+5C),2.08,3.95,2.45,2.30,0
