@@ -15,6 +15,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   const router = useRouter();
 
   const [step, setStep] = useState('identifier');
+  const [showTooltip, setShowTooltip] = useState(false);
   const [mode, setMode] = useState(null); // null = detecting, 'phone' | 'email'
   const [countryCode, setCountryCode] = useState('+91');
   const [phoneNumber, setPhoneNumber] = useState('');
@@ -203,11 +204,26 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                         <option key={c.value} value={c.value}>{c.label}</option>
                       ))}
                     </select>
-                    <span
-                      title="Purrfect Love Care is currently available in India and Germany only"
-                      style={{ cursor: 'help', fontSize: '0.85rem', color: 'var(--text-light)', marginLeft: '0.25rem' }}
-                    >
-                      ⓘ
+                    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
+                      <span
+                        onClick={() => setShowTooltip(v => !v)}
+                        style={{ cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-light)', marginLeft: '0.25rem', userSelect: 'none' }}
+                      >
+                        ⓘ
+                      </span>
+                      {showTooltip && (
+                        <span
+                          onClick={() => setShowTooltip(false)}
+                          style={{
+                            position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
+                            background: '#333', color: '#fff', fontSize: '0.75rem', borderRadius: '6px',
+                            padding: '0.4rem 0.6rem', whiteSpace: 'nowrap', zIndex: 10,
+                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
+                          }}
+                        >
+                          Purrfect Love Care is available in India and Germany only
+                        </span>
+                      )}
                     </span>
                   </div>
                   <input
