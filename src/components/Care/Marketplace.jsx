@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useMemo, useEffect, useRef } from 'react';
+import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import styles from './Care.module.css';
 import SitterCard from './SitterCard';
@@ -8,6 +8,10 @@ import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 
 const STORAGE_KEY = 'care_marketplace_state';
+const SHIMMER_MIN_MS = 400;
+const SLIDER_DEBOUNCE_MS = 150;
+// Number of skeleton cards to show while loading
+const SKELETON_COUNT = 4;
 
 // Haversine distance in km
 function haversine(lat1, lon1, lat2, lon2) {
@@ -61,6 +65,30 @@ function isAvailableForDates(sitter, startDate, endDate) {
   return false;
 }
 
+function SkeletonCard() {
+  return (
+    <div className={styles.skeletonCard}>
+      <div className={styles.skeletonHeader}>
+        <div className={styles.skeletonAvatar} />
+        <div className={styles.skeletonHeaderText}>
+          <div className={styles.skeletonLine} style={{ height: '14px', width: '60%' }} />
+          <div className={styles.skeletonLine} style={{ height: '11px', width: '35%' }} />
+        </div>
+      </div>
+      <div className={styles.skeletonLine} style={{ height: '11px', width: '90%' }} />
+      <div className={styles.skeletonLine} style={{ height: '11px', width: '75%' }} />
+      <div style={{ display: 'flex', gap: '0.4rem', marginTop: '0.25rem' }}>
+        <div className={styles.skeletonLine} style={{ height: '24px', width: '64px', borderRadius: '20px' }} />
+        <div className={styles.skeletonLine} style={{ height: '24px', width: '64px', borderRadius: '20px' }} />
+      </div>
+      <div className={styles.skeletonActions}>
+        <div className={styles.skeletonBtn} />
+        <div className={styles.skeletonBtn} />
+      </div>
+    </div>
+  );
+}
+
 export default function Marketplace({ initialCanSit, initialNeedsSitting, userName, userLocation, locale: localeProp }) {
   const locale = localeProp || 'en';
   const t = locale === 'de' ? contentDE.marketplace : contentEN.marketplace;
@@ -77,10 +105,20 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const [debugInfo, setDebugInfo] = useState('');
   const [resultsStale, setResultsStale] = useState(false);
   const [fetchedSitters, setFetchedSitters] = useState([]);
+  const [shimmer, setShimmer] = useState(false); // true = show skeleton instead of cards
+  const [displayedCount, setDisplayedCount] = useState(null); // count shown in header, updates after shimmer
 
   // Track which card indices have been revealed for the pop-in animation
   const [visibleCount, setVisibleCount] = useState(0);
   const animFrameRef = useRef(null);
+
+  // Animated container height
+  const gridContainerRef = useRef(null);
+  const heightTweenRef = useRef(null);
+
+  // Debounce slider
+  const sliderDebounceRef = useRef(null);
+  const pendingRadiusRef = useRef(radius);
 
   // Restore state from sessionStorage on mount
   useEffect(() => {
@@ -118,6 +156,23 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     } catch { /* ignore */ }
   }, [startDate, endDate, radius, fetchedSitters, searched]);
 
+  // Tween container height to scrollHeight, then reset to auto
+  const animateHeight = useCallback(() => {
+    const el = gridContainerRef.current;
+    if (!el) return;
+    const from = el.offsetHeight;
+    const to = el.scrollHeight;
+    if (from === to) return;
+    el.style.height = `${from}px`;
+    // force reflow
+    void el.offsetHeight;
+    el.style.height = `${to}px`;
+    if (heightTweenRef.current) clearTimeout(heightTweenRef.current);
+    heightTweenRef.current = setTimeout(() => {
+      if (gridContainerRef.current) gridContainerRef.current.style.height = 'auto';
+    }, 310); // slightly after 300ms transition
+  }, []);
+
   // Pop-in animation: reveal cards one by one when results arrive
   function animateCards(count) {
     if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
@@ -128,9 +183,30 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
       setVisibleCount(i);
       if (i < count) animFrameRef.current = requestAnimationFrame(step);
     };
-    // slight initial delay so the grid has mounted
     animFrameRef.current = requestAnimationFrame(step);
   }
+
+  // Slider change: debounce, show shimmer, update radius, then reveal cards
+  const handleRadiusChange = useCallback((newRadius) => {
+    pendingRadiusRef.current = newRadius;
+    if (sliderDebounceRef.current) clearTimeout(sliderDebounceRef.current);
+    sliderDebounceRef.current = setTimeout(() => {
+      const r = pendingRadiusRef.current;
+      if (!searched) { setRadius(r); return; }
+      const shimmerStart = Date.now();
+      setShimmer(true);
+      setTimeout(() => {
+        setRadius(r);
+        const elapsed = Date.now() - shimmerStart;
+        const remaining = Math.max(0, SHIMMER_MIN_MS - elapsed);
+        setTimeout(() => {
+          setShimmer(false);
+        }, remaining);
+      }, 0);
+    }, SLIDER_DEBOUNCE_MS);
+    // Update display immediately for responsive feel
+    setRadius(newRadius);
+  }, [searched]);
 
   const handleToggle = async (field, value) => {
     const newCanSit = field === 'canSit' ? value : (value ? false : canSit);
@@ -161,6 +237,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     setResultsStale(false);
     setFetchedSitters([]);
     setVisibleCount(0);
+    setShimmer(false);
 
     try {
       const res = await fetch(`/api/care/sitters?type=${apiQueryType}`);
@@ -198,6 +275,23 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
       .filter((s) => s._distance == null || s._distance <= radius)
       .sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
   }, [searched, fetchedSitters, radius]);
+
+  // Update displayed count + trigger height animation when shimmer ends
+  useEffect(() => {
+    if (!shimmer && results !== null) {
+      setDisplayedCount(results.length);
+      // Defer so the DOM has rendered the new cards before we measure
+      requestAnimationFrame(() => animateHeight());
+    }
+  }, [shimmer, results, animateHeight]);
+
+  // Also animate height on initial search complete
+  useEffect(() => {
+    if (!searching && searched && results !== null && !shimmer) {
+      setDisplayedCount(results.length);
+      requestAnimationFrame(() => animateHeight());
+    }
+  }, [searching]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const apiQueryType = canSit ? 'needsSitting' : 'canSit';
   const currentType = canSit ? 'offerToSit' : 'findSitters';
@@ -289,7 +383,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                   max={100}
                   step={5}
                   value={radius}
-                  onChange={(e) => setRadius(Number(e.target.value))}
+                  onChange={(e) => handleRadiusChange(Number(e.target.value))}
                   className={styles.squigglySlider}
                 />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
@@ -325,31 +419,47 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 </div>
               )}
 
-              {searching ? (
-                <div className={styles.searchingSpinner}>
-                  <span className={styles.spinner} />
-                </div>
-              ) : searchError ? (
-                <div className={styles.noResults} style={{ color: '#ef4444' }}>{searchError}</div>
-              ) : results !== null && results.length === 0 ? (
-                <div className={styles.noResults}>{noResultsText}</div>
-              ) : results !== null ? (
-                <div className={styles.sitterGrid}>
-                  {results.map((sitter, i) => (
-                    <div
-                      key={sitter._id}
-                      className={styles.cardPopIn}
-                      style={{
-                        opacity: i < visibleCount ? 1 : 0,
-                        transform: i < visibleCount ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
-                        transition: 'opacity 0.25s ease, transform 0.25s ease',
-                      }}
-                    >
-                      <SitterCard sitter={sitter} type={currentType} locale={locale} />
-                    </div>
-                  ))}
-                </div>
-              ) : null}
+              {/* Count line — fixed height so it never causes a jump */}
+              <div className={styles.resultsCount}>
+                {!searching && !shimmer && displayedCount !== null && displayedCount > 0 && (
+                  `Showing ${displayedCount} ${currentType === 'findSitters' ? 'sitter' : 'member'}${displayedCount !== 1 ? 's' : ''} within ${radius} km`
+                )}
+              </div>
+
+              {/* Animated height wrapper */}
+              <div ref={gridContainerRef} className={styles.resultsAnimated}>
+                {searching ? (
+                  <div className={styles.searchingSpinner}>
+                    <span className={styles.spinner} />
+                  </div>
+                ) : searchError ? (
+                  <div className={styles.noResults} style={{ color: '#ef4444' }}>{searchError}</div>
+                ) : shimmer ? (
+                  <div className={styles.sitterGrid}>
+                    {Array.from({ length: SKELETON_COUNT }).map((_, i) => (
+                      <SkeletonCard key={i} />
+                    ))}
+                  </div>
+                ) : results !== null && results.length === 0 ? (
+                  <div className={styles.noResults}>{noResultsText}</div>
+                ) : results !== null ? (
+                  <div className={styles.sitterGrid}>
+                    {results.map((sitter, i) => (
+                      <div
+                        key={sitter._id}
+                        className={styles.cardPopIn}
+                        style={{
+                          opacity: i < visibleCount ? 1 : 0,
+                          transform: i < visibleCount ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
+                          transition: 'opacity 0.25s ease, transform 0.25s ease',
+                        }}
+                      >
+                        <SitterCard sitter={sitter} type={currentType} locale={locale} />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
+              </div>
             </div>
           )}
         </>
