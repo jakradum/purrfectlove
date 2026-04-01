@@ -494,6 +494,17 @@ export default function ProfileEditor({ initialData }) {
         <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
       </div>
 
+      {/* Availability — at top of edit form */}
+      <div className={styles.section}>
+        <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
+        <AvailabilityCalendar
+          markedDates={form.unavailableDatesV2}
+          availabilityDefault={form.availabilityDefault}
+          onChange={(dates) => update('unavailableDatesV2', dates)}
+          onDefaultChange={(val) => { update('availabilityDefault', val); update('unavailableDatesV2', []); }}
+        />
+      </div>
+
       {/* About Me */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>{t.sections.about}</h2>
