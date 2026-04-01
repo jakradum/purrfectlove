@@ -145,6 +145,11 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
     const newNeedsSitting = field === 'needsSitting' ? value : (value ? false : needsSitting);
     setCanSit(newCanSit);
     setNeedsSitting(newNeedsSitting);
+    // Re-search immediately with the new query type if dates are already set
+    if (startDate && endDate && (newCanSit || newNeedsSitting)) {
+      const queryType = newCanSit ? 'needsSitting' : 'canSit';
+      handleSearch(queryType);
+    }
     try {
       await fetch('/api/care/profile', {
         method: 'PATCH',
@@ -287,7 +292,12 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
     }
   }, [startDate, endDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  const handleSearch = async () => {
+  // needsSitting → show canSit sitters; canSit → show needsSitting members
+  const queryType = needsSitting ? 'canSit' : 'needsSitting';
+  const cardType = needsSitting ? 'findSitters' : 'offerToSit';
+
+  const handleSearch = async (overrideQueryType) => {
+    const type = overrideQueryType ?? queryType;
     setSearching(true);
     setSearched(true);
     setSearchError('');
@@ -296,7 +306,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
     setShimmer(false);
 
     try {
-      const res = await fetch('/api/care/sitters?type=canSit');
+      const res = await fetch(`/api/care/sitters?type=${type}`);
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         setSearchError(`API error ${res.status}: ${err.error || 'unknown'}`);
@@ -528,7 +538,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
                   >
                     <SitterCard
                       sitter={sitter}
-                      type="findSitters"
+                      type={cardType}
                       locale={locale}
                       availabilityUnconfirmed={!!sitter._availabilityUnconfirmed}
                     />
