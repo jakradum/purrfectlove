@@ -17,6 +17,12 @@ export default {
       validation: (Rule) => Rule.required().min(10),
     },
     {
+      name: 'signOff',
+      title: 'Sign off name',
+      type: 'string',
+      description: 'Name that appears at the end of the message, e.g. "Pranav & the Purrfect Love team"',
+    },
+    {
       name: 'status',
       title: 'Status',
       type: 'string',

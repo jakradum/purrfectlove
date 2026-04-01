@@ -65,7 +65,9 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
 
   // Derived state — must be declared before the scroll useEffect below
   const activeThread = threads.find(t => t.partnerId === activePartnerId)
-  const activePartnerName = activeThread?.partnerName || composeTarget?.name || ''
+  const activePartnerName = activeThread?.isBroadcastThread
+    ? 'Purrfect Love'
+    : (activeThread?.partnerName || composeTarget?.name || '')
 
   const fetchInbox = useCallback(async () => {
     try {
@@ -277,7 +279,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
               }}
             >
               <div className={styles.threadName}>
-                {thread.partnerName}
+                {thread.isBroadcastThread ? 'Purrfect Love' : thread.partnerName}
                 {thread.isAdminThread && <span className={styles.adminTag}>Admin</span>}
               </div>
               <div className={styles.threadPreview}>

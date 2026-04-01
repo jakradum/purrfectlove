@@ -69,10 +69,13 @@ export async function GET(request) {
           partnerId,
           partnerName: partnerName || 'Unknown',
           isAdminThread: !!partner.siteAdmin,
+          isBroadcastThread: !!msg.broadcast,
           messages: [],
           unreadCount: 0,
           latestAt: null,
         })
+      } else if (msg.broadcast) {
+        threadsMap.get(partnerId).isBroadcastThread = true
       }
 
       const thread = threadsMap.get(partnerId)

@@ -13,7 +13,7 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request) {
   try {
-    const { broadcastId } = await request.json()
+    const { broadcastId, signOff } = await request.json()
     if (!broadcastId) {
       return Response.json({ error: 'broadcastId is required' }, { status: 400 })
     }
@@ -41,7 +41,7 @@ export async function POST(request) {
     }
 
     const subject = broadcast.subject
-    const bodyText = broadcast.body
+    const bodyText = signOff ? `${broadcast.body}\n\n— ${signOff}` : broadcast.body
 
     // Send in batches of 50 to avoid rate limits
     const BATCH = 50

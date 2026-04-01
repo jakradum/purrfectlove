@@ -13,6 +13,7 @@ export function BroadcastSender({ documentId, document: doc }) {
 
   const subject = doc?.displayed?.subject
   const body = doc?.displayed?.body
+  const signOff = doc?.displayed?.signOff
   const sentAt = doc?.displayed?.sentAt
 
   useEffect(() => {
@@ -55,6 +56,7 @@ export function BroadcastSender({ documentId, document: doc }) {
       let inboxCount = 0
       const now = new Date().toISOString()
       const fromRef = adminSitterId
+      const fullBody = signOff ? `${body}\n\n— ${signOff}` : body
 
       if (fromRef) {
         const BATCH = 50
@@ -67,7 +69,7 @@ export function BroadcastSender({ documentId, document: doc }) {
                   _type: 'message',
                   from: { _type: 'reference', _ref: fromRef },
                   to: { _type: 'reference', _ref: member._id },
-                  body,
+                  body: fullBody,
                   read: false,
                   markedAsSpam: false,
                   broadcast: true,
@@ -90,7 +92,7 @@ export function BroadcastSender({ documentId, document: doc }) {
           'Content-Type': 'application/json',
           ...(secret ? { 'X-Admin-Secret': secret } : {}),
         },
-        body: JSON.stringify({ broadcastId: documentId }),
+        body: JSON.stringify({ broadcastId: documentId, signOff }),
         credentials: 'include',
       })
       const data = await res.json()
