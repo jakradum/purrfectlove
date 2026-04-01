@@ -404,8 +404,8 @@ export default function ProfileEditor({ initialData }) {
   const updateDateRange = (idx, field, value) => update('availableDates', form.availableDates.map((r, i) => i === idx ? { ...r, [field]: value } : r));
   const removeDateRange = (idx) => update('availableDates', form.availableDates.filter((_, i) => i !== idx));
 
-  // ── READ MODE ──────────────────────────────────────────────────────────────
-  if (!editMode) {
+  // ── READ MODE (also handles inline availability editing) ───────────────────
+  if (!editMode || editMode === 'availability') {
     const deletionPending = !!initialData.deletionRequested;
 
     // Profile header derived values
@@ -496,17 +496,8 @@ export default function ProfileEditor({ initialData }) {
 
         <CompletionIndicator form={form} onEdit={() => setEditMode('profile')} />
 
-        {!deletionPending && (
+        {!deletionPending && !editMode && (
           <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', margin: '1rem 0' }}>
-            {form.canSit && (
-              <button
-                type="button"
-                className={styles.editBtnSecondary}
-                onClick={() => setEditMode('availability')}
-              >
-                <PencilIcon /> Edit availability
-              </button>
-            )}
             <button
               type="button"
               className={styles.editBtn}
@@ -517,15 +508,42 @@ export default function ProfileEditor({ initialData }) {
           </div>
         )}
 
-        {/* Availability — first section, above everything else */}
+        {/* Availability — always visible, inline editable */}
         {form.canSit && (
           <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(44,95,79,0.1)' }}>
+              <h2 className={styles.sectionTitle} style={{ margin: 0, padding: 0, border: 'none' }}>{t.sections.availability}</h2>
+              {!editMode && !deletionPending && (
+                <button
+                  type="button"
+                  className={styles.editBtnSecondary}
+                  onClick={() => setEditMode('availability')}
+                >
+                  <PencilIcon /> Edit
+                </button>
+              )}
+            </div>
             <AvailabilityCalendar
               markedDates={form.unavailableDatesV2}
               availabilityDefault={form.availabilityDefault}
-              readOnly
+              readOnly={editMode !== 'availability'}
+              onChange={editMode === 'availability' ? (dates) => update('unavailableDatesV2', dates) : undefined}
+              onDefaultChange={editMode === 'availability' ? (val) => { update('availabilityDefault', val); update('unavailableDatesV2', []); } : undefined}
             />
+            {editMode === 'availability' && (
+              <div className={styles.saveBar} style={{ marginTop: '1rem' }}>
+                {saveError && <span className={styles.saveError}>{saveError}</span>}
+                <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
+                <button
+                  type="button"
+                  className={styles.saveBtn}
+                  onClick={handleSaveAvailability}
+                  disabled={saving}
+                >
+                  {saving ? t.saving : t.save}
+                </button>
+              </div>
+            )}
           </div>
         )}
 
@@ -838,45 +856,6 @@ export default function ProfileEditor({ initialData }) {
             </div>
           </div>
         )}
-      </div>
-    );
-  }
-
-  // ── AVAILABILITY EDIT MODE ─────────────────────────────────────────────────
-  if (editMode === 'availability') {
-    return (
-      <div className={styles.profilePage}>
-        <div className={styles.profileHeader}>
-          <h1 className={styles.pageTitle}>My Availability</h1>
-          <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
-        </div>
-
-        <div className={styles.section}>
-          <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '1rem', lineHeight: 1.6 }}>
-            Set your default availability so cat parents know when you can sit.
-          </p>
-          <AvailabilityCalendar
-            markedDates={form.unavailableDatesV2}
-            availabilityDefault={form.availabilityDefault}
-            onChange={(dates) => update('unavailableDatesV2', dates)}
-            onDefaultChange={(val) => {
-              update('availabilityDefault', val);
-              update('unavailableDatesV2', []);
-            }}
-          />
-        </div>
-
-        <div className={styles.saveBar}>
-          {saveError && <span className={styles.saveError}>{saveError}</span>}
-          <button
-            type="button"
-            className={styles.saveBtn}
-            onClick={handleSaveAvailability}
-            disabled={saving}
-          >
-            {saving ? t.saving : t.save}
-          </button>
-        </div>
       </div>
     );
   }

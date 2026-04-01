@@ -403,17 +403,17 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const apiQueryType = isBrowseMode ? 'needsSitting' : (canSit ? 'needsSitting' : 'canSit');
   const currentType = isBrowseMode ? 'offerToSit' : (canSit ? 'offerToSit' : 'findSitters');
 
-  // Show conflict banner if user is seeking a sitter AND their own availability overlaps the selected dates
-  const showConflictBanner = !isBrowseMode && datesSelected && needsSitting && (() => {
-    if (!userMarkedDates) return false;
+  // Show conflict banner if user is a sitter AND seeking AND their own sitter availability overlaps selected dates
+  const showConflictBanner = !isBrowseMode && datesSelected && canSit && needsSitting && (() => {
     const requested = dateRange(startDate, endDate);
-    const marked = new Set(userMarkedDates);
+    const marked = new Set(userMarkedDates || []);
+    console.log('[ConflictBanner] default:', userAvailabilityDefault, 'marked:', [...marked], 'requested:', requested);
     if (userAvailabilityDefault === 'unavailable') {
-      // User is unavailable by default — conflict if ANY requested date is NOT in their available list
-      return requested.some(d => !marked.has(d));
-    } else {
-      // User is available by default — conflict if ANY requested date is marked unavailable
+      // Unavailable by default — available only on explicitly marked dates → conflict if any requested date is marked
       return requested.some(d => marked.has(d));
+    } else {
+      // Available by default — conflict if any requested date is NOT marked as unavailable (user IS available)
+      return requested.some(d => !marked.has(d));
     }
   })();
 

@@ -2206,6 +2206,54 @@
   border-radius: 0;
 }
 
+/* Airbnb-style range fill — outer cell strips (blue marketplace palette) */
+.drpDayOuterStart {
+  background: linear-gradient(to right, transparent 50%, #E8EEF7 50%) !important;
+  border-radius: 0 !important;
+}
+
+.drpDayOuterEnd {
+  background: linear-gradient(to left, transparent 50%, #E8EEF7 50%) !important;
+  border-radius: 0 !important;
+}
+
+.drpDayOuterMid {
+  background: #E8EEF7 !important;
+  border-radius: 0 !important;
+}
+
+/* Inner circle for DateRangePicker */
+.drpDayInner {
+  width: 100%;
+  aspect-ratio: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 50%;
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+}
+
+.drpDayInnerSelected {
+  background: #4A6FA5;
+  color: #fff;
+}
+
+.drpDayInnerMid {
+  color: #4A6FA5;
+}
+
+.drpDayInnerToday {
+  outline: 2px solid #4A6FA5;
+  outline-offset: -2px;
+  border-radius: 50%;
+}
+
+.monthCalDay:not(:disabled):hover .drpDayInnerAvail {
+  background: rgba(74, 111, 165, 0.12);
+}
+
 /* ====== Mobile Filter Bottom Sheet (F11) ====== */
 
 .filterFab {

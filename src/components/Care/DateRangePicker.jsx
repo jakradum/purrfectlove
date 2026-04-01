@@ -131,31 +131,35 @@ export default function DateRangePicker({ startDate, endDate, onChange, onClear,
           const isPast = ymd < todayYMD;
           const isStart = ymd === startDate;
           const isEnd = ymd === endDate;
+          const isSingleDay = isStart && isEnd;
           const isInRange = startDate && endDate && ymd > startDate && ymd < endDate;
+          const isEndpoint = isStart || isEnd;
           const isToday = ymd === todayYMD;
 
-          let cls = styles.monthCalDay;
-          if (isPast) {
-            cls += ` ${styles.monthCalDayPast}`;
-          } else if (isStart || isEnd) {
-            cls += ` ${styles.drpDaySelected}`;
-          } else if (isInRange) {
-            cls += ` ${styles.drpDayInRange}`;
-          } else {
-            cls += ` ${styles.monthCalDayAvail}`;
-          }
-          if (isToday) cls += ` ${styles.monthCalDayToday}`;
+          // Outer button: strip background for range context
+          let outerCls = styles.monthCalDay;
+          if (isStart && !isSingleDay) outerCls += ` ${styles.drpDayOuterStart}`;
+          else if (isEnd && !isSingleDay) outerCls += ` ${styles.drpDayOuterEnd}`;
+          else if (isInRange) outerCls += ` ${styles.drpDayOuterMid}`;
+          if (isPast) outerCls += ` ${styles.monthCalDayPast}`;
+
+          // Inner span: circle
+          let innerCls = styles.drpDayInner;
+          if (isEndpoint) innerCls += ` ${styles.drpDayInnerSelected}`;
+          else if (isInRange) innerCls += ` ${styles.drpDayInnerMid}`;
+          else if (!isPast) innerCls += ` ${styles.drpDayInnerAvail}`;
+          if (isToday) innerCls += ` ${styles.drpDayInnerToday}`;
 
           return (
             <button
               key={ymd}
               type="button"
-              className={cls}
+              className={outerCls}
               disabled={isPast}
               onClick={() => handleDayClick(ymd)}
               aria-label={ymd}
             >
-              {dayNum}
+              <span className={innerCls}>{dayNum}</span>
             </button>
           );
         })}
