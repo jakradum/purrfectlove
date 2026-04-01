@@ -106,6 +106,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
 
   const [canSit, setCanSit] = useState(initialCanSit);
   const [needsSitting, setNeedsSitting] = useState(initialNeedsSitting);
+  const [browseAsSitter, setBrowseAsSitter] = useState(false);
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -139,8 +140,8 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const updateSliderTrack = useCallback((val) => {
     const el = sliderRef.current;
     if (!el) return;
-    const min = Number(el.min) || 3;
-    const max = Number(el.max) || 25;
+    const min = Number(el.min) || 1.5;
+    const max = Number(el.max) || 20;
     const pct = ((val - min) / (max - min)) * 100;
     el.style.background = `linear-gradient(to right, var(--tabby-brown) ${pct}%, #d1d5db ${pct}%)`;
   }, []);
@@ -214,9 +215,20 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     animFrameRef.current = requestAnimationFrame(step);
   }
 
-  // Auto-search when both dates selected; reset when dates cleared
+  // Auto-fetch in browse mode (no dates needed)
+  const browseModeRef = useRef(false);
+  useEffect(() => {
+    const entering = isBrowseMode && !browseModeRef.current;
+    browseModeRef.current = isBrowseMode;
+    if (entering && (canSit || needsSitting)) {
+      handleSearch();
+    }
+  }, [isBrowseMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Auto-search when both dates selected; reset when dates cleared (seeker mode only)
   const prevDatesRef = useRef({ startDate: '', endDate: '' });
   useEffect(() => {
+    if (isBrowseMode) return;
     const prev = prevDatesRef.current;
     prevDatesRef.current = { startDate, endDate };
     if (startDate && endDate && (canSit || needsSitting)) {
@@ -341,9 +353,13 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     }
   }, [searching]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  // Browse mode: sitter-only users skip the date gate entirely
+  // Also active when both flags are set and user explicitly chose "Browse as sitter"
+  const isBrowseMode = (canSit && !needsSitting) || (canSit && needsSitting && browseAsSitter);
+
   const datesSelected = !!(startDate && endDate);
-  const apiQueryType = canSit ? 'needsSitting' : 'canSit';
-  const currentType = canSit ? 'offerToSit' : 'findSitters';
+  const apiQueryType = isBrowseMode ? 'needsSitting' : (canSit ? 'needsSitting' : 'canSit');
+  const currentType = isBrowseMode ? 'offerToSit' : (canSit ? 'offerToSit' : 'findSitters');
 
   const noResultsText =
     currentType === 'findSitters'
@@ -391,7 +407,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
         <div className={styles.statusPrompt}>
           <p className={styles.statusPromptTitle}>Enable a status to get started</p>
           <p className={styles.statusPromptText}>
-            Toggle &quot;I can sit&quot; above to find cats that need a sitter, or &quot;I need sitting&quot; to find sitters for your cats. You cannot enable both at the same time.
+            Toggle &quot;I can sit&quot; above to find cats that need a sitter, or &quot;I need sitting&quot; to find sitters for your cats.
           </p>
           {!userName && (
             <Link href="/profile" className={styles.profileLink}>
@@ -401,45 +417,109 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
         </div>
       ) : (
         <>
-          {/* Search bar */}
-          <div className={styles.searchBar}>
-            <div className={styles.searchField}>
-              <label className={styles.searchLabel}>{t.search.datesLabel} (from)</label>
-              <input
-                type="date"
-                className={styles.searchInput}
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
-            </div>
-            <div className={styles.searchField}>
-              <label className={styles.searchLabel}>{t.search.datesLabel} (to)</label>
-              <input
-                type="date"
-                className={styles.searchInput}
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-              />
-            </div>
-            {datesSelected && (
-              <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '0.25rem' }}>
-                <button
-                  type="button"
-                  onClick={() => { setStartDate(''); setEndDate(''); }}
-                  style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.8rem', color: 'var(--text-light)', textDecoration: 'underline', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                >
-                  Clear dates
-                </button>
-              </div>
-            )}
-            {userLocation?.lat != null ? (
-              <div
-                className={styles.searchField}
-                title={!datesSelected ? 'Pick dates first' : undefined}
+          {/* Browse-mode / seeker-mode toggle — only shown when both are true */}
+          {canSit && needsSitting && (
+            <div style={{ display: 'flex', gap: '0.5rem', marginBottom: '0.75rem', background: 'rgba(44,95,79,0.06)', borderRadius: '10px', padding: '0.35rem', width: 'fit-content' }}>
+              <button
+                type="button"
+                onClick={() => { setBrowseAsSitter(false); setSearched(false); setFetchedSitters([]); }}
+                style={{
+                  padding: '0.35rem 0.875rem', borderRadius: '7px', border: 'none', fontSize: '0.85rem', fontWeight: 600,
+                  background: !browseAsSitter ? 'var(--hunter-green)' : 'transparent',
+                  color: !browseAsSitter ? '#fff' : 'var(--hunter-green)',
+                  cursor: 'pointer', fontFamily: 'var(--font-outfit)',
+                }}
               >
-                <label className={styles.searchLabel} style={!datesSelected ? { opacity: 0.45 } : {}}>
-                  {t.search.radiusLabel}: {radius} {t.search.radiusUnit}
-                </label>
+                Find a sitter
+              </button>
+              <button
+                type="button"
+                onClick={() => setBrowseAsSitter(true)}
+                style={{
+                  padding: '0.35rem 0.875rem', borderRadius: '7px', border: 'none', fontSize: '0.85rem', fontWeight: 600,
+                  background: browseAsSitter ? 'var(--hunter-green)' : 'transparent',
+                  color: browseAsSitter ? '#fff' : 'var(--hunter-green)',
+                  cursor: 'pointer', fontFamily: 'var(--font-outfit)',
+                }}
+              >
+                Browse as sitter
+              </button>
+            </div>
+          )}
+
+          {/* Search bar — hidden in browse mode */}
+          {!isBrowseMode && (
+            <div className={styles.searchBar}>
+              <div className={styles.searchField}>
+                <label className={styles.searchLabel}>{t.search.datesLabel} (from)</label>
+                <input
+                  type="date"
+                  className={styles.searchInput}
+                  value={startDate}
+                  onChange={(e) => setStartDate(e.target.value)}
+                />
+              </div>
+              <div className={styles.searchField}>
+                <label className={styles.searchLabel}>{t.search.datesLabel} (to)</label>
+                <input
+                  type="date"
+                  className={styles.searchInput}
+                  value={endDate}
+                  onChange={(e) => setEndDate(e.target.value)}
+                />
+              </div>
+              {datesSelected && (
+                <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '0.25rem' }}>
+                  <button
+                    type="button"
+                    onClick={() => { setStartDate(''); setEndDate(''); }}
+                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.8rem', color: 'var(--text-light)', textDecoration: 'underline', cursor: 'pointer', whiteSpace: 'nowrap' }}
+                  >
+                    Clear dates
+                  </button>
+                </div>
+              )}
+              {userLocation?.lat != null ? (
+                <div
+                  className={styles.searchField}
+                  title={!datesSelected ? 'Pick dates first' : undefined}
+                >
+                  <label className={styles.searchLabel} style={!datesSelected ? { opacity: 0.45 } : {}}>
+                    {t.search.radiusLabel}: {radius} {t.search.radiusUnit}
+                  </label>
+                  <input
+                    ref={sliderRef}
+                    type="range"
+                    min={1.5}
+                    max={20}
+                    step={0.5}
+                    value={radius}
+                    onChange={(e) => datesSelected && handleRadiusChange(Number(e.target.value))}
+                    className={styles.squigglySlider}
+                    disabled={!datesSelected}
+                    style={!datesSelected ? { opacity: 0.35, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
+                  />
+                  <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', opacity: !datesSelected ? 0.45 : 1 }}>
+                    {!datesSelected
+                      ? 'Pick dates first to filter by distance'
+                      : `Move slider to adjust search area · ${userLocation.name || 'your location'}`}
+                  </span>
+                </div>
+              ) : (
+                <div className={styles.searchField}>
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
+                    <a href="/profile" style={{ color: 'var(--hunter-green)' }}>Add your location</a> to enable distance filtering
+                  </span>
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* Browse mode radius slider */}
+          {isBrowseMode && userLocation?.lat != null && (
+            <div className={styles.searchBar}>
+              <div className={styles.searchField}>
+                <label className={styles.searchLabel}>{t.search.radiusLabel}: {radius} {t.search.radiusUnit}</label>
                 <input
                   ref={sliderRef}
                   type="range"
@@ -447,28 +527,18 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                   max={20}
                   step={0.5}
                   value={radius}
-                  onChange={(e) => datesSelected && handleRadiusChange(Number(e.target.value))}
+                  onChange={(e) => handleRadiusChange(Number(e.target.value))}
                   className={styles.squigglySlider}
-                  disabled={!datesSelected}
-                  style={!datesSelected ? { opacity: 0.35, cursor: 'not-allowed', pointerEvents: 'none' } : {}}
                 />
-                <span style={{ fontSize: '0.75rem', color: 'var(--text-light)', opacity: !datesSelected ? 0.45 : 1 }}>
-                  {!datesSelected
-                    ? 'Pick dates first to filter by distance'
-                    : `Move slider to adjust search area · ${userLocation.name || 'your location'}`}
+                <span style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>
+                  {`Move slider to adjust search area · ${userLocation.name || 'your location'}`}
                 </span>
               </div>
-            ) : (
-              <div className={styles.searchField}>
-                <span style={{ fontSize: '0.8rem', color: 'var(--text-light)' }}>
-                  <a href="/profile" style={{ color: 'var(--hunter-green)' }}>Add your location</a> to enable distance filtering
-                </span>
-              </div>
-            )}
-          </div>
+            </div>
+          )}
 
-          {/* Empty state — shown until both dates are picked */}
-          {!datesSelected && !searching && (
+          {/* Empty state — seeker mode only */}
+          {!isBrowseMode && !datesSelected && !searching && (
             <div className={styles.datesEmptyState}>
               <div className={styles.datesEmptyIcon}>🗓️</div>
               <h2 className={styles.datesEmptyHeading}>
@@ -482,8 +552,8 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
             </div>
           )}
 
-          {/* Results — shown once dates are selected */}
-          {(datesSelected || searching) && (
+          {/* Results — shown in browse mode always, or seeker mode once dates picked */}
+          {(isBrowseMode || datesSelected || searching) && (
             <div className={styles.resultsWrapper}>
               {resultsStale && (
                 <div className={styles.resultsStaleOverlay}>

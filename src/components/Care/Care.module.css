@@ -989,6 +989,95 @@
   margin-bottom: 2rem;
 }
 
+/* Social profile card */
+.profileCard {
+  display: flex;
+  align-items: center;
+  gap: 1.125rem;
+  margin-top: 1rem;
+}
+
+.profilePhotoWrap {
+  position: relative;
+  flex-shrink: 0;
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  overflow: hidden;
+  background: rgba(44, 95, 79, 0.1);
+  border: 2.5px solid rgba(44, 95, 79, 0.18);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: rgba(44, 95, 79, 0.45);
+  transition: border-color 0.15s;
+}
+
+.profilePhotoWrap:hover .profilePhotoOverlay {
+  opacity: 1;
+}
+
+.profilePhoto {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+.profilePhotoPlaceholder {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  height: 100%;
+}
+
+.profilePhotoOverlay {
+  position: absolute;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.38);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  opacity: 0;
+  transition: opacity 0.15s;
+  border-radius: 50%;
+}
+
+.profileCardInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 0.15rem;
+  min-width: 0;
+}
+
+.profileCardUsername {
+  font-size: 1.05rem;
+  font-weight: 500;
+  color: var(--text-dark);
+  line-height: 1.3;
+  font-family: var(--font-outfit);
+}
+
+.profileCardYou {
+  color: var(--text-light);
+  font-weight: 400;
+}
+
+.profileCardRealName {
+  font-size: 0.82rem;
+  color: var(--text-light);
+  line-height: 1.3;
+}
+
+.profileCardMeta {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  margin-top: 0.1rem;
+  line-height: 1.4;
+}
+
 .profileActions {
   display: flex;
   gap: 1rem;

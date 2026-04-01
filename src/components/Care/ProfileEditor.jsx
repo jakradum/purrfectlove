@@ -1,13 +1,13 @@
 'use client';
 
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
-import { OpenLocationCode } from 'open-location-code';
 import styles from './Care.module.css';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 import AvailabilityCalendar from './AvailabilityCalendar';
+import LocationMapPicker from './LocationMapPicker';
 
 const PERSONALITY_OPTIONS = ['shy', 'energetic', 'special needs']; // 'senior' is auto-calculated from age
 const DIET_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
@@ -205,13 +205,11 @@ export default function ProfileEditor({ initialData }) {
 
   const savedForm = useRef(formFromData(initialData));
   const [form, setForm] = useState(formFromData(initialData));
-  const [locationInput, setLocationInput] = useState(initialData.location?.name || '');
   const [isEditing, setIsEditing] = useState(false);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [privacySaving, setPrivacySaving] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
-  const [locationError, setLocationError] = useState('');
   const [showDeletionModal, setShowDeletionModal] = useState(false);
   const [deletionReason, setDeletionReason] = useState('');
   const [deletionSubmitting, setDeletionSubmitting] = useState(false);
@@ -222,15 +220,9 @@ export default function ProfileEditor({ initialData }) {
   const [usernameRegenerated, setUsernameRegenerated] = useState(!!initialData.usernameRegenerated);
   const [regenLoading, setRegenLoading] = useState(false);
 
-  const CITY_OPTIONS = [
-    { value: 'Bangalore, India', placeholder: 'e.g. 7J4V+XH' },
-    { value: 'Stuttgart, Germany', placeholder: 'e.g. GV3C+9X' },
-  ];
-  const defaultCity = initialData.locale === 'de' ? 'Stuttgart, Germany' : 'Bangalore, India';
-  const [locationCity, setLocationCity] = useState(defaultCity);
-  const locationPlaceholder = CITY_OPTIONS.find(c => c.value === locationCity)?.placeholder ?? 'e.g. 7J4V+XH';
-
-  const olc = new OpenLocationCode();
+  const [photoUrl, setPhotoUrl] = useState(initialData.photoUrl || null);
+  const [photoUploading, setPhotoUploading] = useState(false);
+  const photoInputRef = useRef(null);
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm.current);
 
@@ -246,45 +238,25 @@ export default function ProfileEditor({ initialData }) {
     });
   };
 
-  const handleLocationChange = (raw, city = locationCity) => {
-    setLocationInput(raw);
-    setLocationError('');
-    const trimmed = raw.trim();
-    if (!trimmed) { update('location', null); return; }
-
-    const parts = trimmed.split(/\s+/);
-    const token = parts[0];
-
-    if (!token.includes('+') || !olc.isValid(token)) {
-      setLocationError('Enter a valid Plus Code from plus.codes/map (e.g. 7J4VVHQ2+FC or 7J4V+XH)');
-      update('location', null);
-      return;
-    }
-
-    if (olc.isFull(token)) {
-      // Full global code — decode immediately on the client
-      try {
-        const decoded = olc.decode(token);
-        update('location', {
-          name: token.toUpperCase(),
-          lat: parseFloat(decoded.latitudeCenter.toFixed(6)),
-          lng: parseFloat(decoded.longitudeCenter.toFixed(6)),
-        });
-        return;
-      } catch { /* fall through */ }
-    }
-
-    // Short code — always append the selected city as the locality reference.
-    // Any locality typed inline by the user is ignored in favour of the dropdown.
-    const nameToStore = `${token} ${city}`;
-    // Store without coords — server will geocode and recover the full code on save
-    update('location', { name: nameToStore, lat: null, lng: null });
+  const handlePhotoClick = () => {
+    if (!photoUploading) photoInputRef.current?.click();
   };
 
-  const handleCityChange = (city) => {
-    setLocationCity(city);
-    // Re-process the current input with the new city so location.name stays in sync
-    if (locationInput.trim()) handleLocationChange(locationInput, city);
+  const handlePhotoChange = async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setPhotoUploading(true);
+    try {
+      const formData = new FormData();
+      formData.append('photo', file);
+      const res = await fetch('/api/care/upload-photo', { method: 'POST', body: formData });
+      if (res.ok) {
+        const data = await res.json();
+        setPhotoUrl(data.photoUrl);
+      }
+    } catch { /* silent */ }
+    setPhotoUploading(false);
+    e.target.value = '';
   };
 
   const handleStatusToggle = (field, value) => {
@@ -325,7 +297,6 @@ export default function ProfileEditor({ initialData }) {
       const newForm = formFromData(updated);
       savedForm.current = newForm;
       setForm(newForm);
-      setLocationInput(updated.location?.name || '');
       setIsEditing(false);
       router.refresh();
     } catch {
@@ -337,7 +308,6 @@ export default function ProfileEditor({ initialData }) {
 
   const handleCancel = () => {
     setForm(savedForm.current);
-    setLocationInput(savedForm.current.location?.name || '');
     setSaveError('');
     setIsEditing(false);
   };
@@ -388,6 +358,17 @@ export default function ProfileEditor({ initialData }) {
   // ── READ MODE ──────────────────────────────────────────────────────────────
   if (!isEditing) {
     const deletionPending = !!initialData.deletionRequested;
+
+    // Profile header derived values
+    const memberSince = initialData._createdAt
+      ? new Date(initialData._createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+      : null;
+    const loc = initialData.location || form.location;
+    const locationLabel = loc?.displayName ||
+      (loc?.lat != null
+        ? (loc.lat > 8 && loc.lat < 20 ? 'Bangalore' : 'Stuttgart')
+        : null);
+
     return (
       <div className={styles.profilePage}>
         {deletionPending && (
@@ -395,16 +376,68 @@ export default function ProfileEditor({ initialData }) {
             <strong>Your deletion request is pending.</strong> Your account will be removed within 48 hours. You cannot use the community during this time.
           </div>
         )}
-        <div className={styles.profileHeader} style={{ alignItems: 'flex-start' }}>
-          <div>
-            <Link href="/" className={styles.backLink}>← Back to community</Link>
-            <h1 className={styles.pageTitle}>{username ? `${username} — you` : (form.name || 'My Profile')}</h1>
-            {username && (
-              <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginTop: '0.25rem' }}>
-                Your community username · real name only visible to you
-              </p>
-            )}
+
+        {/* Social profile card header */}
+        <div className={styles.profileHeader}>
+          <Link href="/" className={styles.backLink}>← Back to community</Link>
+          <div className={styles.profileCard}>
+            {/* Circular photo with upload */}
+            <div
+              className={styles.profilePhotoWrap}
+              onClick={handlePhotoClick}
+              role="button"
+              tabIndex={0}
+              onKeyDown={(e) => e.key === 'Enter' && handlePhotoClick()}
+              title={photoUploading ? 'Uploading…' : 'Change photo'}
+              style={{ cursor: photoUploading ? 'wait' : 'pointer' }}
+            >
+              {photoUrl ? (
+                <img src={photoUrl} className={styles.profilePhoto} alt="Profile" />
+              ) : (
+                <div className={styles.profilePhotoPlaceholder}>
+                  <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
+                    <ellipse cx="24" cy="28" rx="14" ry="12" fill="currentColor" opacity="0.25" />
+                    <ellipse cx="24" cy="20" rx="9" ry="9" fill="currentColor" opacity="0.5" />
+                    <polygon points="10,20 14,10 18,20" fill="currentColor" opacity="0.5" />
+                    <polygon points="30,20 34,10 38,20" fill="currentColor" opacity="0.5" />
+                  </svg>
+                </div>
+              )}
+              <div className={styles.profilePhotoOverlay}>
+                {photoUploading ? (
+                  <span style={{ fontSize: '0.65rem' }}>…</span>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                    <circle cx="12" cy="13" r="4"/>
+                  </svg>
+                )}
+              </div>
+            </div>
+
+            {/* Identity info */}
+            <div className={styles.profileCardInfo}>
+              <div className={styles.profileCardUsername}>
+                {username || form.name || 'My Profile'}
+                <span className={styles.profileCardYou}> — you</span>
+              </div>
+              {username && form.name && (
+                <div className={styles.profileCardRealName}>({form.name})</div>
+              )}
+              <div className={styles.profileCardMeta}>
+                {locationLabel && <>{locationLabel}{memberSince ? ' · ' : ''}</>}
+                {memberSince && <>Member since {memberSince}</>}
+              </div>
+            </div>
           </div>
+
+          <input
+            ref={photoInputRef}
+            type="file"
+            accept="image/jpeg,image/png,image/webp"
+            style={{ display: 'none' }}
+            onChange={handlePhotoChange}
+          />
         </div>
 
         <CompletionIndicator form={form} onEdit={() => setIsEditing(true)} />
@@ -434,9 +467,17 @@ export default function ProfileEditor({ initialData }) {
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>{t.sections.about}</h2>
           <ReadField label="Display name" value={form.name} />
-          <ReadField label="Location" value={form.location?.name} />
+          <ReadField label="Location" value={form.location?.displayName || form.location?.name} />
           {form.location?.lat != null && (
-            <ReadField label="Coordinates" value={`${form.location.lat}, ${form.location.lng}`} />
+            <div className={styles.readField}>
+              <span className={styles.readFieldLabel}>
+                Coordinates
+                <span style={{ fontWeight: 400, color: 'var(--text-light)', fontSize: '0.72rem', marginLeft: '0.4rem' }}>Only visible to you</span>
+              </span>
+              <span className={styles.readFieldValue} style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>
+                {form.location.lat}, {form.location.lng}
+              </span>
+            </div>
           )}
           <ReadField label="Contact via" value={TAG_LABELS[form.contactPreference] || form.contactPreference} />
           {form.bio && <p className={styles.readBio}>{form.bio}</p>}
@@ -740,53 +781,11 @@ export default function ProfileEditor({ initialData }) {
         <h2 className={styles.sectionTitle} style={!form.location?.lat ? { color: '#ef4444' } : {}}>
           Location <span style={{ fontWeight: 400 }}>*</span>
         </h2>
-        <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>City <span style={{ color: '#ef4444' }}>*</span></label>
-          <select
-            className={styles.profileInput}
-            value={locationCity}
-            onChange={(e) => handleCityChange(e.target.value)}
-          >
-            {CITY_OPTIONS.map(({ value }) => (
-              <option key={value} value={value}>{value}</option>
-            ))}
-          </select>
-        </div>
-        <div className={styles.formGroup}>
-          <label className={styles.profileLabel} style={!form.location?.lat ? { color: '#ef4444' } : {}}>
-            Plus Code <span style={{ color: '#ef4444' }}>*</span>
-          </label>
-          <input
-            type="text"
-            className={styles.profileInput}
-            value={locationInput}
-            onChange={(e) => handleLocationChange(e.target.value)}
-            placeholder={locationPlaceholder}
-            style={!form.location?.lat ? { borderColor: '#ef4444' } : {}}
-          />
-          {locationError && (
-            <p className={styles.hint} style={{ color: '#ef4444' }}>{locationError}</p>
-          )}
-          {!locationError && form.location?.lat != null && (
-            <>
-              {olc.isValid(form.location.name) && olc.isFull(form.location.name) && (
-                <p className={styles.hint} style={{ color: 'var(--text-light)', fontFamily: 'monospace' }}>
-                  Resolved to: {form.location.name}
-                </p>
-              )}
-              <p className={styles.hint} style={{ fontFamily: 'monospace' }}>
-                📍 {form.location.lat}, {form.location.lng}
-              </p>
-            </>
-          )}
-          {!locationError && form.location?.name && form.location.lat == null && (
-            <p className={styles.hint}>Will resolve to full code on save.</p>
-          )}
-        </div>
-        <p className={styles.hint}>
-          Find your apartment&apos;s Plus Code here:{' '}
-          <a href="https://plus.codes/map" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--hunter-green)' }}>plus.codes/map</a>
-        </p>
+        <LocationMapPicker
+          value={form.location}
+          onChange={(loc) => update('location', loc)}
+          locale={initialData.locale}
+        />
       </div>
 
       {/* Account Info (read-only) */}
