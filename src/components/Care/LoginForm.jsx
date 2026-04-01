@@ -28,6 +28,11 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
+  // Track which modes have hit ACCOUNT_NOT_FOUND, to show progressive fallback messages
+  const [emailNotFound, setEmailNotFound] = useState(false);
+  const [phoneNotFound, setPhoneNotFound] = useState(false);
+  const phoneInputRef = useRef(null);
+  const [shouldFocusPhone, setShouldFocusPhone] = useState(false);
 
   // Tooltip: auto-dismiss after 3s and on outside click
   useEffect(() => {
@@ -54,6 +59,14 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   }
 
   useEffect(() => () => clearInterval(countdownTimerRef.current), []);
+
+  // Focus phone input after programmatic switch to phone tab
+  useEffect(() => {
+    if (shouldFocusPhone && mode === 'phone' && phoneInputRef.current) {
+      phoneInputRef.current.focus();
+      setShouldFocusPhone(false);
+    }
+  }, [shouldFocusPhone, mode]);
 
   // Auto-detect location on mount
   useEffect(() => {
@@ -97,7 +110,15 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
         body: JSON.stringify({ identifier, type: mode }),
       });
       const data = await res.json();
-      if (!res.ok) { setError(data.error || 'Failed to send code.'); return; }
+      if (!res.ok) {
+        const errMsg = data.error || 'Failed to send code.';
+        setError(errMsg);
+        if (errMsg === 'ACCOUNT_NOT_FOUND') {
+          if (mode === 'email') setEmailNotFound(true);
+          if (mode === 'phone') setPhoneNotFound(true);
+        }
+        return;
+      }
       setStep('code');
       startResendCountdown();
     } catch {
@@ -155,18 +176,70 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   };
 
   const joinHref = locale === 'de' ? '/de/care/join' : '/care/join';
+
+  const switchToPhone = () => {
+    setMode('phone');
+    setError('');
+    setEmail('');
+    setShouldFocusPhone(true);
+  };
+
   const renderError = (msg) => {
     if (!msg) return null;
+
     if (msg === 'ACCOUNT_NOT_FOUND') {
-      return (
-        <div className={styles.error}>
-          {locale === 'de' ? 'Konto nicht gefunden. ' : 'Account not found. '}
-          <a href={joinHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
-            {locale === 'de' ? 'Mitgliedschaft beantragen' : 'Request membership'}
-          </a>
-        </div>
-      );
+      // Email not found → suggest phone
+      if (mode === 'email') {
+        return (
+          <div className={styles.error}>
+            <p style={{ margin: '0 0 0.5rem 0' }}>
+              {locale === 'de'
+                ? 'Keine Konto mit dieser E-Mail gefunden.'
+                : 'No account found with this email.'}
+            </p>
+            <button
+              type="button"
+              onClick={switchToPhone}
+              style={{
+                background: 'none', border: 'none', padding: 0,
+                color: 'inherit', fontWeight: 700, textDecoration: 'underline',
+                cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit',
+              }}
+            >
+              {locale === 'de'
+                ? 'Stattdessen mit Telefonnummer anmelden →'
+                : 'Try logging in with your phone number instead →'}
+            </button>
+          </div>
+        );
+      }
+
+      // Phone not found after email was already tried (or phone alone) → having trouble
+      if (emailNotFound || mode === 'phone') {
+        return (
+          <div className={styles.error}>
+            {locale === 'de' ? (
+              <>
+                Probleme beim Einloggen?{' '}
+                <a href={joinHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
+                  Anfrage senden
+                </a>
+                {' '}und wir melden uns bei dir.
+              </>
+            ) : (
+              <>
+                Having trouble logging in?{' '}
+                <a href={joinHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
+                  Submit a request
+                </a>
+                {' '}and we&apos;ll get back to you.
+              </>
+            )}
+          </div>
+        );
+      }
     }
+
     return <div className={styles.error}>{msg}</div>;
   };
 
@@ -213,7 +286,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
             <div className={styles.loginModeTabs}>
               <button
                 type="button"
-                onClick={() => { setMode('phone'); setError(''); setEmail(''); }}
+                onClick={() => { setMode('phone'); setError(''); setEmail(''); setEmailNotFound(false); }}
                 disabled={loading}
                 className={`${styles.loginModeBtn} ${mode === 'phone' ? styles.loginModeBtnActive : ''}`}
               >
@@ -221,7 +294,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
               </button>
               <button
                 type="button"
-                onClick={() => { setMode('email'); setError(''); setPhoneNumber(''); }}
+                onClick={() => { setMode('email'); setError(''); setPhoneNumber(''); setPhoneNotFound(false); }}
                 disabled={loading}
                 className={`${styles.loginModeBtn} ${mode === 'email' ? styles.loginModeBtnActive : ''}`}
               >
@@ -271,6 +344,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                   </div>
                   <input
                     id="phone"
+                    ref={phoneInputRef}
                     type="tel"
                     className={`${styles.input} ${styles.phoneInput}`}
                     placeholder={COUNTRY_CODES.find(c => c.value === countryCode)?.placeholder || ''}
