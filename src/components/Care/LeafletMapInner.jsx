@@ -3,7 +3,6 @@
 import { useEffect, useRef } from 'react';
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from 'react-leaflet';
 import L from 'leaflet';
-import 'leaflet/dist/leaflet.css';
 
 // Custom pin icon — avoids the default icon URL issue in webpack
 let PIN_ICON = null;
