@@ -1,11 +1,11 @@
 import { useEffect, useState } from 'react'
-import { useClient, useCurrentUser } from 'sanity'
+import { useClient } from 'sanity'
 
 export function BroadcastSender({ documentId, document: doc }) {
   const client = useClient({ apiVersion: '2024-01-01' })
-  const currentUser = useCurrentUser()
 
   const [preview, setPreview] = useState(null)
+  const [adminSitterId, setAdminSitterId] = useState(null)
   const [sending, setSending] = useState(false)
   const [result, setResult] = useState(null)
   const [error, setError] = useState(null)
@@ -17,6 +17,10 @@ export function BroadcastSender({ documentId, document: doc }) {
   useEffect(() => {
     client.fetch(`count(*[_type == "catSitter" && memberVerified == true && (newsletterOptOut != true)])`)
       .then(n => setPreview(n))
+      .catch(() => {})
+    // Find admin's own catSitter doc (siteAdmin flag)
+    client.fetch(`*[_type == "catSitter" && siteAdmin == true][0]{ _id }`)
+      .then(d => { if (d?._id) setAdminSitterId(d._id) })
       .catch(() => {})
   }, [client])
 
@@ -32,23 +36,69 @@ export function BroadcastSender({ documentId, document: doc }) {
     setResult(null)
 
     try {
-      // Trigger the broadcast via the API first
+      // 1. Fetch all eligible recipients directly via Sanity client (already authenticated)
+      const members = await client.fetch(
+        `*[_type == "catSitter" && memberVerified == true && (newsletterOptOut != true)]{ _id, email, name, username }`
+      )
+
+      if (!members.length) {
+        setResult('No eligible members found.')
+        return
+      }
+
+      // 2. Create inbox messages directly using the authenticated Sanity client
+      let inboxCount = 0
+      const now = new Date().toISOString()
+      const fromRef = adminSitterId
+
+      if (fromRef) {
+        const BATCH = 50
+        for (let i = 0; i < members.length; i += BATCH) {
+          const batch = members.slice(i, i + BATCH)
+          await Promise.allSettled(
+            batch.map(async (member) => {
+              try {
+                await client.create({
+                  _type: 'message',
+                  from: { _type: 'reference', _ref: fromRef },
+                  to: { _type: 'reference', _ref: member._id },
+                  body,
+                  read: false,
+                  markedAsSpam: false,
+                  createdAt: now,
+                })
+                inboxCount++
+              } catch (err) {
+                console.error('Failed to create inbox message for', member._id, err)
+              }
+            })
+          )
+        }
+      }
+
+      // 3. Call API for email sending (uses shared secret, no care portal login needed)
+      const secret = process.env.NEXT_PUBLIC_ADMIN_API_SECRET
       const res = await fetch('/api/care/admin/broadcast', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
+        headers: {
+          'Content-Type': 'application/json',
+          ...(secret ? { 'X-Admin-Secret': secret } : {}),
+        },
         body: JSON.stringify({ broadcastId: documentId }),
         credentials: 'include',
       })
       const data = await res.json()
+
       if (!res.ok) {
-        setError(`Failed (${res.status}): ${data.error || 'Unknown error'}`)
+        // Emails failed but inbox messages may have been created
+        setError(`Emails failed (${res.status}): ${data.error || 'Unknown error'}. ${inboxCount} inbox messages were created.`)
       } else {
-        // Only mark as sent after confirmed success
-        await client.patch(documentId).set({ sentAt: new Date().toISOString(), status: 'sent' }).commit()
-        setResult(`Sent to ${data.sentCount} members (${data.inboxCount ?? '?'} inbox messages created).`)
+        // Mark as sent only after full success
+        await client.patch(documentId).set({ sentAt: now, status: 'sent' }).commit()
+        setResult(`Done — ${data.sentCount} emails sent, ${inboxCount} inbox messages created (${members.length} total members).`)
       }
     } catch (err) {
-      setError('Network error: ' + err.message)
+      setError('Error: ' + err.message)
     } finally {
       setSending(false)
     }
