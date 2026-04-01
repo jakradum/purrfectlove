@@ -358,7 +358,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
                         {formatTime(msg.createdAt)}
                         {isOutgoing && msg.read && ' · Read'}
                       </div>
-                      {!isOutgoing && (
+                      {!isOutgoing && !isBroadcast && (
                         <div className={styles.msgActions}>
                           <button
                             className={styles.spamBtn}
