@@ -66,22 +66,28 @@ export async function POST(request) {
     // Send in batches of 50 to avoid rate limits
     const BATCH = 50
     let sentCount = 0
+    let inboxCount = 0
     const now = new Date().toISOString()
 
     for (let i = 0; i < members.length; i += BATCH) {
       const batch = members.slice(i, i + BATCH)
-      await Promise.allSettled(
+      const results = await Promise.allSettled(
         batch.map(async (member) => {
           // Create inbox message so broadcast appears in member's inbox
-          await serverClient.create({
-            _type: 'message',
-            from: { _type: 'reference', _ref: adminPayload.sitterId },
-            to: { _type: 'reference', _ref: member._id },
-            body: bodyText,
-            read: false,
-            markedAsSpam: false,
-            createdAt: now,
-          })
+          try {
+            await serverClient.create({
+              _type: 'message',
+              from: { _type: 'reference', _ref: adminPayload.sitterId },
+              to: { _type: 'reference', _ref: member._id },
+              body: bodyText,
+              read: false,
+              markedAsSpam: false,
+              createdAt: now,
+            })
+            inboxCount++
+          } catch (err) {
+            console.error(`broadcast: failed to create inbox message for ${member._id}:`, err)
+          }
 
           if (!member.email) return
           const displayName = member.username || member.name || 'there'
@@ -96,12 +102,18 @@ export async function POST(request) {
           sentCount++
         })
       )
+      // Log any unexpected rejections
+      results.forEach((r, idx) => {
+        if (r.status === 'rejected') {
+          console.error(`broadcast: batch[${i + idx}] rejected:`, r.reason)
+        }
+      })
     }
 
     // Record sentCount on the document
     await serverClient.patch(broadcastId).set({ sentCount }).commit()
 
-    return Response.json({ sentCount })
+    return Response.json({ sentCount, inboxCount, memberCount: members.length })
   } catch (error) {
     console.error('admin/broadcast error:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })

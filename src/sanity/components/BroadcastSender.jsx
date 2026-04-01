@@ -32,10 +32,7 @@ export function BroadcastSender({ documentId, document: doc }) {
     setResult(null)
 
     try {
-      // Mark doc as sent in Sanity
-      await client.patch(documentId).set({ sentAt: new Date().toISOString(), status: 'sent' }).commit()
-
-      // Trigger the broadcast via the API
+      // Trigger the broadcast via the API first
       const res = await fetch('/api/care/admin/broadcast', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -44,9 +41,11 @@ export function BroadcastSender({ documentId, document: doc }) {
       })
       const data = await res.json()
       if (!res.ok) {
-        setError(data.error || 'Failed to send broadcast.')
+        setError(`Failed (${res.status}): ${data.error || 'Unknown error'}`)
       } else {
-        setResult(`Sent to ${data.sentCount} members.`)
+        // Only mark as sent after confirmed success
+        await client.patch(documentId).set({ sentAt: new Date().toISOString(), status: 'sent' }).commit()
+        setResult(`Sent to ${data.sentCount} members (${data.inboxCount ?? '?'} inbox messages created).`)
       }
     } catch (err) {
       setError('Network error: ' + err.message)
