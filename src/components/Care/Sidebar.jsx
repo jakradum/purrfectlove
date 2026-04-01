@@ -89,7 +89,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
               >
                 <span className={styles.iconWrap}>
                   <Icon size={20} strokeWidth={1.75} />
-                  {badge > 0 && <span className={styles.badge}>{badge > 9 ? '9+' : badge}</span>}
+                  {badge > 0 && <span className={styles.badge} />}
                 </span>
                 <span className={styles.label}>{label}</span>
               </Link>
@@ -127,7 +127,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
             >
               <span className={styles.iconWrap}>
                 <Icon size={22} strokeWidth={1.75} />
-                {badge > 0 && <span className={styles.badge}>{badge > 9 ? '9+' : badge}</span>}
+                {badge > 0 && <span className={styles.badge} />}
               </span>
               <span className={styles.bottomLabel}>{label}</span>
             </Link>

@@ -66,11 +66,23 @@ export async function POST(request) {
     // Send in batches of 50 to avoid rate limits
     const BATCH = 50
     let sentCount = 0
+    const now = new Date().toISOString()
 
     for (let i = 0; i < members.length; i += BATCH) {
       const batch = members.slice(i, i + BATCH)
       await Promise.allSettled(
         batch.map(async (member) => {
+          // Create inbox message so broadcast appears in member's inbox
+          await serverClient.create({
+            _type: 'message',
+            from: { _type: 'reference', _ref: adminPayload.sitterId },
+            to: { _type: 'reference', _ref: member._id },
+            body: bodyText,
+            read: false,
+            markedAsSpam: false,
+            createdAt: now,
+          })
+
           if (!member.email) return
           const displayName = member.username || member.name || 'there'
           await resend.emails.send({
