@@ -3071,6 +3071,23 @@
   margin-bottom: 12px;
 }
 
+.sitterSectionEditBtn {
+  background: none;
+  border: 1px solid rgba(44, 95, 79, 0.3);
+  border-radius: 6px;
+  padding: 3px 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2C5F4F;
+  font-family: var(--font-outfit);
+  cursor: pointer;
+  flex-shrink: 0;
+}
+
+.sitterSectionEditBtn:hover {
+  background: rgba(44, 95, 79, 0.06);
+}
+
 .sitterSectionTitle {
   font-size: 14px;
   font-weight: 600;

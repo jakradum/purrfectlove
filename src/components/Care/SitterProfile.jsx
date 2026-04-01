@@ -74,17 +74,19 @@ function AvailabilityStrip({ markedDates = [], availabilityDefault = 'available'
 
 /**
  * Props:
- *   sitter          – catSitter data object
- *   isOwnProfile    – boolean: show edit controls, hide report/message/feedbacks
- *   onEdit          – callback: "Edit profile" button. If absent + isOwnProfile, links to /care/profile
- *   onAvatarClick   – callback: clicking avatar triggers photo upload
- *   photoUploading  – boolean: shows uploading state on avatar
- *   feedbacks       – array of feedback objects (ignored when isOwnProfile)
+ *   sitter               – catSitter data object
+ *   isOwnProfile         – boolean: show edit controls, hide report/message/feedbacks
+ *   onEdit               – callback: "Edit profile" button. If absent + isOwnProfile, links to /care/profile
+ *   onEditAvailability   – callback: "Edit" button in availability section (own profile only)
+ *   onAvatarClick        – callback: clicking avatar triggers photo upload
+ *   photoUploading       – boolean: shows uploading state on avatar
+ *   feedbacks            – array of feedback objects (ignored when isOwnProfile)
  */
 export default function SitterProfile({
   sitter,
   isOwnProfile = false,
   onEdit,
+  onEditAvailability,
   onAvatarClick,
   photoUploading = false,
   feedbacks = [],
@@ -281,7 +283,14 @@ export default function SitterProfile({
 
       {/* Availability */}
       <div className={styles.sitterSection}>
-        <div className={styles.sitterSectionTitle}>Availability</div>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 10, borderBottom: '0.5px solid #eee' }}>
+          <div className={styles.sitterSectionTitle} style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>Availability</div>
+          {isOwnProfile && onEditAvailability && (
+            <button type="button" onClick={onEditAvailability} className={styles.sitterSectionEditBtn}>
+              Edit
+            </button>
+          )}
+        </div>
         <AvailabilityStrip
           markedDates={unavailableDatesV2 || []}
           availabilityDefault={availabilityDefault || 'available'}
