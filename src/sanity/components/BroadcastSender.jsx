@@ -23,9 +23,12 @@ export function BroadcastSender({ documentId, document: doc }) {
   }, [client])
 
   useEffect(() => {
-    if (!currentUser?.email) return
-    // Find the catSitter doc belonging to the currently logged-in Sanity user
-    client.fetch(`*[_type == "catSitter" && email == $email][0]{ _id, name, username }`, { email: currentUser.email })
+    // Try matching by email first, fall back to first siteAdmin
+    const email = currentUser?.email
+    const query = email
+      ? `coalesce(*[_type == "catSitter" && email match $email][0], *[_type == "catSitter" && siteAdmin == true][0]){ _id, name, username }`
+      : `*[_type == "catSitter" && siteAdmin == true][0]{ _id, name, username }`
+    client.fetch(query, email ? { email } : {})
       .then(d => { if (d?._id) setAdminSitterId(d._id) })
       .catch(() => {})
   }, [client, currentUser?.email])
@@ -53,35 +56,37 @@ export function BroadcastSender({ documentId, document: doc }) {
       }
 
       // 2. Create inbox messages directly using the authenticated Sanity client
+      if (!adminSitterId) {
+        setError('Could not resolve sender catSitter doc. Check that the siteAdmin flag is set on your profile.')
+        return
+      }
+
       let inboxCount = 0
       const now = new Date().toISOString()
-      const fromRef = adminSitterId
       const fullBody = signOff ? `${body}\n\n— ${signOff}` : body
 
-      if (fromRef) {
-        const BATCH = 50
-        for (let i = 0; i < members.length; i += BATCH) {
-          const batch = members.slice(i, i + BATCH)
-          await Promise.allSettled(
-            batch.map(async (member) => {
-              try {
-                await client.create({
-                  _type: 'message',
-                  from: { _type: 'reference', _ref: fromRef },
-                  to: { _type: 'reference', _ref: member._id },
-                  body: fullBody,
-                  read: false,
-                  markedAsSpam: false,
-                  broadcast: true,
-                  createdAt: now,
-                })
-                inboxCount++
-              } catch (err) {
-                console.error('Failed to create inbox message for', member._id, err)
-              }
-            })
-          )
-        }
+      const BATCH = 50
+      for (let i = 0; i < members.length; i += BATCH) {
+        const batch = members.slice(i, i + BATCH)
+        await Promise.allSettled(
+          batch.map(async (member) => {
+            try {
+              await client.create({
+                _type: 'message',
+                from: { _type: 'reference', _ref: adminSitterId },
+                to: { _type: 'reference', _ref: member._id },
+                body: fullBody,
+                read: false,
+                markedAsSpam: false,
+                broadcast: true,
+                createdAt: now,
+              })
+              inboxCount++
+            } catch (err) {
+              console.error('Failed to create inbox message for', member._id, err)
+            }
+          })
+        )
       }
 
       // 3. Call API for email sending (uses shared secret, no care portal login needed)
