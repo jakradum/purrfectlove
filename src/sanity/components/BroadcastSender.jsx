@@ -1,8 +1,9 @@
 import { useEffect, useState } from 'react'
-import { useClient } from 'sanity'
+import { useClient, useCurrentUser } from 'sanity'
 
 export function BroadcastSender({ documentId, document: doc }) {
   const client = useClient({ apiVersion: '2024-01-01' })
+  const currentUser = useCurrentUser()
 
   const [preview, setPreview] = useState(null)
   const [adminSitterId, setAdminSitterId] = useState(null)
@@ -18,11 +19,15 @@ export function BroadcastSender({ documentId, document: doc }) {
     client.fetch(`count(*[_type == "catSitter" && memberVerified == true && (newsletterOptOut != true)])`)
       .then(n => setPreview(n))
       .catch(() => {})
-    // Find admin's own catSitter doc (siteAdmin flag)
-    client.fetch(`*[_type == "catSitter" && siteAdmin == true][0]{ _id }`)
+  }, [client])
+
+  useEffect(() => {
+    if (!currentUser?.email) return
+    // Find the catSitter doc belonging to the currently logged-in Sanity user
+    client.fetch(`*[_type == "catSitter" && email == $email][0]{ _id, name, username }`, { email: currentUser.email })
       .then(d => { if (d?._id) setAdminSitterId(d._id) })
       .catch(() => {})
-  }, [client])
+  }, [client, currentUser?.email])
 
   const handleSend = async () => {
     if (!subject || !body) {
