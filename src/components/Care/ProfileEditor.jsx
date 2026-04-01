@@ -221,7 +221,8 @@ export default function ProfileEditor({ initialData }) {
 
   const savedForm = useRef(formFromData(initialData));
   const [form, setForm] = useState(formFromData(initialData));
-  const [isEditing, setIsEditing] = useState(false);
+  // editMode: null = read, 'profile' = full profile edit, 'availability' = availability only
+  const [editMode, setEditMode] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
   const [privacySaving, setPrivacySaving] = useState(false);
@@ -315,7 +316,7 @@ export default function ProfileEditor({ initialData }) {
       const newForm = formFromData(updated);
       savedForm.current = newForm;
       setForm(newForm);
-      setIsEditing(false);
+      setEditMode(null);
       router.refresh();
     } catch {
       setSaveError(t.errors.saveFailed);
@@ -327,7 +328,37 @@ export default function ProfileEditor({ initialData }) {
   const handleCancel = () => {
     setForm(savedForm.current);
     setSaveError('');
-    setIsEditing(false);
+    setEditMode(null);
+  };
+
+  const handleSaveAvailability = async () => {
+    setSaving(true);
+    setSaveError('');
+    try {
+      const res = await fetch('/api/care/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          availabilityDefault: form.availabilityDefault,
+          unavailableDatesV2: form.unavailableDatesV2,
+        }),
+      });
+      if (!res.ok) {
+        const data = await res.json();
+        setSaveError(data.error || t.errors.saveFailed);
+        return;
+      }
+      const updated = await res.json();
+      const newForm = formFromData(updated);
+      savedForm.current = newForm;
+      setForm(newForm);
+      setEditMode(null);
+      router.refresh();
+    } catch {
+      setSaveError(t.errors.saveFailed);
+    } finally {
+      setSaving(false);
+    }
   };
 
   // Auto-save just the privacy toggles without entering edit mode
@@ -374,7 +405,7 @@ export default function ProfileEditor({ initialData }) {
   const removeDateRange = (idx) => update('availableDates', form.availableDates.filter((_, i) => i !== idx));
 
   // ── READ MODE ──────────────────────────────────────────────────────────────
-  if (!isEditing) {
+  if (!editMode) {
     const deletionPending = !!initialData.deletionRequested;
 
     // Profile header derived values
@@ -463,22 +494,30 @@ export default function ProfileEditor({ initialData }) {
           />
         </div>
 
-        <CompletionIndicator form={form} onEdit={() => setIsEditing(true)} />
+        <CompletionIndicator form={form} onEdit={() => setEditMode('profile')} />
 
         {!deletionPending && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', margin: '1rem 0' }}>
+          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', margin: '1rem 0' }}>
+            {form.canSit && (
+              <button
+                type="button"
+                className={styles.editBtnSecondary}
+                onClick={() => setEditMode('availability')}
+              >
+                <PencilIcon /> Edit availability
+              </button>
+            )}
             <button
               type="button"
               className={styles.editBtn}
-              onClick={() => setIsEditing(true)}
-              title="Edit profile"
+              onClick={() => setEditMode('profile')}
             >
-              <PencilIcon /> Edit
+              <PencilIcon /> Edit profile
             </button>
           </div>
         )}
 
-        {/* Availability — shown when user is a sitter */}
+        {/* Availability — first section, above everything else */}
         {form.canSit && (
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
@@ -803,11 +842,50 @@ export default function ProfileEditor({ initialData }) {
     );
   }
 
-  // ── EDIT MODE ──────────────────────────────────────────────────────────────
+  // ── AVAILABILITY EDIT MODE ─────────────────────────────────────────────────
+  if (editMode === 'availability') {
+    return (
+      <div className={styles.profilePage}>
+        <div className={styles.profileHeader}>
+          <h1 className={styles.pageTitle}>My Availability</h1>
+          <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
+        </div>
+
+        <div className={styles.section}>
+          <p style={{ fontSize: '0.875rem', color: 'var(--text-light)', marginBottom: '1rem', lineHeight: 1.6 }}>
+            Set your default availability so cat parents know when you can sit.
+          </p>
+          <AvailabilityCalendar
+            markedDates={form.unavailableDatesV2}
+            availabilityDefault={form.availabilityDefault}
+            onChange={(dates) => update('unavailableDatesV2', dates)}
+            onDefaultChange={(val) => {
+              update('availabilityDefault', val);
+              update('unavailableDatesV2', []);
+            }}
+          />
+        </div>
+
+        <div className={styles.saveBar}>
+          {saveError && <span className={styles.saveError}>{saveError}</span>}
+          <button
+            type="button"
+            className={styles.saveBtn}
+            onClick={handleSaveAvailability}
+            disabled={saving}
+          >
+            {saving ? t.saving : t.save}
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  // ── PROFILE EDIT MODE ──────────────────────────────────────────────────────
   return (
     <form className={styles.profilePage} onSubmit={handleSave}>
       <div className={styles.profileHeader}>
-        <h1 className={styles.pageTitle}>{t.title}</h1>
+        <h1 className={styles.pageTitle}>Edit Profile</h1>
         <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
       </div>
 
@@ -916,22 +994,6 @@ export default function ProfileEditor({ initialData }) {
         ))}
         <button type="button" className={styles.addBtn} onClick={addCat}>{t.fields.addCat}</button>
       </div>
-
-      {/* My Availability — tap-to-mark calendar */}
-      {form.canSit && (
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
-          <AvailabilityCalendar
-            markedDates={form.unavailableDatesV2}
-            availabilityDefault={form.availabilityDefault}
-            onChange={(dates) => update('unavailableDatesV2', dates)}
-            onDefaultChange={(val) => {
-              update('availabilityDefault', val);
-              update('unavailableDatesV2', []);
-            }}
-          />
-        </div>
-      )}
 
       {/* Sitting Capabilities */}
       <div className={styles.section}>
