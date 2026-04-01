@@ -135,9 +135,27 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
   const locale = localeProp || 'en';
   const t = locale === 'de' ? contentDE.marketplace : contentEN.marketplace;
 
-  // Read-only from server — no toggles in this view
-  const canSit = initialCanSit;
-  const needsSitting = initialNeedsSitting;
+  // Stateful — user can toggle from marketplace; PATCHed to profile API
+  const [canSit, setCanSit] = useState(initialCanSit);
+  const [needsSitting, setNeedsSitting] = useState(initialNeedsSitting);
+
+  const handleToggle = async (field, value) => {
+    const newCanSit = field === 'canSit' ? value : canSit;
+    const newNeedsSitting = field === 'needsSitting' ? value : needsSitting;
+    setCanSit(newCanSit);
+    setNeedsSitting(newNeedsSitting);
+    try {
+      await fetch('/api/care/profile', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ canSit: newCanSit, needsSitting: newNeedsSitting }),
+      });
+    } catch (err) {
+      console.error('Failed to update status:', err);
+      setCanSit(initialCanSit);
+      setNeedsSitting(initialNeedsSitting);
+    }
+  };
 
   // Fresh availability data for conflict banner
   const [ownAvailDefault, setOwnAvailDefault] = useState(userAvailabilityDefault);
@@ -317,17 +335,23 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
 
     // Expand in 5 km steps up to 50 km
     let expanded = withinRadius;
-    let effectiveRadius = radius;
-    while (effectiveRadius < 50 && expanded.length < 3) {
-      effectiveRadius = Math.min(effectiveRadius + 5, 50);
+    let searchRadius = radius;
+    while (searchRadius < 50 && expanded.length < 3) {
+      searchRadius = Math.min(searchRadius + 5, 50);
       expanded = fetchedSitters
-        .filter((s) => s._distance == null || s._distance <= effectiveRadius)
+        .filter((s) => s._distance == null || s._distance <= searchRadius)
         .sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
     }
 
+    // Display radius = actual furthest sitter distance (not the search ceiling)
+    const expandedOnly = expanded.filter(s => s._distance != null && s._distance > radius);
+    const displayRadius = expandedOnly.length > 0
+      ? Math.ceil(Math.max(...expandedOnly.map(s => s._distance)))
+      : searchRadius;
+
     return {
       sitters: expanded,
-      effectiveRadius,
+      effectiveRadius: displayRadius,
       expandedCount: expanded.length - withinRadius.length,
     };
   }, [searched, fetchedSitters, radius]);
@@ -367,6 +391,33 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
       <div className={styles.marketplaceHeader}>
         <h1 className={styles.pageTitle}>{t.title}</h1>
         <p className={styles.pageSubtitle}>{t.subtitle}</p>
+      </div>
+
+      {/* Status toggles — placed above filter bar */}
+      <div className={styles.statusCard}>
+        <span className={styles.statusCardTitle}>{t.myStatus}</span>
+        <div className={styles.toggleRow}>
+          <label className={styles.toggle}>
+            <input
+              type="checkbox"
+              checked={canSit}
+              onChange={(e) => handleToggle('canSit', e.target.checked)}
+            />
+            <span className={styles.toggleSlider} />
+          </label>
+          <span className={styles.toggleLabel}>{t.iCanSit}</span>
+        </div>
+        <div className={styles.toggleRow}>
+          <label className={styles.toggle}>
+            <input
+              type="checkbox"
+              checked={needsSitting}
+              onChange={(e) => handleToggle('needsSitting', e.target.checked)}
+            />
+            <span className={styles.toggleSlider} />
+          </label>
+          <span className={styles.toggleLabel}>{t.iNeedSitting}</span>
+        </div>
       </div>
 
       <FilterBar
