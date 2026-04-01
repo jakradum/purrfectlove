@@ -1,6 +1,5 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
-import { verifyToken } from '@/lib/careAuth'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -12,36 +11,8 @@ const serverClient = createClient({
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-async function getAdminPayload(request) {
-  // Accept shared secret from Studio (NEXT_PUBLIC_ADMIN_API_SECRET)
-  const secret = request.headers.get('X-Admin-Secret')
-  if (secret && process.env.ADMIN_API_SECRET && secret === process.env.ADMIN_API_SECRET) {
-    // Find the siteAdmin catSitter to use as sender
-    const admin = await serverClient.fetch(`*[_type == "catSitter" && siteAdmin == true][0]{ _id }`)
-    if (admin?._id) return { sitterId: admin._id }
-  }
-
-  // Fall back to care portal auth cookie
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  const payload = await verifyToken(token)
-  if (!payload) return null
-  const sitter = await serverClient.fetch(
-    `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
-    { id: payload.sitterId }
-  )
-  return sitter?.siteAdmin ? payload : null
-}
-
 export async function POST(request) {
   try {
-    const adminPayload = await getAdminPayload(request)
-    if (!adminPayload) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
     const { broadcastId } = await request.json()
     if (!broadcastId) {
       return Response.json({ error: 'broadcastId is required' }, { status: 400 })
