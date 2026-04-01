@@ -70,6 +70,7 @@ export function BroadcastSender({ documentId, document: doc }) {
                   body,
                   read: false,
                   markedAsSpam: false,
+                  broadcast: true,
                   createdAt: now,
                 })
                 inboxCount++

@@ -9,6 +9,7 @@ export default {
     { name: 'read', type: 'boolean', initialValue: false },
     { name: 'readAt', type: 'datetime' },
     { name: 'markedAsSpam', type: 'boolean', initialValue: false },
+    { name: 'broadcast', type: 'boolean', initialValue: false },
     { name: 'createdAt', type: 'datetime', readOnly: true },
   ],
   preview: { select: { title: 'from.name', subtitle: 'body' } },

@@ -2132,7 +2132,9 @@
 .threadItem { padding: 1rem 1.25rem; cursor: pointer; border-bottom: 1px solid rgba(44,95,79,0.06); transition: background 0.15s; }
 .threadItem:hover, .threadItemActive { background: rgba(44,95,79,0.05); }
 .threadItemActive { background: rgba(44,95,79,0.08) !important; border-left: 3px solid var(--hunter-green); }
-.threadName { font-weight: 600; font-size: 0.9rem; color: var(--text-dark); }
+.threadName { font-weight: 600; font-size: 0.9rem; color: var(--text-dark); display: flex; align-items: center; gap: 0.4rem; }
+.adminTag { font-size: 0.65rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; background: rgba(44,95,79,0.1); color: var(--hunter-green); border-radius: 4px; padding: 1px 5px; flex-shrink: 0; }
+.broadcastTag { display: inline-flex; align-items: center; gap: 0.3rem; font-size: 0.7rem; font-weight: 700; text-transform: uppercase; letter-spacing: 0.04em; color: var(--tabby-brown); margin-bottom: 0.3rem; }
 .threadPreview { font-size: 0.8rem; color: var(--text-light); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; max-width: 220px; margin-top: 0.2rem; }
 .threadMeta { display: flex; justify-content: space-between; align-items: center; margin-top: 0.3rem; }
 .threadTime { font-size: 0.72rem; color: var(--text-light); }

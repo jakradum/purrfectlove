@@ -43,9 +43,9 @@ export async function GET(request) {
     // Fetch all messages where user is sender or recipient
     const messages = await serverClient.fetch(
       `*[_type == "message" && (from._ref == $id || to._ref == $id)] | order(createdAt desc) {
-        _id, body, read, readAt, markedAsSpam, createdAt,
-        from -> { _id, name, username },
-        to -> { _id, name, username }
+        _id, body, read, readAt, markedAsSpam, broadcast, createdAt,
+        from -> { _id, name, username, siteAdmin },
+        to -> { _id, name, username, siteAdmin }
       }`,
       { id: sitterId }
     )
@@ -68,6 +68,7 @@ export async function GET(request) {
         threadsMap.set(partnerId, {
           partnerId,
           partnerName: partnerName || 'Unknown',
+          isAdminThread: !!partner.siteAdmin,
           messages: [],
           unreadCount: 0,
           latestAt: null,

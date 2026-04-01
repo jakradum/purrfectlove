@@ -276,7 +276,10 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
                 setSendError('')
               }}
             >
-              <div className={styles.threadName}>{thread.partnerName}</div>
+              <div className={styles.threadName}>
+                {thread.partnerName}
+                {thread.isAdminThread && <span className={styles.adminTag}>Admin</span>}
+              </div>
               <div className={styles.threadPreview}>
                 {thread.messages[thread.messages.length - 1]?.body?.slice(0, 40) || ''}
               </div>
@@ -310,31 +313,44 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
                   ← Back
                 </button>
                 <span className={styles.threadHeaderName}>{activePartnerName}</span>
-                <div className={styles.threadHeaderActions}>
-                  <button
-                    type="button"
-                    className={styles.btnSecondary}
-                    style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
-                    onClick={() => setShowShareModal(true)}
-                  >
-                    {t.shareContact}
-                  </button>
-                  <button
-                    type="button"
-                    className={styles.dangerBtn}
-                    onClick={() => setShowBlockConfirm(true)}
-                  >
-                    {t.blockUser}
-                  </button>
-                </div>
+                {!activeThread?.isAdminThread && (
+                  <div className={styles.threadHeaderActions}>
+                    <button
+                      type="button"
+                      className={styles.btnSecondary}
+                      style={{ padding: '0.35rem 0.75rem', fontSize: '0.8rem' }}
+                      onClick={() => setShowShareModal(true)}
+                    >
+                      {t.shareContact}
+                    </button>
+                    <button
+                      type="button"
+                      className={styles.dangerBtn}
+                      onClick={() => setShowBlockConfirm(true)}
+                    >
+                      {t.blockUser}
+                    </button>
+                  </div>
+                )}
               </div>
 
               {/* Messages area */}
               <div className={styles.messagesArea} ref={messagesAreaRef}>
                 {activeThread?.messages.filter(msg => msg.from && msg.to).map(msg => {
                   const isOutgoing = msg.from._id === currentUserId
+                  const isBroadcast = !!msg.broadcast
                   return (
                     <div key={msg._id} style={{ display: 'flex', flexDirection: 'column', alignItems: isOutgoing ? 'flex-end' : 'flex-start' }}>
+                      {isBroadcast && !isOutgoing && (
+                        <div className={styles.broadcastTag}>
+                          <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ flexShrink: 0 }}>
+                            <path d="M22 8.5c0-2.5-2-4.5-4.5-4.5S13 6 13 8.5v7c0 2.5 2 4.5 4.5 4.5S22 18 22 15.5v-7z"/>
+                            <path d="M13 12H3"/>
+                            <path d="M5 8v8"/>
+                          </svg>
+                          Announcement
+                        </div>
+                      )}
                       <div className={`${styles.msgBubble} ${isOutgoing ? styles.msgBubbleOut : styles.msgBubbleIn}`}>
                         {msg.body}
                       </div>
