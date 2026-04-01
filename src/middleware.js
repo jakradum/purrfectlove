@@ -71,9 +71,15 @@ export async function middleware(request) {
 
   if (isProtectedCarePath) {
     const token = request.cookies.get('auth_token')?.value;
-    if (!token) return NextResponse.redirect(loginUrl);
+    if (!token) {
+      loginUrl.searchParams.set('reason', 'session');
+      return NextResponse.redirect(loginUrl);
+    }
     const payload = await verifyToken(token);
-    if (!payload) return NextResponse.redirect(loginUrl);
+    if (!payload) {
+      loginUrl.searchParams.set('reason', 'expired');
+      return NextResponse.redirect(loginUrl);
+    }
 
     // Deletion lockout: redirect all page routes (not API routes) to /profile
     // for accounts with a pending deletion request.

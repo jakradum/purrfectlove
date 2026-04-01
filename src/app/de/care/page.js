@@ -3,6 +3,7 @@ import { redirect } from 'next/navigation';
 import { createClient } from '@sanity/client';
 import { verifyToken } from '@/lib/careAuth';
 import Marketplace from '@/components/Care/Marketplace';
+import GuidelinesGate from '@/components/Care/GuidelinesGate';
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -28,11 +29,15 @@ export default async function DeCarePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location { lat, lng, name } }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, canSit, needsSitting, location { lat, lng, name }, guidelinesAccepted }`,
       { id: payload.sitterId }
     );
   } catch (err) {
     console.error('Failed to fetch profile for marketplace:', err);
+  }
+
+  if (!profile?.guidelinesAccepted) {
+    return <GuidelinesGate locale="de" />;
   }
 
   return (

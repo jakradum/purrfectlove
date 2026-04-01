@@ -1,10 +1,10 @@
 'use client';
 
 import Link from 'next/link';
-import Image from 'next/image';
 import styles from './Care.module.css';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
+import CatAvatar from './CatAvatar';
 
 const TAG_LABELS = {
   en: {
@@ -17,15 +17,38 @@ const TAG_LABELS = {
   },
 };
 
+// Cover patterns — place files at /public/images/care/cover-pattern-{1,2,3}.png
+// Falls back to a CSS gradient if the image doesn't exist yet.
+const COVER_PATTERNS = [
+  '/images/care/cover-pattern-1.png',
+  '/images/care/cover-pattern-2.png',
+  '/images/care/cover-pattern-3.png',
+];
+
+const COVER_FALLBACKS = [
+  'linear-gradient(135deg, #c8a8d8 0%, #a07cbf 100%)',  // purple
+  'linear-gradient(135deg, #9ac8e8 0%, #5a9ccc 100%)',  // blue
+  'linear-gradient(135deg, #f5b8c8 0%, #d87a98 100%)',  // pink
+];
+
+function coverIndex(id) {
+  // Deterministic cover assignment based on last 2 chars of id
+  const code = id ? id.charCodeAt(id.length - 1) + id.charCodeAt(id.length - 2) : 0;
+  return code % 3;
+}
+
 export default function SitterCard({ sitter, type = 'canSit', locale = 'en', availabilityUnconfirmed = false }) {
   const t = locale === 'de' ? contentDE.marketplace.card : contentEN.marketplace.card;
   const tagLabels = TAG_LABELS[locale] || TAG_LABELS.en;
 
   const {
-    _id, name, username, location, bio, contactPreference, email, phone,
-    hideEmail, hideWhatsApp, siteAdmin, photoUrl,
+    _id, _createdAt, name, username, location, bio, contactPreference, email, phone,
+    hideEmail, hideWhatsApp, siteAdmin, photoUrl, avatarColour,
+    identityVerified, trustedSitter,
     maxHomesPerDay, feedingTypes, behavioralTraits, cats, _distance,
   } = sitter;
+
+  const memberSinceYear = _createdAt ? new Date(_createdAt).getFullYear() : null;
 
   const bothHidden = hideEmail && hideWhatsApp;
 
@@ -39,101 +62,114 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en', ava
 
   const whatsappNumber = phone ? phone.replace(/\D/g, '') : null;
 
+  const idx = coverIndex(_id || '');
+  const coverPattern = COVER_PATTERNS[idx];
+  const coverFallback = COVER_FALLBACKS[idx];
+
   return (
-    <div className={styles.card}>
-      <div className={styles.cardHeader}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
-          {photoUrl && (
-            <Image
-              src={photoUrl}
-              alt={displayName}
-              width={44}
-              height={44}
-              style={{ borderRadius: '50%', objectFit: 'cover', flexShrink: 0 }}
-            />
+    <div className={styles.card} style={{ padding: 0 }}>
+      {/* Cover image */}
+      <div
+        className={styles.cardCover}
+        style={{ backgroundImage: `url(${coverPattern}), ${coverFallback}` }}
+        aria-hidden="true"
+      />
+
+      {/* Content below cover */}
+      <div className={styles.cardBody}>
+        {/* Avatar overlapping cover */}
+        <div className={styles.cardAvatarWrap}>
+          <CatAvatar photoUrl={photoUrl} avatarColour={avatarColour} name={displayName} size={52} style={{ border: '3px solid #fff' }} />
+          {siteAdmin && (
+            <span className={styles.adminBadge}>Admin</span>
           )}
+        </div>
+
+        {/* Name row */}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.5rem', flexWrap: 'wrap' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <h3 className={styles.cardName} style={{ margin: 0 }}>{displayName}</h3>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
+              <h3 className={styles.cardName}>{displayName}</h3>
+              {identityVerified && (
+                <span className={styles.verifiedBadge} title="Identity verified">✓</span>
+              )}
+              {trustedSitter && (
+                <span className={styles.trustedBadge} title="Trusted sitter">⭐</span>
+              )}
               {siteAdmin && (
-                <span style={{ fontSize: '0.65rem', fontWeight: 700, color: 'var(--hunter-green)', background: 'rgba(44,95,79,0.1)', borderRadius: '4px', padding: '2px 6px', letterSpacing: '0.04em', textTransform: 'uppercase', whiteSpace: 'nowrap' }}>
-                  Site Admin
+                <span className={styles.adminBadge}>Admin</span>
+              )}
+            </div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.15rem' }}>
+              {_distance !== undefined ? (
+                <p className={styles.cardNeighborhood} style={{ margin: 0 }}>~{_distance.toFixed(1)} {t.distance}</p>
+              ) : location?.name ? (
+                <p className={styles.cardNeighborhood} style={{ margin: 0 }}>{location.name}</p>
+              ) : null}
+              {memberSinceYear && (
+                <span style={{ fontSize: '0.72rem', color: 'var(--text-light)' }}>
+                  · Member since {memberSinceYear}
                 </span>
               )}
             </div>
-            {_distance !== undefined ? (
-              <p className={styles.cardNeighborhood}>~{_distance.toFixed(1)} {t.distance}</p>
-            ) : location?.name ? (
-              <p className={styles.cardNeighborhood}>{location.name}</p>
-            ) : null}
           </div>
-        </div>
-      </div>
-
-      {bio && <p className={styles.cardBio}>{bio}</p>}
-
-      {/* For sitters: show capabilities */}
-      {type === 'findSitters' && maxHomesPerDay && (
-        <p className={styles.cardMeta}>
-          {t.maxCats} <strong>{maxHomesPerDay}</strong> {t.cats}
-        </p>
-      )}
-
-      {/* For needs-sitting: show cats */}
-      {type === 'offerToSit' && cats && cats.length > 0 && (
-        <p className={styles.cardMeta}>
-          {cats.length} cat{cats.length !== 1 ? 's' : ''}: {cats.map((c) => c.name).filter(Boolean).join(', ')}
-        </p>
-      )}
-
-      {availabilityUnconfirmed && (
-        <span className={styles.availUnconfirmedBadge}>
-          {locale === 'de' ? 'Verfügbarkeit unbestätigt' : 'Availability unconfirmed'}
-        </span>
-      )}
-
-      {allTags.length > 0 && (
-        <div className={styles.tags}>
-          {allTags.map((tag) => (
-            <span key={tag} className={`${styles.tag} ${styles.tagGreen}`}>
-              {tagLabels[tag] || tag}
+          {availabilityUnconfirmed && (
+            <span className={styles.availUnconfirmedBadge}>
+              {locale === 'de' ? 'Verfügbarkeit unbestätigt' : 'Avail. unconfirmed'}
             </span>
-          ))}
+          )}
         </div>
-      )}
 
-      <div className={styles.cardActions}>
-        {bothHidden ? (
-          <Link
-            href={`/inbox?to=${_id}`}
-            className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}
-          >
-            Message
+        {bio && <p className={styles.cardBio}>{bio}</p>}
+
+        {/* For sitters: show capabilities */}
+        {type === 'findSitters' && maxHomesPerDay && (
+          <p className={styles.cardMeta}>
+            {t.maxCats} <strong>{maxHomesPerDay}</strong> {t.cats}
+          </p>
+        )}
+
+        {/* For needs-sitting: show cats */}
+        {type === 'offerToSit' && cats && cats.length > 0 && (
+          <p className={styles.cardMeta}>
+            {cats.length} cat{cats.length !== 1 ? 's' : ''}: {cats.map((c) => c.name).filter(Boolean).join(', ')}
+          </p>
+        )}
+
+        {allTags.length > 0 && (
+          <div className={styles.tags}>
+            {allTags.map((tag) => (
+              <span key={tag} className={`${styles.tag} ${styles.tagGreen}`}>
+                {tagLabels[tag] || tag}
+              </span>
+            ))}
+          </div>
+        )}
+
+        <div className={styles.cardActions}>
+          {bothHidden ? (
+            <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}>
+              Message
+            </Link>
+          ) : contactPreference === 'whatsapp' && whatsappNumber ? (
+            <a
+              href={`https://wa.me/${whatsappNumber}`}
+              target="_blank"
+              rel="noopener noreferrer"
+              className={`${styles.cardBtn} ${styles.cardBtnWhatsapp}`}
+            >
+              {t.contactWhatsapp}
+            </a>
+          ) : email ? (
+            <a href={`mailto:${email}`} className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}>
+              {t.contactEmail}
+            </a>
+          ) : null}
+
+          <Link href={`/${_id}`} className={`${styles.cardBtn} ${styles.cardBtnOutline}`}>
+            {t.viewProfile}
           </Link>
-        ) : contactPreference === 'whatsapp' && whatsappNumber ? (
-          <a
-            href={`https://wa.me/${whatsappNumber}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className={`${styles.cardBtn} ${styles.cardBtnWhatsapp}`}
-          >
-            {t.contactWhatsapp}
-          </a>
-        ) : email ? (
-          <a
-            href={`mailto:${email}`}
-            className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}
-          >
-            {t.contactEmail}
-          </a>
-        ) : null}
-
-        <Link
-          href={`/${_id}`}
-          className={`${styles.cardBtn} ${styles.cardBtnOutline}`}
-        >
-          {t.viewProfile}
-        </Link>
+        </div>
       </div>
     </div>
   );

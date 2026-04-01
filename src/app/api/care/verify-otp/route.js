@@ -232,7 +232,9 @@ export async function POST(request) {
     if (catSitter && !catSitter.username) {
       try {
         resolvedUsername = await generateUniqueUsername(sanity)
-        await sanity.patch(catSitter._id).set({ username: resolvedUsername }).commit()
+        const AVATAR_COLOURS = ['whisker-cream', 'paw-pink', 'hunter-green', 'tabby-brown']
+        const avatarColour = AVATAR_COLOURS[Math.floor(Math.random() * AVATAR_COLOURS.length)]
+        await sanity.patch(catSitter._id).set({ username: resolvedUsername, avatarColour }).commit()
       } catch (err) {
         console.error('username generation error:', err)
         // Non-fatal

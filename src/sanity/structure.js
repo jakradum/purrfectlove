@@ -2,6 +2,8 @@ import {ApplicantInfoDisplay} from './components/ApplicantInfoDisplay'
 import {ContactMessageDisplay} from './components/ContactMessageDisplay'
 import {MemberMessageLog} from './components/MemberMessageLog'
 import {DeletionRequestedActions} from './components/DeletionRequestedActions'
+import {CommunityMetrics} from './components/CommunityMetrics'
+import {BroadcastSender} from './components/BroadcastSender'
 
 export const structure = (S) =>
   S.list()
@@ -263,6 +265,52 @@ export const structure = (S) =>
                   S.documentTypeList('sittingFeedback')
                     .title('Feedback')
                     .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                ),
+            ])
+        ),
+
+      // === MEMBER REPORTS ===
+      S.listItem()
+        .title('Member Reports')
+        .icon(() => '🚩')
+        .child(
+          S.documentTypeList('memberReport')
+            .title('Member Reports')
+            .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
+        ),
+
+      // === ANALYTICS & BROADCAST ===
+      S.listItem()
+        .title('Analytics & Broadcast')
+        .icon(() => '📊')
+        .child(
+          S.list()
+            .title('Analytics & Broadcast')
+            .items([
+              S.listItem()
+                .title('Community Metrics')
+                .icon(() => '📊')
+                .child(
+                  S.component(CommunityMetrics)
+                    .title('Community Metrics')
+                    .id('community-metrics')
+                ),
+              S.listItem()
+                .title('Broadcast Messages')
+                .icon(() => '📢')
+                .child(
+                  S.documentTypeList('broadcastMessage')
+                    .title('Broadcast Messages')
+                    .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
+                    .child((documentId) =>
+                      S.document()
+                        .documentId(documentId)
+                        .schemaType('broadcastMessage')
+                        .views([
+                          S.view.form().title('Edit'),
+                          S.view.component(BroadcastSender).title('Send'),
+                        ])
+                    )
                 ),
             ])
         ),

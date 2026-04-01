@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './Care.module.css';
 
@@ -13,6 +13,8 @@ const COUNTRY_CODES = [
 export default function LoginForm({ locale = 'en', loginRedirect }) {
   const redirect = loginRedirect || (locale === 'de' ? '/de/care' : '/');
   const router = useRouter();
+  const searchParams = useSearchParams();
+  const sessionReason = searchParams?.get('reason'); // 'expired' | 'session' | null
 
   const [step, setStep] = useState('identifier');
   const [showTooltip, setShowTooltip] = useState(false);
@@ -190,6 +192,13 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
         <h1 className={styles.loginTitle}>
           {locale === 'de' ? 'Mitgliederbereich' : 'Member Login'}
         </h1>
+        {sessionReason && (
+          <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.65rem 1rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#92400e' }}>
+            {sessionReason === 'expired'
+              ? 'Your session has expired. Please log in again.'
+              : 'Please log in to continue.'}
+          </div>
+        )}
         {mode !== null && (
           <p className={styles.loginSubtitle}>{subtitle}</p>
         )}

@@ -4,6 +4,7 @@ import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import styles from './Care.module.css';
 import SitterCard from './SitterCard';
+import DateRangePicker from './DateRangePicker';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 
@@ -34,27 +35,53 @@ function roadMultiplier(lat) {
 
 // Whether a sitter has configured any availability data
 function hasAvailabilityData(sitter) {
+  // New system: any non-empty unavailableDatesV2 means they've set their calendar
+  if (Array.isArray(sitter.unavailableDatesV2)) return true;
+  // Legacy fallback
   return sitter.alwaysAvailable === true || (sitter.availableDates || []).length > 0;
+}
+
+// Build an array of YYYY-MM-DD strings between start and end (inclusive)
+function dateRange(startISO, endISO) {
+  const dates = [];
+  const cur = new Date(startISO);
+  const stop = new Date(endISO);
+  while (cur <= stop) {
+    const y = cur.getFullYear();
+    const m = String(cur.getMonth() + 1).padStart(2, '0');
+    const d = String(cur.getDate()).padStart(2, '0');
+    dates.push(`${y}-${m}-${d}`);
+    cur.setDate(cur.getDate() + 1);
+  }
+  return dates;
 }
 
 // Check if a sitter is available for a date range.
 // Sitters with no availability data pass through (will get "unconfirmed" badge).
 function isAvailableForDates(sitter, startDate, endDate) {
   if (!startDate || !endDate) return true;
+
+  // New system: unavailableDatesV2 — any overlap = not available
+  if (Array.isArray(sitter.unavailableDatesV2) && sitter.unavailableDatesV2.length > 0) {
+    const requested = new Set(dateRange(startDate, endDate));
+    for (const d of sitter.unavailableDatesV2) {
+      if (requested.has(d)) return false;
+    }
+    return true;
+  }
+
+  // Legacy system
   const start = new Date(startDate);
   const end = new Date(endDate);
 
   if (sitter.alwaysAvailable) {
-    // Check new range-based blocked periods
     const ranges = sitter.unavailableRanges || [];
     for (const r of ranges) {
       if (!r.start || !r.end) continue;
       const rStart = new Date(r.start);
       const rEnd = new Date(r.end);
-      // Overlap: blocked range overlaps the requested dates
       if (rStart <= end && rEnd >= start) return false;
     }
-    // Legacy single-date list fallback
     const unavail = sitter.unavailableDates || [];
     for (const d of unavail) {
       const date = new Date(d);
@@ -116,6 +143,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const [searchError, setSearchError] = useState('');
   const [debugInfo, setDebugInfo] = useState('');
   const [resultsStale, setResultsStale] = useState(false);
+  const [showFilters, setShowFilters] = useState(false); // mobile bottom sheet
   const [fetchedSitters, setFetchedSitters] = useState([]);
   const [shimmer, setShimmer] = useState(false); // true = show skeleton instead of cards
   const [displayedCount, setDisplayedCount] = useState(null); // count shown in header, updates after shimmer
@@ -447,38 +475,16 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
             </div>
           )}
 
-          {/* Search bar — hidden in browse mode */}
+          {/* Search bar — hidden in browse mode, hidden on mobile (uses FAB+sheet) */}
           {!isBrowseMode && (
-            <div className={styles.searchBar}>
-              <div className={styles.searchField}>
-                <label className={styles.searchLabel}>{t.search.datesLabel} (from)</label>
-                <input
-                  type="date"
-                  className={styles.searchInput}
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                />
-              </div>
-              <div className={styles.searchField}>
-                <label className={styles.searchLabel}>{t.search.datesLabel} (to)</label>
-                <input
-                  type="date"
-                  className={styles.searchInput}
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                />
-              </div>
-              {datesSelected && (
-                <div style={{ display: 'flex', alignItems: 'flex-end', paddingBottom: '0.25rem' }}>
-                  <button
-                    type="button"
-                    onClick={() => { setStartDate(''); setEndDate(''); }}
-                    style={{ background: 'none', border: 'none', padding: 0, fontSize: '0.8rem', color: 'var(--text-light)', textDecoration: 'underline', cursor: 'pointer', whiteSpace: 'nowrap' }}
-                  >
-                    Clear dates
-                  </button>
-                </div>
-              )}
+            <div className={`${styles.searchBar} ${styles.searchBarDesktop}`}>
+              <DateRangePicker
+                startDate={startDate}
+                endDate={endDate}
+                locale={locale}
+                onChange={({ startDate: s, endDate: e }) => { setStartDate(s); setEndDate(e); }}
+                onClear={() => { setStartDate(''); setEndDate(''); }}
+              />
               {userLocation?.lat != null ? (
                 <div
                   className={styles.searchField}
@@ -513,6 +519,17 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                 </div>
               )}
             </div>
+          )}
+
+          {/* Mobile FAB — opens bottom sheet with date picker + radius */}
+          {!isBrowseMode && (
+            <button
+              type="button"
+              className={styles.filterFab}
+              onClick={() => setShowFilters(true)}
+            >
+              🗓 {datesSelected ? `${startDate} → ${endDate}` : (locale === 'de' ? 'Daten wählen' : 'Pick dates')}
+            </button>
           )}
 
           {/* Browse mode radius slider */}
@@ -578,7 +595,18 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                     <span className={styles.spinner} />
                   </div>
                 ) : searchError ? (
-                  <div className={styles.noResults} style={{ color: '#ef4444' }}>{searchError}</div>
+                  <div className={styles.datesEmptyState}>
+                    <div className={styles.datesEmptyIcon}>⚠️</div>
+                    <h2 className={styles.datesEmptyHeading} style={{ color: '#b91c1c' }}>Something went wrong</h2>
+                    <p className={styles.datesEmptyText}>We couldn&apos;t load results. Please check your connection and try again.</p>
+                    <button
+                      type="button"
+                      onClick={handleSearch}
+                      style={{ marginTop: '1rem', padding: '0.5rem 1.25rem', background: 'var(--hunter-green)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-outfit)' }}
+                    >
+                      Try again
+                    </button>
+                  </div>
                 ) : shimmer ? (
                   <div className={styles.sitterGrid}>
                     {Array.from({ length: lastResultCountRef.current }).map((_, i) => (
@@ -586,7 +614,11 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                     ))}
                   </div>
                 ) : results !== null && results.length === 0 ? (
-                  <div className={styles.noResults}>{noResultsText}</div>
+                  <div className={styles.datesEmptyState}>
+                    <div className={styles.datesEmptyIcon}>🐾</div>
+                    <h2 className={styles.datesEmptyHeading}>No one found nearby</h2>
+                    <p className={styles.datesEmptyText}>{noResultsText}</p>
+                  </div>
                 ) : results !== null ? (
                   <div className={styles.sitterGrid}>
                     {results.map((sitter, i) => (
@@ -612,6 +644,51 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
               </div>
             </div>
           )}
+        </>
+      )}
+
+      {/* Mobile bottom sheet */}
+      {showFilters && (
+        <>
+          <div className={styles.bottomSheetOverlay} onClick={() => setShowFilters(false)} />
+          <div className={styles.bottomSheet}>
+            <div className={styles.bottomSheetHandle} />
+            <p className={styles.bottomSheetTitle}>
+              {locale === 'de' ? 'Filter' : 'Filters'}
+            </p>
+            <DateRangePicker
+              startDate={startDate}
+              endDate={endDate}
+              locale={locale}
+              onChange={({ startDate: s, endDate: e }) => { setStartDate(s); setEndDate(e); }}
+              onClear={() => { setStartDate(''); setEndDate(''); }}
+            />
+            {userLocation?.lat != null && (
+              <div style={{ marginTop: '1rem' }}>
+                <label className={styles.searchLabel}>
+                  {t.search.radiusLabel}: {radius} {t.search.radiusUnit}
+                </label>
+                <input
+                  ref={sliderRef}
+                  type="range"
+                  min={1.5}
+                  max={20}
+                  step={0.5}
+                  value={radius}
+                  onChange={(e) => handleRadiusChange(Number(e.target.value))}
+                  className={styles.squigglySlider}
+                  style={{ marginTop: '0.5rem' }}
+                />
+              </div>
+            )}
+            <button
+              type="button"
+              className={styles.bottomSheetDone}
+              onClick={() => setShowFilters(false)}
+            >
+              {locale === 'de' ? 'Fertig' : 'Done'}
+            </button>
+          </div>
         </>
       )}
     </div>

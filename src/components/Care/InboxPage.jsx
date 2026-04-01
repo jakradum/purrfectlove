@@ -233,7 +233,18 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
           )}
 
           {!loading && threads.length === 0 && (
-            <p className={styles.noMessages}>{t.noMessages}</p>
+            <div style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>
+              <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>💬</div>
+              <p style={{ fontWeight: 600, color: 'var(--text-dark)', marginBottom: '0.4rem', fontSize: '0.95rem' }}>
+                {t.noMessages || 'No messages yet'}
+              </p>
+              <p style={{ fontSize: '0.82rem', color: 'var(--text-light)', lineHeight: 1.6 }}>
+                Start a conversation by visiting a member&apos;s profile and clicking Contact.
+              </p>
+              <a href="/" style={{ display: 'inline-block', marginTop: '1rem', fontSize: '0.85rem', color: 'var(--hunter-green)', fontWeight: 600 }}>
+                Browse members →
+              </a>
+            </div>
           )}
 
           {threads.map(thread => (

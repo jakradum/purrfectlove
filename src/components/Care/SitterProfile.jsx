@@ -1,7 +1,9 @@
 'use client';
 
+import { useState } from 'react';
 import Link from 'next/link';
 import styles from './Care.module.css';
+import ReportModal from './ReportModal';
 
 const TAG_LABELS = {
   shy: 'Shy', energetic: 'Energetic', senior: 'Senior', 'special needs': 'Special Needs',
@@ -23,25 +25,60 @@ function TagList({ items }) {
 
 export default function SitterProfile({ sitter }) {
   const {
-    name, location, bio, email, phone, contactPreference,
+    _id, _createdAt, name, username, location, bio, email, phone, contactPreference,
     bedrooms, householdSize, cats, maxHomesPerDay, feedingTypes, behavioralTraits,
-    canSit, needsSitting,
+    canSit, needsSitting, identityVerified, trustedSitter, photoUrl, avatarColour,
   } = sitter;
 
-  const displayName = name || 'Member';
+  const displayName = username || name || 'Member';
   const whatsappNumber = phone ? phone.replace(/\D/g, '') : null;
+  const memberSince = _createdAt
+    ? new Date(_createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : null;
+
+  const [showReport, setShowReport] = useState(false);
 
   return (
     <div className={styles.page}>
       <Link href="/" className={styles.backLink}>← Back to network</Link>
 
       <div className={styles.profileDetailCard}>
-        <h1 className={styles.profileDetailName}>{displayName}</h1>
-        {location?.name && <p className={styles.profileDetailNeighborhood}>{location.name}</p>}
+        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <h1 className={styles.profileDetailName} style={{ margin: 0 }}>{displayName}</h1>
+              {identityVerified && (
+                <span className={styles.verifiedBadge} title="Identity verified">✓</span>
+              )}
+              {trustedSitter && (
+                <span className={styles.trustedBadge} title="Trusted sitter">⭐</span>
+              )}
+            </div>
+            {location?.name && <p className={styles.profileDetailNeighborhood}>{location.name}</p>}
+            {memberSince && (
+              <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', margin: '0.2rem 0 0' }}>
+                Member since {memberSince}
+              </p>
+            )}
+          </div>
+          <button
+            type="button"
+            onClick={() => setShowReport(true)}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: '0.8rem', padding: '0.35rem 0.5rem', borderRadius: '6px', flexShrink: 0 }}
+            title="Report this member"
+          >
+            🚩 Report
+          </button>
+        </div>
+
         {bio && <p className={styles.profileDetailBio}>{bio}</p>}
 
         <div className={styles.contactActions}>
-          {contactPreference === 'whatsapp' && whatsappNumber ? (
+          {!phone && !email ? (
+            <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnPrimary}`} style={{ textDecoration: 'none' }}>
+              Message
+            </Link>
+          ) : contactPreference === 'whatsapp' && whatsappNumber ? (
             <a
               href={`https://wa.me/${whatsappNumber}`}
               target="_blank"
@@ -60,8 +97,19 @@ export default function SitterProfile({ sitter }) {
               Send Email
             </a>
           ) : null}
+          <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnOutline}`} style={{ textDecoration: 'none' }}>
+            Message
+          </Link>
         </div>
       </div>
+
+      {showReport && (
+        <ReportModal
+          memberName={displayName}
+          memberId={_id}
+          onClose={() => setShowReport(false)}
+        />
+      )}
 
       {/* Home Details */}
       {(bedrooms || householdSize) && (

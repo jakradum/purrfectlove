@@ -15,6 +15,10 @@ import contactShare from './contactShare'
 import sittingFeedback from './sittingFeedback'
 import membershipRequest from './membershipRequest'
 import deletedAccount from './deletedAccount'
+import notification from './notification'
+import sitRecord from './sitRecord'
+import memberReport from './memberReport'
+import broadcastMessage from './broadcastMessage'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -39,5 +43,9 @@ export const schema = {
     sittingFeedback,
     membershipRequest,
     deletedAccount,
+    notification,
+    sitRecord,
+    memberReport,
+    broadcastMessage,
   ]
 }

@@ -9,6 +9,13 @@ import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 import AvailabilityCalendar from './AvailabilityCalendar';
 
+const AVATAR_BG = {
+  'whisker-cream': '#F6F4F0',
+  'paw-pink':      '#F5D5C8',
+  'hunter-green':  '#2C5F4F',
+  'tabby-brown':   '#C85C3F',
+};
+
 const LocationMapPicker = dynamic(() => import('./LocationMapPicker'), {
   ssr: false,
   loading: () => <div style={{ height: '320px', background: '#f5f5f3', borderRadius: '8px' }} />,
@@ -62,7 +69,7 @@ function computeCompletion(form) {
     if (!form.maxHomesPerDay) required.push('Homes you can visit per day');
     if (!form.feedingTypes?.length) required.push('Feeding types you can handle');
     if (!form.behavioralTraits?.length) required.push('Cat behaviors you\'re comfortable with');
-    if (!form.alwaysAvailable && !form.availableDates?.length) required.push('Availability dates');
+    // Availability is optional in new system — all days available by default
   }
 
   if (form.needsSitting) {
@@ -72,7 +79,7 @@ function computeCompletion(form) {
   if (!form.bedrooms) optional.push('Number of bedrooms');
   if (!form.householdSize) optional.push('Household size');
 
-  const totalRequired = 2 + (form.canSit ? 4 : 0) + (form.needsSitting ? 1 : 0);
+  const totalRequired = 2 + (form.canSit ? 3 : 0) + (form.needsSitting ? 1 : 0);
   const totalOptional = 2;
   const total = totalRequired + totalOptional;
   const completed = (totalRequired - required.length) + (totalOptional - optional.length);
@@ -182,8 +189,11 @@ function formFromData(data) {
     bedrooms: data.bedrooms ?? '',
     householdSize: data.householdSize ?? '',
     cats: data.cats || [],
+    // New availability system — single array of unavailable YYYY-MM-DD strings
+    unavailableDatesV2: data.unavailableDatesV2 || [],
+    // Legacy fields kept so old data still renders correctly
     alwaysAvailable: data.alwaysAvailable ?? false,
-    unavailableDates: data.unavailableDates || [], // legacy single-date array, kept for backwards compat
+    unavailableDates: data.unavailableDates || [],
     unavailableRanges: data.unavailableRanges || [],
     availableDates: data.availableDates || [],
     maxHomesPerDay: data.maxHomesPerDay ?? '',
@@ -221,6 +231,8 @@ export default function ProfileEditor({ initialData }) {
   const [deletionDone, setDeletionDone] = useState(false);
   const [newsletterOptOut, setNewsletterOptOut] = useState(!!initialData.newsletterOptOut);
   const [newsletterSaving, setNewsletterSaving] = useState(false);
+  const [notifEmailMessage, setNotifEmailMessage] = useState(initialData.notifEmailMessage !== false);
+  const [notifEmailSitRequest, setNotifEmailSitRequest] = useState(initialData.notifEmailSitRequest !== false);
   const [username, setUsername] = useState(initialData.username || '');
   const [usernameRegenerated, setUsernameRegenerated] = useState(!!initialData.usernameRegenerated);
   const [regenLoading, setRegenLoading] = useState(false);
@@ -394,18 +406,23 @@ export default function ProfileEditor({ initialData }) {
               tabIndex={0}
               onKeyDown={(e) => e.key === 'Enter' && handlePhotoClick()}
               title={photoUploading ? 'Uploading…' : 'Change photo'}
-              style={{ cursor: photoUploading ? 'wait' : 'pointer' }}
+              style={{
+                cursor: photoUploading ? 'wait' : 'pointer',
+                background: photoUrl ? undefined : (AVATAR_BG[initialData.avatarColour] || 'rgba(44,95,79,0.1)'),
+              }}
             >
               {photoUrl ? (
                 <img src={photoUrl} className={styles.profilePhoto} alt="Profile" />
               ) : (
                 <div className={styles.profilePhotoPlaceholder}>
-                  <svg width="40" height="40" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg">
-                    <ellipse cx="24" cy="28" rx="14" ry="12" fill="currentColor" opacity="0.25" />
-                    <ellipse cx="24" cy="20" rx="9" ry="9" fill="currentColor" opacity="0.5" />
-                    <polygon points="10,20 14,10 18,20" fill="currentColor" opacity="0.5" />
-                    <polygon points="30,20 34,10 38,20" fill="currentColor" opacity="0.5" />
-                  </svg>
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img
+                    src="/images/care/default-avatar-cat.png"
+                    alt=""
+                    aria-hidden="true"
+                    style={{ width: '68%', height: '68%', objectFit: 'contain', imageRendering: 'pixelated' }}
+                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
+                  />
                 </div>
               )}
               <div className={styles.profilePhotoOverlay}>
@@ -460,11 +477,14 @@ export default function ProfileEditor({ initialData }) {
           </div>
         )}
 
-        {/* Availability — shown first */}
-        {(form.canSit || form.alwaysAvailable || form.availableDates?.length > 0) && (
+        {/* Availability — shown when user is a sitter */}
+        {form.canSit && (
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
-            <AvailabilityCalendar form={form} updatedAt={initialData._updatedAt} />
+            <AvailabilityCalendar
+              unavailableDates={form.unavailableDatesV2}
+              readOnly
+            />
           </div>
         )}
 
@@ -619,42 +639,77 @@ export default function ProfileEditor({ initialData }) {
           )}
         </div>
 
-        {/* Newsletter & emails */}
+        {/* Notification preferences */}
         <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Newsletter &amp; emails</h2>
-          <div className={styles.toggleRow}>
-            <label className={styles.toggle}>
-              <input
-                type="checkbox"
-                checked={!newsletterOptOut}
-                disabled={newsletterSaving}
-                onChange={async (e) => {
-                  const newOptOut = !e.target.checked;
-                  setNewsletterOptOut(newOptOut);
-                  setNewsletterSaving(true);
-                  try {
-                    await fetch('/api/care/profile', {
-                      method: 'PATCH',
-                      headers: { 'Content-Type': 'application/json' },
-                      body: JSON.stringify({ newsletterOptOut: newOptOut }),
-                    });
-                  } catch {
-                    setNewsletterOptOut(!newOptOut); // revert on error
-                  } finally {
-                    setNewsletterSaving(false);
-                  }
-                }}
-              />
-              <span className={styles.toggleSlider} />
-            </label>
-            <span className={styles.toggleLabel}>
-              Receive community emails from Purrfect Love
-            </span>
-          </div>
+          <h2 className={styles.sectionTitle}>Email notifications</h2>
+          <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
+            Control which emails Purrfect Love sends you.
+          </p>
+          {[
+            {
+              label: 'New inbox message',
+              hint: 'Email when someone sends you a message',
+              value: notifEmailMessage,
+              field: 'notifEmailMessage',
+              setter: setNotifEmailMessage,
+            },
+            {
+              label: 'Sitting request',
+              hint: 'Email when a cat parent requests your help',
+              value: notifEmailSitRequest,
+              field: 'notifEmailSitRequest',
+              setter: setNotifEmailSitRequest,
+            },
+            {
+              label: 'Community newsletter',
+              hint: 'Occasional updates from Purrfect Love',
+              value: !newsletterOptOut,
+              field: 'newsletterOptOut',
+              setter: null, // handled separately (inverted logic)
+            },
+          ].map(({ label, hint, value, field, setter }) => (
+            <div key={field} className={styles.toggleRow} style={{ alignItems: 'flex-start', marginBottom: '0.75rem' }}>
+              <label className={styles.toggle} style={{ marginTop: '2px', flexShrink: 0 }}>
+                <input
+                  type="checkbox"
+                  checked={value}
+                  disabled={newsletterSaving}
+                  onChange={async (e) => {
+                    const checked = e.target.checked;
+                    if (field === 'newsletterOptOut') {
+                      const newOptOut = !checked;
+                      setNewsletterOptOut(newOptOut);
+                      setNewsletterSaving(true);
+                      try {
+                        await fetch('/api/care/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newsletterOptOut: newOptOut }) });
+                      } catch { setNewsletterOptOut(!newOptOut); } finally { setNewsletterSaving(false); }
+                    } else {
+                      setter(checked);
+                      try {
+                        await fetch('/api/care/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: checked }) });
+                      } catch { setter(!checked); }
+                    }
+                  }}
+                />
+                <span className={styles.toggleSlider} />
+              </label>
+              <div>
+                <span className={styles.toggleLabel}>{label}</span>
+                <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', margin: '0.1rem 0 0', lineHeight: 1.4 }}>{hint}</p>
+              </div>
+            </div>
+          ))}
         </div>
 
-        {/* Request account deletion */}
-        <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '0.5rem' }}>
+        {/* GDPR data export + deletion */}
+        <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
+          <a
+            href="/api/care/data-export"
+            download
+            style={{ fontSize: '0.8rem', color: 'var(--hunter-green)', cursor: 'pointer', padding: '0.25rem 0.5rem', textDecoration: 'underline' }}
+          >
+            Download my data (GDPR)
+          </a>
           <button
             type="button"
             onClick={() => setShowDeletionModal(true)}
@@ -860,77 +915,16 @@ export default function ProfileEditor({ initialData }) {
         <button type="button" className={styles.addBtn} onClick={addCat}>{t.fields.addCat}</button>
       </div>
 
-      {/* My Availability */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
-        <div className={styles.formGroup}>
-          <Toggle checked={form.alwaysAvailable} onChange={(v) => update('alwaysAvailable', v)} label={t.fields.alwaysAvailable} />
+      {/* My Availability — tap-to-mark calendar */}
+      {form.canSit && (
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
+          <AvailabilityCalendar
+            unavailableDates={form.unavailableDatesV2}
+            onChange={(dates) => update('unavailableDatesV2', dates)}
+          />
         </div>
-        {form.alwaysAvailable ? (
-          <div className={styles.formGroup}>
-            <label className={styles.profileLabel}>Blocked date ranges</label>
-            <p className={styles.hint}>Add ranges when you won&apos;t be available. Both dates required per range.</p>
-            <div className={styles.dateRangeList}>
-              {(form.unavailableRanges || []).map((range, idx) => (
-                <div key={idx} className={styles.dateRangeRow}>
-                  <input
-                    type="date"
-                    className={styles.profileInput}
-                    placeholder="Unavailable from"
-                    value={range.start || ''}
-                    onChange={(e) => {
-                      const updated = (form.unavailableRanges || []).map((r, i) => i === idx ? { ...r, start: e.target.value } : r);
-                      update('unavailableRanges', updated);
-                    }}
-                    style={{ flex: 1 }}
-                  />
-                  <span>→</span>
-                  <input
-                    type="date"
-                    className={styles.profileInput}
-                    placeholder="Unavailable until"
-                    value={range.end || ''}
-                    onChange={(e) => {
-                      const updated = (form.unavailableRanges || []).map((r, i) => i === idx ? { ...r, end: e.target.value } : r);
-                      update('unavailableRanges', updated);
-                    }}
-                    style={{ flex: 1 }}
-                  />
-                  <button
-                    type="button"
-                    className={styles.removeBtnSmall}
-                    onClick={() => update('unavailableRanges', (form.unavailableRanges || []).filter((_, i) => i !== idx))}
-                  >
-                    Remove
-                  </button>
-                </div>
-              ))}
-            </div>
-            <button
-              type="button"
-              className={styles.addBtn}
-              onClick={() => update('unavailableRanges', [...(form.unavailableRanges || []), { start: '', end: '' }])}
-            >
-              + Add blocked range
-            </button>
-          </div>
-        ) : (
-          <div className={styles.formGroup}>
-            <label className={styles.profileLabel}>{t.fields.availableRanges}</label>
-            <div className={styles.dateRangeList}>
-              {form.availableDates.map((range, idx) => (
-                <div key={idx} className={styles.dateRangeRow}>
-                  <input type="date" className={styles.profileInput} value={range.start || ''} onChange={(e) => updateDateRange(idx, 'start', e.target.value)} style={{ flex: 1 }} />
-                  <span>→</span>
-                  <input type="date" className={styles.profileInput} value={range.end || ''} onChange={(e) => updateDateRange(idx, 'end', e.target.value)} style={{ flex: 1 }} />
-                  <button type="button" className={styles.removeBtnSmall} onClick={() => removeDateRange(idx)}>{t.fields.removeRange}</button>
-                </div>
-              ))}
-            </div>
-            <button type="button" className={styles.addBtn} onClick={addDateRange}>{t.fields.addRange}</button>
-          </div>
-        )}
-      </div>
+      )}
 
       {/* Sitting Capabilities */}
       <div className={styles.section}>

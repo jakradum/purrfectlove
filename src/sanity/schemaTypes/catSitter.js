@@ -119,6 +119,30 @@ export default {
     { name: 'username', title: 'Username', type: 'string', description: 'Auto-generated three-word anonymous display name (e.g. FluffyWhiskerPurrs). Shown in the portal instead of real name.' },
     { name: 'usernameRegenerated', title: 'Username Regenerated', type: 'boolean', initialValue: false, description: 'Set to true after member uses their one-time username regeneration.' },
 
+    // Availability v2 — single source of truth array of YYYY-MM-DD strings
+    {
+      name: 'unavailableDatesV2',
+      title: 'Unavailable Dates (v2)',
+      type: 'array',
+      readOnly: true,
+      of: [{ type: 'string' }],
+      description: 'Array of YYYY-MM-DD strings marking days the member is unavailable. Replaces alwaysAvailable/unavailableRanges/availableDates.',
+    },
+
+    // Avatar
+    { name: 'avatarColour', title: 'Avatar Background Colour', type: 'string', description: 'Assigned randomly on signup. One of: whisker-cream, paw-pink, hunter-green, tabby-brown. Used when no photo uploaded.' },
+
+    // Trust & verification
+    { name: 'identityVerified', title: 'Identity Verified', type: 'boolean', initialValue: false, description: 'Admin-granted after manual identity check.' },
+    { name: 'trustedSitter', title: 'Trusted Sitter', type: 'boolean', initialValue: false, description: 'Admin-granted. Not yet shown in member-facing UI — will be activated once sitting history is established.' },
+
+    // Community guidelines
+    { name: 'guidelinesAccepted', title: 'Guidelines Accepted', type: 'boolean', initialValue: false, description: 'Set to true when member accepts community guidelines on first login.' },
+
+    // Notification preferences
+    { name: 'notifEmailMessage', title: 'Email on new inbox message', type: 'boolean', initialValue: true },
+    { name: 'notifEmailSitRequest', title: 'Email on sit request', type: 'boolean', initialValue: true },
+
     // Deletion request
     { name: 'deletionRequested', title: 'Deletion Requested', type: 'boolean', initialValue: false, description: '⚠ Member has requested account deletion. Delete promptly and log a deletedAccount record.' },
     { name: 'deletionReason', title: 'Deletion Reason', type: 'text', rows: 3 },

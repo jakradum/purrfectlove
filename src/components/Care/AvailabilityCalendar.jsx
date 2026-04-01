@@ -1,124 +1,142 @@
 'use client';
 
+import { useState } from 'react';
 import styles from './Care.module.css';
 
-const DAY_INITIALS = ['S', 'M', 'T', 'W', 'T', 'F', 'S'];
-const STRIP_DAYS = 14;
+const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 function toYMD(date) {
-  // YYYY-MM-DD in local time
   const y = date.getFullYear();
   const m = String(date.getMonth() + 1).padStart(2, '0');
   const d = String(date.getDate()).padStart(2, '0');
   return `${y}-${m}-${d}`;
 }
 
-function daysBetween(a, b) {
-  return Math.round((b - a) / 86400000);
+function startOfDay(date) {
+  const d = new Date(date);
+  d.setHours(0, 0, 0, 0);
+  return d;
 }
 
 /**
- * Returns true if ymd (YYYY-MM-DD) falls within any of the blocked ranges.
- * Ranges are { start: 'YYYY-MM-DD', end: 'YYYY-MM-DD' }.
+ * Full-month tap-to-toggle availability calendar.
+ *
+ * Props:
+ *   unavailableDates  – string[] of YYYY-MM-DD strings (days marked unavailable)
+ *   onChange          – (dates: string[]) => void  [omit for read-only display]
+ *   readOnly          – boolean, default false
+ *   initialMonth      – Date (first day of the month to show initially), default = today's month
  */
-function isInRanges(ymd, ranges) {
-  for (const r of ranges) {
-    if (r.start && r.end && ymd >= r.start && ymd <= r.end) return true;
-    // single-day range or open-ended
-    if (r.start && !r.end && ymd === r.start) return true;
-  }
-  return false;
-}
-
-/**
- * Returns true if ymd is in the unavailableDates array (exact date strings).
- */
-function isUnavailableDate(ymd, unavailableDates) {
-  return (unavailableDates || []).includes(ymd);
-}
-
-export default function AvailabilityCalendar({ form, updatedAt }) {
-  const {
-    alwaysAvailable,
-    availableDates = [],
-    unavailableDates = [],
-    unavailableRanges = [],
-  } = form;
-
-  // Only use complete ranges (both start and end must be non-empty strings)
-  const validAvailableDates = availableDates.filter(r => r.start && r.end);
-  const validUnavailableRanges = unavailableRanges.filter(r => r.start && r.end);
-
-  // Build 14-day strip from today
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
+export default function AvailabilityCalendar({
+  unavailableDates = [],
+  onChange,
+  readOnly = false,
+  initialMonth,
+}) {
+  const today = startOfDay(new Date());
   const todayYMD = toYMD(today);
 
-  const days = Array.from({ length: STRIP_DAYS }, (_, i) => {
-    const d = new Date(today);
-    d.setDate(today.getDate() + i);
-    return { date: d, ymd: toYMD(d), dow: d.getDay() };
-  });
+  const defaultMonth = initialMonth
+    ? new Date(initialMonth.getFullYear(), initialMonth.getMonth(), 1)
+    : new Date(today.getFullYear(), today.getMonth(), 1);
 
-  // Determine availability for each day
-  function isAvailable(ymd) {
-    if (alwaysAvailable) {
-      // Available unless explicitly blocked by a range or legacy single-date entry
-      return !isUnavailableDate(ymd, unavailableDates) && !isInRanges(ymd, validUnavailableRanges);
+  const [viewMonth, setViewMonth] = useState(defaultMonth);
+
+  const year = viewMonth.getFullYear();
+  const month = viewMonth.getMonth();
+
+  const monthLabel = viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+
+  // Build the days in this month
+  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+  const daysInMonth = new Date(year, month + 1, 0).getDate();
+
+  // Padding cells before day 1
+  const leadingBlanks = firstDow;
+
+  const handlePrev = () => setViewMonth(new Date(year, month - 1, 1));
+  const handleNext = () => setViewMonth(new Date(year, month + 1, 1));
+
+  const handleDayClick = (ymd, isPast) => {
+    if (readOnly || isPast || !onChange) return;
+    const isUnavail = unavailableDates.includes(ymd);
+    if (isUnavail) {
+      onChange(unavailableDates.filter(d => d !== ymd));
     } else {
-      // Available only if the day falls within one of the configured available ranges
-      return isInRanges(ymd, validAvailableDates);
+      onChange([...unavailableDates, ymd]);
     }
-  }
-
-  // Staleness
-  let staleness = null;
-  if (updatedAt) {
-    const updated = new Date(updatedAt);
-    const daysAgo = daysBetween(updated, new Date());
-    staleness = { daysAgo, stale: daysAgo > 14 };
-  }
-
-  const modeLabel = alwaysAvailable
-    ? 'Available unless marked'
-    : 'Available on selected dates only';
+  };
 
   return (
-    <div className={styles.availCalendar}>
-      <div className={styles.availCalendarHeader}>
-        <span className={styles.availCalendarMode}>{modeLabel}</span>
+    <div className={styles.monthCal}>
+      {/* Navigation header */}
+      <div className={styles.monthCalHeader}>
+        <button
+          type="button"
+          className={styles.monthCalNav}
+          onClick={handlePrev}
+          aria-label="Previous month"
+        >
+          ‹
+        </button>
+        <span className={styles.monthCalTitle}>{monthLabel}</span>
+        <button
+          type="button"
+          className={styles.monthCalNav}
+          onClick={handleNext}
+          aria-label="Next month"
+        >
+          ›
+        </button>
       </div>
 
-      {/* Day columns */}
-      <div className={styles.availStrip}>
-        {days.map(({ date, ymd, dow }) => {
-          const avail = isAvailable(ymd);
+      {/* Day-of-week headers */}
+      <div className={styles.monthCalDowRow}>
+        {DAY_LABELS.map(d => (
+          <span key={d} className={styles.monthCalDow}>{d}</span>
+        ))}
+      </div>
+
+      {/* Day grid */}
+      <div className={styles.monthCalGrid}>
+        {/* Leading blanks */}
+        {Array.from({ length: leadingBlanks }).map((_, i) => (
+          <div key={`blank-${i}`} className={styles.monthCalBlank} />
+        ))}
+
+        {Array.from({ length: daysInMonth }).map((_, i) => {
+          const dayNum = i + 1;
+          const dateObj = new Date(year, month, dayNum);
+          const ymd = toYMD(dateObj);
+          const isPast = dateObj < today;
           const isToday = ymd === todayYMD;
+          const isUnavail = unavailableDates.includes(ymd);
+
+          let cellClass = styles.monthCalDay;
+          if (isPast) cellClass += ` ${styles.monthCalDayPast}`;
+          else if (isUnavail) cellClass += ` ${styles.monthCalDayUnavail}`;
+          else cellClass += ` ${styles.monthCalDayAvail}`;
+          if (isToday) cellClass += ` ${styles.monthCalDayToday}`;
+
           return (
-            <div key={ymd} className={styles.availDayCol}>
-              <span className={styles.availDayInitial}>{DAY_INITIALS[dow]}</span>
-              <div
-                className={[
-                  styles.availDaySquare,
-                  avail ? styles.availDayGreen : styles.availDayGrey,
-                  isToday ? styles.availDayToday : '',
-                ].join(' ')}
-              >
-                <span className={styles.availDayNum}>{date.getDate()}</span>
-              </div>
-            </div>
+            <button
+              key={ymd}
+              type="button"
+              className={cellClass}
+              onClick={() => handleDayClick(ymd, isPast)}
+              disabled={readOnly || isPast}
+              aria-label={`${ymd}${isUnavail ? ' (unavailable)' : ' (available)'}`}
+              aria-pressed={!readOnly ? isUnavail : undefined}
+            >
+              {dayNum}
+            </button>
           );
         })}
       </div>
 
-      {/* Staleness */}
-      {staleness !== null && (
-        <p
-          className={styles.availStaleness}
-          style={staleness.stale ? { color: '#b45309' } : {}}
-        >
-          Last updated {staleness.daysAgo === 0 ? 'today' : `${staleness.daysAgo} day${staleness.daysAgo !== 1 ? 's' : ''} ago`}
-          {staleness.stale && ' · consider refreshing your availability'}
+      {!readOnly && (
+        <p className={styles.monthCalHint}>
+          Tap a day to mark it unavailable. All other days are shown as available.
         </p>
       )}
     </div>

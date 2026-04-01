@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { verifyToken } from '@/lib/careAuth'
 import { cookies } from 'next/headers'
+import { rateLimit } from '@/lib/rateLimit'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const { OpenLocationCode } = require('open-location-code')
@@ -98,14 +99,19 @@ export async function PATCH(request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
+    if (!rateLimit(`profile:${payload.sitterId}`, 30, 60_000)) {
+      return Response.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 })
+    }
+
     const body = await request.json()
 
     // Only allow member-editable fields
     const allowedFields = [
       'name', 'location', 'contactPreference', 'bio', 'bedrooms', 'householdSize',
       'cats', 'alwaysAvailable', 'unavailableDates', 'unavailableRanges', 'availableDates',
-      'maxHomesPerDay', 'feedingTypes', 'behavioralTraits', 'canSit', 'needsSitting',
-      'hideEmail', 'hideWhatsApp', 'newsletterOptOut',
+      'unavailableDatesV2', 'maxHomesPerDay', 'feedingTypes', 'behavioralTraits', 'canSit', 'needsSitting',
+      'hideEmail', 'hideWhatsApp', 'newsletterOptOut', 'guidelinesAccepted',
+      'notifEmailMessage', 'notifEmailSitRequest',
     ]
 
     const patch = {}

@@ -5,6 +5,7 @@ import { verifyToken } from '@/lib/careAuth';
 import { isProfileComplete } from '@/lib/profileComplete';
 import Marketplace from '@/components/Care/Marketplace';
 import IncompleteProfileGate from '@/components/Care/IncompleteProfileGate';
+import GuidelinesGate from '@/components/Care/GuidelinesGate';
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -36,7 +37,7 @@ export default async function CarePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, canSit, needsSitting, location { lat, lng, name } }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, canSit, needsSitting, location { lat, lng, name }, guidelinesAccepted }`,
       { id: payload.sitterId }
     );
   } catch (err) {
@@ -45,6 +46,11 @@ export default async function CarePage() {
 
   if (!isProfileComplete(profile)) {
     return <IncompleteProfileGate />;
+  }
+
+  // Show guidelines gate on first entry (before accessing the community)
+  if (!profile?.guidelinesAccepted) {
+    return <GuidelinesGate locale="en" />;
   }
 
   return (
