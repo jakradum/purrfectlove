@@ -170,17 +170,25 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const lastResultCountRef = useRef(1);
 
   // Slider track fill
-  const sliderRef = useRef(null);
-  const updateSliderTrack = useCallback((val) => {
-    const el = sliderRef.current;
+  // Use a callback ref so the track colour is painted the moment the element
+  // mounts (including when the conditional rendering first shows it).
+  const sliderElRef = useRef(null);
+  const paintTrack = useCallback((el, val) => {
     if (!el) return;
     const min = Number(el.min) || 1.5;
     const max = Number(el.max) || 20;
     const pct = ((val - min) / (max - min)) * 100;
     el.style.background = `linear-gradient(to right, var(--tabby-brown) ${pct}%, #d1d5db ${pct}%)`;
   }, []);
+  const sliderRef = useCallback((el) => {
+    sliderElRef.current = el;
+    if (el) paintTrack(el, Number(el.value));
+  }, [paintTrack]);
+  const updateSliderTrack = useCallback((val) => {
+    paintTrack(sliderElRef.current, val);
+  }, [paintTrack]);
 
-  // Keep track filled when radius changes
+  // Keep track filled when radius changes programmatically
   useEffect(() => { updateSliderTrack(radius); }, [radius, updateSliderTrack]);
 
   // Restore state from sessionStorage on mount

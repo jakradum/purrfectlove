@@ -44,6 +44,9 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
   const [draftText, setDraftText] = useState('')
   const [sending, setSending] = useState(false)
   const [sendError, setSendError] = useState('')
+  const [enterToSend, setEnterToSend] = useState(() => {
+    try { return localStorage.getItem('inbox_enterToSend') === 'true' } catch { return false }
+  })
 
   // Modals
   const [showShareModal, setShowShareModal] = useState(false)
@@ -140,6 +143,22 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
   const words = countWords(draftText)
   const chars = draftText.length
   const overLimit = words > 200 || chars > 3200
+
+  function handleEnterToSendToggle(checked) {
+    setEnterToSend(checked)
+    try { localStorage.setItem('inbox_enterToSend', String(checked)) } catch { /* ignore */ }
+  }
+
+  function handleTextareaKeyDown(e) {
+    if (e.key !== 'Enter') return
+    if (enterToSend) {
+      if (e.shiftKey) return // Shift+Enter = new line
+      e.preventDefault()
+      if (!draftText.trim() || overLimit || sending) return
+      handleSend(e)
+    }
+    // enterToSend off: Enter always adds new line (default textarea behaviour)
+  }
 
   async function handleSend(e) {
     e.preventDefault()
@@ -360,8 +379,23 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
                     rows={3}
                     value={draftText}
                     onChange={e => { setDraftText(e.target.value); setSendError('') }}
+                    onKeyDown={handleTextareaKeyDown}
                     placeholder={t.messagePlaceholder}
                   />
+                  <div className={styles.composeEnterPref}>
+                    <label className={styles.composeEnterLabel}>
+                      <input
+                        type="checkbox"
+                        checked={enterToSend}
+                        onChange={e => handleEnterToSendToggle(e.target.checked)}
+                        style={{ marginRight: '0.35rem', cursor: 'pointer' }}
+                      />
+                      Press Enter to send
+                    </label>
+                    <span className={styles.composeEnterHint}>
+                      {enterToSend ? 'Shift+Enter for new line' : 'Enter adds a new line'}
+                    </span>
+                  </div>
                   <div className={styles.composeMeta}>
                     <div>
                       <span className={`${styles.composeCounters} ${overLimit ? styles.composeCounterOver : ''}`}>

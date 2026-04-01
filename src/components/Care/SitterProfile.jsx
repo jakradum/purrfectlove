@@ -79,27 +79,34 @@ export default function SitterProfile({ sitter }) {
               Message
             </Link>
           ) : contactPreference === 'whatsapp' && whatsappNumber ? (
-            <a
-              href={`https://wa.me/${whatsappNumber}`}
-              target="_blank"
-              rel="noopener noreferrer"
-              className={`${styles.cardBtn} ${styles.cardBtnWhatsapp}`}
-              style={{ textDecoration: 'none' }}
-            >
-              WhatsApp
-            </a>
+            <>
+              <a
+                href={`https://wa.me/${whatsappNumber}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className={`${styles.cardBtn} ${styles.cardBtnWhatsapp}`}
+                style={{ textDecoration: 'none' }}
+              >
+                WhatsApp
+              </a>
+              <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnOutline}`} style={{ textDecoration: 'none' }}>
+                Message
+              </Link>
+            </>
           ) : email ? (
-            <a
-              href={`mailto:${email}`}
-              className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}
-              style={{ textDecoration: 'none' }}
-            >
-              Send Email
-            </a>
+            <>
+              <a
+                href={`mailto:${email}`}
+                className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}
+                style={{ textDecoration: 'none' }}
+              >
+                Send Email
+              </a>
+              <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnOutline}`} style={{ textDecoration: 'none' }}>
+                Message
+              </Link>
+            </>
           ) : null}
-          <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnOutline}`} style={{ textDecoration: 'none' }}>
-            Message
-          </Link>
         </div>
       </div>
 
