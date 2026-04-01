@@ -2872,3 +2872,315 @@
   color: var(--text-light);
   font-family: var(--font-outfit);
 }
+
+/* ====== Sitter public profile (redesign) ====== */
+
+.sitterProfilePage {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem 1rem 4rem;
+}
+
+.sitterProfileHeader {
+  background: #fff;
+  border-radius: 16px;
+  border: 0.5px solid #ddd;
+  overflow: hidden;
+  margin-bottom: 12px;
+}
+
+.sitterProfileCover {
+  height: 120px;
+  position: relative;
+  overflow: visible;
+  background-size: cover;
+  background-position: center;
+  background-repeat: no-repeat;
+}
+
+.editCoverBtn {
+  position: absolute;
+  bottom: 10px;
+  right: 12px;
+  background: rgba(0, 0, 0, 0.45);
+  color: #fff;
+  font-size: 11px;
+  border: none;
+  border-radius: 6px;
+  padding: 4px 10px;
+  cursor: pointer;
+  z-index: 5;
+  font-family: var(--font-outfit);
+  transition: background 0.15s;
+}
+
+.editCoverBtn:hover:not(:disabled) {
+  background: rgba(0, 0, 0, 0.6);
+}
+
+.editCoverBtn:disabled {
+  opacity: 0.7;
+  cursor: not-allowed;
+}
+
+.sitterProfileAvatarWrap {
+  position: absolute;
+  bottom: -28px;
+  left: 20px;
+  z-index: 10;
+  border-radius: 50%;
+}
+
+.sitterProfileHeaderBody {
+  padding: 36px 20px 20px;
+}
+
+.sitterProfileUsername {
+  font-size: 20px;
+  font-weight: 600;
+  color: #2C2C2A;
+  font-family: var(--font-outfit);
+}
+
+.sitterProfileRealName {
+  font-size: 13px;
+  color: #666;
+  margin: 2px 0;
+}
+
+.sitterProfileMeta {
+  font-size: 12px;
+  color: #888;
+  margin-bottom: 10px;
+}
+
+.sitterProfileBadges {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-bottom: 16px;
+  min-height: 6px;
+}
+
+.sitterBadge {
+  font-size: 11px;
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-weight: 500;
+  font-family: var(--font-outfit);
+}
+
+.sitterBadgeGreen {
+  background: #EAF3DE;
+  color: #2C5F4F;
+}
+
+.sitterBadgeBlue {
+  background: #E6F1FB;
+  color: #4A6FA5;
+}
+
+.sitterContactBtn {
+  display: block;
+  width: 100%;
+  background: #C85C3F;
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  padding: 10px 20px;
+  font-size: 14px;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  box-sizing: border-box;
+  transition: background 0.15s;
+}
+
+.sitterContactBtn:hover {
+  background: #b04832;
+}
+
+.sitterSection {
+  background: #fff;
+  border-radius: 16px;
+  border: 0.5px solid #ddd;
+  padding: 18px 20px;
+  margin-bottom: 12px;
+}
+
+.sitterSectionTitle {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2C2C2A;
+  font-family: var(--font-outfit);
+  margin-bottom: 14px;
+  padding-bottom: 10px;
+  border-bottom: 0.5px solid #eee;
+}
+
+.sitterBio {
+  font-size: 0.9rem;
+  line-height: 1.65;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.trustRow {
+  display: flex;
+  gap: 10px;
+}
+
+.trustMetric {
+  flex: 1;
+  background: #f7f7f5;
+  border-radius: 8px;
+  padding: 12px;
+}
+
+.trustVal {
+  font-size: 18px;
+  font-weight: 500;
+  color: #888;
+  font-family: var(--font-outfit);
+}
+
+.trustLabel {
+  font-size: 11px;
+  color: #888;
+  margin-top: 2px;
+  font-family: var(--font-outfit);
+}
+
+.noActivityNote {
+  font-size: 12px;
+  color: #aaa;
+  margin-top: 10px;
+  text-align: center;
+}
+
+.capabilityPills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+
+.capabilityPill {
+  border: 0.5px solid #ccc;
+  border-radius: 8px;
+  padding: 6px 12px;
+  font-size: 12px;
+  color: #2C2C2A;
+  background: #f7f7f5;
+  font-family: var(--font-outfit);
+}
+
+.catProfileGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.catProfileCard {
+  border: 0.5px solid #eee;
+  border-radius: 10px;
+  padding: 12px;
+}
+
+.catProfileName {
+  font-size: 14px;
+  font-weight: 600;
+  color: #2C2C2A;
+  font-family: var(--font-outfit);
+  margin-bottom: 2px;
+}
+
+.catProfileMeta {
+  font-size: 12px;
+  color: #888;
+}
+
+.infoRow {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 8px 0;
+  border-bottom: 0.5px solid #eee;
+}
+
+.infoRow:last-of-type {
+  border-bottom: none;
+}
+
+.infoLabel {
+  font-size: 13px;
+  color: #888;
+  font-family: var(--font-outfit);
+}
+
+.infoVal {
+  font-size: 13px;
+  color: #2C2C2A;
+}
+
+.infoValLink {
+  color: #4A6FA5;
+  text-decoration: none;
+}
+
+.infoValLink:hover {
+  text-decoration: underline;
+}
+
+.inboxOnly {
+  font-size: 13px;
+  color: #666;
+  line-height: 1.5;
+  margin-bottom: 0;
+}
+
+.reportLink {
+  display: block;
+  width: 100%;
+  font-size: 12px;
+  color: #aaa;
+  text-align: center;
+  margin-top: 4px;
+  text-decoration: underline;
+  cursor: pointer;
+  background: none;
+  border: none;
+  font-family: var(--font-outfit);
+  padding: 0.5rem 0;
+}
+
+.reportLink:hover {
+  color: #888;
+}
+
+/* ====== Info tooltip (join page) ====== */
+
+.infoTooltipWrap {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+}
+
+.infoTooltipPopup {
+  position: absolute;
+  bottom: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #2C2C2A;
+  color: #fff;
+  font-size: 0.75rem;
+  line-height: 1.5;
+  border-radius: 8px;
+  padding: 0.45rem 0.75rem;
+  white-space: nowrap;
+  z-index: 20;
+  pointer-events: none;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.18);
+  font-family: var(--font-outfit);
+}

@@ -1,167 +1,270 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef, useCallback } from 'react';
 import Link from 'next/link';
 import styles from './Care.module.css';
+import CatAvatar from './CatAvatar';
 import ReportModal from './ReportModal';
+import FeedbackDisplay from './FeedbackDisplay';
 
 const TAG_LABELS = {
   shy: 'Shy', energetic: 'Energetic', senior: 'Senior', 'special needs': 'Special Needs',
   wet: 'Wet food', dry: 'Dry food', medication: 'Medication', 'special diet': 'Special diet',
 };
 
-function TagList({ items }) {
-  if (!items || items.length === 0) return null;
+const COVERS = [
+  '/images/care/cover-pattern-1.png',
+  '/images/care/cover-pattern-2.png',
+  '/images/care/cover-pattern-3.png',
+];
+const COVER_FALLBACKS = ['#F6F4F0', '#F5D5C8', '#D4E4DF'];
+
+function coverIndex(id) {
+  if (!id) return 0;
+  let h = 0;
+  for (let i = 0; i < id.length; i++) h = ((h * 31) + id.charCodeAt(i)) >>> 0;
+  return h % 3;
+}
+
+function toYMD(date) {
+  const y = date.getFullYear();
+  const m = String(date.getMonth() + 1).padStart(2, '0');
+  const d = String(date.getDate()).padStart(2, '0');
+  return `${y}-${m}-${d}`;
+}
+
+const DAY_INITIALS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
+
+function AvailabilityStrip({ markedDates = [], availabilityDefault = 'available' }) {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  const days = Array.from({ length: 14 }, (_, i) => {
+    const d = new Date(today);
+    d.setDate(today.getDate() + i);
+    return d;
+  });
+
   return (
-    <div className={styles.tags}>
-      {items.map((item) => (
-        <span key={item} className={`${styles.tag} ${styles.tagGreen}`}>
-          {TAG_LABELS[item] || item}
-        </span>
-      ))}
+    <div className={styles.availStrip}>
+      {days.map((date) => {
+        const ymd = toYMD(date);
+        const isAvailable = availabilityDefault === 'available'
+          ? !markedDates.includes(ymd)
+          : markedDates.includes(ymd);
+        return (
+          <div key={ymd} className={styles.availDayCol}>
+            <span className={styles.availDayInitial}>{DAY_INITIALS[date.getDay()]}</span>
+            <div
+              className={styles.availDaySquare}
+              style={{
+                background: isAvailable ? '#EAF3DE' : '#f3f4f6',
+                position: 'relative',
+              }}
+            >
+              <span
+                className={styles.availDayNum}
+                style={{
+                  color: isAvailable ? '#2C5F4F' : '#aaa',
+                  textDecoration: isAvailable ? 'none' : 'line-through',
+                }}
+              >
+                {date.getDate()}
+              </span>
+            </div>
+          </div>
+        );
+      })}
     </div>
   );
 }
 
-export default function SitterProfile({ sitter }) {
+export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks = [] }) {
   const {
-    _id, _createdAt, name, username, location, bio, email, phone, contactPreference,
-    bedrooms, householdSize, cats, maxHomesPerDay, feedingTypes, behavioralTraits,
-    canSit, needsSitting, identityVerified, trustedSitter, photoUrl, avatarColour,
+    _id, _createdAt, name, username, location, bio,
+    email, phone, hideEmail, hideWhatsApp,
+    cats, feedingTypes, behavioralTraits,
+    availabilityDefault, unavailableDatesV2,
+    avatarColour, photoUrl, coverImageUrl,
+    identityVerified, trustedSitter,
   } = sitter;
 
   const displayName = username || name || 'Member';
-  const whatsappNumber = phone ? phone.replace(/\D/g, '') : null;
+  const realName = username && name ? name : null;
+
   const memberSince = _createdAt
-    ? new Date(_createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    ? new Date(_createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     : null;
 
+  const metaParts = [location?.name, memberSince ? `Member since ${memberSince}` : null].filter(Boolean);
+
+  const showEmail = !hideEmail && !!email;
+  const showPhone = !hideWhatsApp && !!phone;
+  const inboxOnly = !showEmail && !showPhone;
+
+  const idx = coverIndex(_id || '');
+  const coverSrc = coverImageUrl || COVERS[idx];
+  const coverBg = COVER_FALLBACKS[idx];
+
   const [showReport, setShowReport] = useState(false);
+  const [coverUploading, setCoverUploading] = useState(false);
+  const [localCoverUrl, setLocalCoverUrl] = useState(null);
+  const coverInputRef = useRef(null);
+
+  const handleCoverUpload = useCallback(async (e) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setCoverUploading(true);
+    try {
+      const fd = new FormData();
+      fd.append('cover', file);
+      const res = await fetch('/api/care/upload-cover', { method: 'POST', body: fd });
+      const data = await res.json();
+      if (res.ok && data.coverImageUrl) {
+        setLocalCoverUrl(data.coverImageUrl);
+      }
+    } finally {
+      setCoverUploading(false);
+      e.target.value = '';
+    }
+  }, []);
+
+  const activeCoverSrc = localCoverUrl || coverSrc;
+  const isCoverPattern = !localCoverUrl && !coverImageUrl;
+
+  const capabilities = [...new Set([...(feedingTypes || []), ...(behavioralTraits || [])])];
 
   return (
-    <div className={styles.page}>
-      <Link href="/" className={styles.backLink}>← Back to network</Link>
+    <div className={styles.sitterProfilePage}>
+      <Link href="/care" className={styles.backLink}>← Back to network</Link>
 
-      <div className={styles.profileDetailCard}>
-        <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <h1 className={styles.profileDetailName} style={{ margin: 0 }}>{displayName}</h1>
-              {identityVerified && (
-                <span className={styles.verifiedBadge} title="Identity verified">✓</span>
-              )}
-              {trustedSitter && (
-                <span className={styles.trustedBadge} title="Trusted sitter">⭐</span>
-              )}
-            </div>
-            {location?.name && <p className={styles.profileDetailNeighborhood}>{location.name}</p>}
-            {memberSince && (
-              <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', margin: '0.2rem 0 0' }}>
-                Member since {memberSince}
-              </p>
-            )}
+      {/* Profile header card */}
+      <div className={styles.sitterProfileHeader}>
+        {/* Cover */}
+        <div
+          className={styles.sitterProfileCover}
+          style={isCoverPattern
+            ? { backgroundImage: `url(${activeCoverSrc})`, backgroundColor: coverBg }
+            : { backgroundImage: `url(${activeCoverSrc})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          }
+        >
+          {isOwnProfile && (
+            <>
+              <button
+                type="button"
+                className={styles.editCoverBtn}
+                onClick={() => coverInputRef.current?.click()}
+                disabled={coverUploading}
+              >
+                {coverUploading ? 'Uploading…' : 'Edit cover'}
+              </button>
+              <input
+                ref={coverInputRef}
+                type="file"
+                accept="image/jpeg,image/png,image/webp"
+                style={{ display: 'none' }}
+                onChange={handleCoverUpload}
+              />
+            </>
+          )}
+          <div className={styles.sitterProfileAvatarWrap}>
+            <CatAvatar
+              photoUrl={photoUrl}
+              avatarColour={avatarColour}
+              name={displayName}
+              size={64}
+              style={{ border: '3px solid #fff' }}
+            />
           </div>
-          <button
-            type="button"
-            onClick={() => setShowReport(true)}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-light)', fontSize: '0.8rem', padding: '0.35rem 0.5rem', borderRadius: '6px', flexShrink: 0 }}
-            title="Report this member"
-          >
-            🚩 Report
-          </button>
         </div>
 
-        {bio && <p className={styles.profileDetailBio}>{bio}</p>}
-
-        <div className={styles.contactActions}>
-          {!phone && !email ? (
-            <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnPrimary}`} style={{ textDecoration: 'none' }}>
-              Message
-            </Link>
-          ) : contactPreference === 'whatsapp' && whatsappNumber ? (
-            <>
-              <a
-                href={`https://wa.me/${whatsappNumber}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className={`${styles.cardBtn} ${styles.cardBtnWhatsapp}`}
-                style={{ textDecoration: 'none' }}
-              >
-                WhatsApp
-              </a>
-              <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnOutline}`} style={{ textDecoration: 'none' }}>
-                Message
-              </Link>
-            </>
-          ) : email ? (
-            <>
-              <a
-                href={`mailto:${email}`}
-                className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}
-                style={{ textDecoration: 'none' }}
-              >
-                Send Email
-              </a>
-              <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnOutline}`} style={{ textDecoration: 'none' }}>
-                Message
-              </Link>
-            </>
-          ) : null}
+        {/* Header body */}
+        <div className={styles.sitterProfileHeaderBody}>
+          <div className={styles.sitterProfileUsername}>{displayName}</div>
+          {realName && <div className={styles.sitterProfileRealName}>{realName}</div>}
+          {metaParts.length > 0 && (
+            <div className={styles.sitterProfileMeta}>{metaParts.join(' · ')}</div>
+          )}
+          <div className={styles.sitterProfileBadges}>
+            {identityVerified && (
+              <span className={`${styles.sitterBadge} ${styles.sitterBadgeGreen}`}>Identity verified</span>
+            )}
+            {trustedSitter && (
+              <span className={`${styles.sitterBadge} ${styles.sitterBadgeBlue}`}>Trusted sitter</span>
+            )}
+          </div>
+          <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
+            Send a message
+          </Link>
         </div>
       </div>
 
-      {showReport && (
-        <ReportModal
-          memberName={displayName}
-          memberId={_id}
-          onClose={() => setShowReport(false)}
-        />
+      {/* Bio */}
+      {bio && (
+        <div className={styles.sitterSection}>
+          <div className={styles.sitterSectionTitle}>About</div>
+          <p className={styles.sitterBio}>{bio}</p>
+        </div>
       )}
 
-      {/* Home Details */}
-      {(bedrooms || householdSize) && (
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Home</h2>
-          <div className={styles.detailGrid}>
-            {bedrooms && (
-              <div className={styles.detailItem}>
-                <span className={styles.detailItemLabel}>Bedrooms</span>
-                <span className={styles.detailItemValue}>{bedrooms}</span>
-              </div>
-            )}
-            {householdSize && (
-              <div className={styles.detailItem}>
-                <span className={styles.detailItemLabel}>Household Size</span>
-                <span className={styles.detailItemValue}>{householdSize}</span>
-              </div>
-            )}
+      {/* Activity */}
+      <div className={styles.sitterSection}>
+        <div className={styles.sitterSectionTitle}>Activity</div>
+        <div className={styles.trustRow}>
+          <div className={styles.trustMetric}>
+            <div className={styles.trustVal}>—</div>
+            <div className={styles.trustLabel}>Response rate</div>
+          </div>
+          <div className={styles.trustMetric}>
+            <div className={styles.trustVal}>—</div>
+            <div className={styles.trustLabel}>Last active</div>
+          </div>
+          <div className={styles.trustMetric}>
+            <div className={styles.trustVal}>—</div>
+            <div className={styles.trustLabel}>Sits completed</div>
+          </div>
+        </div>
+        <div className={styles.noActivityNote}>Activity data will appear after the first sit.</div>
+      </div>
+
+      {/* Availability */}
+      <div className={styles.sitterSection}>
+        <div className={styles.sitterSectionTitle}>Availability</div>
+        <AvailabilityStrip
+          markedDates={unavailableDatesV2 || []}
+          availabilityDefault={availabilityDefault || 'available'}
+        />
+      </div>
+
+      {/* Sitting capabilities */}
+      {capabilities.length > 0 && (
+        <div className={styles.sitterSection}>
+          <div className={styles.sitterSectionTitle}>Sitting capabilities</div>
+          <div className={styles.capabilityPills}>
+            {capabilities.map(tag => (
+              <span key={tag} className={styles.capabilityPill}>
+                {TAG_LABELS[tag] || tag}
+              </span>
+            ))}
           </div>
         </div>
       )}
 
       {/* Cats */}
       {cats && cats.length > 0 && (
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>My Cats</h2>
-          <div className={styles.catList}>
+        <div className={styles.sitterSection}>
+          <div className={styles.sitterSectionTitle}>My cats</div>
+          <div className={styles.catProfileGrid}>
             {cats.map((cat, idx) => (
-              <div key={idx} className={styles.catListItem}>
-                <p className={styles.catListItemName}>
-                  {cat.name || 'Unnamed cat'}
-                  {cat.age ? ` — ${cat.age} years old` : ''}
-                </p>
-                {cat.personality && cat.personality.length > 0 && (
-                  <div style={{ marginBottom: '0.4rem' }}>
-                    <TagList items={cat.personality} />
-                  </div>
-                )}
-                {cat.diet && cat.diet.length > 0 && (
-                  <div className={styles.tags}>
-                    {cat.diet.map((d) => (
-                      <span key={d} className={`${styles.tag} ${styles.tagBrown}`}>
-                        {TAG_LABELS[d] || d}
-                      </span>
-                    ))}
+              <div key={idx} className={styles.catProfileCard}>
+                <div className={styles.catProfileName}>{cat.name || 'Unnamed'}</div>
+                {(cat.gender || cat.age || cat.indoor !== undefined || cat.neutered !== undefined) && (
+                  <div className={styles.catProfileMeta}>
+                    {[
+                      cat.gender,
+                      cat.age ? `${cat.age} yr` : null,
+                      cat.indoor === true ? 'Indoor' : cat.indoor === false ? 'Indoor/Outdoor' : null,
+                      cat.neutered === true ? 'Neutered' : cat.neutered === false ? 'Not neutered' : null,
+                    ].filter(Boolean).join(' · ')}
                   </div>
                 )}
               </div>
@@ -170,31 +273,63 @@ export default function SitterProfile({ sitter }) {
         </div>
       )}
 
-      {/* Sitter Capabilities */}
-      {canSit && (
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Sitting Capabilities</h2>
-          {maxHomesPerDay && (
-            <div className={styles.formGroup}>
-              <div className={styles.detailItem}>
-                <span className={styles.detailItemLabel}>Homes per day</span>
-                <span className={styles.detailItemValue}>{maxHomesPerDay}</span>
+      {/* Contact */}
+      <div className={styles.sitterSection}>
+        <div className={styles.sitterSectionTitle}>Contact</div>
+        {inboxOnly ? (
+          <p className={styles.inboxOnly}>
+            This member prefers to be contacted via the community inbox only.
+          </p>
+        ) : (
+          <>
+            {showEmail && (
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>Email</span>
+                <a href={`mailto:${email}`} className={`${styles.infoVal} ${styles.infoValLink}`}>{email}</a>
               </div>
-            </div>
-          )}
-          {feedingTypes && feedingTypes.length > 0 && (
-            <div className={styles.formGroup}>
-              <p className={styles.profileLabel} style={{ marginBottom: '0.5rem' }}>Can handle feeding</p>
-              <TagList items={feedingTypes} />
-            </div>
-          )}
-          {behavioralTraits && behavioralTraits.length > 0 && (
-            <div className={styles.formGroup}>
-              <p className={styles.profileLabel} style={{ marginBottom: '0.5rem' }}>Comfortable with</p>
-              <TagList items={behavioralTraits} />
-            </div>
-          )}
+            )}
+            {showPhone && (
+              <div className={styles.infoRow}>
+                <span className={styles.infoLabel}>WhatsApp</span>
+                <a
+                  href={`https://wa.me/${phone.replace(/\D/g, '')}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className={`${styles.infoVal} ${styles.infoValLink}`}
+                >
+                  {phone}
+                </a>
+              </div>
+            )}
+          </>
+        )}
+        <div style={{ marginTop: '1rem' }}>
+          <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
+            Send a message
+          </Link>
         </div>
+      </div>
+
+      {/* Feedback */}
+      {feedbacks.length > 0 && (
+        <FeedbackDisplay feedbacks={feedbacks} locale="en" />
+      )}
+
+      {/* Report */}
+      <button
+        type="button"
+        className={styles.reportLink}
+        onClick={() => setShowReport(true)}
+      >
+        Report this member
+      </button>
+
+      {showReport && (
+        <ReportModal
+          memberName={displayName}
+          memberId={_id}
+          onClose={() => setShowReport(false)}
+        />
       )}
     </div>
   );

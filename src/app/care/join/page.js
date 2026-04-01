@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import Image from 'next/image';
 import { Turnstile } from '@marsidev/react-turnstile';
 import styles from '@/components/Care/Care.module.css';
@@ -21,6 +21,25 @@ export default function JoinPage() {
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
   const turnstileRef = useRef();
+  const [showTooltip, setShowTooltip] = useState(false);
+  const tooltipTimerRef = useRef(null);
+  const tooltipWrapRef = useRef(null);
+
+  useEffect(() => {
+    if (!showTooltip) return;
+    tooltipTimerRef.current = setTimeout(() => setShowTooltip(false), 3000);
+    const onDown = (e) => {
+      if (tooltipWrapRef.current && !tooltipWrapRef.current.contains(e.target)) {
+        clearTimeout(tooltipTimerRef.current);
+        setShowTooltip(false);
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    return () => {
+      clearTimeout(tooltipTimerRef.current);
+      document.removeEventListener('mousedown', onDown);
+    };
+  }, [showTooltip]);
 
   const fullPhone = phoneNumber ? `${countryCode}${phoneNumber.replace(/\D/g, '')}` : '';
 
@@ -133,10 +152,37 @@ export default function JoinPage() {
                     ))}
                   </select>
                   <span
-                    title="Purrfect Love Care is currently available in India and Germany only"
-                    style={{ cursor: 'help', fontSize: '0.85rem', color: 'var(--text-light)', marginLeft: '0.25rem' }}
+                    ref={tooltipWrapRef}
+                    style={{ position: 'relative', display: 'inline-flex', alignItems: 'center', marginLeft: '0.25rem' }}
                   >
-                    ⓘ
+                    <button
+                      type="button"
+                      onClick={() => setShowTooltip(t => !t)}
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-light)', lineHeight: 1 }}
+                      aria-label="Availability info"
+                    >
+                      ⓘ
+                    </button>
+                    {showTooltip && (
+                      <span style={{
+                        position: 'absolute',
+                        bottom: 'calc(100% + 6px)',
+                        left: '50%',
+                        transform: 'translateX(-50%)',
+                        background: '#2C2C2A',
+                        color: '#fff',
+                        fontSize: '0.75rem',
+                        lineHeight: 1.5,
+                        borderRadius: '8px',
+                        padding: '0.45rem 0.75rem',
+                        whiteSpace: 'nowrap',
+                        zIndex: 20,
+                        pointerEvents: 'none',
+                        boxShadow: '0 2px 8px rgba(0,0,0,0.18)',
+                      }}>
+                        Available in India and Germany only
+                      </span>
+                    )}
                   </span>
                 </div>
                 <input

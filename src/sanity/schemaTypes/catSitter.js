@@ -138,8 +138,9 @@ export default {
       description: 'When availabilityDefault=available: YYYY-MM-DD strings of unavailable days. When availabilityDefault=unavailable: YYYY-MM-DD strings of available days.',
     },
 
-    // Avatar
+    // Avatar & cover
     { name: 'avatarColour', title: 'Avatar Background Colour', type: 'string', description: 'Assigned randomly on signup. One of: whisker-cream, paw-pink, hunter-green, tabby-brown. Used when no photo uploaded.' },
+    { name: 'coverImage', title: 'Cover Image', type: 'image', options: { hotspot: true }, description: 'Member-uploaded profile cover image. If absent, a wavy pattern PNG is shown as fallback.' },
 
     // Trust & verification
     { name: 'identityVerified', title: 'Identity Verified', type: 'boolean', initialValue: false, description: 'Admin-granted after manual identity check.' },

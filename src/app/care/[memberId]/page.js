@@ -3,7 +3,6 @@ import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@sanity/client';
 import { verifyToken } from '@/lib/careAuth';
 import SitterProfile from '@/components/Care/SitterProfile';
-import FeedbackDisplay from '@/components/Care/FeedbackDisplay';
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -45,10 +44,13 @@ export default async function MemberProfilePage({ params }) {
     [sitter, feedbacks] = await Promise.all([
       serverClient.fetch(
         `*[_type == "catSitter" && _id == $id && memberVerified == true][0]{
-          _id, name, location, bio, email, phone, contactPreference,
-          bedrooms, householdSize, cats, maxHomesPerDay, feedingTypes, behavioralTraits,
-          canSit, needsSitting, alwaysAvailable, availableDates,
-          hideEmail, hideWhatsApp
+          _id, _createdAt, name, username, location, bio, email, phone,
+          cats, feedingTypes, behavioralTraits,
+          availabilityDefault, unavailableDatesV2,
+          hideEmail, hideWhatsApp,
+          avatarColour, identityVerified, trustedSitter, siteAdmin,
+          "photoUrl": photo.asset->url,
+          "coverImageUrl": coverImage.asset->url
         }`,
         { id: memberId }
       ),
@@ -65,34 +67,15 @@ export default async function MemberProfilePage({ params }) {
 
   if (!sitter) notFound();
 
-  // Respect hide flags — mask contact info before rendering
-  const sitterForDisplay = {
-    ...sitter,
-    email: sitter.hideEmail ? null : sitter.email,
-    phone: sitter.hideWhatsApp ? null : sitter.phone,
-  };
-  const contactHidden = sitter.hideEmail && sitter.hideWhatsApp;
+  const isOwnProfile = payload.sitterId === memberId;
 
   return (
     <>
-      <SitterProfile sitter={sitterForDisplay} />
-      {contactHidden && (
-        <div style={{ padding: '0 1.5rem 1rem' }}>
-          <a href={`/inbox?to=${sitter._id}`} style={{
-            display: 'inline-block',
-            padding: '0.65rem 1.5rem',
-            background: 'var(--hunter-green)',
-            color: 'var(--whisker-cream)',
-            borderRadius: '8px',
-            textDecoration: 'none',
-            fontWeight: 600,
-            fontSize: '0.9rem',
-          }}>
-            Send Message
-          </a>
-        </div>
-      )}
-      <FeedbackDisplay feedbacks={feedbacks} locale="en" />
+      <SitterProfile
+        sitter={sitter}
+        isOwnProfile={isOwnProfile}
+        feedbacks={feedbacks}
+      />
     </>
   );
 }
