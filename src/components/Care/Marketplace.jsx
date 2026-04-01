@@ -140,8 +140,9 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
   const [needsSitting, setNeedsSitting] = useState(initialNeedsSitting);
 
   const handleToggle = async (field, value) => {
-    const newCanSit = field === 'canSit' ? value : canSit;
-    const newNeedsSitting = field === 'needsSitting' ? value : needsSitting;
+    // Mutually exclusive: turning one on turns the other off
+    const newCanSit = field === 'canSit' ? value : (value ? false : canSit);
+    const newNeedsSitting = field === 'needsSitting' ? value : (value ? false : needsSitting);
     setCanSit(newCanSit);
     setNeedsSitting(newNeedsSitting);
     try {
@@ -402,6 +403,42 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
         hasLocation={userLocation?.lat != null}
         locale={locale}
       />
+
+      {/* No-status nudge — shown when both toggles are off */}
+      {!canSit && !needsSitting && (
+        <div className={styles.noStatusBanner}>
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--hunter-green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, marginTop: '1px' }}>
+            <circle cx="12" cy="12" r="10" />
+            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
+          </svg>
+          <div>
+            <p style={{ margin: '0 0 0.25rem 0', fontWeight: 600 }}>
+              {locale === 'de' ? 'Kein Status gesetzt' : 'No status set'}
+            </p>
+            <p style={{ margin: '0 0 0.5rem 0', color: 'var(--text-light)', fontSize: '0.875rem' }}>
+              {locale === 'de'
+                ? 'Suche nach Unterstützung oder biete Hilfe an — je nach deinen Bedürfnissen. Dein Status ist aktuell: Ich brauche keine Betreuung, ich kann nicht helfen.'
+                : 'Browse for support or for volunteering based on your needs. Currently your status is set to: I don\'t need sitting, I can\'t help with sitting.'}
+            </p>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={() => handleToggle('needsSitting', true)}
+                className={styles.noStatusBtn}
+              >
+                {locale === 'de' ? 'Ich brauche Betreuung' : 'I need sitting'}
+              </button>
+              <button
+                type="button"
+                onClick={() => handleToggle('canSit', true)}
+                className={`${styles.noStatusBtn} ${styles.noStatusBtnOutline}`}
+              >
+                {locale === 'de' ? 'Ich kann helfen' : 'I can sit'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Conflict banner */}
       {showConflictBanner && (

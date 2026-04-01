@@ -2630,6 +2630,50 @@
   white-space: nowrap;
 }
 
+/* ====== No-status nudge banner ====== */
+
+.noStatusBanner {
+  display: flex;
+  align-items: flex-start;
+  gap: 0.875rem;
+  background: rgba(44, 95, 79, 0.06);
+  border: 1px solid rgba(44, 95, 79, 0.15);
+  border-radius: 12px;
+  padding: 1rem 1.25rem;
+  margin-bottom: 1rem;
+  font-family: var(--font-outfit);
+  color: var(--hunter-green);
+  font-size: 0.9rem;
+}
+
+.noStatusBtn {
+  padding: 0.45rem 1rem;
+  border-radius: 8px;
+  font-size: 0.82rem;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  background: var(--hunter-green);
+  color: #fff;
+  border: none;
+}
+
+.noStatusBtn:hover {
+  background: #1e4237;
+}
+
+.noStatusBtnOutline {
+  background: transparent;
+  color: var(--hunter-green);
+  border: 1.5px solid var(--hunter-green);
+}
+
+.noStatusBtnOutline:hover {
+  background: var(--hunter-green);
+  color: #fff;
+}
+
 /* ====== FilterBar ====== */
 
 .filterBarWrap {
