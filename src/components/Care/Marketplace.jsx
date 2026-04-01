@@ -133,7 +133,7 @@ function SkeletonCard() {
   );
 }
 
-export default function Marketplace({ initialCanSit, initialNeedsSitting, userName, userLocation, locale: localeProp }) {
+export default function Marketplace({ initialCanSit, initialNeedsSitting, userName, userLocation, locale: localeProp, userAvailabilityDefault = 'available', userMarkedDates = [] }) {
   const locale = localeProp || 'en';
   const t = locale === 'de' ? contentDE.marketplace : contentEN.marketplace;
 
@@ -395,6 +395,20 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const apiQueryType = isBrowseMode ? 'needsSitting' : (canSit ? 'needsSitting' : 'canSit');
   const currentType = isBrowseMode ? 'offerToSit' : (canSit ? 'offerToSit' : 'findSitters');
 
+  // Show conflict banner if user is seeking a sitter AND their own availability overlaps the selected dates
+  const showConflictBanner = !isBrowseMode && datesSelected && needsSitting && (() => {
+    if (!userMarkedDates) return false;
+    const requested = dateRange(startDate, endDate);
+    const marked = new Set(userMarkedDates);
+    if (userAvailabilityDefault === 'unavailable') {
+      // User is unavailable by default — conflict if ANY requested date is NOT in their available list
+      return requested.some(d => !marked.has(d));
+    } else {
+      // User is available by default — conflict if ANY requested date is marked unavailable
+      return requested.some(d => marked.has(d));
+    }
+  })();
+
   const noResultsText =
     currentType === 'findSitters'
       ? t.noResults.replace('{radius}', radius)
@@ -572,6 +586,14 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
                   ? 'Wähle deine Daten aus, um zu sehen, wer verfügbar ist.'
                   : 'Pick your dates above to see who\'s available.'}
               </p>
+            </div>
+          )}
+
+          {/* Availability conflict banner */}
+          {showConflictBanner && (
+            <div className={styles.conflictBanner}>
+              <span>You&apos;re marked as available to sit on some of these dates. If your plans have changed, </span>
+              <a href="/profile#availability" className={styles.conflictBannerLink}>update your availability in your profile</a>.
             </div>
           )}
 

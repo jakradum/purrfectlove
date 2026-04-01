@@ -37,7 +37,7 @@ export default async function CarePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, canSit, needsSitting, location { lat, lng, name }, guidelinesAccepted }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, canSit, needsSitting, location { lat, lng, name }, guidelinesAccepted, availabilityDefault, unavailableDatesV2 }`,
       { id: payload.sitterId }
     );
   } catch (err) {
@@ -59,6 +59,8 @@ export default async function CarePage() {
       initialNeedsSitting={profile?.needsSitting ?? false}
       userName={payload.name || profile?.name || ''}
       userLocation={profile?.location ?? null}
+      userAvailabilityDefault={profile?.availabilityDefault ?? 'available'}
+      userMarkedDates={profile?.unavailableDatesV2 ?? []}
     />
   );
 }

@@ -1746,6 +1746,24 @@
   line-height: 1.5;
 }
 
+/* Availability conflict banner */
+.conflictBanner {
+  background: #fffbeb;
+  border: 1px solid #fcd34d;
+  border-radius: 8px;
+  padding: 0.65rem 1rem;
+  font-size: 0.875rem;
+  color: #92400e;
+  margin-bottom: 0.75rem;
+  line-height: 1.5;
+}
+
+.conflictBannerLink {
+  color: #92400e;
+  font-weight: 600;
+  text-decoration: underline;
+}
+
 /* Availability default toggle */
 .availDefaultToggle {
   display: flex;
