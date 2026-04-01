@@ -321,54 +321,27 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
     }
   };
 
-  // Smart radius expansion: if < 3 sitters within chosen radius, expand in 5 km steps up to 50 km
+  // Filter strictly to the chosen radius — no silent expansion
   const results = useMemo(() => {
     if (!searched) return null;
-
-    const withinRadius = fetchedSitters
+    return fetchedSitters
       .filter((s) => s._distance == null || s._distance <= radius)
       .sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
-
-    if (withinRadius.length >= 3) {
-      return { sitters: withinRadius, effectiveRadius: radius, expandedCount: 0 };
-    }
-
-    // Expand in 5 km steps up to 50 km
-    let expanded = withinRadius;
-    let searchRadius = radius;
-    while (searchRadius < 50 && expanded.length < 3) {
-      searchRadius = Math.min(searchRadius + 5, 50);
-      expanded = fetchedSitters
-        .filter((s) => s._distance == null || s._distance <= searchRadius)
-        .sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
-    }
-
-    // Display radius = actual furthest sitter distance (not the search ceiling)
-    const expandedOnly = expanded.filter(s => s._distance != null && s._distance > radius);
-    const displayRadius = expandedOnly.length > 0
-      ? Math.ceil(Math.max(...expandedOnly.map(s => s._distance)))
-      : searchRadius;
-
-    return {
-      sitters: expanded,
-      effectiveRadius: displayRadius,
-      expandedCount: expanded.length - withinRadius.length,
-    };
   }, [searched, fetchedSitters, radius]);
 
   // Update displayed count + trigger height animation when shimmer ends
   useEffect(() => {
     if (!shimmer && results !== null) {
-      lastResultCountRef.current = results.sitters.length || 1;
-      setDisplayedCount(results.sitters.length);
+      lastResultCountRef.current = results.length || 1;
+      setDisplayedCount(results.length);
       requestAnimationFrame(() => animateHeight());
     }
   }, [shimmer, results, animateHeight]);
 
   useEffect(() => {
     if (!searching && searched && results !== null && !shimmer) {
-      lastResultCountRef.current = results.sitters.length || 1;
-      setDisplayedCount(results.sitters.length);
+      lastResultCountRef.current = results.length || 1;
+      setDisplayedCount(results.length);
       requestAnimationFrame(() => animateHeight());
     }
   }, [searching]); // eslint-disable-line react-hooks/exhaustive-deps
@@ -465,9 +438,6 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
             <div className={styles.resultsHeader}>
               <span className={styles.resultsHeaderText}>
                 Showing {displayedCount} sitter{displayedCount !== 1 ? 's' : ''} for {formatDateRange(startDate, endDate)}
-                {results?.expandedCount > 0 && (
-                  <> · {results.expandedCount} from wider area (within {results.effectiveRadius} km)</>
-                )}
               </span>
             </div>
           )}
@@ -497,19 +467,19 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
                   <SkeletonCard key={i} />
                 ))}
               </div>
-            ) : results !== null && results.sitters.length === 0 ? (
+            ) : results !== null && results.length === 0 ? (
               <div className={styles.datesEmptyState}>
                 <div className={styles.datesEmptyIcon}>🐾</div>
                 <h2 className={styles.datesEmptyHeading}>No one found nearby</h2>
                 <p className={styles.datesEmptyText}>
                   {locale === 'de'
-                    ? `Keine Sitter innerhalb von ${results.effectiveRadius} km gefunden.`
-                    : `No sitters found within ${results.effectiveRadius} km for these dates.`}
+                    ? `Keine Sitter innerhalb von ${radius} km gefunden. Versuche einen größeren Radius.`
+                    : `No sitters found within ${radius} km for these dates. Try increasing the radius.`}
                 </p>
               </div>
             ) : results !== null ? (
               <div className={styles.sitterGrid}>
-                {results.sitters.map((sitter, i) => (
+                {results.map((sitter, i) => (
                   <div
                     key={sitter._id}
                     className={styles.cardPopIn}
