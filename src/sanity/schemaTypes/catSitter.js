@@ -121,12 +121,21 @@ export default {
 
     // Availability v2 — single source of truth array of YYYY-MM-DD strings
     {
+      name: 'availabilityDefault',
+      title: 'Availability Default',
+      type: 'string',
+      options: { list: [{ title: 'Generally available (mark exceptions)', value: 'available' }, { title: 'Generally unavailable (mark available days)', value: 'unavailable' }], layout: 'radio' },
+      initialValue: 'available',
+      readOnly: true,
+      description: 'Set by member. "available" = all days available by default, tap to mark unavailable. "unavailable" = all days unavailable by default, tap to mark available.',
+    },
+    {
       name: 'unavailableDatesV2',
-      title: 'Unavailable Dates (v2)',
+      title: 'Marked Dates (v2)',
       type: 'array',
       readOnly: true,
       of: [{ type: 'string' }],
-      description: 'Array of YYYY-MM-DD strings marking days the member is unavailable. Replaces alwaysAvailable/unavailableRanges/availableDates.',
+      description: 'When availabilityDefault=available: YYYY-MM-DD strings of unavailable days. When availabilityDefault=unavailable: YYYY-MM-DD strings of available days.',
     },
 
     // Avatar

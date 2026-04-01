@@ -22,17 +22,28 @@ function startOfDay(date) {
  * Full-month tap-to-toggle availability calendar.
  *
  * Props:
- *   unavailableDates  – string[] of YYYY-MM-DD strings (days marked unavailable)
- *   onChange          – (dates: string[]) => void  [omit for read-only display]
- *   readOnly          – boolean, default false
- *   initialMonth      – Date (first day of the month to show initially), default = today's month
+ *   markedDates        – string[] of YYYY-MM-DD strings (explicitly marked dates)
+ *   availabilityDefault – 'available' | 'unavailable' (default: 'available')
+ *                        'available'  → markedDates are the unavailable days (green default, tap to mark red)
+ *                        'unavailable'→ markedDates are the available days  (grey default, tap to mark green)
+ *   onChange           – (dates: string[]) => void   [omit or pass null for read-only display]
+ *   onDefaultChange    – (newDefault: string) => void [called when toggle changes]
+ *   readOnly           – boolean, default false
+ *   initialMonth       – Date (first day of the month to show initially), default = today's month
+ *
+ * Legacy compat: also accepts `unavailableDates` prop (treated as markedDates with default='available')
  */
 export default function AvailabilityCalendar({
-  unavailableDates = [],
+  markedDates,
+  unavailableDates, // legacy alias
+  availabilityDefault = 'available',
   onChange,
+  onDefaultChange,
   readOnly = false,
   initialMonth,
 }) {
+  const dates = markedDates ?? unavailableDates ?? [];
+
   const today = startOfDay(new Date());
   const todayYMD = toYMD(today);
 
@@ -44,14 +55,10 @@ export default function AvailabilityCalendar({
 
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
-
   const monthLabel = viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
-  // Build the days in this month
-  const firstDow = new Date(year, month, 1).getDay(); // 0=Sun
+  const firstDow = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
-
-  // Padding cells before day 1
   const leadingBlanks = firstDow;
 
   const handlePrev = () => setViewMonth(new Date(year, month - 1, 1));
@@ -59,35 +66,51 @@ export default function AvailabilityCalendar({
 
   const handleDayClick = (ymd, isPast) => {
     if (readOnly || isPast || !onChange) return;
-    const isUnavail = unavailableDates.includes(ymd);
-    if (isUnavail) {
-      onChange(unavailableDates.filter(d => d !== ymd));
-    } else {
-      onChange([...unavailableDates, ymd]);
-    }
+    const isMarked = dates.includes(ymd);
+    onChange(isMarked ? dates.filter(d => d !== ymd) : [...dates, ymd]);
   };
+
+  // In 'available' mode: marked = unavailable (red), unmarked = available (green)
+  // In 'unavailable' mode: marked = available (green), unmarked = unavailable (grey)
+  const isDayAvailable = (ymd) =>
+    availabilityDefault === 'available'
+      ? !dates.includes(ymd)
+      : dates.includes(ymd);
+
+  const hintText = availabilityDefault === 'available'
+    ? 'Tap a date to mark it unavailable. All other days are shown as available.'
+    : 'Tap a date to mark it available. All other days are shown as unavailable.';
 
   return (
     <div className={styles.monthCal}>
+      {/* Default availability toggle */}
+      {!readOnly && onDefaultChange && (
+        <div className={styles.availDefaultToggle}>
+          <span className={styles.availDefaultLabel}>I&apos;m generally:</span>
+          <div className={styles.availDefaultBtns}>
+            <button
+              type="button"
+              className={`${styles.availDefaultBtn} ${availabilityDefault === 'available' ? styles.availDefaultBtnActive : ''}`}
+              onClick={() => onDefaultChange('available')}
+            >
+              Available
+            </button>
+            <button
+              type="button"
+              className={`${styles.availDefaultBtn} ${availabilityDefault === 'unavailable' ? styles.availDefaultBtnActiveRed : ''}`}
+              onClick={() => onDefaultChange('unavailable')}
+            >
+              Unavailable
+            </button>
+          </div>
+        </div>
+      )}
+
       {/* Navigation header */}
       <div className={styles.monthCalHeader}>
-        <button
-          type="button"
-          className={styles.monthCalNav}
-          onClick={handlePrev}
-          aria-label="Previous month"
-        >
-          ‹
-        </button>
+        <button type="button" className={styles.monthCalNav} onClick={handlePrev} aria-label="Previous month">‹</button>
         <span className={styles.monthCalTitle}>{monthLabel}</span>
-        <button
-          type="button"
-          className={styles.monthCalNav}
-          onClick={handleNext}
-          aria-label="Next month"
-        >
-          ›
-        </button>
+        <button type="button" className={styles.monthCalNav} onClick={handleNext} aria-label="Next month">›</button>
       </div>
 
       {/* Day-of-week headers */}
@@ -99,7 +122,6 @@ export default function AvailabilityCalendar({
 
       {/* Day grid */}
       <div className={styles.monthCalGrid}>
-        {/* Leading blanks */}
         {Array.from({ length: leadingBlanks }).map((_, i) => (
           <div key={`blank-${i}`} className={styles.monthCalBlank} />
         ))}
@@ -110,12 +132,16 @@ export default function AvailabilityCalendar({
           const ymd = toYMD(dateObj);
           const isPast = dateObj < today;
           const isToday = ymd === todayYMD;
-          const isUnavail = unavailableDates.includes(ymd);
+          const avail = isDayAvailable(ymd);
 
           let cellClass = styles.monthCalDay;
-          if (isPast) cellClass += ` ${styles.monthCalDayPast}`;
-          else if (isUnavail) cellClass += ` ${styles.monthCalDayUnavail}`;
-          else cellClass += ` ${styles.monthCalDayAvail}`;
+          if (isPast) {
+            cellClass += ` ${styles.monthCalDayPast}`;
+          } else if (avail) {
+            cellClass += ` ${styles.monthCalDayAvail}`;
+          } else {
+            cellClass += ` ${styles.monthCalDayUnavail}`;
+          }
           if (isToday) cellClass += ` ${styles.monthCalDayToday}`;
 
           return (
@@ -125,8 +151,8 @@ export default function AvailabilityCalendar({
               className={cellClass}
               onClick={() => handleDayClick(ymd, isPast)}
               disabled={readOnly || isPast}
-              aria-label={`${ymd}${isUnavail ? ' (unavailable)' : ' (available)'}`}
-              aria-pressed={!readOnly ? isUnavail : undefined}
+              aria-label={`${ymd}${avail ? ' (available)' : ' (unavailable)'}`}
+              aria-pressed={!readOnly ? !avail : undefined}
             >
               {dayNum}
             </button>
@@ -135,9 +161,7 @@ export default function AvailabilityCalendar({
       </div>
 
       {!readOnly && (
-        <p className={styles.monthCalHint}>
-          Tap a day to mark it unavailable. All other days are shown as available.
-        </p>
+        <p className={styles.monthCalHint}>{hintText}</p>
       )}
     </div>
   );

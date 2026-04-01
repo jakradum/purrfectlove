@@ -35,7 +35,8 @@ function roadMultiplier(lat) {
 
 // Whether a sitter has configured any availability data
 function hasAvailabilityData(sitter) {
-  // New system: any non-empty unavailableDatesV2 means they've set their calendar
+  // New system: having a default set (or explicitly marking any dates) means configured
+  if (sitter.availabilityDefault) return true;
   if (Array.isArray(sitter.unavailableDatesV2)) return true;
   // Legacy fallback
   return sitter.alwaysAvailable === true || (sitter.availableDates || []).length > 0;
@@ -61,13 +62,18 @@ function dateRange(startISO, endISO) {
 function isAvailableForDates(sitter, startDate, endDate) {
   if (!startDate || !endDate) return true;
 
-  // New system: unavailableDatesV2 — any overlap = not available
-  if (Array.isArray(sitter.unavailableDatesV2) && sitter.unavailableDatesV2.length > 0) {
-    const requested = new Set(dateRange(startDate, endDate));
-    for (const d of sitter.unavailableDatesV2) {
-      if (requested.has(d)) return false;
+  // New system: check availabilityDefault + markedDates
+  if (sitter.availabilityDefault || Array.isArray(sitter.unavailableDatesV2)) {
+    const requested = dateRange(startDate, endDate);
+    const marked = new Set(sitter.unavailableDatesV2 || []);
+
+    if (sitter.availabilityDefault === 'unavailable') {
+      // Unavailable by default — ALL requested dates must be explicitly marked available
+      return requested.every(d => marked.has(d));
+    } else {
+      // Available by default (or no default set) — excluded if ANY requested date is marked unavailable
+      return !requested.some(d => marked.has(d));
     }
-    return true;
   }
 
   // Legacy system

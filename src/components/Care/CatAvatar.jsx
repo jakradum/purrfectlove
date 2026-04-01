@@ -45,7 +45,7 @@ export default function CatAvatar({ photoUrl, avatarColour, name = 'Member', siz
         alt={name}
         width={size}
         height={size}
-        style={{ ...wrapStyle, objectFit: 'cover' }}
+        style={{ ...wrapStyle, objectFit: 'cover', objectPosition: 'center' }}
         onError={(e) => {
           // Fall back to default avatar if photo fails to load
           e.currentTarget.style.display = 'none';

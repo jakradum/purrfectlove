@@ -109,7 +109,7 @@ export async function PATCH(request) {
     const allowedFields = [
       'name', 'location', 'contactPreference', 'bio', 'bedrooms', 'householdSize',
       'cats', 'alwaysAvailable', 'unavailableDates', 'unavailableRanges', 'availableDates',
-      'unavailableDatesV2', 'maxHomesPerDay', 'feedingTypes', 'behavioralTraits', 'canSit', 'needsSitting',
+      'availabilityDefault', 'unavailableDatesV2', 'maxHomesPerDay', 'feedingTypes', 'behavioralTraits', 'canSit', 'needsSitting',
       'hideEmail', 'hideWhatsApp', 'newsletterOptOut', 'guidelinesAccepted',
       'notifEmailMessage', 'notifEmailSitRequest',
     ]

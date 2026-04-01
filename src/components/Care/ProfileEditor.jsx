@@ -189,7 +189,8 @@ function formFromData(data) {
     bedrooms: data.bedrooms ?? '',
     householdSize: data.householdSize ?? '',
     cats: data.cats || [],
-    // New availability system — single array of unavailable YYYY-MM-DD strings
+    // New availability system
+    availabilityDefault: data.availabilityDefault || 'available',
     unavailableDatesV2: data.unavailableDatesV2 || [],
     // Legacy fields kept so old data still renders correctly
     alwaysAvailable: data.alwaysAvailable ?? false,
@@ -482,7 +483,8 @@ export default function ProfileEditor({ initialData }) {
           <div className={styles.section}>
             <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
             <AvailabilityCalendar
-              unavailableDates={form.unavailableDatesV2}
+              markedDates={form.unavailableDatesV2}
+              availabilityDefault={form.availabilityDefault}
               readOnly
             />
           </div>
@@ -920,8 +922,13 @@ export default function ProfileEditor({ initialData }) {
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>{t.sections.availability}</h2>
           <AvailabilityCalendar
-            unavailableDates={form.unavailableDatesV2}
+            markedDates={form.unavailableDatesV2}
+            availabilityDefault={form.availabilityDefault}
             onChange={(dates) => update('unavailableDatesV2', dates)}
+            onDefaultChange={(val) => {
+              update('availabilityDefault', val);
+              update('unavailableDatesV2', []);
+            }}
           />
         </div>
       )}

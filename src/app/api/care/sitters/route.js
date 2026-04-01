@@ -36,7 +36,7 @@ export async function GET(request) {
         "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
         hideEmail, hideWhatsApp,
-        cats, availableDates, alwaysAvailable, unavailableDates, unavailableRanges, unavailableDatesV2, maxHomesPerDay,
+        cats, availableDates, alwaysAvailable, unavailableDates, unavailableRanges, availabilityDefault, unavailableDatesV2, maxHomesPerDay,
         feedingTypes, behavioralTraits
       }`
     } else {
@@ -47,7 +47,7 @@ export async function GET(request) {
         "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
         hideEmail, hideWhatsApp,
-        maxHomesPerDay, feedingTypes, behavioralTraits, availableDates, alwaysAvailable, unavailableDates, unavailableRanges, unavailableDatesV2
+        maxHomesPerDay, feedingTypes, behavioralTraits, availableDates, alwaysAvailable, unavailableDates, unavailableRanges, availabilityDefault, unavailableDatesV2
       }`
     }
 

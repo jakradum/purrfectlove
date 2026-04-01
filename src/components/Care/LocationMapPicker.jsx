@@ -39,6 +39,11 @@ async function reverseGeocode(lat, lng) {
 export default function LocationMapPicker({ value, onChange, locale }) {
   const defaultCity = CITY_OPTIONS.find(c => locale === 'de' ? c.value.includes('Stuttgart') : c.value.includes('Bangalore')) || CITY_OPTIONS[0];
 
+  // Check geolocation support once, on client only
+  const [geoSupported] = useState(() =>
+    typeof window !== 'undefined' && typeof navigator !== 'undefined' && !!navigator.geolocation
+  );
+
   const [mode, setMode] = useState('map');
   const [city, setCity] = useState(defaultCity);
 
@@ -71,10 +76,8 @@ export default function LocationMapPicker({ value, onChange, locale }) {
   }, [onChange]);
 
   const handleUseMyLocation = () => {
-    if (!navigator.geolocation) {
-      setGeoError('Geolocation is not supported by your browser.');
-      return;
-    }
+    // Must be called directly inside a user gesture (button click) for Safari iOS.
+    // Never call getCurrentPosition in useEffect or on page load.
     setGeolocating(true);
     setGeoError('');
     navigator.geolocation.getCurrentPosition(
@@ -84,11 +87,17 @@ export default function LocationMapPicker({ value, onChange, locale }) {
         setGeolocating(false);
         await handleMapPin(lat, lng);
       },
-      () => {
+      (err) => {
         setGeolocating(false);
-        setGeoError('Could not get your location. Please drop a pin manually.');
+        if (err.code === 1) {
+          // PERMISSION_DENIED
+          setGeoError('Location access was denied. You can enter your Plus Code manually below.');
+          setMode('manual');
+        } else {
+          setGeoError('Could not get your location. Please drop a pin manually.');
+        }
       },
-      { timeout: 10000 }
+      { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     );
   };
 
@@ -126,23 +135,25 @@ export default function LocationMapPicker({ value, onChange, locale }) {
     <div>
       {mode === 'map' ? (
         <div>
-          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <button
-              type="button"
-              onClick={handleUseMyLocation}
-              disabled={geolocating}
-              style={{
-                display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                padding: '0.5rem 1rem', background: 'var(--hunter-green)', color: '#fff',
-                border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600,
-                cursor: geolocating ? 'not-allowed' : 'pointer', opacity: geolocating ? 0.7 : 1,
-                fontFamily: 'var(--font-outfit)',
-              }}
-            >
-              {geolocating ? '📍 Getting location…' : '📍 Use my location'}
-            </button>
-            {geoError && <span style={{ fontSize: '0.78rem', color: '#ef4444' }}>{geoError}</span>}
-          </div>
+          {geoSupported && (
+            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+              <button
+                type="button"
+                onClick={handleUseMyLocation}
+                disabled={geolocating}
+                style={{
+                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+                  padding: '0.5rem 1rem', background: 'var(--hunter-green)', color: '#fff',
+                  border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600,
+                  cursor: geolocating ? 'not-allowed' : 'pointer', opacity: geolocating ? 0.7 : 1,
+                  fontFamily: 'var(--font-outfit)',
+                }}
+              >
+                {geolocating ? '📍 Getting location…' : '📍 Use my location'}
+              </button>
+              {geoError && <span style={{ fontSize: '0.78rem', color: '#ef4444' }}>{geoError}</span>}
+            </div>
+          )}
 
           <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', marginBottom: '0.5rem', lineHeight: 1.4 }}>
             Or tap the map to drop a pin, then drag it to adjust.
