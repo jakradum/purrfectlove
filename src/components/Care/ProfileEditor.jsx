@@ -509,8 +509,7 @@ export default function ProfileEditor({ initialData }) {
         )}
 
         {/* Availability — always visible, inline editable */}
-        {form.canSit && (
-          <div className={styles.section}>
+        <div className={styles.section}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(44,95,79,0.1)' }}>
               <h2 className={styles.sectionTitle} style={{ margin: 0, padding: 0, border: 'none' }}>{t.sections.availability}</h2>
               {!editMode && !deletionPending && (
@@ -545,7 +544,6 @@ export default function ProfileEditor({ initialData }) {
               </div>
             )}
           </div>
-        )}
 
         {/* About */}
         <div className={styles.section}>
