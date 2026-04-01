@@ -96,13 +96,13 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
       setActivePartnerId(preselectedTo)
       setShowMobileThread(true)
     } else {
-      // Need to fetch this member's name for compose
-      fetch(`/api/care/sitters`)
+      // Fetch this specific member's name for the compose header
+      fetch(`/api/care/sitters?id=${encodeURIComponent(preselectedTo)}`)
         .then(r => r.json())
-        .then(sitters => {
-          const found = Array.isArray(sitters) ? sitters.find(s => s._id === preselectedTo) : null
-          if (found) {
-            setComposeTarget({ _id: found._id, name: found.name || 'Member' })
+        .then(member => {
+          if (member && member._id) {
+            const displayName = member.username || member.name || 'Member'
+            setComposeTarget({ _id: member._id, name: displayName })
             setActivePartnerId(preselectedTo)
             setShowMobileThread(true)
           }

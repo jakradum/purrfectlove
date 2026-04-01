@@ -26,6 +26,16 @@ export async function GET(request) {
 
     const { searchParams } = new URL(request.url)
     const type = searchParams.get('type') // 'canSit' or 'needsSitting'
+    const id = searchParams.get('id')
+
+    // Single-member lookup (for compose target resolution)
+    if (id) {
+      const member = await serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id && memberVerified == true][0]{ _id, name, username }`,
+        { id }
+      )
+      return Response.json(member || null)
+    }
 
     let query
     if (type === 'needsSitting') {
