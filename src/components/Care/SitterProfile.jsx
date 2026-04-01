@@ -119,6 +119,7 @@ export default function SitterProfile({
   const isCoverPattern = !coverImageUrl;
 
   const [showReport, setShowReport] = useState(false);
+  const [linkCopied, setLinkCopied] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [localCoverUrl, setLocalCoverUrl] = useState(null);
   const coverInputRef = useRef(null);
@@ -236,15 +237,30 @@ export default function SitterProfile({
           )}
 
           {isOwnProfile ? (
-            onEdit ? (
-              <button type="button" onClick={onEdit} className={styles.sitterEditBtn}>
-                Edit profile
+            <>
+              {onEdit ? (
+                <button type="button" onClick={onEdit} className={styles.sitterEditBtn}>
+                  Edit profile
+                </button>
+              ) : (
+                <Link href="/care/profile" className={styles.sitterEditBtn}>
+                  Edit profile
+                </Link>
+              )}
+              <button
+                type="button"
+                className={styles.copyLinkBtn}
+                onClick={() => {
+                  const url = `${window.location.origin}/care/${_id}`;
+                  navigator.clipboard.writeText(url).then(() => {
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  });
+                }}
+              >
+                {linkCopied ? 'Link copied!' : 'Copy profile link'}
               </button>
-            ) : (
-              <Link href="/care/profile" className={styles.sitterEditBtn}>
-                Edit profile
-              </Link>
-            )
+            </>
           ) : (
             <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
               Send a message
