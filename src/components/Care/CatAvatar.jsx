@@ -57,10 +57,10 @@ export default function CatAvatar({ photoUrl, avatarColour, name = 'Member', siz
 
   return (
     <div style={wrapStyle} aria-label={name} role="img">
-      {/* Pixel cat image — place at /public/images/care/default-avatar-cat.png */}
+      {/* Pixel cat image — place at /public/images/care/2.png */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/images/care/default-avatar-cat.png"
+        src="/images/care/2.png"
         alt=""
         aria-hidden="true"
         style={{ width: '70%', height: '70%', objectFit: 'contain', imageRendering: 'pixelated' }}

@@ -509,7 +509,7 @@ export default function ProfileEditor({ initialData }) {
         )}
 
         {/* Availability — always visible, inline editable */}
-        <div className={styles.section}>
+        <div className={styles.section} style={editMode === 'availability' ? { paddingBottom: '5rem' } : undefined}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(44,95,79,0.1)' }}>
               <h2 className={styles.sectionTitle} style={{ margin: 0, padding: 0, border: 'none' }}>{t.sections.availability}</h2>
               {!editMode && !deletionPending && (
@@ -530,9 +530,9 @@ export default function ProfileEditor({ initialData }) {
               onDefaultChange={editMode === 'availability' ? (val) => { update('availabilityDefault', val); update('unavailableDatesV2', []); } : undefined}
             />
             {editMode === 'availability' && (
-              <div className={styles.saveBar} style={{ marginTop: '1rem' }}>
+              <div className={styles.saveBar}>
                 {saveError && <span className={styles.saveError}>{saveError}</span>}
-                <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
+                <button type="button" className={styles.cancelBtnText} onClick={handleCancel}>Cancel</button>
                 <button
                   type="button"
                   className={styles.saveBtn}

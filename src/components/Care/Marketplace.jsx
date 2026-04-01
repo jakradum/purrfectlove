@@ -141,6 +141,10 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const [needsSitting, setNeedsSitting] = useState(initialNeedsSitting);
   const [browseAsSitter, setBrowseAsSitter] = useState(false);
 
+  // Fresh availability data fetched client-side for conflict banner
+  const [ownAvailDefault, setOwnAvailDefault] = useState(userAvailabilityDefault);
+  const [ownMarkedDates, setOwnMarkedDates] = useState(userMarkedDates);
+
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [radius, setRadius] = useState(10);
@@ -270,6 +274,27 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
       handleSearch();
     }
   }, [isBrowseMode]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch user's own profile when both dates are selected to get fresh availability for conflict banner
+  useEffect(() => {
+    if (!startDate || !endDate) return;
+    fetch('/api/care/profile')
+      .then(r => r.json())
+      .then(doc => {
+        const availDefault = doc.availabilityDefault || 'available';
+        const markedDates = doc.unavailableDatesV2 || [];
+        console.log('[ConflictBanner] fetched profile:', {
+          availabilityDefault: availDefault,
+          unavailableDatesV2: markedDates,
+          selectedRange: { startDate, endDate },
+          canSit: doc.canSit,
+          needsSitting: doc.needsSitting,
+        });
+        setOwnAvailDefault(availDefault);
+        setOwnMarkedDates(markedDates);
+      })
+      .catch(err => console.error('[ConflictBanner] fetch error:', err));
+  }, [startDate, endDate]);
 
   // Auto-search when both dates selected; reset when dates cleared (seeker mode only)
   const prevDatesRef = useRef({ startDate: '', endDate: '' });
@@ -404,11 +429,11 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
   const currentType = isBrowseMode ? 'offerToSit' : (canSit ? 'offerToSit' : 'findSitters');
 
   // Show conflict banner if user is a sitter AND seeking AND their own sitter availability overlaps selected dates
+  // Uses fresh client-fetched availability data (ownAvailDefault / ownMarkedDates)
   const showConflictBanner = !isBrowseMode && datesSelected && canSit && needsSitting && (() => {
     const requested = dateRange(startDate, endDate);
-    const marked = new Set(userMarkedDates || []);
-    console.log('[ConflictBanner] default:', userAvailabilityDefault, 'marked:', [...marked], 'requested:', requested);
-    if (userAvailabilityDefault === 'unavailable') {
+    const marked = new Set(ownMarkedDates || []);
+    if (ownAvailDefault === 'unavailable') {
       // Unavailable by default — available only on explicitly marked dates → conflict if any requested date is marked
       return requested.some(d => marked.has(d));
     } else {

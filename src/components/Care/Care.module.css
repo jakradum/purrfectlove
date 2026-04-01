@@ -904,14 +904,13 @@
 .card {
   background: #ffffff;
   border-radius: 12px;
-  padding: 1.5rem 1.25rem;
+  padding: 0;
   width: 100%;
   box-sizing: border-box;
-  overflow: hidden;
+  /* overflow: visible — avatar must protrude below cover without clipping */
   box-shadow: 0 2px 8px rgba(44, 95, 79, 0.07);
   display: flex;
   flex-direction: column;
-  gap: 0.75rem;
   transition: box-shadow 0.2s;
 }
 
@@ -919,10 +918,11 @@
   box-shadow: 0 4px 16px rgba(44, 95, 79, 0.12);
 }
 
-/* ── Cover+avatar card layout (F15) ── */
+/* ── Cover+avatar card layout ── */
 
 .cardCover {
-  height: 80px;
+  position: relative;
+  height: 96px;
   border-radius: 12px 12px 0 0;
   background-size: cover;
   background-position: center;
@@ -930,18 +930,17 @@
 }
 
 .cardBody {
-  padding: 0 1.25rem 1.25rem;
+  padding: 36px 1.25rem 1.25rem;
   display: flex;
   flex-direction: column;
   gap: 0.6rem;
 }
 
 .cardAvatarWrap {
-  margin-top: -28px;
-  margin-bottom: 0.15rem;
-  display: flex;
-  align-items: flex-end;
-  gap: 0.5rem;
+  position: absolute;
+  bottom: -28px;
+  left: 16px;
+  z-index: 100;
 }
 
 .adminBadge {
@@ -1839,15 +1838,35 @@
 .saveBar {
   position: sticky;
   bottom: 0;
-  background: rgba(246, 244, 240, 0.95);
-  backdrop-filter: blur(8px);
-  padding: 1rem 1.5rem;
-  margin: 0 -1.5rem -4rem;
+  z-index: 50;
+  background: #F6F4F0;
+  background: rgba(246, 244, 240, 0.85);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
+  padding: 1rem 1rem env(safe-area-inset-bottom);
+  margin: 0 -1.5rem -1.5rem;
   display: flex;
   justify-content: flex-end;
   align-items: center;
   gap: 1rem;
-  border-top: 1px solid rgba(44, 95, 79, 0.1);
+  border-top: 0.5px solid rgba(0, 0, 0, 0.1);
+  border-radius: 16px 16px 0 0;
+}
+
+/* Plain text cancel — used inside the inline availability save bar */
+.cancelBtnText {
+  background: none;
+  border: none;
+  padding: 0.5rem 0.75rem;
+  font-size: 0.875rem;
+  font-weight: 500;
+  color: #888;
+  font-family: var(--font-outfit);
+  cursor: pointer;
+}
+
+.cancelBtnText:hover {
+  color: #555;
 }
 
 .saveBtn {
@@ -2104,7 +2123,8 @@
   .catCard { padding: 1rem; }
   .dateRangeRow { flex-direction: column; gap: 0.5rem; }
   .saveBar { flex-direction: column; gap: 0.75rem; align-items: stretch; }
-  .saveBtn, .cancelBtn, .editBtn, .editBtnSecondary, .addBtn { min-height: 44px; font-size: 0.9rem; }
+  .saveBtn, .cancelBtn, .cancelBtnText, .editBtn, .editBtnSecondary, .addBtn { min-height: 44px; font-size: 0.9rem; }
+  .saveBar { margin: 0 -1rem -1rem; }
   .profileInput, .profileTextarea { min-height: 44px; font-size: 16px; } /* 16px prevents iOS zoom */
   .checkboxLabel { min-height: 40px; display: flex; align-items: center; }
   .pageWide { padding: 1rem; }
