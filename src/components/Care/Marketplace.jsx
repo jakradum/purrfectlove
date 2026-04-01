@@ -215,6 +215,10 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
     animFrameRef.current = requestAnimationFrame(step);
   }
 
+  // Browse mode: sitter-only users skip the date gate entirely
+  // Also active when both flags are set and user explicitly chose "Browse as sitter"
+  const isBrowseMode = (canSit && !needsSitting) || (canSit && needsSitting && browseAsSitter);
+
   // Auto-fetch in browse mode (no dates needed)
   const browseModeRef = useRef(false);
   useEffect(() => {
@@ -352,10 +356,6 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userNa
       requestAnimationFrame(() => animateHeight());
     }
   }, [searching]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  // Browse mode: sitter-only users skip the date gate entirely
-  // Also active when both flags are set and user explicitly chose "Browse as sitter"
-  const isBrowseMode = (canSit && !needsSitting) || (canSit && needsSitting && browseAsSitter);
 
   const datesSelected = !!(startDate && endDate);
   const apiQueryType = isBrowseMode ? 'needsSitting' : (canSit ? 'needsSitting' : 'canSit');
