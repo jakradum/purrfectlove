@@ -1,13 +1,18 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import styles from './Care.module.css';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 import AvailabilityCalendar from './AvailabilityCalendar';
-import LocationMapPicker from './LocationMapPicker';
+
+const LocationMapPicker = dynamic(() => import('./LocationMapPicker'), {
+  ssr: false,
+  loading: () => <div style={{ height: '320px', background: '#f5f5f3', borderRadius: '8px' }} />,
+});
 
 const PERSONALITY_OPTIONS = ['shy', 'energetic', 'special needs']; // 'senior' is auto-calculated from age
 const DIET_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
