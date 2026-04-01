@@ -410,21 +410,14 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
       {(datesSelected || searching) && (
         <div className={styles.resultsWrapper}>
           {/* Results header */}
-          {!searching && !shimmer && displayedCount !== null && (
+          {!searching && !shimmer && displayedCount !== null && displayedCount > 0 && (
             <div className={styles.resultsHeader}>
               <span className={styles.resultsHeaderText}>
-                {displayedCount > 0 ? (
-                  <>
-                    Showing {displayedCount} sitter{displayedCount !== 1 ? 's' : ''} for {formatDateRange(startDate, endDate)}
-                    {results?.expandedCount > 0 && (
-                      <> · {results.expandedCount} from wider area (within {results.effectiveRadius} km)</>
-                    )}
-                  </>
-                ) : 'No sitters found'}
+                Showing {displayedCount} sitter{displayedCount !== 1 ? 's' : ''} for {formatDateRange(startDate, endDate)}
+                {results?.expandedCount > 0 && (
+                  <> · {results.expandedCount} from wider area (within {results.effectiveRadius} km)</>
+                )}
               </span>
-              {displayedCount > 0 && (
-                <button type="button" className={styles.sortBtn}>Nearest first</button>
-              )}
             </div>
           )}
 

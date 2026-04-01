@@ -10,15 +10,6 @@ function formatMonthDay(ymd) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
 }
 
-function SearchIcon() {
-  return (
-    <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-      <circle cx="11" cy="11" r="8" />
-      <path d="m21 21-4.35-4.35" />
-    </svg>
-  );
-}
-
 export default function FilterBar({ startDate, endDate, radius, onDatesChange, onRadiusChange, hasLocation, locale = 'en' }) {
   const [openPopover, setOpenPopover] = useState(null); // 'dates' | 'radius' | null
   const innerRef = useRef(null);
@@ -82,16 +73,6 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
           >
             <span className={styles.filterLabel}>{locale === 'de' ? 'Radius' : 'Radius'}</span>
             <span className={styles.filterValue}>{hasLocation ? `Within ${radius} km` : 'No location'}</span>
-          </button>
-
-          {/* Search button */}
-          <button
-            type="button"
-            className={styles.filterSearchBtn}
-            aria-label="Search"
-            onClick={() => setOpenPopover(null)}
-          >
-            <SearchIcon />
           </button>
         </div>
 

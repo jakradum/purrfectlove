@@ -17,17 +17,18 @@ const TAG_LABELS = {
   },
 };
 
-// Cover images: /public/images/care/3.png, 4.png, 5.png
+// Wavy cover pattern PNGs — /public/images/care/cover-pattern-{1,2,3}.png
 const COVERS = [
-  '/images/care/3.png',
-  '/images/care/4.png',
-  '/images/care/5.png',
+  '/images/care/cover-pattern-1.png',
+  '/images/care/cover-pattern-2.png',
+  '/images/care/cover-pattern-3.png',
 ];
 
+// Colour fallbacks while PNG loads (whisker-cream, paw-pink, hunter-green tints)
 const COVER_FALLBACKS = [
-  'linear-gradient(135deg, #c8a8d8 0%, #a07cbf 100%)',
-  'linear-gradient(135deg, #9ac8e8 0%, #5a9ccc 100%)',
-  'linear-gradient(135deg, #f5b8c8 0%, #d87a98 100%)',
+  '#F6F4F0',
+  '#F5D5C8',
+  '#D4E4DF',
 ];
 
 function coverIndex(id) {
@@ -37,15 +38,15 @@ function coverIndex(id) {
   return h % 3;
 }
 
-export default function SitterCard({ sitter, type = 'canSit', locale = 'en', availabilityUnconfirmed = false }) {
+export default function SitterCard({ sitter, locale = 'en', availabilityUnconfirmed = false }) {
   const t = locale === 'de' ? contentDE.marketplace.card : contentEN.marketplace.card;
   const tagLabels = TAG_LABELS[locale] || TAG_LABELS.en;
 
   const {
-    _id, _createdAt, name, username, location,
+    _id, _createdAt, name, username,
     identityVerified, trustedSitter, siteAdmin,
     photoUrl, avatarColour,
-    maxHomesPerDay, feedingTypes, behavioralTraits,
+    feedingTypes, behavioralTraits,
     cats, _distance,
     availabilityDefault,
   } = sitter;
@@ -56,15 +57,18 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en', ava
     ? new Date(_createdAt).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short', year: 'numeric' })
     : null;
 
-  // Capability pills — cap at 3, show overflow count
-  const traits = type === 'findSitters' ? (behavioralTraits || []) : [];
-  const capabilities = feedingTypes || [];
-  const allPills = [...new Set([...traits, ...capabilities])];
+  // Cat names — always shown regardless of view type
+  const catNames = (cats || []).map(c => c.name).filter(Boolean);
+  const catNamesDisplay = catNames.length === 0
+    ? null
+    : catNames.length === 1
+    ? catNames[0]
+    : `${catNames.slice(0, -1).join(', ')} & ${catNames[catNames.length - 1]}`;
+
+  // Capability pills — traits + feeding types, capped at 3
+  const allPills = [...new Set([...(behavioralTraits || []), ...(feedingTypes || [])])];
   const shownPills = allPills.slice(0, 3);
   const extraCount = allPills.length - shownPills.length;
-
-  // Cat names for "offer to sit" type
-  const catNames = (cats || []).map(c => c.name).filter(Boolean);
 
   // Availability label
   let availLabel = null;
@@ -76,110 +80,89 @@ export default function SitterCard({ sitter, type = 'canSit', locale = 'en', ava
 
   const idx = coverIndex(_id || '');
   const coverSrc = COVERS[idx];
-  const coverFallback = COVER_FALLBACKS[idx];
+  const coverBg = COVER_FALLBACKS[idx];
 
   return (
     <div className={styles.card}>
-      {/* Cover image */}
+      {/* Cover image — wavy pattern PNG */}
       <div
         className={styles.cardCover}
-        style={{ backgroundImage: `url(${coverSrc}), ${coverFallback}` }}
+        style={{ backgroundImage: `url(${coverSrc})`, backgroundColor: coverBg }}
         aria-hidden="true"
       >
-        {/* Pixel cat avatar — overlaps cover/body boundary */}
+        {/* Avatar — overlaps cover/body boundary */}
         <div className={styles.cardAvatarWrap}>
           <CatAvatar
             photoUrl={photoUrl}
             avatarColour={avatarColour}
             name={displayName}
-            size={56}
-            style={{ border: '3px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+            size={64}
+            style={{ border: '3px solid #F6F4F0', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
           />
         </div>
       </div>
 
       {/* Card body */}
       <div className={styles.cardBody}>
-        {/* Name + badges */}
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexWrap: 'wrap' }}>
-            <h3 className={styles.cardName}>{displayName}</h3>
-            {identityVerified && (
-              <span className={styles.verifiedBadge} title="Identity verified">✓</span>
-            )}
-            {trustedSitter && (
-              <span className={styles.trustedBadge} title="Trusted sitter">⭐</span>
-            )}
-            {siteAdmin && (
-              <span className={styles.adminBadge}>Admin</span>
-            )}
-            {availabilityUnconfirmed && (
-              <span className={styles.availUnconfirmedBadge} style={{ marginLeft: 'auto' }}>
-                {locale === 'de' ? 'Unbestätigt' : 'Unconfirmed'}
-              </span>
-            )}
-          </div>
-
-          {/* Meta line: distance · member since */}
-          <p className={styles.cardNeighborhood}>
-            {_distance !== undefined
-              ? `~${_distance.toFixed(1)} ${t.distance}`
-              : location?.name || ''}
-            {memberSince && (
-              <span style={{ color: 'var(--text-light)', marginLeft: _distance !== undefined || location?.name ? '0.4rem' : 0 }}>
-                · {locale === 'de' ? 'Dabei seit' : 'Since'} {memberSince}
-              </span>
-            )}
-          </p>
+        {/* Top row: member since + unconfirmed badge */}
+        <div className={styles.cardMetaRow}>
+          {availabilityUnconfirmed ? (
+            <span className={styles.availUnconfirmedBadge}>
+              {locale === 'de' ? 'Verfügbarkeit unbestätigt' : 'Availability unconfirmed'}
+            </span>
+          ) : memberSince ? (
+            <span className={styles.memberSince}>
+              {locale === 'de' ? 'Dabei seit' : 'Since'} {memberSince}
+            </span>
+          ) : null}
+          {siteAdmin && <span className={styles.adminBadge}>Admin</span>}
         </div>
 
-        {/* Cat names (offer-to-sit) */}
-        {type === 'offerToSit' && catNames.length > 0 && (
-          <p className={styles.cardMeta}>
-            {catNames.length === 1 ? catNames[0] : `${catNames.slice(0, -1).join(', ')} & ${catNames[catNames.length - 1]}`}
-          </p>
+        {/* Name + badges + distance */}
+        <div className={styles.cardNameRow}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, flex: 1 }}>
+            <h3 className={styles.cardName}>{displayName}</h3>
+            {identityVerified && <span className={styles.verifiedBadge} title="Identity verified">✓</span>}
+            {trustedSitter && <span className={styles.trustedBadge} title="Trusted sitter">⭐</span>}
+          </div>
+          {_distance !== undefined && (
+            <span className={styles.distanceBadge}>~{_distance.toFixed(1)} km</span>
+          )}
+        </div>
+
+        {/* Cat names subtitle */}
+        {catNamesDisplay && (
+          <p className={styles.cardSubtitle}>{catNamesDisplay}</p>
         )}
 
-        {/* Max homes per day (find-sitters) */}
-        {type === 'findSitters' && maxHomesPerDay && (
-          <p className={styles.cardMeta}>
-            {t.maxCats} <strong>{maxHomesPerDay}</strong> {t.cats}
-          </p>
-        )}
-
-        {/* Availability label */}
+        {/* Availability indicator */}
         {availLabel && (
-          <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', margin: 0 }}>{availLabel}</p>
+          <div className={styles.availRow}>
+            <div className={styles.tickCircle}>✓</div>
+            <span className={styles.availText}>{availLabel}</span>
+          </div>
         )}
 
         {/* Capability pills */}
         {shownPills.length > 0 && (
           <div className={styles.tags} style={{ margin: 0 }}>
             {shownPills.map(tag => (
-              <span key={tag} className={`${styles.tag} ${styles.tagGreen}`}>
+              <span key={tag} className={`${styles.tag} ${styles.tagOutline}`}>
                 {tagLabels[tag] || tag}
               </span>
             ))}
             {extraCount > 0 && (
-              <span className={`${styles.tag} ${styles.tagGreen}`} style={{ opacity: 0.6 }}>
-                +{extraCount} more
-              </span>
+              <span className={`${styles.tag} ${styles.tagMore}`}>+{extraCount}</span>
             )}
           </div>
         )}
 
         {/* Actions */}
         <div className={styles.cardActions}>
-          <Link
-            href={`/inbox?to=${_id}`}
-            className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}
-          >
+          <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnBrown}`}>
             {locale === 'de' ? 'Nachricht' : 'Message'}
           </Link>
-          <Link
-            href={`/${_id}`}
-            className={`${styles.cardBtn} ${styles.cardBtnOutline}`}
-          >
+          <Link href={`/${_id}`} className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}>
             {t.viewProfile}
           </Link>
         </div>

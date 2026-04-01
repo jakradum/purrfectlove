@@ -60,7 +60,7 @@ export default function CatAvatar({ photoUrl, avatarColour, name = 'Member', siz
       {/* Pixel cat image — place at /public/images/care/2.png */}
       {/* eslint-disable-next-line @next/next/no-img-element */}
       <img
-        src="/images/care/2.png"
+        src="/images/care/default-avatar-cat.png"
         alt=""
         aria-hidden="true"
         style={{ width: '70%', height: '70%', objectFit: 'contain', imageRendering: 'pixelated' }}
