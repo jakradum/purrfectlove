@@ -8,6 +8,7 @@ import styles from './Care.module.css';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 import AvailabilityCalendar from './AvailabilityCalendar';
+import SitterProfile from './SitterProfile';
 
 const AVATAR_BG = {
   'whisker-cream': '#F6F4F0',
@@ -404,456 +405,83 @@ export default function ProfileEditor({ initialData }) {
   const updateDateRange = (idx, field, value) => update('availableDates', form.availableDates.map((r, i) => i === idx ? { ...r, [field]: value } : r));
   const removeDateRange = (idx) => update('availableDates', form.availableDates.filter((_, i) => i !== idx));
 
-  // ── READ MODE (also handles inline availability editing) ───────────────────
-  if (!editMode || editMode === 'availability') {
+  // ── READ MODE ──────────────────────────────────────────────────────────────
+  if (editMode === null) {
     const deletionPending = !!initialData.deletionRequested;
-
-    // Profile header derived values
-    const memberSince = initialData._createdAt
-      ? new Date(initialData._createdAt).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
-      : null;
-    const loc = initialData.location || form.location;
-    const locationLabel = loc?.displayName ||
-      (loc?.lat != null
-        ? (loc.lat > 8 && loc.lat < 20 ? 'Bangalore' : 'Stuttgart')
-        : null);
-
+    const sitterForView = {
+      _id: initialData._id,
+      _createdAt: initialData._createdAt,
+      name: form.name,
+      username: username,
+      location: form.location || initialData.location,
+      bio: form.bio,
+      email: initialData.email,
+      phone: initialData.phone,
+      hideEmail: form.hideEmail ?? initialData.hideEmail,
+      hideWhatsApp: form.hideWhatsApp ?? initialData.hideWhatsApp,
+      cats: form.cats,
+      feedingTypes: form.feedingTypes,
+      behavioralTraits: form.behavioralTraits,
+      availabilityDefault: form.availabilityDefault,
+      unavailableDatesV2: form.unavailableDatesV2,
+      avatarColour: initialData.avatarColour,
+      photoUrl: photoUrl,
+      coverImageUrl: initialData.coverImageUrl,
+      identityVerified: initialData.identityVerified,
+      trustedSitter: initialData.trustedSitter,
+    };
     return (
-      <div className={styles.profilePage}>
+      <div>
         {deletionPending && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1.25rem', color: '#b91c1c', fontSize: '0.9rem', lineHeight: 1.6 }}>
             <strong>Your deletion request is pending.</strong> Your account will be removed within 48 hours. You cannot use the community during this time.
           </div>
         )}
+        <SitterProfile
+          sitter={sitterForView}
+          isOwnProfile={true}
+          onEdit={!deletionPending ? () => setEditMode('profile') : undefined}
+          onAvatarClick={!deletionPending ? handlePhotoClick : undefined}
+          photoUploading={photoUploading}
+        />
+        <input
+          ref={photoInputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/webp"
+          style={{ display: 'none' }}
+          onChange={handlePhotoChange}
+        />
+      </div>
+    );
+  }
 
-        {/* Social profile card header */}
-        <div className={styles.profileHeader}>
-          <Link href="/" className={styles.backLink}>← Back to community</Link>
-          <div className={styles.profileCard}>
-            {/* Circular photo with upload */}
-            <div
-              className={styles.profilePhotoWrap}
-              onClick={handlePhotoClick}
-              role="button"
-              tabIndex={0}
-              onKeyDown={(e) => e.key === 'Enter' && handlePhotoClick()}
-              title={photoUploading ? 'Uploading…' : 'Change photo'}
-              style={{
-                cursor: photoUploading ? 'wait' : 'pointer',
-                background: photoUrl ? undefined : (AVATAR_BG[initialData.avatarColour] || 'rgba(44,95,79,0.1)'),
-              }}
-            >
-              {photoUrl ? (
-                <img src={photoUrl} className={styles.profilePhoto} alt="Profile" />
-              ) : (
-                <div className={styles.profilePhotoPlaceholder}>
-                  {/* eslint-disable-next-line @next/next/no-img-element */}
-                  <img
-                    src="/images/care/default-avatar-cat.png"
-                    alt=""
-                    aria-hidden="true"
-                    style={{ width: '68%', height: '68%', objectFit: 'contain', imageRendering: 'pixelated' }}
-                    onError={(e) => { e.currentTarget.style.display = 'none'; }}
-                  />
-                </div>
-              )}
-              <div className={styles.profilePhotoOverlay}>
-                {photoUploading ? (
-                  <span style={{ fontSize: '0.65rem' }}>…</span>
-                ) : (
-                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
-                    <circle cx="12" cy="13" r="4"/>
-                  </svg>
-                )}
-              </div>
-            </div>
-
-            {/* Identity info */}
-            <div className={styles.profileCardInfo}>
-              <div className={styles.profileCardUsername}>
-                {username || form.name || 'My Profile'}
-                <span className={styles.profileCardYou}> — you</span>
-              </div>
-              {username && form.name && (
-                <div className={styles.profileCardRealName}>({form.name})</div>
-              )}
-              <div className={styles.profileCardMeta}>
-                {locationLabel && <>{locationLabel}{memberSince ? ' · ' : ''}</>}
-                {memberSince && <>Member since {memberSince}</>}
-              </div>
-            </div>
-          </div>
-
-          <input
-            ref={photoInputRef}
-            type="file"
-            accept="image/jpeg,image/png,image/webp"
-            style={{ display: 'none' }}
-            onChange={handlePhotoChange}
+  // ── AVAILABILITY EDIT MODE ────────────────────────────────────────────────
+  if (editMode === 'availability') {
+    return (
+      <div className={styles.sitterProfilePage}>
+        <button
+          type="button"
+          onClick={() => setEditMode(null)}
+          style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hunter-green)', fontSize: '0.875rem', fontWeight: 600, fontFamily: 'var(--font-outfit)', marginBottom: '1.5rem', padding: 0 }}
+        >
+          ← Back to profile
+        </button>
+        <div className={styles.sitterSection}>
+          <div className={styles.sitterSectionTitle}>Edit availability</div>
+          <AvailabilityCalendar
+            markedDates={form.unavailableDatesV2}
+            availabilityDefault={form.availabilityDefault}
+            onChange={(dates) => update('unavailableDatesV2', dates)}
+            onDefaultChange={(val) => { update('availabilityDefault', val); update('unavailableDatesV2', []); }}
           />
-        </div>
-
-        <CompletionIndicator form={form} onEdit={() => setEditMode('profile')} />
-
-        {!deletionPending && !editMode && (
-          <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.5rem', margin: '1rem 0' }}>
-            <button
-              type="button"
-              className={styles.editBtn}
-              onClick={() => setEditMode('profile')}
-            >
-              <PencilIcon /> Edit profile
+          <div className={styles.saveBar} style={{ marginTop: '1rem' }}>
+            {saveError && <span className={styles.saveError}>{saveError}</span>}
+            <button type="button" className={styles.cancelBtnText} onClick={handleCancel}>Cancel</button>
+            <button type="button" className={styles.saveBtn} onClick={handleSaveAvailability} disabled={saving}>
+              {saving ? t.saving : t.save}
             </button>
           </div>
-        )}
-
-        {/* Availability — always visible, inline editable */}
-        <div className={styles.section} style={editMode === 'availability' ? { paddingBottom: '5rem' } : undefined}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.75rem', borderBottom: '1px solid rgba(44,95,79,0.1)' }}>
-              <h2 className={styles.sectionTitle} style={{ margin: 0, padding: 0, border: 'none' }}>{t.sections.availability}</h2>
-              {!editMode && !deletionPending && (
-                <button
-                  type="button"
-                  className={styles.editBtnSecondary}
-                  onClick={() => setEditMode('availability')}
-                >
-                  <PencilIcon /> Edit
-                </button>
-              )}
-            </div>
-            <AvailabilityCalendar
-              markedDates={form.unavailableDatesV2}
-              availabilityDefault={form.availabilityDefault}
-              readOnly={editMode !== 'availability'}
-              onChange={editMode === 'availability' ? (dates) => update('unavailableDatesV2', dates) : undefined}
-              onDefaultChange={editMode === 'availability' ? (val) => { update('availabilityDefault', val); update('unavailableDatesV2', []); } : undefined}
-            />
-            {editMode === 'availability' && (
-              <div className={styles.saveBar}>
-                {saveError && <span className={styles.saveError}>{saveError}</span>}
-                <button type="button" className={styles.cancelBtnText} onClick={handleCancel}>Cancel</button>
-                <button
-                  type="button"
-                  className={styles.saveBtn}
-                  onClick={handleSaveAvailability}
-                  disabled={saving}
-                >
-                  {saving ? t.saving : t.save}
-                </button>
-              </div>
-            )}
-          </div>
-
-        {/* About */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t.sections.about}</h2>
-          <ReadField label="Display name" value={form.name} />
-          <ReadField label="Location" value={form.location?.displayName || form.location?.name} />
-          {form.location?.lat != null && (
-            <div className={styles.readField}>
-              <span className={styles.readFieldLabel}>
-                Coordinates
-                <span style={{ fontWeight: 400, color: 'var(--text-light)', fontSize: '0.72rem', marginLeft: '0.4rem' }}>Only visible to you</span>
-              </span>
-              <span className={styles.readFieldValue} style={{ fontFamily: 'monospace', fontSize: '0.82rem' }}>
-                {form.location.lat}, {form.location.lng}
-              </span>
-            </div>
-          )}
-          <ReadField label="Contact via" value={TAG_LABELS[form.contactPreference] || form.contactPreference} />
-          {form.bio && <p className={styles.readBio}>{form.bio}</p>}
         </div>
-
-        {/* Read-only account info */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t.sections.account}</h2>
-          {initialData.email && (
-            <div className={styles.readField}>
-              <span className={styles.readFieldLabel}>Email</span>
-              <span className={styles.readFieldValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{initialData.email}</span>
-                <button
-                  type="button"
-                  title="Copy email"
-                  style={{ flexShrink: 0, padding: '0.3rem', background: 'none', border: '1px solid rgba(44,95,79,0.25)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: copiedField === 'email' ? 'var(--hunter-green)' : 'var(--text-light)' }}
-                  onClick={() => handleCopy(initialData.email, 'email')}
-                >
-                  {copiedField === 'email' ? <CheckIcon /> : <CopyIcon />}
-                </button>
-              </span>
-            </div>
-          )}
-          {initialData.phone && (
-            <div className={styles.readField}>
-              <span className={styles.readFieldLabel}>Phone</span>
-              <span className={styles.readFieldValue} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', minWidth: 0 }}>
-                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{initialData.phone}</span>
-                <button
-                  type="button"
-                  title="Copy phone"
-                  style={{ flexShrink: 0, padding: '0.3rem', background: 'none', border: '1px solid rgba(44,95,79,0.25)', borderRadius: '6px', cursor: 'pointer', display: 'flex', alignItems: 'center', color: copiedField === 'phone' ? 'var(--hunter-green)' : 'var(--text-light)' }}
-                  onClick={() => handleCopy(initialData.phone, 'phone')}
-                >
-                  {copiedField === 'phone' ? <CheckIcon /> : <CopyIcon />}
-                </button>
-              </span>
-            </div>
-          )}
-          {/* Contact privacy — always-visible toggles with auto-save */}
-          <div style={{ marginTop: '1rem', borderTop: '1px solid rgba(44,95,79,0.08)', paddingTop: '0.75rem' }}>
-            <p style={{ fontSize: '0.75rem', fontWeight: 600, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.5rem' }}>
-              Contact Visibility {privacySaving && <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0 }}>Saving…</span>}
-            </p>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-dark)', cursor: 'pointer', marginBottom: '0.4rem' }}>
-              <input
-                type="checkbox"
-                checked={!form.hideEmail}
-                onChange={(e) => handlePrivacyToggle('hideEmail', !e.target.checked)}
-              />
-              Show email on profile
-            </label>
-            <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontSize: '0.85rem', color: 'var(--text-dark)', cursor: 'pointer', marginBottom: '0.4rem' }}>
-              <input
-                type="checkbox"
-                checked={!form.hideWhatsApp}
-                onChange={(e) => handlePrivacyToggle('hideWhatsApp', !e.target.checked)}
-              />
-              Show WhatsApp on profile
-            </label>
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', marginTop: '0.25rem', lineHeight: 1.5 }}>
-              Your contact info is visible by default. If both are hidden, members message you via the inbox.
-            </p>
-          </div>
-        </div>
-
-        {/* Home */}
-        {(form.bedrooms || form.householdSize) && (
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>{t.sections.home}</h2>
-            <ReadField label={t.fields.bedrooms} value={form.bedrooms} />
-            <ReadField label={t.fields.householdSize} value={form.householdSize} />
-          </div>
-        )}
-
-        {/* Cats */}
-        {form.cats.length > 0 && (
-          <div className={styles.section}>
-            <h2 className={styles.sectionTitle}>{t.sections.myCats}</h2>
-            {form.cats.map((cat, i) => (
-              <div key={i} className={styles.readCatRow}>
-                <strong>{cat.name || `Cat ${i + 1}`}</strong>
-                {cat.age ? ` — ${cat.age} yrs` : ''}
-                {Number(cat.age) >= 10 && <span style={{ marginLeft: '0.4rem', fontSize: '0.75rem', color: 'var(--text-light)' }}>🐱 Senior</span>}
-                {cat.personality?.filter((p) => p !== 'senior').length > 0 && (
-                  <div className={styles.tags} style={{ marginTop: '0.3rem' }}>
-                    {cat.personality.filter((p) => p !== 'senior').map((p) => <span key={p} className={`${styles.tag} ${styles.tagGreen}`}>{tagMap[p] || p}</span>)}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Status */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>{t.sections.status}</h2>
-          <div className={styles.tags}>
-            {form.canSit && <span className={`${styles.tag} ${styles.tagGreen}`}>I can sit</span>}
-            {form.needsSitting && <span className={`${styles.tag} ${styles.tagBrown}`}>I need sitting</span>}
-            {!form.canSit && !form.needsSitting && <span className={styles.readFieldValue} style={{ color: '#aaa' }}>Not active</span>}
-          </div>
-        </div>
-
-        {/* Username */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Your username</h2>
-          <p style={{ fontSize: '0.9rem', color: 'var(--text-dark)', marginBottom: '0.4rem', fontWeight: 600 }}>
-            {username || <span style={{ color: '#aaa' }}>Generating…</span>}
-          </p>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', lineHeight: 1.5, marginBottom: '0.75rem' }}>
-            This is how other members see you. Your real name is never shown publicly.
-          </p>
-          {!usernameRegenerated && (
-            <button
-              type="button"
-              disabled={regenLoading}
-              onClick={async () => {
-                setRegenLoading(true);
-                try {
-                  const res = await fetch('/api/care/regenerate-username', { method: 'POST' });
-                  const data = await res.json();
-                  if (data.username) { setUsername(data.username); setUsernameRegenerated(true); }
-                } catch { /* silent */ } finally { setRegenLoading(false); }
-              }}
-              style={{ fontSize: '0.8rem', color: 'var(--hunter-green)', background: 'none', border: '1px solid var(--hunter-green)', borderRadius: '6px', padding: '0.3rem 0.75rem', cursor: 'pointer', opacity: regenLoading ? 0.6 : 1 }}
-            >
-              {regenLoading ? 'Regenerating…' : 'Regenerate username'}
-            </button>
-          )}
-          {usernameRegenerated && (
-            <p style={{ fontSize: '0.75rem', color: 'var(--text-light)' }}>Username has been regenerated (one-time only).</p>
-          )}
-        </div>
-
-        {/* Notification preferences */}
-        <div className={styles.section}>
-          <h2 className={styles.sectionTitle}>Email notifications</h2>
-          <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', marginBottom: '0.75rem', lineHeight: 1.5 }}>
-            Control which emails Purrfect Love sends you.
-          </p>
-          {[
-            {
-              label: 'New inbox message',
-              hint: 'Email when someone sends you a message',
-              value: notifEmailMessage,
-              field: 'notifEmailMessage',
-              setter: setNotifEmailMessage,
-            },
-            {
-              label: 'Sitting request',
-              hint: 'Email when a cat parent requests your help',
-              value: notifEmailSitRequest,
-              field: 'notifEmailSitRequest',
-              setter: setNotifEmailSitRequest,
-            },
-            {
-              label: 'Community newsletter',
-              hint: 'Occasional updates from Purrfect Love',
-              value: !newsletterOptOut,
-              field: 'newsletterOptOut',
-              setter: null, // handled separately (inverted logic)
-            },
-          ].map(({ label, hint, value, field, setter }) => (
-            <div key={field} className={styles.toggleRow} style={{ alignItems: 'flex-start', marginBottom: '0.75rem' }}>
-              <label className={styles.toggle} style={{ marginTop: '2px', flexShrink: 0 }}>
-                <input
-                  type="checkbox"
-                  checked={value}
-                  disabled={newsletterSaving}
-                  onChange={async (e) => {
-                    const checked = e.target.checked;
-                    if (field === 'newsletterOptOut') {
-                      const newOptOut = !checked;
-                      setNewsletterOptOut(newOptOut);
-                      setNewsletterSaving(true);
-                      try {
-                        await fetch('/api/care/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ newsletterOptOut: newOptOut }) });
-                      } catch { setNewsletterOptOut(!newOptOut); } finally { setNewsletterSaving(false); }
-                    } else {
-                      setter(checked);
-                      try {
-                        await fetch('/api/care/profile', { method: 'PATCH', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ [field]: checked }) });
-                      } catch { setter(!checked); }
-                    }
-                  }}
-                />
-                <span className={styles.toggleSlider} />
-              </label>
-              <div>
-                <span className={styles.toggleLabel}>{label}</span>
-                <p style={{ fontSize: '0.75rem', color: 'var(--text-light)', margin: '0.1rem 0 0', lineHeight: 1.4 }}>{hint}</p>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* GDPR data export + deletion */}
-        <div style={{ textAlign: 'center', marginTop: '2rem', paddingBottom: '0.5rem', display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '0.5rem' }}>
-          <a
-            href="/api/care/data-export"
-            download
-            style={{ fontSize: '0.8rem', color: 'var(--hunter-green)', cursor: 'pointer', padding: '0.25rem 0.5rem', textDecoration: 'underline' }}
-          >
-            Download my data (GDPR)
-          </a>
-          <button
-            type="button"
-            onClick={() => setShowDeletionModal(true)}
-            style={{ background: 'none', border: 'none', fontSize: '0.8rem', color: '#999', cursor: 'pointer', padding: '0.25rem 0.5rem' }}
-            onMouseEnter={(e) => { e.currentTarget.style.textDecoration = 'underline'; }}
-            onMouseLeave={(e) => { e.currentTarget.style.textDecoration = 'none'; }}
-          >
-            Request account deletion
-          </button>
-        </div>
-
-        {/* Deletion request modal */}
-        {showDeletionModal && (
-          <div
-            style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}
-            onClick={() => !deletionSubmitting && setShowDeletionModal(false)}
-          >
-            <div
-              style={{ background: '#fff', borderRadius: '12px', padding: '2rem', maxWidth: '420px', width: '90%', boxShadow: '0 8px 32px rgba(0,0,0,0.18)' }}
-              onClick={(e) => e.stopPropagation()}
-            >
-              {deletionDone ? (
-                <>
-                  <h2 style={{ fontWeight: 700, color: 'var(--hunter-green)', fontSize: '1.1rem', marginBottom: '0.75rem' }}>Request received</h2>
-                  <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.9rem', marginBottom: '1.5rem' }}>
-                    We've received your request and will delete your account within 48 hours.
-                  </p>
-                  <button
-                    type="button"
-                    onClick={() => setShowDeletionModal(false)}
-                    style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #ddd', background: 'transparent', color: 'var(--text-dark)', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
-                  >
-                    Close
-                  </button>
-                </>
-              ) : (
-                <>
-                  <h2 style={{ fontWeight: 700, color: 'var(--text-dark)', fontSize: '1.1rem', marginBottom: '0.5rem' }}>Request account deletion</h2>
-                  <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.875rem', marginBottom: '0.75rem' }}>
-                    Once submitted, your profile will be immediately locked — you won't be able to edit it, send messages, or appear in the marketplace. Your account will be permanently deleted within 48 hours.
-                  </p>
-                  <p style={{ color: 'var(--text-light)', lineHeight: 1.6, fontSize: '0.875rem', marginBottom: '1rem' }}>
-                    Please tell us why you're leaving.
-                  </p>
-                  <textarea
-                    rows={4}
-                    placeholder="Reason for leaving (min 20 characters)"
-                    value={deletionReason}
-                    onChange={(e) => setDeletionReason(e.target.value)}
-                    style={{ width: '100%', borderRadius: '8px', border: '1.5px solid #ddd', padding: '0.6rem 0.75rem', fontFamily: 'inherit', fontSize: '0.9rem', resize: 'vertical', boxSizing: 'border-box', marginBottom: '1rem' }}
-                  />
-                  {deletionReason.trim().length > 0 && deletionReason.trim().length < 20 && (
-                    <p style={{ fontSize: '0.75rem', color: '#dc2626', marginBottom: '0.75rem' }}>Please enter at least 20 characters.</p>
-                  )}
-                  <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end' }}>
-                    <button
-                      type="button"
-                      onClick={() => setShowDeletionModal(false)}
-                      disabled={deletionSubmitting}
-                      style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: '1.5px solid #ddd', background: 'transparent', color: 'var(--text-dark)', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 600, cursor: 'pointer' }}
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      type="button"
-                      disabled={deletionSubmitting || deletionReason.trim().length < 20}
-                      onClick={async () => {
-                        setDeletionSubmitting(true);
-                        try {
-                          const res = await fetch('/api/care/request-deletion', {
-                            method: 'POST',
-                            headers: { 'Content-Type': 'application/json' },
-                            body: JSON.stringify({ reason: deletionReason }),
-                          });
-                          if (res.ok) setDeletionDone(true);
-                        } catch { /* silent */ } finally { setDeletionSubmitting(false); }
-                      }}
-                      style={{ padding: '0.5rem 1rem', borderRadius: '8px', border: 'none', background: '#dc2626', color: '#fff', fontFamily: 'inherit', fontSize: '0.9rem', fontWeight: 600, cursor: (deletionSubmitting || deletionReason.trim().length < 20) ? 'not-allowed' : 'pointer', opacity: (deletionSubmitting || deletionReason.trim().length < 20) ? 0.6 : 1 }}
-                    >
-                      {deletionSubmitting ? 'Submitting…' : 'Submit request'}
-                    </button>
-                  </div>
-                </>
-              )}
-            </div>
-          </div>
-        )}
       </div>
     );
   }

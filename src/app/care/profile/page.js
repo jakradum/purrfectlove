@@ -28,7 +28,7 @@ export default async function ProfilePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ ..., "photoUrl": photo.asset->url }`,
+      `*[_type == "catSitter" && _id == $id][0]{ ..., "photoUrl": photo.asset->url, "coverImageUrl": coverImage.asset->url }`,
       { id: payload.sitterId }
     );
   } catch (err) {

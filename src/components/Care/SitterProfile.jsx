@@ -54,13 +54,7 @@ function AvailabilityStrip({ markedDates = [], availabilityDefault = 'available'
         return (
           <div key={ymd} className={styles.availDayCol}>
             <span className={styles.availDayInitial}>{DAY_INITIALS[date.getDay()]}</span>
-            <div
-              className={styles.availDaySquare}
-              style={{
-                background: isAvailable ? '#EAF3DE' : '#f3f4f6',
-                position: 'relative',
-              }}
-            >
+            <div className={styles.availDaySquare} style={{ background: isAvailable ? '#EAF3DE' : '#f3f4f6' }}>
               <span
                 className={styles.availDayNum}
                 style={{
@@ -78,7 +72,23 @@ function AvailabilityStrip({ markedDates = [], availabilityDefault = 'available'
   );
 }
 
-export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks = [] }) {
+/**
+ * Props:
+ *   sitter          – catSitter data object
+ *   isOwnProfile    – boolean: show edit controls, hide report/message/feedbacks
+ *   onEdit          – callback: "Edit profile" button. If absent + isOwnProfile, links to /care/profile
+ *   onAvatarClick   – callback: clicking avatar triggers photo upload
+ *   photoUploading  – boolean: shows uploading state on avatar
+ *   feedbacks       – array of feedback objects (ignored when isOwnProfile)
+ */
+export default function SitterProfile({
+  sitter,
+  isOwnProfile = false,
+  onEdit,
+  onAvatarClick,
+  photoUploading = false,
+  feedbacks = [],
+}) {
   const {
     _id, _createdAt, name, username, location, bio,
     email, phone, hideEmail, hideWhatsApp,
@@ -95,7 +105,7 @@ export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks 
     ? new Date(_createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     : null;
 
-  const metaParts = [location?.name, memberSince ? `Member since ${memberSince}` : null].filter(Boolean);
+  const metaParts = [location?.name || location?.displayName, memberSince ? `Member since ${memberSince}` : null].filter(Boolean);
 
   const showEmail = !hideEmail && !!email;
   const showPhone = !hideWhatsApp && !!phone;
@@ -104,6 +114,7 @@ export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks 
   const idx = coverIndex(_id || '');
   const coverSrc = coverImageUrl || COVERS[idx];
   const coverBg = COVER_FALLBACKS[idx];
+  const isCoverPattern = !coverImageUrl;
 
   const [showReport, setShowReport] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
@@ -119,9 +130,7 @@ export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks 
       fd.append('cover', file);
       const res = await fetch('/api/care/upload-cover', { method: 'POST', body: fd });
       const data = await res.json();
-      if (res.ok && data.coverImageUrl) {
-        setLocalCoverUrl(data.coverImageUrl);
-      }
+      if (res.ok && data.coverImageUrl) setLocalCoverUrl(data.coverImageUrl);
     } finally {
       setCoverUploading(false);
       e.target.value = '';
@@ -129,20 +138,18 @@ export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks 
   }, []);
 
   const activeCoverSrc = localCoverUrl || coverSrc;
-  const isCoverPattern = !localCoverUrl && !coverImageUrl;
-
   const capabilities = [...new Set([...(feedingTypes || []), ...(behavioralTraits || [])])];
 
   return (
     <div className={styles.sitterProfilePage}>
-      <Link href="/care" className={styles.backLink}>← Back to network</Link>
+      {!isOwnProfile && <Link href="/care" className={styles.backLink}>← Back to network</Link>}
 
       {/* Profile header card */}
       <div className={styles.sitterProfileHeader}>
         {/* Cover */}
         <div
           className={styles.sitterProfileCover}
-          style={isCoverPattern
+          style={isCoverPattern && !localCoverUrl
             ? { backgroundImage: `url(${activeCoverSrc})`, backgroundColor: coverBg }
             : { backgroundImage: `url(${activeCoverSrc})`, backgroundSize: 'cover', backgroundPosition: 'center' }
           }
@@ -166,35 +173,81 @@ export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks 
               />
             </>
           )}
+
+          {/* Avatar */}
           <div className={styles.sitterProfileAvatarWrap}>
-            <CatAvatar
-              photoUrl={photoUrl}
-              avatarColour={avatarColour}
-              name={displayName}
-              size={64}
-              style={{ border: '3px solid #fff' }}
-            />
+            {isOwnProfile && onAvatarClick ? (
+              <button
+                type="button"
+                onClick={onAvatarClick}
+                className={styles.avatarUploadBtn}
+                title={photoUploading ? 'Uploading…' : 'Change photo'}
+                disabled={photoUploading}
+              >
+                <CatAvatar
+                  photoUrl={photoUrl}
+                  avatarColour={avatarColour}
+                  name={displayName}
+                  size={64}
+                  style={{ border: '3px solid #fff', opacity: photoUploading ? 0.6 : 1 }}
+                />
+                <span className={styles.avatarUploadOverlay}>
+                  {photoUploading ? '…' : (
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <path d="M23 19a2 2 0 0 1-2 2H3a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h4l2-3h6l2 3h4a2 2 0 0 1 2 2z"/>
+                      <circle cx="12" cy="13" r="4"/>
+                    </svg>
+                  )}
+                </span>
+              </button>
+            ) : (
+              <CatAvatar
+                photoUrl={photoUrl}
+                avatarColour={avatarColour}
+                name={displayName}
+                size={64}
+                style={{ border: '3px solid #fff' }}
+              />
+            )}
           </div>
         </div>
 
         {/* Header body */}
         <div className={styles.sitterProfileHeaderBody}>
-          <div className={styles.sitterProfileUsername}>{displayName}</div>
+          <div className={styles.sitterProfileUsername}>
+            {displayName}
+            {isOwnProfile && <span className={styles.sitterProfileYouTag}> — you</span>}
+          </div>
           {realName && <div className={styles.sitterProfileRealName}>{realName}</div>}
           {metaParts.length > 0 && (
             <div className={styles.sitterProfileMeta}>{metaParts.join(' · ')}</div>
           )}
-          <div className={styles.sitterProfileBadges}>
-            {identityVerified && (
-              <span className={`${styles.sitterBadge} ${styles.sitterBadgeGreen}`}>Identity verified</span>
-            )}
-            {trustedSitter && (
-              <span className={`${styles.sitterBadge} ${styles.sitterBadgeBlue}`}>Trusted sitter</span>
-            )}
-          </div>
-          <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
-            Send a message
-          </Link>
+          {(identityVerified || trustedSitter) && (
+            <div className={styles.sitterProfileBadges}>
+              {identityVerified && (
+                <span className={`${styles.sitterBadge} ${styles.sitterBadgeGreen}`}>Identity verified</span>
+              )}
+              {trustedSitter && (
+                <span className={`${styles.sitterBadge} ${styles.sitterBadgeBlue}`}>Trusted sitter</span>
+              )}
+            </div>
+          )}
+
+          {isOwnProfile ? (
+            onEdit ? (
+              <button type="button" onClick={onEdit} className={styles.sitterEditBtn}>
+                Edit profile
+              </button>
+            ) : (
+              <Link href="/care/profile" className={styles.sitterEditBtn}>
+                Edit profile
+              </Link>
+            )
+          ) : (
+            <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
+              Send a message
+            </Link>
+          )}
         </div>
       </div>
 
@@ -235,7 +288,7 @@ export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks 
         />
       </div>
 
-      {/* Sitting capabilities */}
+      {/* Capabilities */}
       {capabilities.length > 0 && (
         <div className={styles.sitterSection}>
           <div className={styles.sitterSectionTitle}>Sitting capabilities</div>
@@ -254,8 +307,8 @@ export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks 
         <div className={styles.sitterSection}>
           <div className={styles.sitterSectionTitle}>My cats</div>
           <div className={styles.catProfileGrid}>
-            {cats.map((cat, idx) => (
-              <div key={idx} className={styles.catProfileCard}>
+            {cats.map((cat, i) => (
+              <div key={i} className={styles.catProfileCard}>
                 <div className={styles.catProfileName}>{cat.name || 'Unnamed'}</div>
                 {(cat.gender || cat.age || cat.indoor !== undefined || cat.neutered !== undefined) && (
                   <div className={styles.catProfileMeta}>
@@ -273,56 +326,60 @@ export default function SitterProfile({ sitter, isOwnProfile = false, feedbacks 
         </div>
       )}
 
-      {/* Contact */}
-      <div className={styles.sitterSection}>
-        <div className={styles.sitterSectionTitle}>Contact</div>
-        {inboxOnly ? (
-          <p className={styles.inboxOnly}>
-            This member prefers to be contacted via the community inbox only.
-          </p>
-        ) : (
-          <>
-            {showEmail && (
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>Email</span>
-                <a href={`mailto:${email}`} className={`${styles.infoVal} ${styles.infoValLink}`}>{email}</a>
-              </div>
-            )}
-            {showPhone && (
-              <div className={styles.infoRow}>
-                <span className={styles.infoLabel}>WhatsApp</span>
-                <a
-                  href={`https://wa.me/${phone.replace(/\D/g, '')}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className={`${styles.infoVal} ${styles.infoValLink}`}
-                >
-                  {phone}
-                </a>
-              </div>
-            )}
-          </>
-        )}
-        <div style={{ marginTop: '1rem' }}>
-          <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
-            Send a message
-          </Link>
+      {/* Contact — public view only */}
+      {!isOwnProfile && (
+        <div className={styles.sitterSection}>
+          <div className={styles.sitterSectionTitle}>Contact</div>
+          {inboxOnly ? (
+            <p className={styles.inboxOnly}>
+              This member prefers to be contacted via the community inbox only.
+            </p>
+          ) : (
+            <>
+              {showEmail && (
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>Email</span>
+                  <a href={`mailto:${email}`} className={`${styles.infoVal} ${styles.infoValLink}`}>{email}</a>
+                </div>
+              )}
+              {showPhone && (
+                <div className={styles.infoRow}>
+                  <span className={styles.infoLabel}>WhatsApp</span>
+                  <a
+                    href={`https://wa.me/${phone.replace(/\D/g, '')}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className={`${styles.infoVal} ${styles.infoValLink}`}
+                  >
+                    {phone}
+                  </a>
+                </div>
+              )}
+            </>
+          )}
+          <div style={{ marginTop: '1rem' }}>
+            <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
+              Send a message
+            </Link>
+          </div>
         </div>
-      </div>
+      )}
 
-      {/* Feedback */}
-      {feedbacks.length > 0 && (
+      {/* Feedbacks — public view only */}
+      {!isOwnProfile && feedbacks.length > 0 && (
         <FeedbackDisplay feedbacks={feedbacks} locale="en" />
       )}
 
-      {/* Report */}
-      <button
-        type="button"
-        className={styles.reportLink}
-        onClick={() => setShowReport(true)}
-      >
-        Report this member
-      </button>
+      {/* Report — public view only */}
+      {!isOwnProfile && (
+        <button
+          type="button"
+          className={styles.reportLink}
+          onClick={() => setShowReport(true)}
+        >
+          Report this member
+        </button>
+      )}
 
       {showReport && (
         <ReportModal
