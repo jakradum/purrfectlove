@@ -51,7 +51,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
 
   const t = locale === 'de'
     ? { network: 'Netzwerk', inbox: 'Nachrichten', profile: 'Profil', logout: 'Abmelden' }
-    : { network: 'Get Care', inbox: 'Inbox', profile: 'Profile', logout: 'Log out' };
+    : { network: 'Home', inbox: 'Inbox', profile: 'Profile', logout: 'Log out' };
 
   const links = [
     { path: '', icon: LayoutGrid, label: t.network, lockable: true },
@@ -63,6 +63,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
     <>
       {/* Desktop sidebar */}
       <aside className={styles.sidebar}>
+        <div className={styles.sidebarTitle}>Community</div>
         <nav className={styles.nav}>
           {links.map(({ path, icon: Icon, label, badge, lockable }) => {
             const disabled = deletionPending && lockable;

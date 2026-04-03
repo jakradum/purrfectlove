@@ -35,11 +35,22 @@
   z-index: -1;
 }
 
+.sidebarTitle {
+  padding: 1.25rem 1.5rem 0;
+  font-size: 0.7rem;
+  font-weight: 800;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--hunter-green);
+  opacity: 0.5;
+  font-family: var(--font-outfit);
+}
+
 .nav {
   display: flex;
   flex-direction: column;
   gap: 0.25rem;
-  padding: 48px 0.75rem 0;
+  padding: 0.5rem 0.75rem 0;
 }
 
 .link {
