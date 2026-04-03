@@ -2696,21 +2696,55 @@
   align-items: center;
   background: #ffffff;
   border-radius: 12px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
   padding: 0;
-  height: 56px;
+  height: 64px;
   overflow: visible;
   width: 100%;
   box-sizing: border-box;
+}
+
+@keyframes filterPulseBorder {
+  0%, 100% { box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1.5px #2C5F4F, 0 0 0 0 rgba(44,95,79,0.35); }
+  50% { box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1.5px #2C5F4F, 0 0 0 7px rgba(44,95,79,0); }
+}
+
+.filterBarPulse {
+  animation: filterPulseBorder 2s ease-in-out infinite;
+}
+
+.filterBarSeen {
+  box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
+}
+
+.filterHint {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 8px;
+  font-size: 0.78rem;
+  font-weight: 600;
+  color: #2C5F4F;
+  font-family: var(--font-outfit);
+}
+
+.filterHintArrow {
+  display: inline-block;
+  animation: filterHintBounce 1s ease-in-out infinite;
+}
+
+@keyframes filterHintBounce {
+  0%, 100% { transform: translateY(0); }
+  50% { transform: translateY(-3px); }
 }
 
 .filterSection {
   flex: 1;
   min-width: 0;
   display: flex;
-  flex-direction: column;
-  justify-content: center;
-  padding: 0 1.25rem;
+  flex-direction: row;
+  align-items: center;
+  gap: 10px;
+  padding: 0 1rem;
   height: 100%;
   background: none;
   border: none;
@@ -2730,10 +2764,27 @@
   cursor: default;
 }
 
+.filterIcon {
+  width: 32px;
+  height: 32px;
+  border-radius: 8px;
+  background: #EAF3DE;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.filterTextGroup {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+}
+
 .filterLabel {
   font-size: 0.65rem;
   font-weight: 700;
-  color: var(--text-dark);
+  color: #888;
   text-transform: uppercase;
   letter-spacing: 0.07em;
   font-family: var(--font-outfit);
@@ -2743,8 +2794,8 @@
 
 .filterValue {
   font-size: 0.85rem;
-  font-weight: 500;
-  color: var(--text-dark);
+  font-weight: 600;
+  color: #2C5F4F;
   font-family: var(--font-outfit);
   white-space: nowrap;
   overflow: hidden;
