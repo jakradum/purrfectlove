@@ -9,81 +9,90 @@ export const structure = (S) =>
   S.list()
     .title('Purrfect Love')
     .items([
-      // === CATS + APPLICATIONS ===
-      S.listItem()
-        .title('Cats + Applications')
-        .icon(() => '🐱')
-        .child(
-          S.list()
-            .title('Cats + Applications')
-            .items([
-              S.listItem()
-                .title('Cats')
-                .icon(() => '🐱')
-                .child(
-                  S.list()
-                    .title('Cats')
-                    .items([
-                      S.listItem()
-                        .title('Available Cats')
-                        .icon(() => '🐱')
-                        .child(
-                          S.documentTypeList('cat')
-                            .title('Available Cats')
-                            .filter('_type == "cat" && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0')
-                        ),
-                      S.listItem()
-                        .title('Adopted Cats')
-                        .icon(() => '💚')
-                        .child(
-                          S.documentTypeList('cat')
-                            .title('Adopted Cats')
-                            .filter('_type == "cat" && (adoptedOverride == true || count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0)')
-                        ),
-                      S.listItem()
-                        .title('All Cats')
-                        .icon(() => '📋')
-                        .child(S.documentTypeList('cat').title('All Cats')),
-                    ])
-                ),
-              S.listItem()
-                .title('Applications')
-                .icon(() => '📋')
-                .child(
-                  S.documentTypeList('application')
-                    .child((documentId) =>
-                      S.document()
-                        .documentId(documentId)
-                        .schemaType('application')
-                        .views([
-                          S.view.component(ApplicantInfoDisplay).title('Applicant Info'),
-                          S.view.form().title('Review & Status')
-                        ])
-                    )
-                ),
-              S.listItem()
-                .title('Success Stories')
-                .icon(() => '💚')
-                .child(S.documentTypeList('successStory')),
-            ])
-        ),
 
-      // === CORE SITE UPDATES ===
+      // ══════════════════════════════════════════
+      // PURRFECT LOVE WEBSITE
+      // ══════════════════════════════════════════
       S.listItem()
-        .title('Core Site Updates')
+        .title('Purrfect Love Website')
         .icon(() => '🌐')
         .child(
           S.list()
-            .title('Core Site Updates')
+            .title('Purrfect Love Website')
             .items([
+
+              // Cats + Applications
+              S.listItem()
+                .title('Cats + Applications')
+                .icon(() => '🐱')
+                .child(
+                  S.list()
+                    .title('Cats + Applications')
+                    .items([
+                      S.listItem()
+                        .title('Cats')
+                        .icon(() => '🐱')
+                        .child(
+                          S.list()
+                            .title('Cats')
+                            .items([
+                              S.listItem()
+                                .title('Available Cats')
+                                .icon(() => '🐱')
+                                .child(
+                                  S.documentTypeList('cat')
+                                    .title('Available Cats')
+                                    .filter('_type == "cat" && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0')
+                                ),
+                              S.listItem()
+                                .title('Adopted Cats')
+                                .icon(() => '💚')
+                                .child(
+                                  S.documentTypeList('cat')
+                                    .title('Adopted Cats')
+                                    .filter('_type == "cat" && (adoptedOverride == true || count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0)')
+                                ),
+                              S.listItem()
+                                .title('All Cats')
+                                .icon(() => '📋')
+                                .child(S.documentTypeList('cat').title('All Cats')),
+                            ])
+                        ),
+                      S.listItem()
+                        .title('Applications')
+                        .icon(() => '📋')
+                        .child(
+                          S.documentTypeList('application')
+                            .child((documentId) =>
+                              S.document()
+                                .documentId(documentId)
+                                .schemaType('application')
+                                .views([
+                                  S.view.component(ApplicantInfoDisplay).title('Applicant Info'),
+                                  S.view.form().title('Review & Status')
+                                ])
+                            )
+                        ),
+                      S.listItem()
+                        .title('Success Stories')
+                        .icon(() => '💚')
+                        .child(S.documentTypeList('successStory')),
+                    ])
+                ),
+
+              // Team Members
               S.listItem()
                 .title('Team Members')
                 .icon(() => '👥')
                 .child(S.documentTypeList('teamMember')),
+
+              // Blog Posts
               S.listItem()
                 .title('Blog Posts')
                 .icon(() => '✍️')
                 .child(S.documentTypeList('blogPost')),
+
+              // FAQs
               S.listItem()
                 .title('FAQs')
                 .icon(() => '❓')
@@ -117,184 +126,205 @@ export const structure = (S) =>
                         ),
                     ])
                 ),
+
+              // Process Steps
               S.listItem()
                 .title('Process Steps')
                 .icon(() => '📝')
                 .child(S.documentTypeList('processStep')),
+
+              // Contact Messages
+              S.listItem()
+                .title('Contact Messages')
+                .icon(() => '📬')
+                .child(
+                  S.documentTypeList('contactMessage')
+                    .title('Contact Messages')
+                    .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
+                    .child((documentId) =>
+                      S.document()
+                        .documentId(documentId)
+                        .schemaType('contactMessage')
+                        .views([
+                          S.view.component(ContactMessageDisplay).title('Message'),
+                          S.view.form().title('Status & Notes')
+                        ])
+                    )
+                ),
+
+              // Site Settings
+              S.listItem()
+                .title('Site Settings')
+                .icon(() => '⚙️')
+                .child(
+                  S.document()
+                    .schemaType('siteSettings')
+                    .documentId('siteSettings')
+                    .title('Site Settings')
+                ),
             ])
         ),
 
-      // === CONTACT MESSAGES ===
-      S.listItem()
-        .title('Contact Messages')
-        .icon(() => '📬')
-        .child(
-          S.documentTypeList('contactMessage')
-            .title('Contact Messages')
-            .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
-            .child((documentId) =>
-              S.document()
-                .documentId(documentId)
-                .schemaType('contactMessage')
-                .views([
-                  S.view.component(ContactMessageDisplay).title('Message'),
-                  S.view.form().title('Status & Notes')
-                ])
-            )
-        ),
+      S.divider(),
 
-      // === CAT SITTING PORTAL ===
+      // ══════════════════════════════════════════
+      // COMMUNITY PORTAL
+      // ══════════════════════════════════════════
       S.listItem()
-        .title('Cat Sitting Portal')
+        .title('Community Portal')
         .icon(() => '🏠')
         .child(
           S.list()
-            .title('Cat Sitting Portal')
+            .title('Community Portal')
             .items([
+
+              // Members
               S.listItem()
-                .title('All Members')
+                .title('Members')
                 .icon(() => '👤')
                 .child(
-                  S.documentTypeList('catSitter')
-                    .title('All Members')
-                    .defaultOrdering([{ field: 'name', direction: 'asc' }])
-                    .child((documentId) =>
-                      S.document()
-                        .documentId(documentId)
-                        .schemaType('catSitter')
-                        .views([
-                          S.view.form().title('Profile'),
-                          S.view.component(MemberMessageLog).title('Messages'),
-                        ])
-                    )
+                  S.list()
+                    .title('Members')
+                    .items([
+                      S.listItem()
+                        .title('All Members')
+                        .icon(() => '👤')
+                        .child(
+                          S.documentTypeList('catSitter')
+                            .title('All Members')
+                            .defaultOrdering([{ field: 'name', direction: 'asc' }])
+                            .child((documentId) =>
+                              S.document()
+                                .documentId(documentId)
+                                .schemaType('catSitter')
+                                .views([
+                                  S.view.form().title('Profile'),
+                                  S.view.component(MemberMessageLog).title('Messages'),
+                                ])
+                            )
+                        ),
+                      S.listItem()
+                        .title('Verified Members')
+                        .icon(() => '✅')
+                        .child(
+                          S.documentTypeList('catSitter')
+                            .title('Verified Members')
+                            .filter('_type == "catSitter" && memberVerified == true')
+                            .defaultOrdering([{ field: 'name', direction: 'asc' }])
+                            .child((documentId) =>
+                              S.document()
+                                .documentId(documentId)
+                                .schemaType('catSitter')
+                                .views([
+                                  S.view.form().title('Profile'),
+                                  S.view.component(MemberMessageLog).title('Messages'),
+                                ])
+                            )
+                        ),
+                      S.listItem()
+                        .title('Pending Verification')
+                        .icon(() => '⏳')
+                        .child(
+                          S.documentTypeList('catSitter')
+                            .title('Pending Verification')
+                            .filter('_type == "catSitter" && (memberVerified == false || !defined(memberVerified))')
+                            .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
+                            .child((documentId) =>
+                              S.document()
+                                .documentId(documentId)
+                                .schemaType('catSitter')
+                                .views([
+                                  S.view.form().title('Profile'),
+                                  S.view.component(MemberMessageLog).title('Messages'),
+                                ])
+                            )
+                        ),
+                      S.listItem()
+                        .title('Deletion Requested')
+                        .icon(() => '🔴')
+                        .child(
+                          S.documentTypeList('catSitter')
+                            .title('Deletion Requested')
+                            .filter('_type == "catSitter" && deletionRequested == true')
+                            .defaultOrdering([{ field: 'deletionRequestedAt', direction: 'desc' }])
+                            .child((documentId) =>
+                              S.document()
+                                .documentId(documentId)
+                                .schemaType('catSitter')
+                                .views([
+                                  S.view.form().title('Profile (read-only)'),
+                                  S.view.component(DeletionRequestedActions).title('Deletion Actions'),
+                                ])
+                            )
+                        ),
+                    ])
                 ),
-              S.listItem()
-                .title('Verified Members')
-                .icon(() => '✅')
-                .child(
-                  S.documentTypeList('catSitter')
-                    .title('Verified Members')
-                    .filter('_type == "catSitter" && memberVerified == true')
-                    .defaultOrdering([{ field: 'name', direction: 'asc' }])
-                    .child((documentId) =>
-                      S.document()
-                        .documentId(documentId)
-                        .schemaType('catSitter')
-                        .views([
-                          S.view.form().title('Profile'),
-                          S.view.component(MemberMessageLog).title('Messages'),
-                        ])
-                    )
-                ),
-              S.listItem()
-                .title('Pending Verification')
-                .icon(() => '⏳')
-                .child(
-                  S.documentTypeList('catSitter')
-                    .title('Pending Verification')
-                    .filter('_type == "catSitter" && (memberVerified == false || !defined(memberVerified))')
-                    .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
-                    .child((documentId) =>
-                      S.document()
-                        .documentId(documentId)
-                        .schemaType('catSitter')
-                        .views([
-                          S.view.form().title('Profile'),
-                          S.view.component(MemberMessageLog).title('Messages'),
-                        ])
-                    )
-                ),
-              S.listItem()
-                .title('Deletion Requested')
-                .icon(() => '🔴')
-                .child(
-                  S.documentTypeList('catSitter')
-                    .title('Deletion Requested')
-                    .filter('_type == "catSitter" && deletionRequested == true')
-                    .defaultOrdering([{ field: 'deletionRequestedAt', direction: 'desc' }])
-                    .child((documentId) =>
-                      S.document()
-                        .documentId(documentId)
-                        .schemaType('catSitter')
-                        .views([
-                          S.view.form().title('Profile (read-only)'),
-                          S.view.component(DeletionRequestedActions).title('Deletion Actions'),
-                        ])
-                    )
-                ),
-            ])
-        ),
 
-      // === MESSAGING ===
-      S.listItem()
-        .title('Messaging')
-        .icon(() => '💬')
-        .child(
-          S.list()
-            .title('Messaging')
-            .items([
+              // Community Join Requests
               S.listItem()
-                .title('Spam Reports')
+                .title('Community Join Requests')
+                .icon(() => '🐾')
+                .child(
+                  S.documentTypeList('membershipRequest')
+                    .title('Community Join Requests')
+                    .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
+                ),
+
+              // Messaging
+              S.listItem()
+                .title('Messaging')
+                .icon(() => '💬')
+                .child(
+                  S.list()
+                    .title('Messaging')
+                    .items([
+                      S.listItem()
+                        .title('Spam Reports')
+                        .icon(() => '🚩')
+                        .child(
+                          S.documentTypeList('message')
+                            .title('Spam Reports')
+                            .filter('_type == "message" && markedAsSpam == true')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Blocked Users')
+                        .icon(() => '🚫')
+                        .child(
+                          S.documentTypeList('blockedUser')
+                            .title('Blocked Users')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Contact Shares')
+                        .icon(() => '📇')
+                        .child(
+                          S.documentTypeList('contactShare')
+                            .title('Contact Shares')
+                            .defaultOrdering([{ field: 'sharedAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Feedback')
+                        .icon(() => '⭐')
+                        .child(
+                          S.documentTypeList('sittingFeedback')
+                            .title('Feedback')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                    ])
+                ),
+
+              // Member Reports
+              S.listItem()
+                .title('Member Reports')
                 .icon(() => '🚩')
                 .child(
-                  S.documentTypeList('message')
-                    .title('Spam Reports')
-                    .filter('_type == "message" && markedAsSpam == true')
-                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                  S.documentTypeList('memberReport')
+                    .title('Member Reports')
+                    .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
                 ),
-              S.listItem()
-                .title('Blocked Users')
-                .icon(() => '🚫')
-                .child(
-                  S.documentTypeList('blockedUser')
-                    .title('Blocked Users')
-                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
-                ),
-              S.listItem()
-                .title('Contact Shares')
-                .icon(() => '📇')
-                .child(
-                  S.documentTypeList('contactShare')
-                    .title('Contact Shares')
-                    .defaultOrdering([{ field: 'sharedAt', direction: 'desc' }])
-                ),
-              S.listItem()
-                .title('Feedback')
-                .icon(() => '⭐')
-                .child(
-                  S.documentTypeList('sittingFeedback')
-                    .title('Feedback')
-                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
-                ),
-            ])
-        ),
 
-      // === MEMBER REPORTS ===
-      S.listItem()
-        .title('Member Reports')
-        .icon(() => '🚩')
-        .child(
-          S.documentTypeList('memberReport')
-            .title('Member Reports')
-            .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
-        ),
-
-      // === ANALYTICS & BROADCAST ===
-      S.listItem()
-        .title('Analytics & Broadcast')
-        .icon(() => '📊')
-        .child(
-          S.list()
-            .title('Analytics & Broadcast')
-            .items([
-              S.listItem()
-                .title('Community Metrics')
-                .icon(() => '📊')
-                .child(
-                  S.component(CommunityMetrics)
-                    .title('Community Metrics')
-                    .id('community-metrics')
-                ),
+              // Broadcast Messages
               S.listItem()
                 .title('Broadcast Messages')
                 .icon(() => '📢')
@@ -312,27 +342,26 @@ export const structure = (S) =>
                         ])
                     )
                 ),
+
+              // Community Metrics
+              S.listItem()
+                .title('Community Metrics')
+                .icon(() => '📊')
+                .child(
+                  S.component(CommunityMetrics)
+                    .title('Community Metrics')
+                    .id('community-metrics')
+                ),
+
+              // Deleted Accounts
+              S.listItem()
+                .title('Deleted Accounts')
+                .icon(() => '🗑️')
+                .child(
+                  S.documentTypeList('deletedAccount')
+                    .title('Deleted Accounts')
+                    .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
+                ),
             ])
-        ),
-
-      // === CARE — MEMBERSHIP REQUESTS ===
-      S.listItem()
-        .title('Care — Membership Requests')
-        .icon(() => '🐾')
-        .child(
-          S.documentTypeList('membershipRequest')
-            .title('Membership Requests')
-            .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
-        ),
-
-      // === SITE SETTINGS ===
-      S.listItem()
-        .title('Site Settings')
-        .icon(() => '⚙️')
-        .child(
-          S.document()
-            .schemaType('siteSettings')
-            .documentId('siteSettings')
-            .title('Site Settings')
         ),
     ])

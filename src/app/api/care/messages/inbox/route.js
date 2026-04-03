@@ -70,6 +70,7 @@ export async function GET(request) {
         threadsMap.set(partnerId, {
           partnerId,
           partnerName: partnerName || 'Unknown',
+          partnerUsername: partner.username || null,
           isAdminThread: !!partner.siteAdmin,
           isBroadcastThread: !!msg.broadcast,
           messages: [],

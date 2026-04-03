@@ -4,6 +4,7 @@ export default {
   type: 'document',
   fields: [
     // Team-set fields
+    { name: 'name', title: 'Display Name', type: 'string' },
     { name: 'email', title: 'Email', type: 'string', readOnly: true, description: 'Set by member via profile — do not edit manually. Required for members to log in via email.', validation: Rule => Rule.email() },
     { name: 'phone', title: 'Phone (used for login)', type: 'string', description: 'Optional. Format: +91XXXXXXXXXX or +49XXXXXXXXXX. Spaces are ignored automatically. Used for SMS OTP login.' },
     { name: 'memberVerified', title: 'Member Verified', type: 'boolean', initialValue: false },
@@ -30,7 +31,6 @@ export default {
     { name: 'locale', title: 'Locale', type: 'string', options: { list: [{ title: 'English (India)', value: 'en' }, { title: 'German (Germany)', value: 'de' }] }, initialValue: 'en' },
 
     // Member-set fields (read-only in Studio — members edit via portal)
-    { name: 'name', title: 'Display Name', type: 'string', readOnly: true },
     {
       name: 'location',
       title: 'Location',

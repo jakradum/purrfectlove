@@ -279,7 +279,11 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
               }}
             >
               <div className={styles.threadName}>
-                {thread.isBroadcastThread ? 'Purrfect Love' : thread.partnerName}
+                {thread.isBroadcastThread ? 'Purrfect Love' : (
+                  <Link href={`/care/${thread.partnerId}`} onClick={e => e.stopPropagation()} style={{ color: 'inherit', textDecoration: 'none' }}>
+                    {thread.partnerName}
+                  </Link>
+                )}
                 {thread.isAdminThread && <span className={styles.adminTag}>Admin</span>}
               </div>
               <div className={styles.threadPreview}>
@@ -314,7 +318,13 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
                 >
                   ← Back
                 </button>
-                <span className={styles.threadHeaderName}>{activePartnerName}</span>
+                {activeThread && !activeThread.isBroadcastThread ? (
+                  <Link href={`/care/${activeThread.partnerId}`} style={{ color: 'inherit', textDecoration: 'none' }} className={styles.threadHeaderName}>
+                    {activePartnerName}
+                  </Link>
+                ) : (
+                  <span className={styles.threadHeaderName}>{activePartnerName}</span>
+                )}
                 {!activeThread?.isAdminThread && (
                   <div className={styles.threadHeaderActions}>
                     <button

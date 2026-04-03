@@ -1,6 +1,6 @@
 export default {
   name: 'membershipRequest',
-  title: 'Membership Request',
+  title: 'Community Join Request',
   type: 'document',
   fields: [
     { name: 'name', title: 'Name', type: 'string', validation: Rule => Rule.required() },
