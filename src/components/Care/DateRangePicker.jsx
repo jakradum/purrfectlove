@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styles from './Care.module.css';
 
 const DOW = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -41,6 +41,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, onClear,
   const [viewMonth, setViewMonth] = useState(defaultMonth);
   // 'start' = picking start, 'end' = picking end
   const [picking, setPicking] = useState(startDate ? 'end' : 'start');
+  const lastClickedRef = useRef(null);
 
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
@@ -49,8 +50,20 @@ export default function DateRangePicker({ startDate, endDate, onChange, onClear,
   const firstDow = new Date(year, month, 1).getDay();
   const daysInMonth = new Date(year, month + 1, 0).getDate();
 
-  const handleDayClick = (ymd) => {
+  const handleDayClick = (ymd, e) => {
     if (ymd < todayYMD) return; // block past dates
+
+    // Shift+click: treat last clicked date as start, current as end (or vice versa)
+    if (e?.shiftKey && lastClickedRef.current && lastClickedRef.current !== ymd) {
+      const [a, b] = lastClickedRef.current < ymd
+        ? [lastClickedRef.current, ymd]
+        : [ymd, lastClickedRef.current];
+      onChange({ startDate: a, endDate: b });
+      setPicking('start');
+      return;
+    }
+
+    lastClickedRef.current = ymd;
 
     if (picking === 'start' || !startDate) {
       onChange({ startDate: ymd, endDate: '' });
@@ -156,7 +169,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, onClear,
               type="button"
               className={outerCls}
               disabled={isPast}
-              onClick={() => handleDayClick(ymd)}
+              onClick={(e) => handleDayClick(ymd, e)}
               aria-label={ymd}
             >
               <span className={innerCls}>{dayNum}</span>

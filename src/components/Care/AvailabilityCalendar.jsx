@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useRef } from 'react';
 import styles from './Care.module.css';
 
 const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
@@ -52,6 +52,7 @@ export default function AvailabilityCalendar({
     : new Date(today.getFullYear(), today.getMonth(), 1);
 
   const [viewMonth, setViewMonth] = useState(defaultMonth);
+  const lastClickedRef = useRef(null);
 
   const year = viewMonth.getFullYear();
   const month = viewMonth.getMonth();
@@ -64,8 +65,40 @@ export default function AvailabilityCalendar({
   const handlePrev = () => setViewMonth(new Date(year, month - 1, 1));
   const handleNext = () => setViewMonth(new Date(year, month + 1, 1));
 
-  const handleDayClick = (ymd, isPast) => {
+  const handleDayClick = (ymd, isPast, e) => {
     if (readOnly || isPast || !onChange) return;
+
+    if (e?.shiftKey && lastClickedRef.current && lastClickedRef.current !== ymd) {
+      // Determine the toggle state from the first clicked date
+      const anchorMarked = dates.includes(lastClickedRef.current);
+      const [a, b] = lastClickedRef.current < ymd
+        ? [lastClickedRef.current, ymd]
+        : [ymd, lastClickedRef.current];
+
+      // Build the range of non-past dates between a and b inclusive
+      const range = [];
+      const [ay, am, ad] = a.split('-').map(Number);
+      const [by, bm, bd] = b.split('-').map(Number);
+      const end = new Date(by, bm - 1, bd);
+      for (let d = new Date(ay, am - 1, ad); d <= end; d.setDate(d.getDate() + 1)) {
+        const dYmd = toYMD(d);
+        if (dYmd >= toYMD(today)) range.push(dYmd);
+      }
+
+      // Apply: if anchor was marked → unmark all in range; if anchor was unmarked → mark all
+      let next = [...dates];
+      if (anchorMarked) {
+        next = next.filter(d => !range.includes(d));
+      } else {
+        for (const d of range) {
+          if (!next.includes(d)) next.push(d);
+        }
+      }
+      onChange(next);
+      return;
+    }
+
+    lastClickedRef.current = ymd;
     const isMarked = dates.includes(ymd);
     onChange(isMarked ? dates.filter(d => d !== ymd) : [...dates, ymd]);
   };
@@ -149,7 +182,7 @@ export default function AvailabilityCalendar({
               key={ymd}
               type="button"
               className={cellClass}
-              onClick={() => handleDayClick(ymd, isPast)}
+              onClick={(e) => handleDayClick(ymd, isPast, e)}
               disabled={readOnly || isPast}
               aria-label={`${ymd}${avail ? ' (available)' : ' (unavailable)'}`}
               aria-pressed={!readOnly ? !avail : undefined}
