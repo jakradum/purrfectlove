@@ -51,7 +51,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
 
   const t = locale === 'de'
     ? { network: 'Startseite', inbox: 'Nachrichten', profile: 'Profil', logout: 'Abmelden' }
-    : { network: 'Get Care', inbox: 'Inbox', profile: 'Profile', logout: 'Log out' };
+    : { network: 'Home', inbox: 'Inbox', profile: 'Profile', logout: 'Log out' };
 
   const links = [
     { path: '', icon: House, label: t.network, lockable: true },
