@@ -15,7 +15,6 @@ export default {
       options: { list: ['pending', 'approved', 'rejected'] },
       initialValue: 'pending',
     },
-    { name: 'approvedAt', title: 'Approved At', type: 'datetime', readOnly: true },
   ],
   preview: {
     select: { title: 'name', subtitle: 'status', date: 'submittedAt' },

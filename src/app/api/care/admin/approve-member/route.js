@@ -59,8 +59,8 @@ export async function POST(request) {
     // 3. Mark welcomeSent on the catSitter doc
     await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
 
-    // 4. Mark join request as approved
-    await serverClient.patch(requestId).set({ status: 'approved', approvedAt: now }).commit()
+    // 4. Delete the join request — member now lives in catSitter
+    await serverClient.delete(requestId)
 
     return Response.json({
       success: true,
