@@ -4,6 +4,7 @@ import {MemberMessageLog} from './components/MemberMessageLog'
 import {DeletionRequestedActions} from './components/DeletionRequestedActions'
 import {CommunityMetrics} from './components/CommunityMetrics'
 import {BroadcastSender} from './components/BroadcastSender'
+import {ApproveJoinRequest} from './components/ApproveJoinRequest'
 
 export const structure = (S) =>
   S.list()
@@ -265,9 +266,46 @@ export const structure = (S) =>
                 .title('Community Join Requests')
                 .icon(() => '🐾')
                 .child(
-                  S.documentTypeList('membershipRequest')
+                  S.list()
                     .title('Community Join Requests')
-                    .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
+                    .items([
+                      S.listItem()
+                        .title('Pending')
+                        .icon(() => '⏳')
+                        .child(
+                          S.documentTypeList('membershipRequest')
+                            .title('Pending Requests')
+                            .filter('_type == "membershipRequest" && (status == "pending" || !defined(status))')
+                            .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
+                            .child((documentId) =>
+                              S.document()
+                                .documentId(documentId)
+                                .schemaType('membershipRequest')
+                                .views([
+                                  S.view.form().title('Details'),
+                                  S.view.component(ApproveJoinRequest).title('Approve'),
+                                ])
+                            )
+                        ),
+                      S.listItem()
+                        .title('Approved')
+                        .icon(() => '✅')
+                        .child(
+                          S.documentTypeList('membershipRequest')
+                            .title('Approved Requests')
+                            .filter('_type == "membershipRequest" && status == "approved"')
+                            .defaultOrdering([{ field: 'approvedAt', direction: 'desc' }])
+                            .child((documentId) =>
+                              S.document()
+                                .documentId(documentId)
+                                .schemaType('membershipRequest')
+                                .views([
+                                  S.view.form().title('Details'),
+                                  S.view.component(ApproveJoinRequest).title('Approve'),
+                                ])
+                            )
+                        ),
+                    ])
                 ),
 
               // Messaging
