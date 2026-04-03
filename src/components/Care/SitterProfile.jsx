@@ -101,7 +101,6 @@ export default function SitterProfile({
   } = sitter;
 
   const displayName = username || name || 'Member';
-  const realName = username && name ? name : null;
 
   const memberSince = _createdAt
     ? new Date(_createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
@@ -221,7 +220,7 @@ export default function SitterProfile({
             {displayName}
             {isOwnProfile && <span className={styles.sitterProfileYouTag}> — you</span>}
           </div>
-          {realName && <div className={styles.sitterProfileRealName}>{realName}</div>}
+
           {metaParts.length > 0 && (
             <div className={styles.sitterProfileMeta}>{metaParts.join(' · ')}</div>
           )}
