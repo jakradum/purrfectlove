@@ -50,12 +50,12 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
   };
 
   const t = locale === 'de'
-    ? { network: 'Netzwerk', inbox: 'Nachrichten', profile: 'Profil', logout: 'Abmelden' }
-    : { network: 'Home', inbox: 'Inbox', profile: 'Profile', logout: 'Log out' };
+    ? { network: 'Startseite', inbox: 'Nachrichten', profile: 'Profil', logout: 'Abmelden' }
+    : { network: 'Get Care', inbox: 'Inbox', profile: 'Profile', logout: 'Log out' };
 
   const links = [
     { path: '', icon: House, label: t.network, lockable: true },
-    { path: '/inbox', icon: MessageSquare, label: t.inbox, badge: unreadCount, lockable: true },
+    { path: '/inbox', icon: MessageSquare, label: t.inbox, badge: true, lockable: true },
     { path: '/profile', icon: User, label: t.profile },
   ];
 
@@ -63,12 +63,17 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
     <>
       {/* Desktop sidebar */}
       <aside className={styles.sidebar}>
-        <div className={styles.sidebarTop}>
-        <div className={styles.sidebarTitle}>Community</div>
+        <div className={styles.sidebarLogo}>
+          <div className={styles.sidebarLogoText}>Purrfect Love</div>
+          <div className={styles.sidebarLogoSub}>Community Portal</div>
+        </div>
+
         <nav className={styles.nav}>
           {links.map(({ path, icon: Icon, label, badge, lockable }) => {
             const disabled = deletionPending && lockable;
             const active = isActive(path);
+            const showBadge = badge && unreadCount > 0;
+
             if (disabled) {
               return (
                 <span
@@ -76,9 +81,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
                   className={`${styles.link} ${styles.linkDisabled}`}
                   title="Your account is pending deletion"
                 >
-                  <span className={styles.iconWrap}>
-                    <Icon size={20} strokeWidth={1.75} />
-                  </span>
+                  <Icon size={16} strokeWidth={1.75} />
                   <span className={styles.label}>{label}</span>
                 </span>
               );
@@ -90,17 +93,20 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
                 className={`${styles.link} ${active ? styles.linkActive : ''}`}
               >
                 <span className={styles.iconWrap}>
-                  <Icon size={20} strokeWidth={1.75} />
-                  {badge > 0 && <span className={styles.badge} />}
+                  <Icon size={16} strokeWidth={1.75} />
+                  {showBadge && <span className={styles.badge} />}
                 </span>
                 <span className={styles.label}>{label}</span>
+                {showBadge && <span className={styles.navBadge}>{unreadCount > 9 ? '9+' : unreadCount}</span>}
               </Link>
             );
           })}
         </nav>
-        </div>
+
+        <div className={styles.spacer} />
+        <div className={styles.divider} />
         <button onClick={handleLogout} className={styles.logoutBtn}>
-          <LogOut size={20} strokeWidth={1.75} />
+          <LogOut size={14} strokeWidth={1.75} />
           <span className={styles.label}>{t.logout}</span>
         </button>
       </aside>
@@ -110,6 +116,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
         {links.map(({ path, icon: Icon, label, badge, lockable }) => {
           const disabled = deletionPending && lockable;
           const active = isActive(path);
+          const showBadge = badge && unreadCount > 0;
           if (disabled) {
             return (
               <span
@@ -130,7 +137,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
             >
               <span className={styles.iconWrap}>
                 <Icon size={22} strokeWidth={1.75} />
-                {badge > 0 && <span className={styles.badge} />}
+                {showBadge && <span className={styles.badge} />}
               </span>
               <span className={styles.bottomLabel}>{label}</span>
             </Link>
