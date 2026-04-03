@@ -182,6 +182,7 @@ export default function AvailabilityCalendar({
               key={ymd}
               type="button"
               className={cellClass}
+              onMouseDown={(e) => { if (e.shiftKey) e.preventDefault(); }}
               onClick={(e) => handleDayClick(ymd, isPast, e)}
               disabled={readOnly || isPast}
               aria-label={`${ymd}${avail ? ' (available)' : ' (unavailable)'}`}

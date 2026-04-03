@@ -169,6 +169,7 @@ export default function DateRangePicker({ startDate, endDate, onChange, onClear,
               type="button"
               className={outerCls}
               disabled={isPast}
+              onMouseDown={(e) => { if (e.shiftKey) e.preventDefault(); }}
               onClick={(e) => handleDayClick(ymd, e)}
               aria-label={ymd}
             >
