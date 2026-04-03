@@ -35,6 +35,11 @@
   z-index: -1;
 }
 
+.sidebarTop {
+  display: flex;
+  flex-direction: column;
+}
+
 .sidebarTitle {
   padding: 52px 1.5rem 0.5rem;
   font-size: 0.7rem;

@@ -3,7 +3,7 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { LayoutGrid, MessageSquare, User, LogOut } from 'lucide-react';
+import { House, MessageSquare, User, LogOut } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({ locale = 'en', basePath = '' }) {
@@ -54,7 +54,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
     : { network: 'Home', inbox: 'Inbox', profile: 'Profile', logout: 'Log out' };
 
   const links = [
-    { path: '', icon: LayoutGrid, label: t.network, lockable: true },
+    { path: '', icon: House, label: t.network, lockable: true },
     { path: '/inbox', icon: MessageSquare, label: t.inbox, badge: unreadCount, lockable: true },
     { path: '/profile', icon: User, label: t.profile },
   ];
@@ -63,6 +63,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
     <>
       {/* Desktop sidebar */}
       <aside className={styles.sidebar}>
+        <div className={styles.sidebarTop}>
         <div className={styles.sidebarTitle}>Community</div>
         <nav className={styles.nav}>
           {links.map(({ path, icon: Icon, label, badge, lockable }) => {
@@ -97,6 +98,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
             );
           })}
         </nav>
+        </div>
         <button onClick={handleLogout} className={styles.logoutBtn}>
           <LogOut size={20} strokeWidth={1.75} />
           <span className={styles.label}>{t.logout}</span>
