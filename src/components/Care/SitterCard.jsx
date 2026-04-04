@@ -267,7 +267,7 @@ export default function SitterCard({
         <div className={styles.cardDivider} />
 
         {/* Primary CTA */}
-        {hasDates && bookingState?.status === 'accepted' ? (
+        {hasDates && (bookingState?.status === 'confirmed' || bookingState?.status === 'accepted') ? (
           <div className={styles.cardBookConfirmed}>
             <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
               <circle cx="6.5" cy="6.5" r="6.5" fill="#2C5F4F"/>

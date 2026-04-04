@@ -2,7 +2,7 @@
 .sidebar {
   width: 200px;
   flex-shrink: 0;
-  background: #fff;
+  background: var(--whisker-cream);
   border-right: 0.5px solid #eee;
   display: flex;
   flex-direction: column;
@@ -21,11 +21,22 @@
   margin-top: 52px;
 }
 
+.sidebarLogoBlob {
+  width: 96px;
+  height: 88px;
+  background: transparent;
+  border: 1.5px solid var(--hunter-green);
+  border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  margin-bottom: 8px;
+}
+
 .sidebarLogoSvg {
-  width: 81px;
+  width: 62px;
   height: auto;
   display: block;
-  margin-bottom: 8px;
 }
 
 .sidebarLogoText {
@@ -63,7 +74,7 @@
 }
 
 .link:hover {
-  background: #f5f5f5;
+  background: #EEECE8;
   color: #2C2C2A;
 }
 
@@ -94,7 +105,7 @@
   height: 8px;
   border-radius: 50%;
   background: #C85C3F;
-  border: 1.5px solid #fff;
+  border: 1.5px solid var(--whisker-cream);
 }
 
 .navBadge {
@@ -142,8 +153,28 @@
 }
 
 .logoutBtn:hover {
-  background: #f5f5f5;
+  background: #EEECE8;
   color: #2C2C2A;
+}
+
+.bookingDot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #C85C3F;
+  margin-left: auto;
+  flex-shrink: 0;
+}
+
+.bottomBookingDot {
+  position: absolute;
+  top: -2px;
+  right: -4px;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #C85C3F;
+  border: 1.5px solid var(--hunter-green);
 }
 
 /* ── Mobile bottom nav ── */

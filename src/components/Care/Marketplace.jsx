@@ -250,7 +250,7 @@ export default function Marketplace({ userLocation, locale: localeProp }) {
         for (const [key, booking] of Object.entries(snapshot)) {
           if (booking.status !== 'pending') continue;
           const fresh = freshMap[key];
-          if (fresh?.status === 'accepted') {
+          if (fresh?.status === 'confirmed' || fresh?.status === 'accepted') {
             patch[key] = { status: 'accepted', bookingRef: fresh.bookingRef };
             anyChange = true;
           } else if (!fresh) {

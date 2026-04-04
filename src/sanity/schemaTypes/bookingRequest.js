@@ -19,11 +19,27 @@ export default {
       name: 'status',
       title: 'Status',
       type: 'string',
-      options: { list: ['pending', 'accepted', 'declined'], layout: 'radio' },
+      options: {
+        list: [
+          { title: 'Pending — awaiting sitter response', value: 'pending' },
+          { title: 'Confirmed — sitter accepted', value: 'confirmed' },
+          { title: 'Declined — sitter said no', value: 'declined' },
+          { title: 'Expired — no response within 48 hrs', value: 'expired' },
+          { title: 'Cancelled — parent cancelled', value: 'cancelled' },
+          { title: 'Completed — sit happened', value: 'completed' },
+          { title: 'Unavailable — sitter took another booking', value: 'unavailable' },
+          // Legacy value kept so existing documents remain valid
+          { title: 'Accepted (legacy)', value: 'accepted' },
+        ],
+        layout: 'radio',
+      },
       initialValue: 'pending',
     },
     { name: 'message', title: 'Message from parent', type: 'text', rows: 3 },
     { name: 'createdAt', title: 'Created At', type: 'datetime', readOnly: true },
+    { name: 'cancellationReason', title: 'Cancellation Reason', type: 'text', rows: 3, description: 'Reason provided when the booking was cancelled.' },
+    { name: 'cancelledBy', title: 'Cancelled By', type: 'string', options: { list: [{ title: 'Cat Parent', value: 'parent' }, { title: 'Sitter', value: 'sitter' }] }, readOnly: true },
+    { name: 'cancelledAt', title: 'Cancelled At', type: 'datetime', readOnly: true },
 
     // Scoring / response-time tracking
     { name: 'notifiedAt', title: 'Notified At', type: 'datetime', readOnly: true, description: 'Timestamp when the sit-request notification email was sent to the sitter.' },
@@ -34,9 +50,14 @@ export default {
   preview: {
     select: { sitter: 'sitter.username', parent: 'parent.username', ref: 'bookingRef', status: 'status' },
     prepare({ sitter, parent, ref, status }) {
+      const statusEmoji = {
+        pending: '⏳', confirmed: '✅', accepted: '✅',
+        declined: '❌', expired: '⌛', cancelled: '🚫',
+        completed: '🏁', unavailable: '🔒',
+      }
       return {
         title: `${ref ? `#${ref} · ` : ''}${parent || '?'} → ${sitter || '?'}`,
-        subtitle: status || 'pending',
+        subtitle: `${statusEmoji[status] || ''} ${status || 'pending'}`,
       }
     },
   },

@@ -334,6 +334,98 @@ export const structure = (S) =>
                     .defaultOrdering([{ field: '_createdAt', direction: 'desc' }])
                 ),
 
+              // Booking Requests
+              S.listItem()
+                .title('Booking Requests')
+                .icon(() => '📅')
+                .child(
+                  S.list()
+                    .title('Booking Requests')
+                    .items([
+                      S.listItem()
+                        .title('Pending')
+                        .icon(() => '⏳')
+                        .child(
+                          S.documentTypeList('bookingRequest')
+                            .title('Pending Bookings')
+                            .filter('_type == "bookingRequest" && status == "pending"')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Confirmed')
+                        .icon(() => '✅')
+                        .child(
+                          S.documentTypeList('bookingRequest')
+                            .title('Confirmed Bookings')
+                            .filter('_type == "bookingRequest" && status in ["confirmed", "accepted"]')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Declined')
+                        .icon(() => '❌')
+                        .child(
+                          S.documentTypeList('bookingRequest')
+                            .title('Declined Bookings')
+                            .filter('_type == "bookingRequest" && status == "declined"')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Expired')
+                        .icon(() => '⌛')
+                        .child(
+                          S.documentTypeList('bookingRequest')
+                            .title('Expired Bookings')
+                            .filter('_type == "bookingRequest" && status == "expired"')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Cancelled')
+                        .icon(() => '🚫')
+                        .child(
+                          S.documentTypeList('bookingRequest')
+                            .title('Cancelled Bookings')
+                            .filter('_type == "bookingRequest" && status == "cancelled"')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Completed')
+                        .icon(() => '🏁')
+                        .child(
+                          S.documentTypeList('bookingRequest')
+                            .title('Completed Bookings')
+                            .filter('_type == "bookingRequest" && status == "completed"')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('Unavailable')
+                        .icon(() => '🔒')
+                        .child(
+                          S.documentTypeList('bookingRequest')
+                            .title('Unavailable Bookings')
+                            .filter('_type == "bookingRequest" && status == "unavailable"')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                      S.listItem()
+                        .title('All')
+                        .icon(() => '📋')
+                        .child(
+                          S.documentTypeList('bookingRequest')
+                            .title('All Bookings')
+                            .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                        ),
+                    ])
+                ),
+
+              // Sit Records
+              S.listItem()
+                .title('Sit Records')
+                .icon(() => '🏠')
+                .child(
+                  S.documentTypeList('sitRecord')
+                    .title('Sit Records')
+                    .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
+                ),
+
               // Broadcast Messages
               S.listItem()
                 .title('Broadcast Messages')

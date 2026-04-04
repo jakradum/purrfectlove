@@ -1,6 +1,8 @@
 {
   "crons": [
     { "path": "/api/cron/message-reminders", "schedule": "30 3 * * *" },
-    { "path": "/api/cron/calculate-scores", "schedule": "30 20 * * *" }
+    { "path": "/api/cron/calculate-scores", "schedule": "30 20 * * *" },
+    { "path": "/api/care/cron/reminder", "schedule": "30 2 * * *" },
+    { "path": "/api/care/cron/expire-bookings", "schedule": "0 * * * *" }
   ]
 }
