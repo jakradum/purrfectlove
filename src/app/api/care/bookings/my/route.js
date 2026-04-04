@@ -17,22 +17,39 @@ async function getAuth(request) {
   return verifyToken(token)
 }
 
-// Returns all pending/accepted bookings where the logged-in user is the parent (requester).
-// Used by the marketplace to derive per-card booking button state.
+const BOOKING_FIELDS = `
+  _id, bookingRef, startDate, endDate, status, cats,
+  "sitterId": sitter._ref,
+  "sitterName": sitter->name,
+  "parentName": parent->name
+`
+
+// Returns bookings as both parent (requester) and sitter.
+// Marketplace polling reads asParent for per-card booking state.
 export async function GET(request) {
   try {
     const payload = await getAuth(request)
     if (!payload) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const bookings = await serverClient.fetch(
-      `*[_type == "bookingRequest" && parent._ref == $parentId && status in ["pending", "accepted"]]{
-        _id, bookingRef, startDate, endDate, status,
-        "sitterId": sitter._ref
-      }`,
-      { parentId: payload.sitterId }
-    )
+    const userId = payload.sitterId
 
-    return Response.json({ bookings: bookings || [] })
+    const [asParent, asSitter] = await Promise.all([
+      serverClient.fetch(
+        `*[_type == "bookingRequest" && parent._ref == $userId] | order(startDate asc) { ${BOOKING_FIELDS} }`,
+        { userId }
+      ),
+      serverClient.fetch(
+        `*[_type == "bookingRequest" && sitter._ref == $userId] | order(startDate asc) { ${BOOKING_FIELDS} }`,
+        { userId }
+      ),
+    ])
+
+    return Response.json({
+      // 'bookings' kept for backwards-compat with marketplace polling (pending + active only)
+      bookings: (asParent || []).filter(b => ['pending', 'accepted', 'confirmed'].includes(b.status)),
+      asParent: asParent || [],
+      asSitter: asSitter || [],
+    })
   } catch (error) {
     console.error('bookings/my GET error:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
