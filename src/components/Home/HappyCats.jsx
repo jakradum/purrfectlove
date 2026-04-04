@@ -1,18 +1,14 @@
-// src/components/HappyCats.jsx
+// src/components/Home/HappyCats.jsx
 import styles from './HappyCats.module.css';
 import { client } from '@/sanity/lib/client';
 import imageUrlBuilder from '@sanity/image-url';
+import SuccessStoriesGrid from './SuccessStoriesGrid';
 
 const builder = imageUrlBuilder(client);
 
-function urlFor(source) {
-  return builder.image(source);
-}
-
 export default async function HappyCats({ content, locale }) {
-  // Fetch stories that have a quote in the current language, limit to 4
   const stories = await client.fetch(
-    `*[_type == "successStory" && defined(quote[$locale]) && quote[$locale] != ""] | order(adoptionDate desc)[0...4] {
+    `*[_type == "successStory" && defined(quote[$locale]) && quote[$locale] != ""] | order(adoptionDate desc) {
       _id,
       catName,
       adopterName,
@@ -29,10 +25,16 @@ export default async function HappyCats({ content, locale }) {
     { next: { revalidate: 60 } }
   );
 
-  // Don't render section if no stories
-  if (!stories || stories.length === 0) {
-    return null;
-  }
+  if (!stories || stories.length === 0) return null;
+
+  const processed = stories.map((s) => ({
+    _id: s._id,
+    catName: s.catName,
+    adopterName: s.adopterName,
+    adoptionDate: s.adoptionDate,
+    quote: s.quote?.[locale] || null,
+    imageUrl: s.image?.asset ? builder.image(s.image).width(800).url() : null,
+  }));
 
   return (
     <section className={styles.happyCats}>
@@ -40,32 +42,7 @@ export default async function HappyCats({ content, locale }) {
       {content.subheading && (
         <p className={styles.subheading}>{content.subheading}</p>
       )}
-      <div className={styles.grid}>
-        {stories.map((story) => (
-          <div key={story._id} className={styles.card}>
-            {story.image?.asset ? (
-              <img
-                src={urlFor(story.image).width(400).height(400).url()}
-                alt={story.catName}
-                className={styles.image}
-              />
-            ) : (
-              <div className={styles.imagePlaceholder}>No image</div>
-            )}
-            <div className={styles.info}>
-              <h3>{story.catName}</h3>
-              <p className={styles.adopter}>by {story.adopterName}</p>
-              <p className={styles.date}>in{' '}
-                {new Date(story.adoptionDate).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', {
-                  month: 'long',
-                  year: 'numeric',
-                })}
-              </p>
-              {story.quote?.[locale] && <p className={styles.quote}>"{story.quote[locale]}"</p>}
-            </div>
-          </div>
-        ))}
-      </div>
+      <SuccessStoriesGrid stories={processed} locale={locale} />
     </section>
   );
 }
