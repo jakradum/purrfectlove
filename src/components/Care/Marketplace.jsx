@@ -56,6 +56,13 @@ function dateRange(startISO, endISO) {
 function isAvailableForDates(sitter, startDate, endDate) {
   if (!startDate || !endDate) return true;
 
+  // Exclude if any requested date is auto-blocked by an accepted booking
+  if (Array.isArray(sitter.blockedByBooking) && sitter.blockedByBooking.length > 0) {
+    const requested = dateRange(startDate, endDate);
+    const blocked = new Set(sitter.blockedByBooking);
+    if (requested.some(d => blocked.has(d))) return false;
+  }
+
   if (sitter.availabilityDefault || Array.isArray(sitter.unavailableDatesV2)) {
     const requested = dateRange(startDate, endDate);
     const marked = new Set(sitter.unavailableDatesV2 || []);
@@ -131,41 +138,9 @@ function SkeletonCard() {
   );
 }
 
-export default function Marketplace({ initialCanSit, initialNeedsSitting, userLocation, locale: localeProp, userAvailabilityDefault = 'available', userMarkedDates = [] }) {
+export default function Marketplace({ userLocation, locale: localeProp }) {
   const locale = localeProp || 'en';
   const t = locale === 'de' ? contentDE.marketplace : contentEN.marketplace;
-
-  // Stateful — user can toggle from marketplace; PATCHed to profile API
-  const [canSit, setCanSit] = useState(initialCanSit);
-  const [needsSitting, setNeedsSitting] = useState(initialNeedsSitting);
-
-  const handleToggle = async (field, value) => {
-    // Mutually exclusive: turning one on turns the other off
-    const newCanSit = field === 'canSit' ? value : (value ? false : canSit);
-    const newNeedsSitting = field === 'needsSitting' ? value : (value ? false : needsSitting);
-    setCanSit(newCanSit);
-    setNeedsSitting(newNeedsSitting);
-    // Re-search immediately with the new query type if dates are already set
-    if (startDate && endDate && (newCanSit || newNeedsSitting)) {
-      const queryType = newCanSit ? 'needsSitting' : 'canSit';
-      handleSearch(queryType);
-    }
-    try {
-      await fetch('/api/care/profile', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ canSit: newCanSit, needsSitting: newNeedsSitting }),
-      });
-    } catch (err) {
-      console.error('Failed to update status:', err);
-      setCanSit(initialCanSit);
-      setNeedsSitting(initialNeedsSitting);
-    }
-  };
-
-  // Fresh availability data for conflict banner
-  const [ownAvailDefault, setOwnAvailDefault] = useState(userAvailabilityDefault);
-  const [ownMarkedDates, setOwnMarkedDates] = useState(userMarkedDates);
 
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
@@ -175,8 +150,13 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
   const [searchError, setSearchError] = useState('');
   const [fetchedSitters, setFetchedSitters] = useState([]);
   const [shimmer, setShimmer] = useState(false);
+  // myBookings: { [sitterId__startDate__endDate]: { status, bookingRef } }
+  // Keyed by sitter+dates so state resets naturally when dates change.
+  const [myBookings, setMyBookings] = useState({});
+  const [expandedCardId, setExpandedCardId] = useState(null);
   const [displayedCount, setDisplayedCount] = useState(null);
   const [visibleCount, setVisibleCount] = useState(0);
+  const [toast, setToast] = useState(null); // { message, id }
 
   const animFrameRef = useRef(null);
   const gridContainerRef = useRef(null);
@@ -184,6 +164,8 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
   const sliderDebounceRef = useRef(null);
   const pendingRadiusRef = useRef(radius);
   const lastResultCountRef = useRef(1);
+  // Ref so polling interval always reads the latest myBookings without stale closure
+  const myBookingsRef = useRef({});
 
   // Restore state from sessionStorage on mount
   useEffect(() => {
@@ -208,6 +190,96 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
       }
     } catch { /* sessionStorage unavailable */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch the current user's pending/accepted bookings once on mount.
+  // Used to derive per-card booking button state.
+  useEffect(() => {
+    fetch('/api/care/bookings/my')
+      .then(r => r.ok ? r.json() : { bookings: [] })
+      .then(({ bookings }) => {
+        const map = {};
+        for (const b of (bookings || [])) {
+          const key = `${b.sitterId}__${b.startDate}__${b.endDate}`;
+          map[key] = { status: b.status, bookingRef: b.bookingRef };
+        }
+        setMyBookings(map);
+      })
+      .catch(() => {/* silent — cards fall back to bookable state */});
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Keep ref in sync so polling interval reads latest state without stale closure
+  useEffect(() => { myBookingsRef.current = myBookings; }, [myBookings]);
+
+  // Auto-dismiss toast after 4 s
+  useEffect(() => {
+    if (!toast) return;
+    const t = setTimeout(() => setToast(null), 4000);
+    return () => clearTimeout(t);
+  }, [toast]);
+
+  // Poll every 15 s while any booking is pending. Single interval from mount — reads state
+  // via ref to avoid stale closures. Active poll count resets when no bookings are pending.
+  useEffect(() => {
+    const MAX_ACTIVE_POLLS = 120; // 30 min ÷ 15 s
+    let activePollCount = 0;
+
+    const id = setInterval(async () => {
+      const hasPending = Object.values(myBookingsRef.current).some(b => b.status === 'pending');
+      if (!hasPending) { activePollCount = 0; return; }
+
+      activePollCount++;
+      if (activePollCount > MAX_ACTIVE_POLLS) { clearInterval(id); return; }
+
+      try {
+        const r = await fetch('/api/care/bookings/my');
+        if (!r.ok) return;
+        const { bookings } = await r.json();
+
+        // Build a fresh lookup from API response
+        const freshMap = {};
+        for (const b of (bookings || [])) {
+          freshMap[`${b.sitterId}__${b.startDate}__${b.endDate}`] = b;
+        }
+
+        // Compare against current state via ref (avoids stale closure)
+        const snapshot = myBookingsRef.current;
+        const patch = {};
+        let anyChange = false;
+        let anyDeclined = false;
+
+        for (const [key, booking] of Object.entries(snapshot)) {
+          if (booking.status !== 'pending') continue;
+          const fresh = freshMap[key];
+          if (fresh?.status === 'accepted') {
+            patch[key] = { status: 'accepted', bookingRef: fresh.bookingRef };
+            anyChange = true;
+          } else if (!fresh) {
+            // Booking absent from results while still pending → declined
+            patch[key] = 'declined';
+            anyChange = true;
+            anyDeclined = true;
+          }
+        }
+
+        if (!anyChange) return;
+
+        setMyBookings(prev => {
+          const next = { ...prev };
+          for (const [key, val] of Object.entries(patch)) {
+            if (val === 'declined') delete next[key];
+            else next[key] = val;
+          }
+          return next;
+        });
+
+        if (anyDeclined) {
+          setToast({ message: 'Your booking request was declined', id: Date.now() });
+        }
+      } catch { /* network error — do nothing, try again next tick */ }
+    }, 15_000);
+
+    return () => clearInterval(id);
+  }, []); // single interval from mount; reads latest state via myBookingsRef
 
   // Persist to sessionStorage
   useEffect(() => {
@@ -264,18 +336,6 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
     setRadius(newRadius);
   }, [searched]);
 
-  // Fetch own profile when dates change (conflict banner)
-  useEffect(() => {
-    if (!startDate || !endDate) return;
-    fetch('/api/care/profile')
-      .then(r => r.json())
-      .then(doc => {
-        setOwnAvailDefault(doc.availabilityDefault || 'available');
-        setOwnMarkedDates(doc.unavailableDatesV2 || []);
-      })
-      .catch(() => {});
-  }, [startDate, endDate]);
-
   // Auto-search when both dates selected
   const prevDatesRef = useRef({ startDate: '', endDate: '' });
   useEffect(() => {
@@ -292,12 +352,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
     }
   }, [startDate, endDate]); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // needsSitting → show canSit sitters; canSit → show needsSitting members
-  const queryType = needsSitting ? 'canSit' : 'needsSitting';
-  const cardType = needsSitting ? 'findSitters' : 'offerToSit';
-
-  const handleSearch = async (overrideQueryType) => {
-    const type = overrideQueryType ?? queryType;
+  const handleSearch = async () => {
     setSearching(true);
     setSearched(true);
     setSearchError('');
@@ -306,7 +361,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
     setShimmer(false);
 
     try {
-      const res = await fetch(`/api/care/sitters?type=${type}`);
+      const res = await fetch('/api/care/sitters');
       if (!res.ok) {
         const err = await res.json().catch(() => ({}));
         setSearchError(`API error ${res.status}: ${err.error || 'unknown'}`);
@@ -332,12 +387,30 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
     }
   };
 
-  // Filter strictly to the chosen radius — no silent expansion
+  // Three-tier sort:
+  //   1. Availability confirmed (unconfirmed last)
+  //   2. Distance ascending (no location last)
+  //   3. Rating descending (null last — field reserved for future use)
   const results = useMemo(() => {
     if (!searched) return null;
     return fetchedSitters
       .filter((s) => s._distance == null || s._distance <= radius)
-      .sort((a, b) => (a._distance ?? 999) - (b._distance ?? 999));
+      .sort((a, b) => {
+        // Tier 1: confirmed availability first
+        const aUnconfirmed = a._availabilityUnconfirmed ? 1 : 0;
+        const bUnconfirmed = b._availabilityUnconfirmed ? 1 : 0;
+        if (aUnconfirmed !== bUnconfirmed) return aUnconfirmed - bUnconfirmed;
+
+        // Tier 2: distance ascending, nulls last
+        const aDist = a._distance ?? Infinity;
+        const bDist = b._distance ?? Infinity;
+        if (aDist !== bDist) return aDist - bDist;
+
+        // Tier 3: rating descending, nulls last
+        const aRating = a.rating ?? -Infinity;
+        const bRating = b.rating ?? -Infinity;
+        return bRating - aRating;
+      });
   }, [searched, fetchedSitters, radius]);
 
   // Update displayed count + trigger height animation when shimmer ends
@@ -359,49 +432,11 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
 
   const datesSelected = !!(startDate && endDate);
 
-  // Conflict banner: shown if user is both a sitter and a seeker, and their availability overlaps
-  const showConflictBanner = datesSelected && canSit && needsSitting && (() => {
-    const requested = dateRange(startDate, endDate);
-    const marked = new Set(ownMarkedDates || []);
-    if (ownAvailDefault === 'unavailable') {
-      return requested.some(d => marked.has(d));
-    } else {
-      return requested.some(d => !marked.has(d));
-    }
-  })();
-
   return (
     <div className={styles.pageWide}>
       <div className={styles.marketplaceHeader}>
         <h1 className={styles.pageTitle}>{t.title}</h1>
         <p className={styles.pageSubtitle}>{t.subtitle}</p>
-      </div>
-
-      {/* Status toggles — placed above filter bar */}
-      <div className={styles.statusCard}>
-        <span className={styles.statusCardTitle}>{t.myStatus}</span>
-        <div className={styles.toggleRow}>
-          <label className={styles.toggle}>
-            <input
-              type="checkbox"
-              checked={canSit}
-              onChange={(e) => handleToggle('canSit', e.target.checked)}
-            />
-            <span className={styles.toggleSlider} />
-          </label>
-          <span className={styles.toggleLabel}>{t.iCanSit}</span>
-        </div>
-        <div className={styles.toggleRow}>
-          <label className={styles.toggle}>
-            <input
-              type="checkbox"
-              checked={needsSitting}
-              onChange={(e) => handleToggle('needsSitting', e.target.checked)}
-            />
-            <span className={styles.toggleSlider} />
-          </label>
-          <span className={styles.toggleLabel}>{t.iNeedSitting}</span>
-        </div>
       </div>
 
       <FilterBar
@@ -413,54 +448,6 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
         hasLocation={userLocation?.lat != null}
         locale={locale}
       />
-
-      {/* No-status nudge — shown when both toggles are off */}
-      {!canSit && !needsSitting && (
-        <div className={styles.noStatusBanner}>
-          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="var(--hunter-green)" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true" style={{ flexShrink: 0, marginTop: '1px' }}>
-            <circle cx="12" cy="12" r="10" />
-            <line x1="4.93" y1="4.93" x2="19.07" y2="19.07" />
-          </svg>
-          <div>
-            <p style={{ margin: '0 0 0.25rem 0', fontWeight: 600 }}>
-              {locale === 'de' ? 'Kein Status gesetzt' : 'No status set'}
-            </p>
-            <p style={{ margin: '0 0 0.5rem 0', color: 'var(--text-light)', fontSize: '0.875rem' }}>
-              {locale === 'de'
-                ? 'Suche nach Unterstützung oder biete Hilfe an — je nach deinen Bedürfnissen. Dein Status ist aktuell: Ich brauche keine Betreuung, ich kann nicht helfen.'
-                : 'Browse for support or for volunteering based on your needs. Currently your status is set to: I don\'t need sitting, I can\'t help with sitting.'}
-            </p>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <button
-                type="button"
-                onClick={() => handleToggle('needsSitting', true)}
-                className={styles.noStatusBtn}
-              >
-                {locale === 'de' ? 'Ich brauche Betreuung' : 'I need sitting'}
-              </button>
-              <button
-                type="button"
-                onClick={() => handleToggle('canSit', true)}
-                className={`${styles.noStatusBtn} ${styles.noStatusBtnOutline}`}
-              >
-                {locale === 'de' ? 'Ich kann helfen' : 'I can sit'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Conflict banner */}
-      {showConflictBanner && (
-        <div className={styles.conflictBanner}>
-          <span>⚠️</span>
-          <span>
-            You&apos;re marked as available to sit on some of these dates.{' '}
-            <a href="/profile#availability" className={styles.conflictBannerLink}>Update your availability</a>
-            {' '}if your plans have changed.
-          </span>
-        </div>
-      )}
 
       {/* Empty state — no dates selected */}
       {!datesSelected && !searching && (
@@ -484,7 +471,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
           {!searching && !shimmer && displayedCount !== null && displayedCount > 0 && (
             <div className={styles.resultsHeader}>
               <span className={styles.resultsHeaderText}>
-                Showing {displayedCount} sitter{displayedCount !== 1 ? 's' : ''} for {formatDateRange(startDate, endDate)}
+                {displayedCount} sitter{displayedCount !== 1 ? 's' : ''} available for {formatDateRange(startDate, endDate)}
               </span>
             </div>
           )}
@@ -517,7 +504,7 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
             ) : results !== null && results.length === 0 ? (
               <div className={styles.datesEmptyState}>
                 <div className={styles.datesEmptyIcon}>🐾</div>
-                <h2 className={styles.datesEmptyHeading}>No one found nearby</h2>
+                <h2 className={styles.datesEmptyHeading}>No sitters found nearby</h2>
                 <p className={styles.datesEmptyText}>
                   {locale === 'de'
                     ? `Keine Sitter innerhalb von ${radius} km gefunden. Versuche einen größeren Radius.`
@@ -538,15 +525,29 @@ export default function Marketplace({ initialCanSit, initialNeedsSitting, userLo
                   >
                     <SitterCard
                       sitter={sitter}
-                      type={cardType}
                       locale={locale}
                       availabilityUnconfirmed={!!sitter._availabilityUnconfirmed}
+                      startDate={startDate}
+                      endDate={endDate}
+                      bookingState={myBookings[`${sitter._id}__${startDate}__${endDate}`] ?? null}
+                      onBooked={(bookingRef) => {
+                        const key = `${sitter._id}__${startDate}__${endDate}`;
+                        setMyBookings(prev => ({ ...prev, [key]: { status: 'pending', bookingRef } }));
+                      }}
+                      expanded={expandedCardId === sitter._id}
+                      onExpand={() => setExpandedCardId(prev => prev === sitter._id ? null : sitter._id)}
                     />
                   </div>
                 ))}
               </div>
             ) : null}
           </div>
+        </div>
+      )}
+
+      {toast && (
+        <div key={toast.id} className={styles.toast}>
+          {toast.message}
         </div>
       )}
     </div>

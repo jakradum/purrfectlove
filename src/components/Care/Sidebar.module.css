@@ -21,6 +21,13 @@
   margin-top: 52px;
 }
 
+.sidebarLogoSvg {
+  width: 81px;
+  height: auto;
+  display: block;
+  margin-bottom: 8px;
+}
+
 .sidebarLogoText {
   font-size: 13px;
   font-weight: 700;

@@ -1,9 +1,8 @@
 'use client';
 
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './Care.module.css';
-import contentEN from '@/data/careContent.en.json';
-import contentDE from '@/data/careContent.de.json';
 import CatAvatar from './CatAvatar';
 
 const TAG_LABELS = {
@@ -17,19 +16,13 @@ const TAG_LABELS = {
   },
 };
 
-// Wavy cover pattern PNGs — /public/images/care/cover-pattern-{1,2,3}.png
 const COVERS = [
   '/images/care/cover-pattern-1.png',
   '/images/care/cover-pattern-2.png',
   '/images/care/cover-pattern-3.png',
 ];
 
-// Colour fallbacks while PNG loads (whisker-cream, paw-pink, hunter-green tints)
-const COVER_FALLBACKS = [
-  '#F6F4F0',
-  '#F5D5C8',
-  '#D4E4DF',
-];
+const COVER_FALLBACKS = ['#F6F4F0', '#F5D5C8', '#D4E4DF'];
 
 function coverIndex(id) {
   if (!id) return 0;
@@ -38,26 +31,61 @@ function coverIndex(id) {
   return h % 3;
 }
 
-export default function SitterCard({ sitter, locale = 'en', availabilityUnconfirmed = false }) {
-  const t = locale === 'de' ? contentDE.marketplace.card : contentEN.marketplace.card;
+function IconMessage() {
+  return (
+    <svg viewBox="0 0 14 14" fill="none" strokeWidth="1.2" strokeLinecap="round" strokeLinejoin="round" width="14" height="14" stroke="#666">
+      <path d="M1 1h12a.5.5 0 01.5.5v8a.5.5 0 01-.5.5H4l-3 2.5V1.5A.5.5 0 011 1z"/>
+    </svg>
+  );
+}
+
+function IconPerson() {
+  return (
+    <svg viewBox="0 0 14 14" fill="none" strokeWidth="1.2" strokeLinecap="round" width="14" height="14" stroke="#666">
+      <circle cx="7" cy="5" r="2.5"/>
+      <path d="M1.5 13c0-3 2.5-4.5 5.5-4.5s5.5 1.5 5.5 4.5"/>
+    </svg>
+  );
+}
+
+function CheckIcon() {
+  return (
+    <div className={styles.cardCheckIcon}>
+      <svg viewBox="0 0 9 9" fill="none" width="9" height="9">
+        <path d="M1.5 4.5l2 2 4-4" stroke="#2C5F4F" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+      </svg>
+    </div>
+  );
+}
+
+export default function SitterCard({
+  sitter,
+  locale = 'en',
+  availabilityUnconfirmed = false,
+  startDate,
+  endDate,
+  bookingState = null,
+  onBooked,
+  expanded = false,
+  onExpand,
+}) {
   const tagLabels = TAG_LABELS[locale] || TAG_LABELS.en;
 
   const {
-    _id, _createdAt, name, username,
+    _id, _createdAt, name,
     identityVerified, trustedSitter, siteAdmin,
     photoUrl, avatarColour,
     feedingTypes, behavioralTraits,
     cats, _distance,
-    availabilityDefault,
+    availabilityDefault, maxCatsPerDay,
   } = sitter;
 
-  const displayName = username || name || 'Member';
+  const displayName = name || 'Member';
 
   const memberSince = _createdAt
     ? new Date(_createdAt).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short', year: 'numeric' })
     : null;
 
-  // Cat names — always shown regardless of view type
   const catNames = (cats || []).map(c => c.name).filter(Boolean);
   const catNamesDisplay = catNames.length === 0
     ? null
@@ -65,12 +93,10 @@ export default function SitterCard({ sitter, locale = 'en', availabilityUnconfir
     ? catNames[0]
     : `${catNames.slice(0, -1).join(', ')} & ${catNames[catNames.length - 1]}`;
 
-  // Capability pills — traits + feeding types, capped at 3
-  const allPills = [...new Set([...(behavioralTraits || []), ...(feedingTypes || [])])];
-  const shownPills = allPills.slice(0, 3);
-  const extraCount = allPills.length - shownPills.length;
+  const allCaps = [...new Set([...(behavioralTraits || []), ...(feedingTypes || [])])];
+  const shownCaps = allCaps.slice(0, 4);
+  const extraCount = allCaps.length - shownCaps.length;
 
-  // Availability label
   let availLabel = null;
   if (availabilityDefault === 'unavailable') {
     availLabel = locale === 'de' ? 'Verfügbarkeit auf Anfrage' : 'Availability on request';
@@ -81,91 +107,256 @@ export default function SitterCard({ sitter, locale = 'en', availabilityUnconfir
   const idx = coverIndex(_id || '');
   const coverSrc = COVERS[idx];
   const coverBg = COVER_FALLBACKS[idx];
+  const hasDates = !!(startDate && endDate);
+
+  // ── Inline booking form state ──────────────────────────────────────────────
+  const [myCats, setMyCats] = useState(null); // null = not yet fetched
+  const [selectedCats, setSelectedCats] = useState([]);
+  const [note, setNote] = useState('');
+  const [submitting, setSubmitting] = useState(false);
+  const [formError, setFormError] = useState('');
+
+  // Lazy-fetch the logged-in user's cats on first expand
+  useEffect(() => {
+    if (!expanded || myCats !== null) return;
+    fetch('/api/care/profile')
+      .then(r => r.json())
+      .then(doc => setMyCats((doc.cats || []).map(c => c.name).filter(Boolean)))
+      .catch(() => setMyCats([]));
+  }, [expanded, myCats]);
+
+  // Reset form when card collapses
+  useEffect(() => {
+    if (!expanded) {
+      setSelectedCats([]);
+      setNote('');
+      setFormError('');
+      setSubmitting(false);
+    }
+  }, [expanded]);
+
+  const toggleCat = (catName) => {
+    setSelectedCats(prev =>
+      prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
+    );
+  };
+
+  const handleSubmit = async () => {
+    setFormError('');
+    if (selectedCats.length === 0) {
+      setFormError('Please select at least one cat.');
+      return;
+    }
+    setSubmitting(true);
+    try {
+      const res = await fetch('/api/care/bookings/request', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          sitterId: _id,
+          startDate,
+          endDate,
+          cats: selectedCats,
+          message: note.trim() || null,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setFormError(data.error || 'Failed to send request.');
+        return;
+      }
+      onBooked?.(data.bookingRef);
+      onExpand?.(); // collapse the card
+    } catch {
+      setFormError('Network error. Please try again.');
+    } finally {
+      setSubmitting(false);
+    }
+  };
 
   return (
     <div className={styles.card}>
-      {/* Cover image — wavy pattern PNG */}
+      {/* Cover */}
       <div
         className={styles.cardCover}
         style={{ backgroundImage: `url(${coverSrc})`, backgroundColor: coverBg }}
         aria-hidden="true"
       >
-        {/* Avatar — overlaps cover/body boundary */}
         <div className={styles.cardAvatarWrap}>
           <CatAvatar
             photoUrl={photoUrl}
             avatarColour={avatarColour}
             name={displayName}
-            size={64}
-            style={{ border: '3px solid #F6F4F0', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }}
+            size={52}
+            style={{ border: '3px solid #fff', boxShadow: '0 2px 6px rgba(0,0,0,0.1)' }}
           />
         </div>
       </div>
 
       {/* Card body */}
       <div className={styles.cardBody}>
-        {/* Top row: member since + unconfirmed badge */}
-        <div className={styles.cardMetaRow}>
+
+        {/* Member since — right-aligned */}
+        <div className={styles.cardMemberSince}>
           {availabilityUnconfirmed ? (
             <span className={styles.availUnconfirmedBadge}>
               {locale === 'de' ? 'Verfügbarkeit unbestätigt' : 'Availability unconfirmed'}
             </span>
           ) : memberSince ? (
-            <span className={styles.memberSince}>
-              {locale === 'de' ? 'Dabei seit' : 'Since'} {memberSince}
-            </span>
+            <>Member since {memberSince}</>
           ) : null}
-          {siteAdmin && <span className={styles.adminBadge}>Admin</span>}
+          {siteAdmin && <span className={styles.adminBadge} style={{ marginLeft: 4 }}>Admin</span>}
         </div>
 
-        {/* Name + badges + distance */}
-        <div className={styles.cardNameRow}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', minWidth: 0, flex: 1 }}>
-            <h3 className={styles.cardName}>{displayName}</h3>
-            {identityVerified && <span className={styles.verifiedBadge} title="Identity verified">✓</span>}
-            {trustedSitter && <span className={styles.trustedBadge} title="Trusted sitter">⭐</span>}
+        {/* Top row: name + distance left, icon buttons right */}
+        <div className={styles.cardTopRow}>
+          <div>
+            <div className={styles.cardUsername}>
+              {displayName}
+              {identityVerified && <span className={styles.verifiedBadge} title="Identity verified"> ✓</span>}
+              {trustedSitter && <span className={styles.trustedBadge} title="Trusted sitter"> ⭐</span>}
+            </div>
+            {_distance !== undefined && (
+              <div className={styles.cardDistLabel}>~{_distance.toFixed(1)} km</div>
+            )}
           </div>
-          {_distance !== undefined && (
-            <span className={styles.distanceBadge}>~{_distance.toFixed(1)} km</span>
-          )}
+          <div className={styles.cardIconRow}>
+            <Link href={`/care/${_id}`} className={styles.cardIconBtn} title="View profile">
+              <IconPerson />
+            </Link>
+          </div>
         </div>
 
-        {/* Cat names subtitle */}
+        {/* Cat names */}
         {catNamesDisplay && (
-          <p className={styles.cardSubtitle}>{catNamesDisplay}</p>
-        )}
-
-        {/* Availability indicator */}
-        {availLabel && (
-          <div className={styles.availRow}>
-            <div className={styles.tickCircle}>✓</div>
-            <span className={styles.availText}>{availLabel}</span>
+          <div className={styles.cardMetaLine}>
+            {locale === 'de' ? 'Katzen: ' : 'Parent of '}{catNamesDisplay}
           </div>
         )}
 
-        {/* Capability pills */}
-        {shownPills.length > 0 && (
-          <div className={styles.tags} style={{ margin: 0 }}>
-            {shownPills.map(tag => (
-              <span key={tag} className={`${styles.tag} ${styles.tagOutline}`}>
-                {tagLabels[tag] || tag}
-              </span>
+        {/* Availability dot + label */}
+        {availLabel && (
+          <div className={styles.cardAvailRow}>
+            <div className={styles.cardAvailDot} />
+            <span className={styles.cardAvailText}>{availLabel}</span>
+          </div>
+        )}
+
+        {/* Max cats per day */}
+        {maxCatsPerDay > 0 && (
+          <div className={styles.cardMetaLine}>
+            {locale === 'de' ? `Bis zu ${maxCatsPerDay} Katzen pro Tag` : `Up to ${maxCatsPerDay} cat${maxCatsPerDay !== 1 ? 's' : ''} per day`}
+          </div>
+        )}
+
+        {/* Capabilities checklist */}
+        {shownCaps.length > 0 && (
+          <div className={styles.cardChecklist}>
+            {shownCaps.map(cap => (
+              <div key={cap} className={styles.cardCheckItem}>
+                <CheckIcon />
+                <span>{tagLabels[cap] || cap}</span>
+              </div>
             ))}
             {extraCount > 0 && (
-              <span className={`${styles.tag} ${styles.tagMore}`}>+{extraCount}</span>
+              <div className={styles.cardCheckMore}>+{extraCount} more</div>
             )}
           </div>
         )}
 
-        {/* Actions */}
-        <div className={styles.cardActions}>
-          <Link href={`/inbox?to=${_id}`} className={`${styles.cardBtn} ${styles.cardBtnBrown}`}>
-            {locale === 'de' ? 'Nachricht' : 'Message'}
+        <div className={styles.cardDivider} />
+
+        {/* Primary CTA */}
+        {hasDates && bookingState?.status === 'accepted' ? (
+          <div className={styles.cardBookConfirmed}>
+            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
+              <circle cx="6.5" cy="6.5" r="6.5" fill="#2C5F4F"/>
+              <path d="M3.5 6.5l2 2 4-4" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+            </svg>
+            Booking confirmed · #{bookingState.bookingRef}
+          </div>
+        ) : hasDates && bookingState?.status === 'pending' ? (
+          <div className={styles.cardBookPending}>
+            <span className={styles.cardBookPendingDot} />
+            Awaiting approval
+          </div>
+        ) : hasDates && !expanded ? (
+          <button
+            type="button"
+            className={styles.cardBookBtn}
+            onClick={onExpand}
+          >
+            {locale === 'de' ? 'Für diese Daten anfragen' : 'Book for these dates'}
+          </button>
+        ) : !hasDates ? (
+          <Link href={`/care/${_id}`} className={styles.cardBookBtn}>
+            {locale === 'de' ? 'Profil ansehen' : 'View profile'}
           </Link>
-          <Link href={`/${_id}`} className={`${styles.cardBtn} ${styles.cardBtnPrimary}`}>
-            {t.viewProfile}
-          </Link>
+        ) : null}
+
+        {/* ── Inline booking form (expands below CTA) ── */}
+        <div className={`${styles.cardExpand} ${expanded ? styles.cardExpandOpen : ''}`}>
+          <div className={styles.cardFormDivider} />
+
+          {/* Cat selector — required */}
+          <p className={styles.cardFormLabel}>
+            Select your cats <span className={styles.cardFormRequired}>*</span>
+          </p>
+          {myCats === null ? (
+            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: 12 }}>Loading…</p>
+          ) : myCats.length === 0 ? (
+            <p style={{ fontSize: '12px', color: '#888', lineHeight: 1.5, marginBottom: 12 }}>
+              Add cats to your profile first.{' '}
+              <Link href="/care/profile" style={{ color: '#2C5F4F', fontWeight: 600 }}>
+                Go to profile →
+              </Link>
+            </p>
+          ) : (
+            <div className={styles.catChips}>
+              {myCats.map(catName => (
+                <button
+                  key={catName}
+                  type="button"
+                  className={`${styles.catChip} ${selectedCats.includes(catName) ? styles.catChipSelected : ''}`}
+                  onClick={() => toggleCat(catName)}
+                >
+                  {catName}
+                </button>
+              ))}
+            </div>
+          )}
+
+          {/* Note field — optional */}
+          <p className={styles.cardFormLabel}>Note <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#bbb' }}>(optional)</span></p>
+          <textarea
+            className={styles.cardNoteField}
+            placeholder="Any notes for the sitter…"
+            value={note}
+            onChange={e => setNote(e.target.value)}
+          />
+
+          {formError && <p className={styles.cardFormError}>{formError}</p>}
+
+          <div className={styles.cardFormBtnRow}>
+            <button
+              type="button"
+              className={styles.cardFormCancelBtn}
+              onClick={onExpand}
+              disabled={submitting}
+            >
+              Cancel
+            </button>
+            <button
+              type="button"
+              className={styles.cardFormSendBtn}
+              onClick={handleSubmit}
+              disabled={submitting || selectedCats.length === 0 || myCats === null}
+            >
+              {submitting ? 'Sending…' : 'Send request'}
+            </button>
+          </div>
         </div>
+
       </div>
     </div>
   );

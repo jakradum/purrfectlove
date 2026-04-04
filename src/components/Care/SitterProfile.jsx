@@ -6,6 +6,7 @@ import styles from './Care.module.css';
 import CatAvatar from './CatAvatar';
 import ReportModal from './ReportModal';
 import FeedbackDisplay from './FeedbackDisplay';
+import BookingRequestModal from './BookingRequestModal';
 
 const TAG_LABELS = {
   shy: 'Shy', energetic: 'Energetic', senior: 'Senior', 'special needs': 'Special Needs',
@@ -92,25 +93,20 @@ export default function SitterProfile({
   feedbacks = [],
 }) {
   const {
-    _id, _createdAt, name, username, location, bio,
-    email, phone, hideEmail, hideWhatsApp,
+    _id, _createdAt, name, location, bio,
     cats, feedingTypes, behavioralTraits,
     availabilityDefault, unavailableDatesV2,
     avatarColour, photoUrl, coverImageUrl,
-    identityVerified, trustedSitter,
+    identityVerified, trustedSitter, maxCatsPerDay,
   } = sitter;
 
-  const displayName = username || name || 'Member';
+  const displayName = name || 'Member';
 
   const memberSince = _createdAt
     ? new Date(_createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     : null;
 
   const metaParts = [location?.name || location?.displayName, memberSince ? `Member since ${memberSince}` : null].filter(Boolean);
-
-  const showEmail = !hideEmail && !!email;
-  const showPhone = !hideWhatsApp && !!phone;
-  const inboxOnly = !showEmail && !showPhone;
 
   const idx = coverIndex(_id || '');
   const coverSrc = coverImageUrl || COVERS[idx];
@@ -119,6 +115,7 @@ export default function SitterProfile({
 
   const [showReport, setShowReport] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
+  const [showBooking, setShowBooking] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [localCoverUrl, setLocalCoverUrl] = useState(null);
   const coverInputRef = useRef(null);
@@ -261,9 +258,16 @@ export default function SitterProfile({
               </button>
             </>
           ) : (
-            <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
-              Send a message
-            </Link>
+            <>
+
+              <button
+                type="button"
+                className={styles.sitterRequestBtn}
+                onClick={() => setShowBooking(true)}
+              >
+                Request a sit
+              </button>
+            </>
           )}
         </div>
       </div>
@@ -313,16 +317,23 @@ export default function SitterProfile({
       </div>
 
       {/* Capabilities */}
-      {capabilities.length > 0 && (
+      {(capabilities.length > 0 || maxCatsPerDay > 0) && (
         <div className={styles.sitterSection}>
           <div className={styles.sitterSectionTitle}>Sitting capabilities</div>
-          <div className={styles.capabilityPills}>
-            {capabilities.map(tag => (
-              <span key={tag} className={styles.capabilityPill}>
-                {TAG_LABELS[tag] || tag}
-              </span>
-            ))}
-          </div>
+          {maxCatsPerDay > 0 && (
+            <p style={{ fontSize: '0.875rem', color: '#555', margin: '0 0 10px' }}>
+              Can sit up to <strong>{maxCatsPerDay}</strong> cat{maxCatsPerDay !== 1 ? 's' : ''} per day
+            </p>
+          )}
+          {capabilities.length > 0 && (
+            <div className={styles.capabilityPills}>
+              {capabilities.map(tag => (
+                <span key={tag} className={styles.capabilityPill}>
+                  {TAG_LABELS[tag] || tag}
+                </span>
+              ))}
+            </div>
+          )}
         </div>
       )}
 
@@ -350,44 +361,6 @@ export default function SitterProfile({
         </div>
       )}
 
-      {/* Contact — public view only */}
-      {!isOwnProfile && (
-        <div className={styles.sitterSection}>
-          <div className={styles.sitterSectionTitle}>Contact</div>
-          {inboxOnly ? (
-            <p className={styles.inboxOnly}>
-              This member prefers to be contacted via the community inbox only.
-            </p>
-          ) : (
-            <>
-              {showEmail && (
-                <div className={styles.infoRow}>
-                  <span className={styles.infoLabel}>Email</span>
-                  <a href={`mailto:${email}`} className={`${styles.infoVal} ${styles.infoValLink}`}>{email}</a>
-                </div>
-              )}
-              {showPhone && (
-                <div className={styles.infoRow}>
-                  <span className={styles.infoLabel}>WhatsApp</span>
-                  <a
-                    href={`https://wa.me/${phone.replace(/\D/g, '')}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                    className={`${styles.infoVal} ${styles.infoValLink}`}
-                  >
-                    {phone}
-                  </a>
-                </div>
-              )}
-            </>
-          )}
-          <div style={{ marginTop: '1rem' }}>
-            <Link href={`/inbox?to=${_id}`} className={styles.sitterContactBtn}>
-              Send a message
-            </Link>
-          </div>
-        </div>
-      )}
 
       {/* Feedbacks — public view only */}
       {!isOwnProfile && feedbacks.length > 0 && (
@@ -410,6 +383,16 @@ export default function SitterProfile({
           memberName={displayName}
           memberId={_id}
           onClose={() => setShowReport(false)}
+        />
+      )}
+
+      {showBooking && (
+        <BookingRequestModal
+          sitterId={_id}
+          sitterName={displayName}
+          startDate={null}
+          endDate={null}
+          onClose={() => setShowBooking(false)}
         />
       )}
     </div>
