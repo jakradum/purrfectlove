@@ -9,85 +9,47 @@ const sanity = createClient({
   useCdn: false,
 })
 
-// Strip all whitespace; produce both compact and spaced variants for Sanity matching
-function phoneVariants(raw) {
-  const norm = raw.replace(/\s+/g, '')
-  const spaced = norm.replace(/^(\+\d{2})(\d)/, '$1 $2')
-  return { norm, spaced }
-}
-
 export async function POST(request) {
   try {
-    const { identifier: rawIdentifier, type } = await request.json()
+    const { identifier: rawIdentifier } = await request.json()
 
-    if (!rawIdentifier || !type || !['phone', 'email'].includes(type)) {
-      return Response.json({ error: 'identifier and type (phone or email) are required' }, { status: 400 })
+    if (!rawIdentifier) {
+      return Response.json({ error: 'Email address is required.' }, { status: 400 })
     }
 
-    let identifier
-
-    if (type === 'phone') {
-      const { norm } = phoneVariants(rawIdentifier)
-      identifier = norm
-      if (!/^\+\d{10,15}$/.test(identifier)) {
-        return Response.json({ error: 'Invalid phone number. Use E.164 format (e.g. +91XXXXXXXXXX).' }, { status: 400 })
-      }
-    } else {
-      identifier = rawIdentifier.trim().toLowerCase()
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(identifier)) {
-        return Response.json({ error: 'Invalid email address.' }, { status: 400 })
-      }
+    const email = rawIdentifier.trim().toLowerCase()
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      return Response.json({ error: 'Invalid email address.' }, { status: 400 })
     }
 
     // Membership gate: must exist as a verified catSitter or a teamMember
-    let catSitter, teamMember
-
-    if (type === 'phone') {
-      const { norm: phone, spaced: phoneSpaced } = phoneVariants(rawIdentifier)
-      ;[catSitter, teamMember] = await Promise.all([
-        sanity.fetch(
-          `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id }`,
-          { phone, phoneSpaced }
-        ),
-        sanity.fetch(
-          `*[_type == "teamMember" && (phone == $phone || phone == $phoneSpaced)][0]{ _id }`,
-          { phone, phoneSpaced }
-        ),
-      ])
-    } else {
-      ;[catSitter, teamMember] = await Promise.all([
-        sanity.fetch(
-          `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id }`,
-          { email: identifier }
-        ),
-        sanity.fetch(
-          `*[_type == "teamMember" && email == $email][0]{ _id }`,
-          { email: identifier }
-        ),
-      ])
-    }
+    const [catSitter, teamMember] = await Promise.all([
+      sanity.fetch(
+        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id }`,
+        { email }
+      ),
+      sanity.fetch(
+        `*[_type == "teamMember" && email == $email][0]{ _id }`,
+        { email }
+      ),
+    ])
 
     if (!catSitter && !teamMember) {
       return Response.json({ error: 'ACCOUNT_NOT_FOUND' }, { status: 403 })
     }
 
-    // Trigger Supabase OTP
+    // Trigger Supabase email OTP.
+    // shouldCreateUser: false — non-members are blocked above, but if the gate
+    // fails for any reason we must not silently create a Supabase account.
     const supabase = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     )
 
-    let otpError
-    if (type === 'phone') {
-      const { error } = await supabase.auth.signInWithOtp({ phone: identifier })
-      otpError = error
-    } else {
-      const { error } = await supabase.auth.signInWithOtp({
-        email: identifier,
-        options: { shouldCreateUser: true },
-      })
-      otpError = error
-    }
+    const { error: otpError } = await supabase.auth.signInWithOtp({
+      email,
+      options: { shouldCreateUser: false },
+    })
 
     if (otpError) {
       console.error('send-otp Supabase error:', otpError)

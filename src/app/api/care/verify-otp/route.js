@@ -14,12 +14,6 @@ const sanity = createClient({
   useCdn: false,
 })
 
-function phoneVariants(raw) {
-  const norm = raw.replace(/\s+/g, '')
-  const spaced = norm.replace(/^(\+\d{2})(\d)/, '$1 $2')
-  return { norm, spaced }
-}
-
 function welcomeEmailHtml(firstName, unsubUrl, isDE) {
   const plusCodesUrl = 'https://plus.codes'
   const body = isDE ? `
@@ -127,18 +121,13 @@ Unsubscribe from community emails: ${unsubUrl}`
 
 export async function POST(request) {
   try {
-    const { identifier: rawIdentifier, type, code } = await request.json()
+    const { identifier: rawIdentifier, code } = await request.json()
 
-    if (!rawIdentifier || !type || !code || !['phone', 'email'].includes(type)) {
-      return Response.json({ error: 'identifier, type, and code are required' }, { status: 400 })
+    if (!rawIdentifier || !code) {
+      return Response.json({ error: 'Email and code are required.' }, { status: 400 })
     }
 
-    let identifier
-    if (type === 'phone') {
-      identifier = rawIdentifier.replace(/\s+/g, '')
-    } else {
-      identifier = rawIdentifier.trim().toLowerCase()
-    }
+    const email = rawIdentifier.trim().toLowerCase()
 
     // Buffer cookies that Supabase wants to set on the response
     const cookiesToSet = []
@@ -153,13 +142,12 @@ export async function POST(request) {
       }
     )
 
-    // Verify OTP with Supabase
-    const verifyPayload =
-      type === 'phone'
-        ? { phone: identifier, token: code, type: 'sms' }
-        : { email: identifier, token: code, type: 'email' }
-
-    const { data, error } = await supabase.auth.verifyOtp(verifyPayload)
+    // Verify OTP with Supabase (email only)
+    const { data, error } = await supabase.auth.verifyOtp({
+      email,
+      token: code,
+      type: 'email',
+    })
 
     if (error || !data.user) {
       return Response.json(
@@ -169,48 +157,33 @@ export async function POST(request) {
     }
 
     // Look up the catSitter / teamMember in Sanity to get sitterId
-    let catSitter, teamMember
-
-    if (type === 'phone') {
-      const { norm: phone, spaced: phoneSpaced } = phoneVariants(rawIdentifier)
-      ;[catSitter, teamMember] = await Promise.all([
-        sanity.fetch(
-          `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
-          { phone, phoneSpaced }
-        ),
-        sanity.fetch(
-          `*[_type == "teamMember" && (phone == $phone || phone == $phoneSpaced)][0]{ _id, name }`,
-          { phone, phoneSpaced }
-        ),
-      ])
-    } else {
-      ;[catSitter, teamMember] = await Promise.all([
-        sanity.fetch(
-          `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
-          { email: identifier }
-        ),
-        sanity.fetch(
-          `*[_type == "teamMember" && email == $email][0]{ _id, name }`,
-          { email: identifier }
-        ),
-      ])
-    }
+    const [catSitter, teamMember] = await Promise.all([
+      sanity.fetch(
+        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
+        { email }
+      ),
+      sanity.fetch(
+        `*[_type == "teamMember" && email == $email][0]{ _id, name }`,
+        { email }
+      ),
+    ])
 
     // If teamMember matched but no catSitter, find their linked catSitter by name
+    let resolvedCatSitter = catSitter
     if (!catSitter && teamMember) {
-      catSitter = await sanity.fetch(
+      resolvedCatSitter = await sanity.fetch(
         `*[_type == "catSitter" && name == $name && siteAdmin == true && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
         { name: teamMember.name }
       )
     }
 
-    const account = catSitter || teamMember
+    const account = resolvedCatSitter || teamMember
     if (!account) {
-      return Response.json({ error: 'Account not found or not verified' }, { status: 403 })
+      return Response.json({ error: 'Account not found or not verified.' }, { status: 403 })
     }
 
     const sitterId = account._id
-    const isTeamMember = !catSitter && !!teamMember
+    const isTeamMember = !resolvedCatSitter && !!teamMember
 
     // Write sitterId + isTeamMember into Supabase user_metadata via service role
     const supabaseAdmin = createSupabaseAdminClient()
@@ -219,12 +192,12 @@ export async function POST(request) {
     })
 
     // Send welcome email on first login (catSitters only)
-    if (catSitter && !catSitter.welcomeSent) {
-      const recipientEmail = catSitter.email || (type === 'email' ? identifier : null)
+    if (resolvedCatSitter && !resolvedCatSitter.welcomeSent) {
+      const recipientEmail = resolvedCatSitter.email || email
       if (recipientEmail && process.env.NODE_ENV === 'production') {
-        const locale = catSitter.locale || 'en'
-        const firstName = (catSitter.name || '').split(' ')[0] || 'there'
-        const unsubUrl = `https://care.purrfectlove.org/api/care/unsubscribe?id=${catSitter._id}`
+        const locale = resolvedCatSitter.locale || 'en'
+        const firstName = (resolvedCatSitter.name || '').split(' ')[0] || 'there'
+        const unsubUrl = `https://care.purrfectlove.org/api/care/unsubscribe?id=${resolvedCatSitter._id}`
         const isDE = locale === 'de'
         try {
           await resend.emails.send({
@@ -235,7 +208,7 @@ export async function POST(request) {
             html: welcomeEmailHtml(firstName, unsubUrl, isDE),
             text: welcomeEmailText(firstName, unsubUrl, isDE),
           })
-          await sanity.patch(catSitter._id).set({ welcomeSent: true }).commit()
+          await sanity.patch(resolvedCatSitter._id).set({ welcomeSent: true }).commit()
         } catch (err) {
           console.error('welcome email error:', err)
           // Non-fatal — don't block login

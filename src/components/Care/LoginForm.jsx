@@ -5,11 +5,6 @@ import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
 import styles from './Care.module.css';
 
-const COUNTRY_CODES = [
-  { label: '🇮🇳 +91', value: '+91', country: 'IN', placeholder: '98765 43210' },
-  { label: '🇩🇪 +49', value: '+49', country: 'DE', placeholder: '151 23456789' },
-];
-
 export default function LoginForm({ locale = 'en', loginRedirect }) {
   const redirect = loginRedirect || (locale === 'de' ? '/de/care' : '/');
   const router = useRouter();
@@ -17,34 +12,20 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
   const sessionReason = searchParams?.get('reason'); // 'expired' | 'session' | null
 
   const [step, setStep] = useState('identifier');
-  const [showTooltip, setShowTooltip] = useState(false);
   const [resendCountdown, setResendCountdown] = useState(0);
-  const tooltipTimerRef = useRef(null);
   const countdownTimerRef = useRef(null);
-  const [mode, setMode] = useState(null); // null = detecting, 'phone' | 'email'
-  const [countryCode, setCountryCode] = useState('+91');
-  const [phoneNumber, setPhoneNumber] = useState('');
   const [email, setEmail] = useState('');
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
-  // Track which modes have hit ACCOUNT_NOT_FOUND, to show progressive fallback messages
   const [emailNotFound, setEmailNotFound] = useState(false);
-  const [phoneNotFound, setPhoneNotFound] = useState(false);
-  const phoneInputRef = useRef(null);
-  const [shouldFocusPhone, setShouldFocusPhone] = useState(false);
 
-  // Tooltip: auto-dismiss after 3s and on outside click
+  // ipapi.co — kept for potential future locale/country use
   useEffect(() => {
-    if (!showTooltip) return;
-    tooltipTimerRef.current = setTimeout(() => setShowTooltip(false), 3000);
-    const dismiss = () => setShowTooltip(false);
-    document.addEventListener('click', dismiss, { capture: true, once: true });
-    return () => {
-      clearTimeout(tooltipTimerRef.current);
-      document.removeEventListener('click', dismiss, { capture: true });
-    };
-  }, [showTooltip]);
+    fetch('https://ipapi.co/json/')
+      .then(r => r.json())
+      .catch(() => {})
+  }, []);
 
   // Resend countdown
   function startResendCountdown() {
@@ -60,44 +41,12 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
 
   useEffect(() => () => clearInterval(countdownTimerRef.current), []);
 
-  // Focus phone input after programmatic switch to phone tab
-  useEffect(() => {
-    if (shouldFocusPhone && mode === 'phone' && phoneInputRef.current) {
-      phoneInputRef.current.focus();
-      setShouldFocusPhone(false);
-    }
-  }, [shouldFocusPhone, mode]);
-
-  // Auto-detect location on mount
-  useEffect(() => {
-    fetch('https://ipapi.co/json/')
-      .then(r => r.json())
-      .then(data => {
-        if (data.country_code === 'IN') {
-          setMode('phone');
-          setCountryCode('+91');
-        } else {
-          setMode('email');
-          const match = COUNTRY_CODES.find(c => c.country === data.country_code);
-          if (match) setCountryCode(match.value);
-        }
-      })
-      .catch(() => setMode('phone')); // fallback to phone if geo fails
-  }, []);
-
-  const fullPhone = `${countryCode}${phoneNumber.replace(/\D/g, '')}`;
-  const identifier = mode === 'phone' ? fullPhone : email.trim().toLowerCase();
-  const sentTo = mode === 'phone' ? fullPhone : email.trim();
+  const identifier = email.trim().toLowerCase();
 
   const handleSendCode = async (e) => {
     e.preventDefault();
     setError('');
-
-    if (mode === 'phone' && !phoneNumber) {
-      setError(locale === 'de' ? 'Bitte Handynummer eingeben.' : 'Please enter your phone number.');
-      return;
-    }
-    if (mode === 'email' && !email.trim()) {
+    if (!email.trim()) {
       setError(locale === 'de' ? 'Bitte E-Mail-Adresse eingeben.' : 'Please enter your email address.');
       return;
     }
@@ -107,16 +56,13 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
       const res = await fetch('/api/care/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, type: mode }),
+        body: JSON.stringify({ identifier, type: 'email' }),
       });
       const data = await res.json();
       if (!res.ok) {
         const errMsg = data.error || 'Failed to send code.';
         setError(errMsg);
-        if (errMsg === 'ACCOUNT_NOT_FOUND') {
-          if (mode === 'email') setEmailNotFound(true);
-          if (mode === 'phone') setPhoneNotFound(true);
-        }
+        if (errMsg === 'ACCOUNT_NOT_FOUND') setEmailNotFound(true);
         return;
       }
       setStep('code');
@@ -141,7 +87,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
       const res = await fetch('/api/care/verify-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, type: mode, code }),
+        body: JSON.stringify({ identifier, type: 'email', code }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Invalid code.'); return; }
@@ -163,7 +109,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
       const res = await fetch('/api/care/send-otp', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ identifier, type: mode }),
+        body: JSON.stringify({ identifier, type: 'email' }),
       });
       const data = await res.json();
       if (!res.ok) setError(data.error || 'Failed to resend. Please try again.');
@@ -177,86 +123,33 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
 
   const joinHref = locale === 'de' ? '/de/care/join' : '/care/join';
 
-  const switchToPhone = () => {
-    setMode('phone');
-    setError('');
-    setEmail('');
-    setShouldFocusPhone(true);
-  };
-
   const renderError = (msg) => {
     if (!msg) return null;
-
     if (msg === 'ACCOUNT_NOT_FOUND') {
-      // Email not found → suggest phone
-      if (mode === 'email') {
-        return (
-          <div className={styles.error}>
-            <p style={{ margin: '0 0 0.5rem 0' }}>
-              {locale === 'de'
-                ? 'Keine Konto mit dieser E-Mail gefunden.'
-                : 'No account found with this email.'}
-            </p>
-            <button
-              type="button"
-              onClick={switchToPhone}
-              style={{
-                background: 'none', border: 'none', padding: 0,
-                color: 'inherit', fontWeight: 700, textDecoration: 'underline',
-                cursor: 'pointer', fontSize: 'inherit', fontFamily: 'inherit',
-              }}
-            >
-              {locale === 'de'
-                ? 'Stattdessen mit Telefonnummer anmelden →'
-                : 'Try logging in with your phone number instead →'}
-            </button>
-          </div>
-        );
-      }
-
-      // Phone not found after email was already tried (or phone alone) → having trouble
-      if (emailNotFound || mode === 'phone') {
-        return (
-          <div className={styles.error}>
-            {locale === 'de' ? (
-              <>
-                Probleme beim Einloggen?{' '}
-                <a href={joinHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
-                  Anfrage senden
-                </a>
-                {' '}und wir melden uns bei dir.
-              </>
-            ) : (
-              <>
-                Having trouble logging in?{' '}
-                <a href={joinHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
-                  Submit a request
-                </a>
-                {' '}and we&apos;ll get back to you.
-              </>
-            )}
-          </div>
-        );
-      }
+      return (
+        <div className={styles.error}>
+          {locale === 'de' ? (
+            <>
+              Kein Konto mit dieser E-Mail-Adresse gefunden.{' '}
+              <a href={joinHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
+                Mitgliedschaft beantragen
+              </a>
+              {' '}und wir melden uns bei dir.
+            </>
+          ) : (
+            <>
+              No account found with this email.{' '}
+              <a href={joinHref} style={{ color: 'inherit', textDecoration: 'underline' }}>
+                Submit a membership request
+              </a>
+              {' '}and we&apos;ll get back to you.
+            </>
+          )}
+        </div>
+      );
     }
-
     return <div className={styles.error}>{msg}</div>;
   };
-
-  const toggleMode = () => {
-    setMode(m => m === 'phone' ? 'email' : 'phone');
-    setError('');
-    setPhoneNumber('');
-    setEmail('');
-  };
-
-  const subtitle = mode === 'phone'
-    ? (locale === 'de' ? 'Melde dich mit deiner Handynummer an.' : 'Sign in with your phone number.')
-    : (locale === 'de' ? 'Melde dich mit deiner E-Mail-Adresse an.' : 'Sign in with your email address.');
-
-  const sentVia = mode === 'phone'
-    ? (locale === 'de' ? 'per SMS' : 'via SMS')
-    : (locale === 'de' ? 'per E-Mail' : 'via email');
 
   return (
     <div className={styles.loginPageWrap}>
@@ -265,6 +158,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
         <h1 className={styles.loginTitle}>
           {locale === 'de' ? 'Mitgliederbereich' : 'Member Login'}
         </h1>
+
         {sessionReason && (
           <div style={{ background: '#fef3c7', border: '1px solid #fde68a', borderRadius: '8px', padding: '0.65rem 1rem', marginBottom: '1rem', fontSize: '0.875rem', color: '#92400e' }}>
             {sessionReason === 'expired'
@@ -272,109 +166,29 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
               : 'Please log in to continue.'}
           </div>
         )}
-        {mode !== null && (
-          <p className={styles.loginSubtitle}>{subtitle}</p>
-        )}
 
-        {mode === null ? (
-          <div style={{ padding: '2rem 0', color: '#888' }}>
-            {locale === 'de' ? 'Wird geladen…' : 'Loading…'}
-          </div>
-        ) : step === 'identifier' ? (
+        {step === 'identifier' ? (
           <form onSubmit={handleSendCode}>
-            {/* Mode toggle */}
-            <div className={styles.loginModeTabs}>
-              <button
-                type="button"
-                onClick={() => { setMode('phone'); setError(''); setEmail(''); setEmailNotFound(false); }}
-                disabled={loading}
-                className={`${styles.loginModeBtn} ${mode === 'phone' ? styles.loginModeBtnActive : ''}`}
-              >
-                {locale === 'de' ? 'Telefon' : 'Phone'}
-              </button>
-              <button
-                type="button"
-                onClick={() => { setMode('email'); setError(''); setPhoneNumber(''); setPhoneNotFound(false); }}
-                disabled={loading}
-                className={`${styles.loginModeBtn} ${mode === 'email' ? styles.loginModeBtnActive : ''}`}
-              >
-                {locale === 'de' ? 'E-Mail' : 'Email'}
-              </button>
-            </div>
+            <p className={styles.loginSubtitle}>
+              {locale === 'de' ? 'Melde dich mit deiner E-Mail-Adresse an.' : 'Sign in with your email address.'}
+            </p>
 
-            {mode === 'phone' ? (
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="phone">
-                  {locale === 'de' ? 'Handynummer' : 'Phone number'}
-                </label>
-                <div className={styles.phoneRow}>
-                  <div style={{ display: 'flex', alignItems: 'center', flexShrink: 0 }}>
-                    <select
-                      value={countryCode}
-                      onChange={(e) => setCountryCode(e.target.value)}
-                      className={styles.input}
-                      style={{ width: '110px' }}
-                      disabled={loading}
-                    >
-                      {COUNTRY_CODES.map((c) => (
-                        <option key={c.value} value={c.value}>{c.label}</option>
-                      ))}
-                    </select>
-                    <span style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }}>
-                      <span
-                        onClick={(e) => { e.stopPropagation(); setShowTooltip(v => !v); }}
-                        style={{ cursor: 'pointer', fontSize: '0.85rem', color: 'var(--text-light)', marginLeft: '0.25rem', userSelect: 'none' }}
-                      >
-                        ⓘ
-                      </span>
-                      {showTooltip && (
-                        <span
-                          onClick={() => setShowTooltip(false)}
-                          style={{
-                            position: 'absolute', bottom: '130%', left: '50%', transform: 'translateX(-50%)',
-                            background: '#333', color: '#fff', fontSize: '0.75rem', borderRadius: '6px',
-                            padding: '0.4rem 0.6rem', whiteSpace: 'nowrap', zIndex: 10,
-                            boxShadow: '0 2px 8px rgba(0,0,0,0.2)',
-                          }}
-                        >
-                          Purrfect Love Care is available in India and Germany only
-                        </span>
-                      )}
-                    </span>
-                  </div>
-                  <input
-                    id="phone"
-                    ref={phoneInputRef}
-                    type="tel"
-                    className={`${styles.input} ${styles.phoneInput}`}
-                    placeholder={COUNTRY_CODES.find(c => c.value === countryCode)?.placeholder || ''}
-                    value={phoneNumber}
-                    onChange={(e) => setPhoneNumber(e.target.value.replace(/\D/g, ''))}
-                    disabled={loading}
-                    autoComplete="tel-national"
-                    autoFocus
-                    inputMode="numeric"
-                  />
-                </div>
-              </div>
-            ) : (
-              <div className={styles.formGroup}>
-                <label className={styles.label} htmlFor="email">
-                  {locale === 'de' ? 'E-Mail-Adresse' : 'Email address'}
-                </label>
-                <input
-                  id="email"
-                  type="email"
-                  className={styles.input}
-                  placeholder="you@example.com"
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
-                  disabled={loading}
-                  autoComplete="email"
-                  autoFocus
-                />
-              </div>
-            )}
+            <div className={styles.formGroup}>
+              <label className={styles.label} htmlFor="email">
+                {locale === 'de' ? 'E-Mail-Adresse' : 'Email address'}
+              </label>
+              <input
+                id="email"
+                type="email"
+                className={styles.input}
+                placeholder="you@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                disabled={loading}
+                autoComplete="email"
+                autoFocus
+              />
+            </div>
 
             {renderError(error)}
 
@@ -393,7 +207,6 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                   <a href="/care/privacy" className={styles.loginPrivacyLink}>Privacy Policy</a>.</>
               )}
             </p>
-
           </form>
         ) : (
           <form onSubmit={handleVerify}>
@@ -402,9 +215,9 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
                 {locale === 'de' ? 'Code gesendet' : 'Code sent'}
               </p>
               <p className={styles.codeSentSubtitle}>
-                {locale === 'de' ? 'Wir haben einen Code an' : 'We sent a code to'}{' '}
-                <span className={styles.emailHighlight}>{sentTo}</span>{' '}
-                {sentVia}{locale === 'de' ? ' gesendet.' : '.'}
+                {locale === 'de' ? 'Wir haben einen Code per E-Mail an' : 'We sent a code via email to'}{' '}
+                <span className={styles.emailHighlight}>{email.trim()}</span>
+                {locale === 'de' ? ' gesendet.' : '.'}
               </p>
             </div>
 
