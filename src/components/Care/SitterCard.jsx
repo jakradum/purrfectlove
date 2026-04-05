@@ -121,7 +121,11 @@ export default function SitterCard({
     if (!expanded || myCats !== null) return;
     fetch('/api/care/profile')
       .then(r => r.json())
-      .then(doc => setMyCats((doc.cats || []).map(c => c.name).filter(Boolean)))
+      .then(doc => {
+        const names = (doc.cats || []).map(c => c.name).filter(Boolean);
+        setMyCats(names);
+        if (names.length === 1) setSelectedCats(names);
+      })
       .catch(() => setMyCats([]));
   }, [expanded, myCats]);
 
