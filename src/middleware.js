@@ -70,20 +70,28 @@ export async function middleware(request) {
       : new URL('/care/login', request.url);
   }
 
-  // Build Supabase client — buffers any session-refresh cookies for the response
+  // Build Supabase client — buffers any session-refresh cookies for the response.
+  // Wrapped in try/catch: if Supabase env vars are missing or the client throws,
+  // fall through with user = null so the site stays up (protected routes redirect
+  // to login, which is acceptable degraded behaviour).
   const cookiesToSet = [];
-  const supabase = createServerClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL,
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
-    {
-      cookies: {
-        getAll: () => request.cookies.getAll(),
-        setAll: (cookies) => cookiesToSet.push(...cookies),
-      },
-    }
-  );
-
-  const { data: { user } } = await supabase.auth.getUser();
+  let user = null;
+  try {
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: (cookies) => cookiesToSet.push(...cookies),
+        },
+      }
+    );
+    const { data } = await supabase.auth.getUser();
+    user = data.user;
+  } catch (err) {
+    console.error('[middleware] Supabase init/getUser failed:', err);
+  }
 
   // Helper: apply any refreshed session cookies to a response before returning it
   function withSessionCookies(response) {
