@@ -306,6 +306,9 @@ export default function SitterCard({
           <p className={styles.cardFormLabel}>
             Select your cats <span className={styles.cardFormRequired}>*</span>
           </p>
+          <p style={{ fontSize: '11px', color: '#999', marginTop: '-8px', marginBottom: '10px', lineHeight: 1.5 }}>
+            Select your cats so the sitter can know how many to expect
+          </p>
           {myCats === null ? (
             <p style={{ fontSize: '12px', color: '#aaa', marginBottom: 12 }}>Loading…</p>
           ) : myCats.length === 0 ? (

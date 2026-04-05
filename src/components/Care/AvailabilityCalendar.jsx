@@ -220,8 +220,8 @@ export default function AvailabilityCalendar({
         disabled={{ before: today }}
         modifiers={modifiers}
         modifiersStyles={modifiersStyles}
-        onDayButtonClick={handleDayClick}
-        onDayButtonMouseDown={(date, _modifiers, e) => {
+        onDayClick={handleDayClick}
+        onDayMouseDown={(date, _modifiers, e) => {
           if (e?.shiftKey) e.preventDefault(); // prevent text selection
         }}
       />
