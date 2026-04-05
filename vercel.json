@@ -1,5 +1,5 @@
 {
-  "installCommand": "npm ci",
+  "installCommand": "npm ci --legacy-peer-deps",
   "crons": [
     { "path": "/api/cron/message-reminders", "schedule": "30 3 * * *" },
     { "path": "/api/cron/calculate-scores", "schedule": "30 20 * * *" },
