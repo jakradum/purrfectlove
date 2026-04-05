@@ -357,7 +357,7 @@ export const structure = (S) =>
                         .child(
                           S.documentTypeList('bookingRequest')
                             .title('Confirmed Bookings')
-                            .filter('_type == "bookingRequest" && status in ["confirmed", "accepted"]')
+                            .filter('_type == "bookingRequest" && (status == "confirmed" || status == "accepted")')
                             .defaultOrdering([{ field: 'createdAt', direction: 'desc' }])
                         ),
                       S.listItem()
