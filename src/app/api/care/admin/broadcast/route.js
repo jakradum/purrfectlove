@@ -1,5 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -13,6 +14,19 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request) {
   try {
+    const user = await getSupabaseUser(request)
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const admin = await serverClient.fetch(
+      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
+      { id: user.sitterId }
+    )
+    if (!admin?.siteAdmin) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { broadcastId, signOff } = await request.json()
     if (!broadcastId) {
       return Response.json({ error: 'broadcastId is required' }, { status: 400 })
@@ -31,7 +45,7 @@ export async function POST(request) {
     // Fetch all eligible recipients: verified members who haven't opted out
     const members = await serverClient.fetch(
       `*[_type == "catSitter" && memberVerified == true && (newsletterOptOut != true)]{
-        _id, email, name, username
+        _id, email, name
       }`,
       {}
     )
@@ -52,7 +66,7 @@ export async function POST(request) {
       const results = await Promise.allSettled(
         batch.map(async (member) => {
           if (!member.email) return
-          const displayName = member.username || member.name || 'there'
+          const displayName = member.name || 'there'
           await resend.emails.send({
             from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
             replyTo: 'support@purrfectlove.org',

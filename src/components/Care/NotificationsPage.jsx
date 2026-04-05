@@ -8,6 +8,7 @@ const TYPE_LABELS = {
   sit_request: 'Sit request',
   membership_approved: 'Membership approved',
   sit_confirm: 'Sit confirmation',
+  booking_blocked: 'Availability updated',
 };
 
 function formatDate(iso) {
@@ -37,6 +38,9 @@ export default function NotificationsPage({ notifications = [], locale = 'en' })
                   <span className={styles.notifLabel}>{label}</span>
                   {n.senderName && (
                     <span className={styles.notifSender}>from {n.senderName}</span>
+                  )}
+                  {n.body && (
+                    <span className={styles.notifBody}>{n.body}</span>
                   )}
                   <span className={styles.notifDate}>{formatDate(n.createdAt)}</span>
                 </div>

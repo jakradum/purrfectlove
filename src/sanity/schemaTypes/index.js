@@ -8,7 +8,6 @@ import blogPost from './blogPost'
 import contactMessage from './contactMessage'
 import siteSettings from './siteSettings'
 import catSitter from './catSitter'
-import otpCode from './otpCode'
 import message from './message'
 import blockedUser from './blockedUser'
 import contactShare from './contactShare'
@@ -37,7 +36,6 @@ export const schema = {
     contactMessage,
     siteSettings,
     catSitter,
-    otpCode,
     message,
     blockedUser,
     contactShare,

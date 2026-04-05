@@ -1,40 +1,24 @@
-import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
-
-const serverClient = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: '2024-01-01',
-  useCdn: false,
-})
-
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
+import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 // Lightweight endpoint for sidebar dot polling.
-// Returns { count } — total active (pending/accepted) bookings as parent or sitter.
+// Returns { count } — total active (pending/confirmed) bookings as parent or sitter.
 export async function GET(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const userId = payload.sitterId
+    const userId = user.sitterId
+    const db = createSupabaseDbClient()
 
-    const [asParent, asSitter] = await Promise.all([
-      serverClient.fetch(
-        `count(*[_type == "bookingRequest" && parent._ref == $userId && status in ["pending", "confirmed", "accepted"]])`,
-        { userId }
-      ),
-      serverClient.fetch(
-        `count(*[_type == "bookingRequest" && sitter._ref == $userId && status in ["pending", "confirmed", "accepted"]])`,
-        { userId }
-      ),
+    const [{ count: asParent }, { count: asSitter }] = await Promise.all([
+      db.from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('parent_id', userId)
+        .in('status', ['pending', 'confirmed', 'accepted']),
+      db.from('bookings')
+        .select('id', { count: 'exact', head: true })
+        .eq('sitter_id', userId)
+        .in('status', ['pending', 'confirmed', 'accepted']),
     ])
 
     return Response.json({ count: (asParent || 0) + (asSitter || 0) })

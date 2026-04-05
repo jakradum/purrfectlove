@@ -1,6 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -11,14 +11,6 @@ const serverClient = createClient({
 })
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
 
 function expandDateRange(startYMD, endYMD) {
   const dates = []
@@ -77,86 +69,112 @@ function brandedEmail({ heading, body }) {
 
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { bookingId } = await request.json()
     if (!bookingId) return Response.json({ error: 'bookingId is required' }, { status: 400 })
 
-    // Fetch the booking request with both parties' details
-    const booking = await serverClient.fetch(
-      `*[_type == "bookingRequest" && _id == $id][0]{
-        _id, bookingRef, startDate, endDate, status, cats,
-        notifiedAt, notificationDelivered,
-        sitter -> { _id, name, email, location, blockedByBooking },
-        parent -> { _id, name, email },
-      }`,
-      { id: bookingId }
-    )
+    const db = createSupabaseDbClient()
 
-    if (!booking) return Response.json({ error: 'Booking not found' }, { status: 404 })
-    if (booking.sitter._id !== payload.sitterId) {
+    // Fetch booking from Supabase
+    const { data: booking, error: fetchError } = await db
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
+
+    if (fetchError || !booking) return Response.json({ error: 'Booking not found' }, { status: 404 })
+    if (booking.sitter_id !== user.sitterId) {
       return Response.json({ error: 'Only the sitter can accept this booking' }, { status: 403 })
     }
-    if (booking.status === 'accepted') {
-      return Response.json({ error: 'Already accepted' }, { status: 409 })
+    if (booking.status === 'confirmed' || booking.status === 'accepted') {
+      return Response.json({ error: 'Already confirmed' }, { status: 409 })
     }
 
-    const ref = booking.bookingRef
-    const startFmt = formatDate(booking.startDate)
-    const endFmt = formatDate(booking.endDate)
-    const sitterName = booking.sitter.name || 'Your sitter'
-    const parentName = booking.parent.name || 'Your cat parent'
-    const lat = booking.sitter.location?.lat
-    const lng = booking.sitter.location?.lng
+    // Fetch sitter + parent profiles from Sanity
+    const [sitterProfile, parentProfile] = await Promise.all([
+      serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location, blockedByBooking }`,
+        { id: booking.sitter_id }
+      ),
+      serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ _id, name, email }`,
+        { id: booking.parent_id }
+      ),
+    ])
+
+    const ref = booking.booking_ref
+    const startFmt = formatDate(booking.start_date)
+    const endFmt = formatDate(booking.end_date)
+    const sitterName = sitterProfile?.name || 'Your sitter'
+    const parentName = parentProfile?.name || 'Your cat parent'
+    const lat = sitterProfile?.location?.lat
+    const lng = sitterProfile?.location?.lng
     const mapsUrl = lat && lng ? `https://maps.google.com/?q=${lat},${lng}` : null
 
-    // 1. Mark booking as accepted; write respondedAt and responseTimeHours for scoring
+    // 1. Mark booking as confirmed; write responded_at and response_time_hours for scoring
     const respondedAt = new Date().toISOString()
-    const acceptPatch = { status: 'accepted', respondedAt }
-    if (booking.notificationDelivered && booking.notifiedAt) {
+    const acceptPatch = { status: 'confirmed', responded_at: respondedAt }
+    if (booking.notification_delivered && booking.notified_at) {
       const hours = parseFloat(
-        ((Date.now() - new Date(booking.notifiedAt).getTime()) / 3_600_000).toFixed(1)
+        ((Date.now() - new Date(booking.notified_at).getTime()) / 3_600_000).toFixed(1)
       )
-      acceptPatch.responseTimeHours = hours
+      acceptPatch.response_time_hours = hours
     }
-    await serverClient.patch(bookingId).set(acceptPatch).commit()
+    await db.from('bookings').update(acceptPatch).eq('id', bookingId)
 
-    // 2. Create sitRecord
+    // 2. Mark overlapping pending bookings for this sitter as unavailable
+    const { data: overlapping } = await db
+      .from('bookings')
+      .select('id')
+      .neq('id', bookingId)
+      .eq('sitter_id', booking.sitter_id)
+      .eq('status', 'pending')
+      .lte('start_date', booking.end_date)
+      .gte('end_date', booking.start_date)
+
+    if (overlapping?.length > 0) {
+      await db.from('bookings')
+        .update({ status: 'unavailable' })
+        .in('id', overlapping.map(b => b.id))
+    }
+
+    // 3. Create sitRecord in Sanity (post-sit confirmation record)
     await serverClient.create({
       _type: 'sitRecord',
-      sitter: { _type: 'reference', _ref: booking.sitter._id },
-      parent: { _type: 'reference', _ref: booking.parent._id },
-      startDate: booking.startDate,
-      endDate: booking.endDate,
+      sitter: { _type: 'reference', _ref: booking.sitter_id },
+      parent: { _type: 'reference', _ref: booking.parent_id },
+      startDate: booking.start_date,
+      endDate: booking.end_date,
       bookingRef: ref,
       createdAt: new Date().toISOString(),
     })
 
-    // 3. Auto-block dates on sitter's catSitter doc
-    const newBlockedDates = expandDateRange(booking.startDate, booking.endDate)
-    const existingBlocked = booking.sitter.blockedByBooking || []
+    // 4. Auto-block dates on sitter's catSitter doc
+    const newBlockedDates = expandDateRange(booking.start_date, booking.end_date)
+    const existingBlocked = sitterProfile?.blockedByBooking || []
     const mergedBlocked = [...new Set([...existingBlocked, ...newBlockedDates])]
-    await serverClient.patch(booking.sitter._id).set({ blockedByBooking: mergedBlocked }).commit()
+    await serverClient.patch(booking.sitter_id).set({ blockedByBooking: mergedBlocked }).commit()
 
-    // 4. In-app notification to sitter
+    // 5. In-app notification to sitter
     const notifBody = `Your cats are being looked after ${startFmt}–${endFmt}. We've marked those dates as unavailable for sitting. You can override this in your profile.`
     await serverClient.create({
       _type: 'notification',
       type: 'booking_blocked',
-      recipient: { _type: 'reference', _ref: booking.sitter._id },
+      recipient: { _type: 'reference', _ref: booking.sitter_id },
       body: notifBody,
       linkPath: '/care/profile',
       read: false,
       createdAt: new Date().toISOString(),
     })
 
-    // 5. Email to parent
-    if (booking.parent.email) {
+    // 6. Email to parent
+    if (parentProfile?.email) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
         replyTo: 'support@purrfectlove.org',
-        to: [booking.parent.email],
+        to: [parentProfile.email],
         subject: `Booking confirmed! #${ref}`,
         html: brandedEmail({
           heading: 'Your booking is confirmed! 🐾',
@@ -174,16 +192,12 @@ export async function POST(request) {
       })
     }
 
-    // 6. Email to sitter — includes availability-block notice.
-    // NOTE: This email is sent unconditionally. When a notificationDelivered tracking system
-    // is added, gate this send so the booking_blocked in-app notification doesn't also
-    // trigger a duplicate email. At that point, move the availability notice to the
-    // notification delivery email instead.
-    if (booking.sitter.email) {
+    // 7. Email to sitter
+    if (sitterProfile?.email) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
         replyTo: 'support@purrfectlove.org',
-        to: [booking.sitter.email],
+        to: [sitterProfile.email],
         subject: `Booking confirmed! #${ref}`,
         html: brandedEmail({
           heading: 'Booking confirmed! 🐾',

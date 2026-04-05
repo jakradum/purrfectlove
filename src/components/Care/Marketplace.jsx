@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import { createBrowserClient } from '@supabase/ssr';
 import styles from './Care.module.css';
 import SitterCard from './SitterCard';
 import FilterBar from './FilterBar';
@@ -138,7 +139,7 @@ function SkeletonCard() {
   );
 }
 
-export default function Marketplace({ userLocation, locale: localeProp }) {
+export default function Marketplace({ userLocation, sitterId, locale: localeProp }) {
   const locale = localeProp || 'en';
   const t = locale === 'de' ? contentDE.marketplace : contentEN.marketplace;
 
@@ -164,8 +165,6 @@ export default function Marketplace({ userLocation, locale: localeProp }) {
   const sliderDebounceRef = useRef(null);
   const pendingRadiusRef = useRef(radius);
   const lastResultCountRef = useRef(1);
-  // Ref so polling interval always reads the latest myBookings without stale closure
-  const myBookingsRef = useRef({});
 
   // Restore state from sessionStorage on mount
   useEffect(() => {
@@ -207,9 +206,6 @@ export default function Marketplace({ userLocation, locale: localeProp }) {
       .catch(() => {/* silent — cards fall back to bookable state */});
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
-  // Keep ref in sync so polling interval reads latest state without stale closure
-  useEffect(() => { myBookingsRef.current = myBookings; }, [myBookings]);
-
   // Auto-dismiss toast after 4 s
   useEffect(() => {
     if (!toast) return;
@@ -217,69 +213,43 @@ export default function Marketplace({ userLocation, locale: localeProp }) {
     return () => clearTimeout(t);
   }, [toast]);
 
-  // Poll every 15 s while any booking is pending. Single interval from mount — reads state
-  // via ref to avoid stale closures. Active poll count resets when no bookings are pending.
+  // Supabase Realtime: watch for booking status changes where current user is the parent.
+  // Replaces the 15-second polling interval.
   useEffect(() => {
-    const MAX_ACTIVE_POLLS = 120; // 30 min ÷ 15 s
-    let activePollCount = 0;
+    if (!sitterId) return;
 
-    const id = setInterval(async () => {
-      const hasPending = Object.values(myBookingsRef.current).some(b => b.status === 'pending');
-      if (!hasPending) { activePollCount = 0; return; }
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
 
-      activePollCount++;
-      if (activePollCount > MAX_ACTIVE_POLLS) { clearInterval(id); return; }
-
-      try {
-        const r = await fetch('/api/care/bookings/my');
-        if (!r.ok) return;
-        const { bookings } = await r.json();
-
-        // Build a fresh lookup from API response
-        const freshMap = {};
-        for (const b of (bookings || [])) {
-          freshMap[`${b.sitterId}__${b.startDate}__${b.endDate}`] = b;
-        }
-
-        // Compare against current state via ref (avoids stale closure)
-        const snapshot = myBookingsRef.current;
-        const patch = {};
-        let anyChange = false;
-        let anyDeclined = false;
-
-        for (const [key, booking] of Object.entries(snapshot)) {
-          if (booking.status !== 'pending') continue;
-          const fresh = freshMap[key];
-          if (fresh?.status === 'confirmed' || fresh?.status === 'accepted') {
-            patch[key] = { status: 'accepted', bookingRef: fresh.bookingRef };
-            anyChange = true;
-          } else if (!fresh) {
-            // Booking absent from results while still pending → declined
-            patch[key] = 'declined';
-            anyChange = true;
-            anyDeclined = true;
+    const channel = supabase
+      .channel(`marketplace-bookings-${sitterId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `parent_id=eq.${sitterId}` },
+        (payload) => {
+          const row = payload.new;
+          const key = `${row.sitter_id}__${row.start_date}__${row.end_date}`;
+          if (row.status === 'confirmed' || row.status === 'accepted') {
+            setMyBookings(prev => ({
+              ...prev,
+              [key]: { status: 'confirmed', bookingRef: row.booking_ref },
+            }));
+          } else if (row.status === 'declined' || row.status === 'unavailable' || row.status === 'cancelled') {
+            setMyBookings(prev => {
+              const next = { ...prev };
+              delete next[key];
+              return next;
+            });
+            setToast({ message: 'Your booking request was declined', id: Date.now() });
           }
         }
+      )
+      .subscribe();
 
-        if (!anyChange) return;
-
-        setMyBookings(prev => {
-          const next = { ...prev };
-          for (const [key, val] of Object.entries(patch)) {
-            if (val === 'declined') delete next[key];
-            else next[key] = val;
-          }
-          return next;
-        });
-
-        if (anyDeclined) {
-          setToast({ message: 'Your booking request was declined', id: Date.now() });
-        }
-      } catch { /* network error — do nothing, try again next tick */ }
-    }, 15_000);
-
-    return () => clearInterval(id);
-  }, []); // single interval from mount; reads latest state via myBookingsRef
+    return () => supabase.removeChannel(channel);
+  }, [sitterId]);
 
   // Persist to sessionStorage
   useEffect(() => {

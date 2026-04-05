@@ -1,13 +1,5 @@
 import { Webhook } from 'svix'
-import { createClient } from '@sanity/client'
-
-const serverClient = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: '2024-01-01',
-  useCdn: false,
-})
+import { createSupabaseDbClient } from '@/lib/supabaseServer'
 
 export async function POST(request) {
   const secret = process.env.RESEND_WEBHOOK_SECRET
@@ -19,7 +11,7 @@ export async function POST(request) {
   // Must read raw body as text before any parsing — Svix verifies the exact bytes
   const rawBody = await request.text()
 
-  const svixId = request.headers.get('svix-id')
+  const svixId        = request.headers.get('svix-id')
   const svixTimestamp = request.headers.get('svix-timestamp')
   const svixSignature = request.headers.get('svix-signature')
 
@@ -31,7 +23,7 @@ export async function POST(request) {
   try {
     const wh = new Webhook(secret)
     event = wh.verify(rawBody, {
-      'svix-id': svixId,
+      'svix-id':        svixId,
       'svix-timestamp': svixTimestamp,
       'svix-signature': svixSignature,
     })
@@ -47,18 +39,18 @@ export async function POST(request) {
   // Extract booking_id from email tags
   const tags = event.data?.tags
   const bookingTag = Array.isArray(tags) ? tags.find(t => t.name === 'booking_id') : null
-  const bookingId = bookingTag?.value
+  const bookingId  = bookingTag?.value
 
   if (!bookingId) {
-    // Not a booking notification email — nothing to do
     return new Response('OK', { status: 200 })
   }
 
   try {
-    await serverClient.patch(bookingId).set({ notificationDelivered: true }).commit()
+    const db = createSupabaseDbClient()
+    await db.from('bookings').update({ notification_delivered: true }).eq('id', bookingId)
   } catch (error) {
-    console.error('resend-webhook: failed to patch bookingRequest:', bookingId, error)
-    // Return 200 so Resend doesn't retry — the email event was valid, just the DB write failed
+    console.error('resend-webhook: failed to update booking:', bookingId, error)
+    // Return 200 so Resend doesn't retry — the email event was valid
     return new Response('OK', { status: 200 })
   }
 

@@ -115,6 +115,7 @@ export async function POST(request) {
 
     // Generate OTP token via Supabase admin — does not send any email itself.
     // We extract email_otp and send it via Resend using our own template.
+    // The Sanity membership gate above is the primary access control.
     const supabaseAdmin = createSupabaseAdminClient()
     const { data, error: genError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',

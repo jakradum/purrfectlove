@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -9,18 +9,10 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -34,7 +26,7 @@ export async function POST(request) {
       return Response.json({ error: 'Select at least one contact method to share' }, { status: 400 })
     }
 
-    const sitterId = payload.sitterId
+    const sitterId = user.sitterId
 
     const record = await serverClient.create({
       _type: 'contactShare',

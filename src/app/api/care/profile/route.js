@@ -1,6 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
-import { cookies } from 'next/headers'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
@@ -60,25 +59,16 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  // Try cookie from request headers first
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? match[1] : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function GET(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const sitter = await serverClient.fetch(
       `*[_type == "catSitter" && _id == $id][0]`,
-      { id: payload.sitterId }
+      { id: user.sitterId }
     )
 
     if (!sitter) {
@@ -94,12 +84,12 @@ export async function GET(request) {
 
 export async function PATCH(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!rateLimit(`profile:${payload.sitterId}`, 30, 60_000)) {
+    if (!rateLimit(`profile:${user.sitterId}`, 30, 60_000)) {
       return Response.json({ error: 'Too many requests. Please wait a moment.' }, { status: 429 })
     }
 
@@ -109,8 +99,8 @@ export async function PATCH(request) {
     const allowedFields = [
       'name', 'location', 'contactPreference', 'bio', 'bedrooms', 'householdSize',
       'cats', 'alwaysAvailable', 'unavailableDates', 'unavailableRanges', 'availableDates',
-      'availabilityDefault', 'unavailableDatesV2', 'maxHomesPerDay', 'feedingTypes', 'behavioralTraits', 'canSit', 'needsSitting',
-      'hideEmail', 'hideWhatsApp', 'newsletterOptOut', 'guidelinesAccepted',
+      'availabilityDefault', 'unavailableDatesV2', 'maxHomesPerDay', 'maxCatsPerDay', 'feedingTypes', 'behavioralTraits', 'canSit',
+      'hideEmail', 'hideWhatsApp', 'newsletterOptOut', 'guidelinesAccepted', 'blockedByBooking',
       'notifEmailMessage', 'notifEmailSitRequest',
     ]
 
@@ -141,7 +131,7 @@ export async function PATCH(request) {
     }
 
     const updated = await serverClient
-      .patch(payload.sitterId)
+      .patch(user.sitterId)
       .set(patch)
       .commit()
 

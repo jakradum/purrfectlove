@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -9,22 +9,14 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function GET(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const sitterId = payload.sitterId
+    const sitterId = user.sitterId
 
     // Fetch all blocks involving this user (as blocker or blocked)
     const blocks = await serverClient.fetch(
@@ -44,8 +36,8 @@ export async function GET(request) {
     const messages = await serverClient.fetch(
       `*[_type == "message" && (from._ref == $id || to._ref == $id)] | order(createdAt desc) {
         _id, body, read, readAt, markedAsSpam, broadcast, createdAt,
-        from -> { _id, name, username, siteAdmin },
-        to -> { _id, name, username, siteAdmin }
+        from -> { _id, name, siteAdmin },
+        to -> { _id, name, siteAdmin }
       }`,
       { id: sitterId }
     )
@@ -64,13 +56,12 @@ export async function GET(request) {
     for (const msg of filtered) {
       const partnerId = msg.from._id === sitterId ? msg.to._id : msg.from._id
       const partner = msg.from._id === sitterId ? msg.to : msg.from
-      const partnerName = partner.username || partner.name
+      const partnerName = partner.name
 
       if (!threadsMap.has(partnerId)) {
         threadsMap.set(partnerId, {
           partnerId,
           partnerName: partnerName || 'Unknown',
-          partnerUsername: partner.username || null,
           isAdminThread: !!partner.siteAdmin,
           isBroadcastThread: !!msg.broadcast,
           messages: [],

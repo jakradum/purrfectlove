@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const sanity = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -9,25 +9,17 @@ const sanity = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? match[1] : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { reason } = await request.json()
     if (!reason || reason.trim().length < 20) {
       return Response.json({ error: 'Please provide a reason of at least 20 characters.' }, { status: 400 })
     }
 
-    await sanity.patch(payload.sitterId).set({
+    await sanity.patch(user.sitterId).set({
       deletionRequested: true,
       deletionReason: reason.trim(),
       deletionRequestedAt: new Date().toISOString(),

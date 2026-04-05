@@ -1,3 +1,5 @@
+import { cookies } from 'next/headers';
+import { createServerClient } from '@supabase/ssr';
 import Navbar from '@/components/navbar';
 import Sidebar from '@/components/Care/Sidebar';
 import Footer from '@/components/Footer';
@@ -8,13 +10,22 @@ export const metadata = {
   robots: { index: false, follow: false },
 };
 
-export default function DeCareLayout({ children }) {
+export default async function DeCareLayout({ children }) {
+  const cookieStore = await cookies();
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  const sitterId = user?.user_metadata?.sitterId || null;
+
   return (
     <>
       <Navbar locale="de" siteUrl="https://purrfectlove.org" />
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
         <div style={{ display: 'flex', flex: 1, minHeight: 'calc(100vh - 64px)' }}>
-          <Sidebar locale="de" basePath="/de/care" />
+          <Sidebar locale="de" basePath="/de/care" sitterId={sitterId} />
           <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px' }}>
             {children}
           </main>

@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const sanity = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -9,28 +9,20 @@ const sanity = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? match[1] : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function GET(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const id = payload.sitterId
+    const id = user.sitterId
 
     // Fetch all data associated with this member in parallel
     const [profile, messages, feedbackItems, memberReports] = await Promise.all([
       sanity.fetch(
         `*[_type == "catSitter" && _id == $id][0]{
-          _id, _createdAt, _updatedAt, name, username, email, phone, bio, location,
+          _id, _createdAt, _updatedAt, name, "username_legacy": username, email, phone, bio, location,
           cats, canSit, needsSitting, contactPreference, bedrooms, householdSize,
           hideEmail, hideWhatsApp, newsletterOptOut, guidelinesAccepted,
           alwaysAvailable, unavailableDatesV2, feedingTypes, behavioralTraits, maxHomesPerDay,

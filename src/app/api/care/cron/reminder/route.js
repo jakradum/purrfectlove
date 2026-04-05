@@ -1,5 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
+import { createSupabaseDbClient } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -102,25 +103,37 @@ export async function GET(request) {
 
   try {
     const date = targetDate()
+    const db = createSupabaseDbClient()
 
-    const bookings = await serverClient.fetch(
-      `*[_type == "bookingRequest" && status == "accepted" && startDate == $date]{
-        _id, bookingRef, startDate, endDate,
-        sitter -> { _id, name, email, phone },
-        parent -> { _id, name, email, phone }
-      }`,
-      { date }
+    // Fixed: was querying status == "accepted" — correct value is "confirmed"
+    const { data: bookings } = await db
+      .from('bookings')
+      .select('id, booking_ref, start_date, end_date, sitter_id, parent_id')
+      .in('status', ['confirmed', 'accepted']) // include legacy 'accepted' for migrated rows
+      .eq('start_date', date)
+
+    if (!bookings || bookings.length === 0) {
+      return Response.json({ ok: true, date, bookings: 0, sent: 0 })
+    }
+
+    // Batch-fetch all profiles from Sanity
+    const allIds = [...new Set(bookings.flatMap(b => [b.sitter_id, b.parent_id]))]
+    const profiles = await serverClient.fetch(
+      `*[_type == "catSitter" && _id in $ids]{ _id, name, email, phone }`,
+      { ids: allIds }
     )
+    const profileMap = Object.fromEntries(profiles.map(p => [p._id, p]))
 
     let sent = 0
+    const subject = `Your sit starts in 2 days — here are the contact details`
 
     for (const booking of bookings) {
-      const { sitter, parent, startDate, endDate, bookingRef } = booking
-      const startFmt = formatDate(startDate)
-      const endFmt = formatDate(endDate)
-      const subject = `Your sit starts in 2 days — here are the contact details`
+      const sitter = profileMap[booking.sitter_id]
+      const parent = profileMap[booking.parent_id]
+      const startFmt = formatDate(booking.start_date)
+      const endFmt = formatDate(booking.end_date)
+      const bookingRef = booking.booking_ref
 
-      // Email to parent (contains sitter's contact info)
       if (parent?.email) {
         await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
@@ -131,19 +144,18 @@ export async function GET(request) {
             heading: 'Your sit starts in 2 days 🐾',
             body: `
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
-                Your booking with <strong>${sitter?.name || 'your sitter'}</strong> starts on <strong>${startFmt}</strong>${endDate !== startDate ? ` and runs until ${endFmt}` : ''}.
+                Your booking with <strong>${sitter?.name || 'your sitter'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
                 Here are their contact details so you can coordinate:
               </p>
               ${contactBlock({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}
               <p style="font-size:13px;color:#999;margin:0;">Booking ID: #${bookingRef}</p>
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${endDate !== startDate ? ` and runs until ${endFmt}` : ''}.\n\nSitter contact details:\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\n– The Purrfect Love Community`,
+          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nSitter contact details:\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\n– The Purrfect Love Community`,
         })
         sent++
       }
 
-      // Email to sitter (contains parent's contact info)
       if (sitter?.email) {
         await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
@@ -154,14 +166,14 @@ export async function GET(request) {
             heading: 'Your sit starts in 2 days 🐾',
             body: `
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
-                Your sitting commitment for <strong>${parent?.name || 'your cat parent'}</strong> starts on <strong>${startFmt}</strong>${endDate !== startDate ? ` and runs until ${endFmt}` : ''}.
+                Your sitting commitment for <strong>${parent?.name || 'your cat parent'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
                 Here are their contact details:
               </p>
               ${contactBlock({ name: parent?.name, email: parent?.email, phone: parent?.phone })}
               <p style="font-size:13px;color:#999;margin:0;">Booking ID: #${bookingRef}</p>
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${endDate !== startDate ? ` and runs until ${endFmt}` : ''}.\n\nCat parent contact details:\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\n– The Purrfect Love Community`,
+          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nCat parent contact details:\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\n– The Purrfect Love Community`,
         })
         sent++
       }

@@ -1,21 +1,4 @@
-import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
-
-const serverClient = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: '2024-01-01',
-  useCdn: false,
-})
-
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
+import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 function expandRange(startYMD, endYMD) {
   const dates = []
@@ -33,21 +16,23 @@ function expandRange(startYMD, endYMD) {
 
 export async function GET(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    // Find accepted bookings where this member is the sitter
-    const bookings = await serverClient.fetch(
-      `*[_type == "bookingRequest" && status == "accepted" && sitter._ref == $sitterId]{ startDate, endDate }`,
-      { sitterId: payload.sitterId }
-    )
+    const db = createSupabaseDbClient()
+
+    // Find confirmed bookings where this member is the sitter.
+    // Fixed: was querying status == "accepted" but the correct value is "confirmed".
+    const { data: bookings } = await db
+      .from('bookings')
+      .select('start_date, end_date')
+      .eq('sitter_id', user.sitterId)
+      .in('status', ['confirmed', 'accepted']) // include 'accepted' for migrated legacy rows
 
     const blocked = new Set()
-    for (const b of bookings) {
-      if (b.startDate && b.endDate) {
-        for (const d of expandRange(b.startDate, b.endDate)) {
+    for (const b of (bookings || [])) {
+      if (b.start_date && b.end_date) {
+        for (const d of expandRange(b.start_date, b.end_date)) {
           blocked.add(d)
         }
       }

@@ -27,7 +27,7 @@ export async function getSupabaseUser(request) {
 }
 
 /**
- * Service-role admin client. Use for updateUserById and other admin ops.
+ * Service-role admin client. Use for auth.admin.* ops and Postgres queries.
  * Never expose to the browser.
  */
 export function createSupabaseAdminClient() {
@@ -37,3 +37,6 @@ export function createSupabaseAdminClient() {
     { auth: { autoRefreshToken: false, persistSession: false } }
   )
 }
+
+/** Alias: Postgres-only operations (bookings, membership_requests, etc.) */
+export const createSupabaseDbClient = createSupabaseAdminClient

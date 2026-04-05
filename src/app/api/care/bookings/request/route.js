@@ -1,6 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -19,7 +19,6 @@ const WORDS = [
 ]
 
 function generateBookingRef(startDate) {
-  // Format: [CatWord][DDMM] — e.g. "Derp2304" for a sit starting Apr 23
   const [, m, d] = startDate.split('-')
   const ddmm = `${d}${m}`
   const word = WORDS[Math.floor(Math.random() * WORDS.length)]
@@ -28,54 +27,57 @@ function generateBookingRef(startDate) {
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
     const { sitterId, startDate, endDate, cats, message } = await request.json()
 
     if (!sitterId || !startDate || !endDate) {
       return Response.json({ error: 'sitterId, startDate and endDate are required' }, { status: 400 })
     }
-    if (sitterId === payload.sitterId) {
+    if (sitterId === user.sitterId) {
       return Response.json({ error: 'Cannot book yourself' }, { status: 400 })
     }
+
+    const db = createSupabaseDbClient()
 
     // Ensure unique bookingRef
     let bookingRef
     let attempts = 0
     do {
       bookingRef = generateBookingRef(startDate)
-      const existing = await serverClient.fetch(
-        `*[_type == "bookingRequest" && bookingRef == $ref][0]._id`,
-        { ref: bookingRef }
-      )
+      const { data: existing } = await db
+        .from('bookings')
+        .select('id')
+        .eq('booking_ref', bookingRef)
+        .maybeSingle()
       if (!existing) break
     } while (++attempts < 5)
 
-    const doc = await serverClient.create({
-      _type: 'bookingRequest',
-      sitter: { _type: 'reference', _ref: sitterId },
-      parent: { _type: 'reference', _ref: payload.sitterId },
-      startDate,
-      endDate,
-      cats: cats || [],
-      message: message || null,
-      bookingRef,
-      status: 'pending',
-      createdAt: new Date().toISOString(),
-    })
+    // Insert booking
+    const { data: booking, error: insertError } = await db
+      .from('bookings')
+      .insert({
+        booking_ref: bookingRef,
+        sitter_id:   sitterId,
+        parent_id:   user.sitterId,
+        start_date:  startDate,
+        end_date:    endDate,
+        cats:        cats || [],
+        message:     message || null,
+        status:      'pending',
+        created_at:  new Date().toISOString(),
+      })
+      .select('id')
+      .single()
 
-    // Send sit-request notification email to sitter + write notifiedAt for response-time tracking
+    if (insertError) throw insertError
+
+    const bookingId = booking.id
+
+    // Send sit-request notification email + write notified_at for response-time tracking
     try {
       const sitter = await serverClient.fetch(
         `*[_type == "catSitter" && _id == $id][0]{ name, email, notifEmailSitRequest }`,
@@ -91,22 +93,19 @@ export async function POST(request) {
           replyTo: 'support@purrfectlove.org',
           to: [sitter.email],
           subject: `New sit request #${bookingRef}`,
-          // tags allow the Resend webhook to match email.opened events back to this booking
-          tags: [{ name: 'booking_id', value: doc._id }],
+          tags: [{ name: 'booking_id', value: bookingId }],
           text: `Hi ${(sitter.name || '').split(' ')[0] || 'there'},\n\nYou have a new sit request for ${startFmt}–${endFmt}.\n\nBooking ID: #${bookingRef}\n\nLog in to your profile to accept or decline: https://purrfectlove.org/care/profile\n\n– The Purrfect Love Community`,
           html: `<p>Hi ${(sitter.name || '').split(' ')[0] || 'there'},</p><p>You have a new sit request for <strong>${startFmt}–${endFmt}</strong>.</p><p>Booking ID: <strong>#${bookingRef}</strong></p><p><a href="https://purrfectlove.org/care/profile">Log in to accept or decline →</a></p><p>– The Purrfect Love Community</p>`,
         })
         if (!resendError) {
-          // notifiedAt anchors the response-time clock; only write it when the email actually sent
-          await serverClient.patch(doc._id).set({ notifiedAt: new Date().toISOString() }).commit()
+          await db.from('bookings').update({ notified_at: new Date().toISOString() }).eq('id', bookingId)
         }
       }
     } catch (notifError) {
-      // Non-fatal — booking is already created; scoring data simply won't be available for this request
       console.error('bookings/request notification error:', notifError)
     }
 
-    return Response.json({ bookingRef, bookingId: doc._id })
+    return Response.json({ bookingRef, bookingId })
   } catch (error) {
     console.error('bookings/request error:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })

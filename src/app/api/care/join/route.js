@@ -1,18 +1,9 @@
-import { createClient } from '@sanity/client'
-
-const sanity = createClient({
-  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
-  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
-  token: process.env.SANITY_API_TOKEN,
-  apiVersion: '2024-01-01',
-  useCdn: false,
-})
+import { createSupabaseDbClient } from '@/lib/supabaseServer'
 
 export async function POST(request) {
   try {
     const { name, phone, email, message, turnstileToken } = await request.json()
 
-    // Validate required fields
     if (!name?.trim()) {
       return Response.json({ error: 'Name is required' }, { status: 400 })
     }
@@ -34,17 +25,18 @@ export async function POST(request) {
       return Response.json({ error: 'Please complete the human verification.' }, { status: 400 })
     }
 
-    const doc = {
-      _type: 'membershipRequest',
-      name: name.trim(),
-      phone: phone?.trim() || undefined,
-      email: email?.trim().toLowerCase() || undefined,
-      message: message?.trim() || undefined,
-      submittedAt: new Date().toISOString(),
-      status: 'pending',
-    }
+    const db = createSupabaseDbClient()
+    const { error } = await db.from('membership_requests').insert({
+      name:         name.trim(),
+      phone:        phone?.trim() || null,
+      email:        email?.trim().toLowerCase() || null,
+      message:      message?.trim() || null,
+      submitted_at: new Date().toISOString(),
+      status:       'pending',
+    })
 
-    await sanity.create(doc)
+    if (error) throw error
+
     return Response.json({ success: true })
   } catch (error) {
     console.error('join error:', error)

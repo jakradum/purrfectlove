@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@sanity/client';
-import { verifyToken } from '@/lib/careAuth';
+import { createServerClient } from '@supabase/ssr';
 import { isProfileComplete } from '@/lib/profileComplete';
 import Marketplace from '@/components/Care/Marketplace';
 import IncompleteProfileGate from '@/components/Care/IncompleteProfileGate';
@@ -23,22 +23,21 @@ export const metadata = {
 
 export default async function CarePage() {
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/login');
 
-  if (!token) {
-    redirect('/login');
-  }
-
-  const payload = await verifyToken(token);
-  if (!payload) {
-    redirect('/login');
-  }
+  const sitterId = user.user_metadata?.sitterId;
 
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, canSit, needsSitting, location { lat, lng, name }, guidelinesAccepted, availabilityDefault, unavailableDatesV2 }`,
-      { id: payload.sitterId }
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location { lat, lng, name }, guidelinesAccepted }`,
+      { id: sitterId }
     );
   } catch (err) {
     console.error('Failed to fetch profile for marketplace:', err);
@@ -55,12 +54,8 @@ export default async function CarePage() {
 
   return (
     <Marketplace
-      initialCanSit={profile?.canSit ?? false}
-      initialNeedsSitting={profile?.needsSitting ?? false}
-      userName={payload.name || profile?.name || ''}
       userLocation={profile?.location ?? null}
-      userAvailabilityDefault={profile?.availabilityDefault ?? 'available'}
-      userMarkedDates={profile?.unavailableDatesV2 ?? []}
+      sitterId={sitterId}
     />
   );
 }

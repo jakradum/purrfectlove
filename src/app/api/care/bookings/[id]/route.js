@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -8,14 +8,6 @@ const serverClient = createClient({
   apiVersion: '2024-01-01',
   useCdn: false,
 })
-
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
 
 async function reverseGeocode(lat, lng) {
   if (!lat || !lng) return null
@@ -49,57 +41,64 @@ async function reverseGeocode(lat, lng) {
 
 export async function GET(request, { params }) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const userId = payload.sitterId
+    const userId = user.sitterId
     const bookingId = params.id
+    const db = createSupabaseDbClient()
 
-    const booking = await serverClient.fetch(
-      `*[_type == "bookingRequest" && _id == $bookingId][0]{
-        _id, bookingRef, startDate, endDate, status, cats, message,
-        cancellationReason, cancelledBy, cancelledAt,
-        sitter -> { _id, name, email, phone, location },
-        parent -> { _id, name, email, phone, location },
-      }`,
-      { bookingId }
-    )
+    const { data: booking, error: fetchError } = await db
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
 
-    if (!booking) return Response.json({ error: 'Not found' }, { status: 404 })
+    if (fetchError || !booking) return Response.json({ error: 'Not found' }, { status: 404 })
 
-    const isParent = booking.parent?._id === userId
-    const isSitter = booking.sitter?._id === userId
+    const isParent = booking.parent_id === userId
+    const isSitter = booking.sitter_id === userId
     if (!isParent && !isSitter) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
     const role = isParent ? 'parent' : 'sitter'
-    const other = isParent ? booking.sitter : booking.parent
+    const otherId = isParent ? booking.sitter_id : booking.parent_id
+
+    const other = await serverClient.fetch(
+      `*[_type == "catSitter" && _id == $id][0]{ name, email, phone, location }`,
+      { id: otherId }
+    )
+
+    const [sitterProfile, parentProfile] = await Promise.all([
+      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.sitter_id }),
+      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.parent_id }),
+    ])
 
     const lat = other?.location?.lat
     const lng = other?.location?.lng
     const neighbourhood = await reverseGeocode(lat, lng)
 
     return Response.json({
-      _id: booking._id,
-      bookingRef: booking.bookingRef,
-      startDate: booking.startDate,
-      endDate: booking.endDate,
-      status: booking.status,
-      cats: booking.cats || [],
-      message: booking.message || null,
-      cancellationReason: booking.cancellationReason || null,
-      cancelledBy: booking.cancelledBy || null,
-      cancelledAt: booking.cancelledAt || null,
+      _id:                booking.id,
+      bookingRef:         booking.booking_ref,
+      startDate:          booking.start_date,
+      endDate:            booking.end_date,
+      status:             booking.status,
+      cats:               booking.cats || [],
+      message:            booking.message || null,
+      cancellationReason: booking.cancellation_reason || null,
+      cancelledBy:        booking.cancelled_by || null,
+      cancelledAt:        booking.cancelled_at || null,
       role,
-      sitterName: booking.sitter?.name || 'Member',
-      parentName: booking.parent?.name || 'Member',
+      sitterName: sitterProfile?.name || 'Member',
+      parentName: parentProfile?.name || 'Member',
       other: {
-        name: other?.name || 'Member',
-        email: other?.email || null,
-        phone: other?.phone || null,
-        lat: lat || null,
-        lng: lng || null,
+        name:          other?.name || 'Member',
+        email:         other?.email || null,
+        phone:         other?.phone || null,
+        lat:           lat || null,
+        lng:           lng || null,
         neighbourhood: neighbourhood || null,
       },
     })

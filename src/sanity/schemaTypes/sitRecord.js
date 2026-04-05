@@ -30,6 +30,7 @@ export default {
     { name: 'sitterFeedbackNote', title: 'Sitter Feedback Note', type: 'text', rows: 3, description: 'Admin-only' },
     { name: 'parentFeedbackNote', title: 'Parent Feedback Note', type: 'text', rows: 3, description: 'Admin-only' },
     { name: 'promptSentAt', title: 'Confirmation Prompt Sent At', type: 'datetime' },
+    { name: 'bookingRef', title: 'Booking Ref', type: 'string', readOnly: true },
     { name: 'createdAt', title: 'Created At', type: 'datetime', initialValue: () => new Date().toISOString() },
   ],
   preview: {

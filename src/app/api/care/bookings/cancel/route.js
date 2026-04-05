@@ -1,6 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -11,14 +11,6 @@ const serverClient = createClient({
 })
 
 const resend = new Resend(process.env.RESEND_API_KEY)
-
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
 
 function formatDate(ymd) {
   if (!ymd) return ''
@@ -65,10 +57,10 @@ const CANCELLABLE_STATUSES = ['pending', 'confirmed', 'accepted']
 
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const userId = payload.sitterId
+    const userId = user.sitterId
     const { bookingId, reason } = await request.json()
 
     if (!bookingId) return Response.json({ error: 'bookingId is required' }, { status: 400 })
@@ -76,19 +68,18 @@ export async function POST(request) {
       return Response.json({ error: 'Please provide a reason of at least 20 characters.' }, { status: 400 })
     }
 
-    const booking = await serverClient.fetch(
-      `*[_type == "bookingRequest" && _id == $bookingId][0]{
-        _id, bookingRef, startDate, endDate, status, cats,
-        sitter -> { _id, name, email },
-        parent -> { _id, name, email },
-      }`,
-      { bookingId }
-    )
+    const db = createSupabaseDbClient()
 
-    if (!booking) return Response.json({ error: 'Booking not found' }, { status: 404 })
+    const { data: booking, error: fetchError } = await db
+      .from('bookings')
+      .select('*')
+      .eq('id', bookingId)
+      .single()
 
-    const isParent = booking.parent?._id === userId
-    const isSitter = booking.sitter?._id === userId
+    if (fetchError || !booking) return Response.json({ error: 'Booking not found' }, { status: 404 })
+
+    const isParent = booking.parent_id === userId
+    const isSitter = booking.sitter_id === userId
     if (!isParent && !isSitter) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
@@ -100,20 +91,25 @@ export async function POST(request) {
     const cancelledBy = isParent ? 'parent' : 'sitter'
     const cancelledAt = new Date().toISOString()
 
-    await serverClient.patch(bookingId).set({
+    await db.from('bookings').update({
       status: 'cancelled',
-      cancellationReason: reason.trim(),
-      cancelledBy,
-      cancelledAt,
-    }).commit()
+      cancellation_reason: reason.trim(),
+      cancelled_by: cancelledBy,
+      cancelled_at: cancelledAt,
+    }).eq('id', bookingId)
 
-    // Send email to the other party
-    const ref = booking.bookingRef
-    const startFmt = formatDate(booking.startDate)
-    const endFmt = formatDate(booking.endDate)
-    const cancellerName = isParent ? (booking.parent?.name || 'The cat parent') : (booking.sitter?.name || 'The sitter')
-    const otherEmail = isParent ? booking.sitter?.email : booking.parent?.email
-    const otherName = isParent ? (booking.sitter?.name || 'there') : (booking.parent?.name || 'there')
+    // Fetch party names/emails from Sanity for the notification email
+    const [sitterProfile, parentProfile] = await Promise.all([
+      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name, email }`, { id: booking.sitter_id }),
+      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name, email }`, { id: booking.parent_id }),
+    ])
+
+    const ref = booking.booking_ref
+    const startFmt = formatDate(booking.start_date)
+    const endFmt = formatDate(booking.end_date)
+    const cancellerName = isParent ? (parentProfile?.name || 'The cat parent') : (sitterProfile?.name || 'The sitter')
+    const otherEmail = isParent ? sitterProfile?.email : parentProfile?.email
+    const otherName = isParent ? (sitterProfile?.name || 'there') : (parentProfile?.name || 'there')
 
     if (otherEmail) {
       await resend.emails.send({

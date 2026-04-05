@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 import { Resend } from 'resend'
 
 const serverClient = createClient({
@@ -41,18 +41,10 @@ function recordSend(sitterId, recipientId) {
   pairMsgMap.set(pairKey, [...pair, now])
 }
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -69,7 +61,7 @@ export async function POST(request) {
       return Response.json({ error: 'Message too long. Max 200 words or 3200 characters.' }, { status: 400 })
     }
 
-    const sitterId = payload.sitterId
+    const sitterId = user.sitterId
 
     // Block deletion-pending accounts from sending messages
     const senderDoc = await serverClient.fetch(
@@ -136,7 +128,7 @@ export async function POST(request) {
     )
 
     if (recipient?.hideEmail && recipient?.hideWhatsApp && recipient?.email) {
-      const senderName = sender?.name || payload.name || 'A member'
+      const senderName = sender?.name || 'A member'
       try {
         await resend.emails.send({
           from: 'Purrfect Love <noreply@purrfectlove.org>',

@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 import { adjustScore } from '@/lib/memberScore'
 
 const serverClient = createClient({
@@ -10,23 +10,15 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function POST(request, { params }) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { memberId } = await params
-    const sitterId = payload.sitterId
+    const sitterId = user.sitterId
 
     if (memberId === sitterId) {
       return Response.json({ error: 'Cannot block yourself' }, { status: 400 })

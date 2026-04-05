@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -9,28 +9,19 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function GET(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify admin
     const sitter = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ isAdmin }`,
-      { id: payload.sitterId }
+      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
+      { id: user.sitterId }
     )
 
-    if (!sitter?.isAdmin) {
+    if (!sitter?.siteAdmin) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 
@@ -64,7 +55,7 @@ export async function GET(request) {
         ),
         serverClient.fetch(
           `*[_type == "catSitter" && memberVerified == true]{
-            _id, name, email, phone, memberScore, isAdmin, canSit, needsSitting
+            _id, name, email, phone, memberScore, siteAdmin, canSit, needsSitting
           } | order(name asc)`,
           {}
         ),

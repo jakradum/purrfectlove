@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -9,59 +9,40 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? match[1] : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function GET(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
     const { searchParams } = new URL(request.url)
-    const type = searchParams.get('type') // 'canSit' or 'needsSitting'
     const id = searchParams.get('id')
 
     // Single-member lookup (for compose target resolution)
     if (id) {
       const member = await serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id && memberVerified == true][0]{ _id, name, username }`,
+        `*[_type == "catSitter" && _id == $id && memberVerified == true][0]{ _id, name }`,
         { id }
       )
       return Response.json(member || null)
     }
 
-    let query
-    if (type === 'needsSitting') {
-      query = `*[_type == "catSitter" && needsSitting == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
-        _id, _createdAt, name, username, location, bio, contactPreference, siteAdmin, avatarColour,
+    // Seeker-only marketplace: always fetch members with canSit == true
+    const sitters = await serverClient.fetch(
+      `*[_type == "catSitter" && canSit == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
+        _id, _createdAt, name, location, bio, contactPreference, siteAdmin, avatarColour,
         identityVerified, trustedSitter,
         "email": select(hideEmail == true => null, email),
         "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
         hideEmail, hideWhatsApp,
-        cats, availableDates, alwaysAvailable, unavailableDates, unavailableRanges, availabilityDefault, unavailableDatesV2, maxHomesPerDay,
-        feedingTypes, behavioralTraits
+        maxHomesPerDay, maxCatsPerDay, feedingTypes, behavioralTraits,
+        availableDates, alwaysAvailable, unavailableDates, unavailableRanges,
+        availabilityDefault, unavailableDatesV2, blockedByBooking,
+        "rating": sitterScore.rating
       }`
-    } else {
-      query = `*[_type == "catSitter" && canSit == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
-        _id, _createdAt, name, username, location, bio, contactPreference, siteAdmin, avatarColour,
-        identityVerified, trustedSitter,
-        "email": select(hideEmail == true => null, email),
-        "phone": select(hideWhatsApp == true => null, phone),
-        "photoUrl": photo.asset->url,
-        hideEmail, hideWhatsApp,
-        maxHomesPerDay, feedingTypes, behavioralTraits, availableDates, alwaysAvailable, unavailableDates, unavailableRanges, availabilityDefault, unavailableDatesV2
-      }`
-    }
-
-    const sitters = await serverClient.fetch(query)
+    )
     return Response.json(sitters)
   } catch (error) {
     console.error('sitters GET error:', error)

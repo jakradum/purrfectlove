@@ -103,7 +103,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
         .then(r => r.json())
         .then(member => {
           if (member && member._id) {
-            const displayName = member.username || member.name || 'Member'
+            const displayName = member.name || 'Member'
             setComposeTarget({ _id: member._id, name: displayName })
             setActivePartnerId(preselectedTo)
             setShowMobileThread(true)

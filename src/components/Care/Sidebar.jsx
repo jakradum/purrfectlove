@@ -3,10 +3,11 @@
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import { House, User, LogOut, CalendarDays } from 'lucide-react';
+import { createBrowserClient } from '@supabase/ssr';
+import { House, User, LogOut, CalendarDays, ShieldCheck } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
-export default function Sidebar({ locale = 'en', basePath = '' }) {
+export default function Sidebar({ locale = 'en', basePath = '', sitterId, isTeamMember = false }) {
   const pathname = usePathname();
   const router = useRouter();
   const [deletionPending, setDeletionPending] = useState(false);
@@ -19,17 +20,36 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
       .catch(() => {});
   }, []);
 
+  // Supabase Realtime: subscribe to booking changes for this member.
+  // Replaces the 30-second polling interval on /api/care/bookings/active-count.
   useEffect(() => {
-    const fetchCount = () => {
-      fetch('/api/care/bookings/active-count')
-        .then(r => r.ok ? r.json() : { count: 0 })
-        .then(({ count }) => setHasActiveBookings((count || 0) > 0))
-        .catch(() => {});
+    if (!sitterId) return;
+
+    const supabase = createBrowserClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+    );
+
+    const fetchCount = async () => {
+      const [{ count: asParent }, { count: asSitter }] = await Promise.all([
+        supabase.from('bookings').select('id', { count: 'exact', head: true })
+          .eq('parent_id', sitterId).in('status', ['pending', 'confirmed', 'accepted']),
+        supabase.from('bookings').select('id', { count: 'exact', head: true })
+          .eq('sitter_id', sitterId).in('status', ['pending', 'confirmed', 'accepted']),
+      ]);
+      setHasActiveBookings(((asParent || 0) + (asSitter || 0)) > 0);
     };
+
     fetchCount();
-    const id = setInterval(fetchCount, 30_000);
-    return () => clearInterval(id);
-  }, []);
+
+    const channel = supabase
+      .channel(`sidebar-bookings-${sitterId}`)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `parent_id=eq.${sitterId}` }, fetchCount)
+      .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `sitter_id=eq.${sitterId}` }, fetchCount)
+      .subscribe();
+
+    return () => supabase.removeChannel(channel);
+  }, [sitterId]);
 
   const handleLogout = async () => {
     await fetch('/api/care/logout', { method: 'POST' });
@@ -53,6 +73,7 @@ export default function Sidebar({ locale = 'en', basePath = '' }) {
     { path: '', icon: House, label: t.network, lockable: true },
     { path: '/bookings', icon: CalendarDays, label: t.bookings, showDot: hasActiveBookings },
     { path: '/profile', icon: User, label: t.profile },
+    ...(isTeamMember ? [{ path: '/care/admin', icon: ShieldCheck, label: 'Admin' }] : []),
   ];
 
   return (

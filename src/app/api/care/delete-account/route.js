@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -9,22 +9,14 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? match[1] : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const sitterId = payload.sitterId
+    const sitterId = user.sitterId
 
     // Fetch the sitter document to get phone/email before deleting
     const sitter = await serverClient.fetch(
@@ -47,13 +39,7 @@ export async function POST(request) {
     // Delete the catSitter document
     await serverClient.delete(sitterId)
 
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: {
-        'Content-Type': 'application/json',
-        'Set-Cookie': 'auth_token=; HttpOnly; Path=/; Max-Age=0; SameSite=Lax',
-      },
-    })
+    return Response.json({ success: true })
   } catch (error) {
     console.error('delete-account error:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })

@@ -1,5 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -13,6 +14,19 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request) {
   try {
+    const user = await getSupabaseUser(request)
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const admin = await serverClient.fetch(
+      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
+      { id: user.sitterId }
+    )
+    if (!admin?.siteAdmin) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { documentId } = await request.json()
 
     if (!documentId) {
@@ -22,7 +36,7 @@ export async function POST(request) {
     // Fetch the document — must be a deletion-requested catSitter
     const doc = await serverClient.fetch(
       `*[_type == "catSitter" && _id == $id && deletionRequested == true][0]{
-        _id, email, username, name, deletionReason
+        _id, email, name, deletionReason
       }`,
       { id: documentId }
     )
@@ -31,7 +45,7 @@ export async function POST(request) {
       return Response.json({ error: 'Document not found or deletion not requested' }, { status: 404 })
     }
 
-    const displayName = doc.username || doc.name || 'there'
+    const displayName = doc.name || 'there'
 
     // Step 1: Send confirmation email (non-fatal if no email on file)
     if (doc.email) {

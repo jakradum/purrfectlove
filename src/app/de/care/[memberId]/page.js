@@ -1,7 +1,7 @@
 import { cookies } from 'next/headers';
 import { redirect, notFound } from 'next/navigation';
 import { createClient } from '@sanity/client';
-import { verifyToken } from '@/lib/careAuth';
+import { createServerClient } from '@supabase/ssr';
 import SitterProfile from '@/components/Care/SitterProfile';
 
 const serverClient = createClient({
@@ -31,12 +31,13 @@ export default async function DeMemberProfilePage({ params }) {
   const { memberId } = await params;
 
   const cookieStore = await cookies();
-  const token = cookieStore.get('auth_token')?.value;
-
-  if (!token) redirect('/de/care/login');
-
-  const payload = await verifyToken(token);
-  if (!payload) redirect('/de/care/login');
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    { cookies: { getAll: () => cookieStore.getAll(), setAll: () => {} } }
+  );
+  const { data: { user } } = await supabase.auth.getUser();
+  if (!user) redirect('/de/care/login');
 
   let sitter = null;
   try {

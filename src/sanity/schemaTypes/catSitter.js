@@ -104,6 +104,7 @@ export default {
 
     // Sitter capabilities
     { name: 'maxHomesPerDay', title: 'Max Homes Per Day (Visits)', type: 'number', readOnly: true },
+    { name: 'maxCatsPerDay', title: 'Max Cats Per Day', type: 'number', description: 'Maximum number of cats this sitter is comfortable with per day.' },
     { name: 'feedingTypes', title: 'Can Feed', type: 'array', readOnly: true, of: [{ type: 'string' }], options: { list: ['wet', 'dry', 'medication', 'special diet'] } },
     { name: 'behavioralTraits', title: 'Comfortable With', type: 'array', readOnly: true, of: [{ type: 'string' }], options: { list: ['shy', 'energetic', 'senior', 'special needs'] } },
 
@@ -115,9 +116,35 @@ export default {
     { name: 'welcomeSent', title: 'Welcome Email Sent', type: 'boolean', initialValue: false, description: 'Set to true after first login welcome email is sent. Never send again.' },
     { name: 'newsletterOptOut', title: 'Newsletter Opt-Out', type: 'boolean', initialValue: false, description: 'Set to true when member unsubscribes from community emails.' },
 
-    // Username (anonymous display name)
-    { name: 'username', title: 'Username', type: 'string', description: 'Auto-generated three-word anonymous display name (e.g. FluffyWhiskerPurrs). Shown in the portal instead of real name.' },
-    { name: 'usernameRegenerated', title: 'Username Regenerated', type: 'boolean', initialValue: false, description: 'Set to true after member uses their one-time username regeneration.' },
+    // Username (legacy — no longer displayed)
+    { name: 'username', title: 'Username (legacy)', type: 'string', readOnly: true, description: 'Legacy anonymous display name. No longer shown in the portal. Kept for historical data only.' },
+    { name: 'usernameRegenerated', title: 'Username Regenerated (legacy)', type: 'boolean', hidden: true, description: 'Legacy flag. No longer used.' },
+
+    // Sitter scoring — computed by cron after each completed sit, never entered manually
+    {
+      name: 'sitterScore',
+      title: 'Sitter Score',
+      type: 'object',
+      readOnly: true,
+      description: 'Computed metrics. Updated by cron after completed sits. Do not edit manually.',
+      fields: [
+        { name: 'responseTimeAvg', title: 'Avg Response Time (hours)', type: 'number', description: 'Average hours to accept/decline a booking request.' },
+        { name: 'rating', title: 'Rating', type: 'number', description: 'Average rating from cat parents (0–5). Null until first rating received.' },
+        { name: 'completionRate', title: 'Completion Rate', type: 'number', description: 'Fraction of accepted bookings that completed without cancellation (0–1).' },
+        { name: 'totalSits', title: 'Total Sits', type: 'number', description: 'Number of completed sits.' },
+      ],
+    },
+
+    // Auto-blocked dates from accepted bookings (denormalised for fast marketplace filtering)
+    // Written by the booking accept route. Members can override individual dates via their profile
+    // (those dates are removed from this array on the next availability save).
+    {
+      name: 'blockedByBooking',
+      title: 'Blocked by Booking',
+      type: 'array',
+      of: [{ type: 'string' }],
+      description: 'YYYY-MM-DD dates auto-blocked when a booking is accepted. Members can override. Do not edit manually.',
+    },
 
     // Availability v2 — single source of truth array of YYYY-MM-DD strings
     {

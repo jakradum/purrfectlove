@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
 
 const sanity = createClient({
@@ -10,22 +10,14 @@ const sanity = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? match[1] : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    if (!rateLimit(`report:${payload.sitterId}`, 5, 60_000 * 60)) {
+    if (!rateLimit(`report:${user.sitterId}`, 5, 60_000 * 60)) {
       return Response.json({ error: 'Too many reports. Please wait before submitting another.' }, { status: 429 })
     }
 
@@ -38,7 +30,7 @@ export async function POST(request) {
       return Response.json({ error: 'reportedId and a valid reason are required' }, { status: 400 })
     }
 
-    if (reportedId === payload.sitterId) {
+    if (reportedId === user.sitterId) {
       return Response.json({ error: 'You cannot report yourself.' }, { status: 400 })
     }
 
@@ -53,7 +45,7 @@ export async function POST(request) {
 
     await sanity.create({
       _type: 'memberReport',
-      reporter: { _type: 'reference', _ref: payload.sitterId },
+      reporter: { _type: 'reference', _ref: user.sitterId },
       reported: { _type: 'reference', _ref: reportedId },
       reason,
       note: (note || '').trim().slice(0, 500),

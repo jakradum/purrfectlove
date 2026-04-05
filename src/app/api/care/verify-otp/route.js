@@ -159,7 +159,7 @@ export async function POST(request) {
     // Look up the catSitter / teamMember in Sanity to get sitterId
     const [catSitter, teamMember] = await Promise.all([
       sanity.fetch(
-        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
+        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, siteAdmin }`,
         { email }
       ),
       sanity.fetch(
@@ -183,7 +183,7 @@ export async function POST(request) {
     }
 
     const sitterId = account._id
-    const isTeamMember = !resolvedCatSitter && !!teamMember
+    const isTeamMember = (!resolvedCatSitter && !!teamMember) || !!resolvedCatSitter?.siteAdmin
 
     // Write sitterId + isTeamMember into Supabase user_metadata via service role
     const supabaseAdmin = createSupabaseAdminClient()

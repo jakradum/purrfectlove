@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 import { adjustScore } from '@/lib/memberScore'
 
 const serverClient = createClient({
@@ -10,18 +10,10 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function POST(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
@@ -39,7 +31,7 @@ export async function POST(request) {
       return Response.json({ error: 'Comment must be 500 characters or fewer' }, { status: 400 })
     }
 
-    const reviewerId = payload.sitterId
+    const reviewerId = user.sitterId
 
     if (reviewerId === revieweeId) {
       return Response.json({ error: 'Cannot leave feedback for yourself' }, { status: 400 })

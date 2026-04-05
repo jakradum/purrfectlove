@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { verifyToken } from '@/lib/careAuth'
+import { getSupabaseUser } from '@/lib/supabaseServer'
 import { adjustScore } from '@/lib/memberScore'
 
 const serverClient = createClient({
@@ -10,28 +10,19 @@ const serverClient = createClient({
   useCdn: false,
 })
 
-async function getAuth(request) {
-  const cookieHeader = request.headers.get('cookie') || ''
-  const match = cookieHeader.match(/auth_token=([^;]+)/)
-  const token = match ? decodeURIComponent(match[1]) : null
-  if (!token) return null
-  return verifyToken(token)
-}
-
 export async function PATCH(request) {
   try {
-    const payload = await getAuth(request)
-    if (!payload) {
+    const user = await getSupabaseUser(request)
+    if (!user) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // Verify admin
     const admin = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ isAdmin }`,
-      { id: payload.sitterId }
+      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
+      { id: user.sitterId }
     )
 
-    if (!admin?.isAdmin) {
+    if (!admin?.siteAdmin) {
       return Response.json({ error: 'Forbidden' }, { status: 403 })
     }
 

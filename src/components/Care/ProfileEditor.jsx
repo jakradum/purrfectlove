@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import dynamic from 'next/dynamic';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
@@ -68,19 +68,16 @@ function computeCompletion(form) {
 
   if (form.canSit) {
     if (!form.maxHomesPerDay) required.push('Homes you can visit per day');
+    if (!form.maxCatsPerDay) required.push('Max cats per day');
     if (!form.feedingTypes?.length) required.push('Feeding types you can handle');
     if (!form.behavioralTraits?.length) required.push('Cat behaviors you\'re comfortable with');
     // Availability is optional in new system — all days available by default
   }
 
-  if (form.needsSitting) {
-    if (!form.cats?.length) required.push('At least one cat profile');
-  }
-
   if (!form.bedrooms) optional.push('Number of bedrooms');
   if (!form.householdSize) optional.push('Household size');
 
-  const totalRequired = 2 + (form.canSit ? 3 : 0) + (form.needsSitting ? 1 : 0);
+  const totalRequired = 2 + (form.canSit ? 4 : 0);
   const totalOptional = 2;
   const total = totalRequired + totalOptional;
   const completed = (totalRequired - required.length) + (totalOptional - optional.length);
@@ -199,10 +196,10 @@ function formFromData(data) {
     unavailableRanges: data.unavailableRanges || [],
     availableDates: data.availableDates || [],
     maxHomesPerDay: data.maxHomesPerDay ?? '',
+    maxCatsPerDay: data.maxCatsPerDay ?? '',
     feedingTypes: data.feedingTypes || [],
     behavioralTraits: data.behavioralTraits || [],
     canSit: data.canSit ?? false,
-    needsSitting: data.needsSitting ?? false,
     hideEmail: data.hideEmail ?? false,
     hideWhatsApp: data.hideWhatsApp ?? false,
   };
@@ -236,13 +233,26 @@ export default function ProfileEditor({ initialData }) {
   const [newsletterSaving, setNewsletterSaving] = useState(false);
   const [notifEmailMessage, setNotifEmailMessage] = useState(initialData.notifEmailMessage !== false);
   const [notifEmailSitRequest, setNotifEmailSitRequest] = useState(initialData.notifEmailSitRequest !== false);
-  const [username, setUsername] = useState(initialData.username || '');
-  const [usernameRegenerated, setUsernameRegenerated] = useState(!!initialData.usernameRegenerated);
-  const [regenLoading, setRegenLoading] = useState(false);
-
   const [photoUrl, setPhotoUrl] = useState(initialData.photoUrl || null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef(null);
+  const [blockedDates, setBlockedDates] = useState([]);
+  const [blockedDatesLoading, setBlockedDatesLoading] = useState(false);
+  // Tracks dates the sitter overrode this edit session; used to compute blockedByBooking on save.
+  // A ref (not state) so it doesn't trigger re-renders and survives across onChange calls.
+  const overriddenDatesRef = useRef(new Set());
+
+  useEffect(() => {
+    if (editMode !== 'availability') return;
+    // Reset overrides on each edit-mode entry — fresh session, fresh computation.
+    overriddenDatesRef.current = new Set();
+    setBlockedDatesLoading(true);
+    fetch('/api/care/bookings/blocked-dates')
+      .then(r => r.json())
+      .then(d => { if (d.blockedDates) setBlockedDates(d.blockedDates); })
+      .catch(() => {/* silent — calendar works without blocked dates */})
+      .finally(() => setBlockedDatesLoading(false));
+  }, [editMode]);
 
   const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm.current);
 
@@ -279,11 +289,6 @@ export default function ProfileEditor({ initialData }) {
     e.target.value = '';
   };
 
-  const handleStatusToggle = (field, value) => {
-    // Mutually exclusive — turning one on turns the other off; both can be off
-    update('canSit', field === 'canSit' ? value : (value ? false : form.canSit));
-    update('needsSitting', field === 'needsSitting' ? value : (value ? false : form.needsSitting));
-  };
 
   const handleSave = async (e) => {
     e.preventDefault();
@@ -300,6 +305,7 @@ export default function ProfileEditor({ initialData }) {
           bedrooms: form.bedrooms !== '' ? Number(form.bedrooms) : undefined,
           householdSize: form.householdSize !== '' ? Number(form.householdSize) : undefined,
           maxHomesPerDay: form.maxHomesPerDay !== '' ? Number(form.maxHomesPerDay) : undefined,
+          maxCatsPerDay: form.maxCatsPerDay !== '' ? Number(form.maxCatsPerDay) : undefined,
           cats: form.cats.map((cat) => ({
             ...cat,
             age: cat.age !== '' && cat.age !== undefined ? Number(cat.age) : undefined,
@@ -336,12 +342,18 @@ export default function ProfileEditor({ initialData }) {
     setSaving(true);
     setSaveError('');
     try {
+      // Compute blockedByBooking = freshly fetched server-blocked dates minus any the sitter
+      // overrode this session. Running on every save (not just when overrides exist) ensures
+      // the stored value stays correct even across multiple save/re-entry cycles.
+      const updatedBlockedByBooking = blockedDates.filter(d => !overriddenDatesRef.current.has(d));
+
       const res = await fetch('/api/care/profile', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           availabilityDefault: form.availabilityDefault,
           unavailableDatesV2: form.unavailableDatesV2,
+          blockedByBooking: updatedBlockedByBooking,
         }),
       });
       if (!res.ok) {
@@ -412,7 +424,6 @@ export default function ProfileEditor({ initialData }) {
       _id: initialData._id,
       _createdAt: initialData._createdAt,
       name: form.name,
-      username: username,
       location: form.location || initialData.location,
       bio: form.bio,
       email: initialData.email,
@@ -469,12 +480,18 @@ export default function ProfileEditor({ initialData }) {
         </button>
         <div className={styles.sitterSection}>
           <div className={styles.sitterSectionTitle}>Edit availability</div>
-          <AvailabilityCalendar
-            markedDates={form.unavailableDatesV2}
-            availabilityDefault={form.availabilityDefault}
-            onChange={(dates) => update('unavailableDatesV2', dates)}
-            onDefaultChange={(val) => { update('availabilityDefault', val); update('unavailableDatesV2', []); }}
-          />
+          {blockedDatesLoading ? (
+            <div style={{ color: '#999', fontSize: '0.875rem', padding: '1rem 0' }}>Loading calendar…</div>
+          ) : (
+            <AvailabilityCalendar
+              markedDates={form.unavailableDatesV2}
+              availabilityDefault={form.availabilityDefault}
+              onChange={(dates) => update('unavailableDatesV2', dates)}
+              onDefaultChange={(val) => { update('availabilityDefault', val); update('unavailableDatesV2', []); }}
+              onOverride={(ymd) => { overriddenDatesRef.current = new Set([...overriddenDatesRef.current, ymd]); }}
+              blockedDates={blockedDates}
+            />
+          )}
           <div className={styles.saveBar} style={{ marginTop: '1rem' }}>
             {saveError && <span className={styles.saveError}>{saveError}</span>}
             <button type="button" className={styles.cancelBtnText} onClick={handleCancel}>Cancel</button>
@@ -601,33 +618,36 @@ export default function ProfileEditor({ initialData }) {
         <button type="button" className={styles.addBtn} onClick={addCat}>{t.fields.addCat}</button>
       </div>
 
-      {/* Sitting Capabilities */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>{t.sections.sittingCapabilities}</h2>
-        <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>{t.fields.maxHomesPerDay}</label>
-          <input type="number" min={1} max={5} className={styles.profileInput} value={form.maxHomesPerDay} onChange={(e) => update('maxHomesPerDay', e.target.value)} placeholder="e.g. 2" style={{ maxWidth: '140px' }} />
-          <p className={styles.hint}>For planning multiple visits in one day</p>
-        </div>
-        <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>{t.fields.feedingTypes}</label>
-          <CheckboxGroup options={FEEDING_OPTIONS} value={form.feedingTypes} onChange={(v) => update('feedingTypes', v)} labelMap={tagMap} />
-        </div>
-        <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>{t.fields.behavioralTraits}</label>
-          <CheckboxGroup options={BEHAVIORAL_OPTIONS} value={form.behavioralTraits} onChange={(v) => update('behavioralTraits', v)} labelMap={tagMap} />
-        </div>
-      </div>
-
       {/* My Status */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>{t.sections.status}</h2>
-        <p className={styles.hint} style={{ marginBottom: '0.75rem' }}>Select one, or neither if you&apos;re currently unavailable.</p>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-          <Toggle checked={form.canSit} onChange={(v) => handleStatusToggle('canSit', v)} label={t.fields.canSit} />
-          <Toggle checked={form.needsSitting} onChange={(v) => handleStatusToggle('needsSitting', v)} label={t.fields.needsSitting} />
-        </div>
+        <Toggle checked={form.canSit} onChange={(v) => update('canSit', v)} label="List me as available to sit" />
       </div>
+
+      {/* Sitting Capabilities — shown only when canSit is on */}
+      {form.canSit && (
+        <div className={styles.section}>
+          <h2 className={styles.sectionTitle}>{t.sections.sittingCapabilities}</h2>
+          <div className={styles.formGroup}>
+            <label className={styles.profileLabel}>{t.fields.maxHomesPerDay}</label>
+            <input type="number" min={1} max={10} className={styles.profileInput} value={form.maxHomesPerDay} onChange={(e) => update('maxHomesPerDay', e.target.value)} placeholder="e.g. 2" style={{ maxWidth: '140px' }} />
+            <p className={styles.hint}>For planning multiple visits in one day</p>
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.profileLabel}>Max cats per day</label>
+            <input type="number" min={1} max={10} className={styles.profileInput} value={form.maxCatsPerDay} onChange={(e) => update('maxCatsPerDay', e.target.value)} placeholder="e.g. 3" style={{ maxWidth: '140px' }} />
+            <p className={styles.hint}>Maximum number of cats you&apos;re comfortable caring for per day</p>
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.profileLabel}>{t.fields.feedingTypes}</label>
+            <CheckboxGroup options={FEEDING_OPTIONS} value={form.feedingTypes} onChange={(v) => update('feedingTypes', v)} labelMap={tagMap} />
+          </div>
+          <div className={styles.formGroup}>
+            <label className={styles.profileLabel}>{t.fields.behavioralTraits}</label>
+            <CheckboxGroup options={BEHAVIORAL_OPTIONS} value={form.behavioralTraits} onChange={(v) => update('behavioralTraits', v)} labelMap={tagMap} />
+          </div>
+        </div>
+      )}
 
       {/* Contact Privacy */}
       <div className={styles.section}>

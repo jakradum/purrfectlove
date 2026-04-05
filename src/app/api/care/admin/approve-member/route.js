@@ -1,5 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
+import { getSupabaseUser, createSupabaseAdminClient, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -13,35 +14,61 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 export async function POST(request) {
   try {
+    const user = await getSupabaseUser(request)
+    if (!user) {
+      return Response.json({ error: 'Unauthorized' }, { status: 401 })
+    }
+
+    const admin = await serverClient.fetch(
+      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
+      { id: user.sitterId }
+    )
+    if (!admin?.siteAdmin) {
+      return Response.json({ error: 'Forbidden' }, { status: 403 })
+    }
+
     const { requestId } = await request.json()
     if (!requestId) {
       return Response.json({ error: 'requestId is required' }, { status: 400 })
     }
 
-    const req = await serverClient.fetch(
-      `*[_type == "membershipRequest" && _id == $id][0]{ _id, name, phone, email, status }`,
-      { id: requestId }
-    )
+    const db = createSupabaseDbClient()
 
-    if (!req) {
+    // Fetch membership request from Supabase
+    const { data: req, error: fetchError } = await db
+      .from('membership_requests')
+      .select('*')
+      .eq('id', requestId)
+      .single()
+
+    if (fetchError || !req) {
       return Response.json({ error: 'Join request not found' }, { status: 404 })
     }
     if (req.status === 'approved') {
       return Response.json({ error: 'Already approved' }, { status: 409 })
     }
 
-    // 1. Create catSitter document
-    const now = new Date().toISOString()
+    // 1. Create catSitter document in Sanity
     const sitter = await serverClient.create({
       _type: 'catSitter',
       name: req.name || null,
       phone: req.phone || null,
       email: req.email || null,
-      memberVerified: false,
+      memberVerified: true,
       welcomeSent: false,
     })
 
-    // 2. Send welcome email
+    // 2. Create Supabase auth user (email-based, confirmed)
+    if (req.email) {
+      const supabaseAdmin = createSupabaseAdminClient()
+      await supabaseAdmin.auth.admin.createUser({
+        email: req.email,
+        email_confirm: true,
+        user_metadata: { sitterId: sitter._id, isTeamMember: false },
+      })
+    }
+
+    // 3. Send welcome email
     let emailSent = false
     if (req.email) {
       const displayName = req.name || 'there'
@@ -51,22 +78,18 @@ export async function POST(request) {
         to: [req.email],
         subject: 'Welcome to the Purrfect Love Community 🐾',
         html: buildWelcomeHtml(displayName),
-        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nYou can now log in at purrfectlove.org/care/login using your email or phone number.\n\n– The Purrfect Love Team`,
+        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nYou can now log in at purrfectlove.org/care/login using your email.\n\n– The Purrfect Love Team`,
       })
       emailSent = true
     }
 
-    // 3. Mark welcomeSent on the catSitter doc
+    // 4. Mark welcomeSent on the catSitter doc
     await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
 
-    // 4. Delete the join request — member now lives in catSitter
-    await serverClient.delete(requestId)
+    // 5. Delete the join request from Supabase
+    await db.from('membership_requests').delete().eq('id', requestId)
 
-    return Response.json({
-      success: true,
-      sitterId: sitter._id,
-      emailSent,
-    })
+    return Response.json({ success: true, sitterId: sitter._id, emailSent })
   } catch (error) {
     console.error('approve-member error:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
@@ -93,7 +116,7 @@ function buildWelcomeHtml(displayName) {
               Welcome to the <strong>Purrfect Love Community</strong>! 🐾 Your application has been approved and your account is ready.
             </p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 24px;">
-              You can log in using your email or phone number at the link below.
+              You can log in using your email at the link below.
             </p>
             <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
               <tr>
@@ -102,9 +125,7 @@ function buildWelcomeHtml(displayName) {
                 </td>
               </tr>
             </table>
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0;">
-              – The Purrfect Love Team
-            </p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0;">– The Purrfect Love Team</p>
           </td>
         </tr>
         <tr>
