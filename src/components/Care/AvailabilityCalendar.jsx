@@ -1,9 +1,8 @@
 'use client';
 
 import { useState, useRef } from 'react';
+import { DayPicker } from 'react-day-picker';
 import styles from './Care.module.css';
-
-const DAY_LABELS = ['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'];
 
 function toYMD(date) {
   const y = date.getFullYear();
@@ -12,26 +11,37 @@ function toYMD(date) {
   return `${y}-${m}-${d}`;
 }
 
-function startOfDay(date) {
-  const d = new Date(date);
-  d.setHours(0, 0, 0, 0);
-  return d;
+function BlockedDateOverrideModal({ date, onCancel, onConfirm }) {
+  const label = date.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' });
+  return (
+    <div className={styles.rdpOverlayBackdrop}>
+      <div className={styles.rdpOverlayModal}>
+        <p className={styles.rdpOverlayText}>
+          <strong>{label}</strong> is blocked because your cats are being looked after. Are you sure you want to mark yourself as available?
+        </p>
+        <div className={styles.rdpOverlayBtns}>
+          <button type="button" className={styles.rdpOverlayCancelBtn} onClick={onCancel}>
+            Cancel
+          </button>
+          <button type="button" className={styles.rdpOverlayConfirmBtn} onClick={onConfirm}>
+            Confirm
+          </button>
+        </div>
+      </div>
+    </div>
+  );
 }
 
 /**
- * Full-month tap-to-toggle availability calendar.
- *
  * Props:
- *   markedDates        – string[] of YYYY-MM-DD strings (explicitly marked dates)
- *   availabilityDefault – 'available' | 'unavailable' (default: 'available')
- *                        'available'  → markedDates are the unavailable days (green default, tap to mark red)
- *                        'unavailable'→ markedDates are the available days  (grey default, tap to mark green)
- *   onChange           – (dates: string[]) => void   [omit or pass null for read-only display]
- *   onDefaultChange    – (newDefault: string) => void [called when toggle changes]
- *   readOnly           – boolean, default false
- *   initialMonth       – Date (first day of the month to show initially), default = today's month
+ *   markedDates          – string[] of YYYY-MM-DD strings
+ *   availabilityDefault  – 'available' | 'unavailable' (default: 'available')
+ *   onChange             – (dates: string[]) => void  (omit for read-only)
+ *   onDefaultChange      – (newDefault: string) => void
+ *   readOnly             – boolean, default false
+ *   blockedDates         – string[] of YYYY-MM-DD from accepted bookings (optional)
  *
- * Legacy compat: also accepts `unavailableDates` prop (treated as markedDates with default='available')
+ * Legacy compat: also accepts `unavailableDates` prop (treated as markedDates)
  */
 export default function AvailabilityCalendar({
   markedDates,
@@ -39,53 +49,104 @@ export default function AvailabilityCalendar({
   availabilityDefault = 'available',
   onChange,
   onDefaultChange,
+  onOverride,       // (ymd: string) => void — called when a blocked date is confirmed overridden
   readOnly = false,
-  initialMonth,
+  blockedDates = [],
 }) {
   const dates = markedDates ?? unavailableDates ?? [];
 
-  const today = startOfDay(new Date());
-  const todayYMD = toYMD(today);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
 
-  const defaultMonth = initialMonth
-    ? new Date(initialMonth.getFullYear(), initialMonth.getMonth(), 1)
-    : new Date(today.getFullYear(), today.getMonth(), 1);
-
-  const [viewMonth, setViewMonth] = useState(defaultMonth);
+  const [viewMonth, setViewMonth] = useState(
+    new Date(today.getFullYear(), today.getMonth(), 1)
+  );
+  const [overriddenDates, setOverriddenDates] = useState(new Set());
+  const [pendingOverride, setPendingOverride] = useState(null); // Date | null
   const lastClickedRef = useRef(null);
 
-  const year = viewMonth.getFullYear();
-  const month = viewMonth.getMonth();
-  const monthLabel = viewMonth.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const isBlocked = (ymd) => blockedDates.includes(ymd);
+  const isOverridden = (ymd) => overriddenDates.has(ymd);
+  const isAvailFn = (ymd) =>
+    availabilityDefault === 'available'
+      ? !dates.includes(ymd)
+      : dates.includes(ymd);
 
-  const firstDow = new Date(year, month, 1).getDay();
-  const daysInMonth = new Date(year, month + 1, 0).getDate();
-  const leadingBlanks = firstDow;
+  // ─── Modifier functions (applied to day buttons) ─────────────────────────────
+  const modifiers = {
+    availDay: (d) => {
+      if (d < today) return false;
+      const y = toYMD(d);
+      return !isBlocked(y) && isAvailFn(y);
+    },
+    unavailDay: (d) => {
+      if (d < today) return false;
+      const y = toYMD(d);
+      return !isBlocked(y) && !isAvailFn(y);
+    },
+    blockedDay: (d) => {
+      if (d < today) return false;
+      const y = toYMD(d);
+      return isBlocked(y) && !isOverridden(y);
+    },
+    overriddenDay: (d) => {
+      if (d < today) return false;
+      const y = toYMD(d);
+      return isBlocked(y) && isOverridden(y);
+    },
+  };
 
-  const handlePrev = () => setViewMonth(new Date(year, month - 1, 1));
-  const handleNext = () => setViewMonth(new Date(year, month + 1, 1));
+  const modifiersStyles = {
+    availDay: {
+      background: '#EAF3DE',
+      color: '#2C5F4F',
+      fontWeight: 600,
+      borderRadius: '6px',
+    },
+    unavailDay: {
+      background: '#FCE8DF',
+      color: '#B84A2E',
+      textDecoration: 'line-through',
+      borderRadius: '6px',
+    },
+    blockedDay: {
+      background: '#FEF3C7',
+      color: '#92400E',
+      borderRadius: '6px',
+    },
+    overriddenDay: {
+      background: 'repeating-linear-gradient(45deg, #FEF3C7, #FEF3C7 5px, #D1FAE5 5px, #D1FAE5 10px)',
+      color: '#2C5F4F',
+      borderRadius: '6px',
+    },
+  };
 
-  const handleDayClick = (ymd, isPast, e) => {
-    if (readOnly || isPast || !onChange) return;
+  // ─── Click handling ──────────────────────────────────────────────────────────
+  const handleDayClick = (date, _modifiers, e) => {
+    if (readOnly || !onChange) return;
+    if (date < today) return;
 
+    const ymd = toYMD(date);
+
+    // Blocked and not yet overridden → show confirmation modal
+    if (isBlocked(ymd) && !isOverridden(ymd)) {
+      setPendingOverride(date);
+      return;
+    }
+
+    // Shift+click range selection
     if (e?.shiftKey && lastClickedRef.current && lastClickedRef.current !== ymd) {
-      // Determine the toggle state from the first clicked date
-      const anchorMarked = dates.includes(lastClickedRef.current);
-      const [a, b] = lastClickedRef.current < ymd
-        ? [lastClickedRef.current, ymd]
-        : [ymd, lastClickedRef.current];
-
-      // Build the range of non-past dates between a and b inclusive
-      const range = [];
+      const anchor = lastClickedRef.current;
+      const anchorMarked = dates.includes(anchor);
+      const [a, b] = anchor < ymd ? [anchor, ymd] : [ymd, anchor];
       const [ay, am, ad] = a.split('-').map(Number);
       const [by, bm, bd] = b.split('-').map(Number);
       const end = new Date(by, bm - 1, bd);
-      for (let d = new Date(ay, am - 1, ad); d <= end; d.setDate(d.getDate() + 1)) {
-        const dYmd = toYMD(d);
+      const range = [];
+      for (let cur = new Date(ay, am - 1, ad); cur <= end; cur.setDate(cur.getDate() + 1)) {
+        const dYmd = toYMD(cur);
         if (dYmd >= toYMD(today)) range.push(dYmd);
       }
-
-      // Apply: if anchor was marked → unmark all in range; if anchor was unmarked → mark all
       let next = [...dates];
       if (anchorMarked) {
         next = next.filter(d => !range.includes(d));
@@ -103,19 +164,32 @@ export default function AvailabilityCalendar({
     onChange(isMarked ? dates.filter(d => d !== ymd) : [...dates, ymd]);
   };
 
-  // In 'available' mode: marked = unavailable (red), unmarked = available (green)
-  // In 'unavailable' mode: marked = available (green), unmarked = unavailable (grey)
-  const isDayAvailable = (ymd) =>
-    availabilityDefault === 'available'
-      ? !dates.includes(ymd)
-      : dates.includes(ymd);
+  const handleOverrideConfirm = () => {
+    if (!pendingOverride) return;
+    const ymd = toYMD(pendingOverride);
+    // Record as overridden locally so the visual state changes
+    setOverriddenDates(prev => new Set([...prev, ymd]));
+    // Notify parent so it can track which blocked dates were overridden for blockedByBooking sync
+    onOverride?.(ymd);
+    // Make the date available in markedDates
+    let next;
+    if (availabilityDefault === 'available') {
+      // default=available: markedDates = unavailable days → remove to make available
+      next = dates.filter(d => d !== ymd);
+    } else {
+      // default=unavailable: markedDates = available days → add to make available
+      next = dates.includes(ymd) ? dates : [...dates, ymd];
+    }
+    onChange?.(next);
+    setPendingOverride(null);
+  };
 
   const hintText = availabilityDefault === 'available'
-    ? 'Tap a date to mark it unavailable. All other days are shown as available.'
-    : 'Tap a date to mark it available. All other days are shown as unavailable.';
+    ? 'Tap a date to mark it unavailable. Shift+click to select a range.'
+    : 'Tap a date to mark it available. Shift+click to select a range.';
 
   return (
-    <div className={styles.monthCal}>
+    <div className={styles.rdpWrap}>
       {/* Default availability toggle */}
       {!readOnly && onDefaultChange && (
         <div className={styles.availDefaultToggle}>
@@ -139,63 +213,61 @@ export default function AvailabilityCalendar({
         </div>
       )}
 
-      {/* Navigation header */}
-      <div className={styles.monthCalHeader}>
-        <button type="button" className={styles.monthCalNav} onClick={handlePrev} aria-label="Previous month">‹</button>
-        <span className={styles.monthCalTitle}>{monthLabel}</span>
-        <button type="button" className={styles.monthCalNav} onClick={handleNext} aria-label="Next month">›</button>
-      </div>
+      <DayPicker
+        className="purrfect-rdp"
+        month={viewMonth}
+        onMonthChange={setViewMonth}
+        disabled={{ before: today }}
+        modifiers={modifiers}
+        modifiersStyles={modifiersStyles}
+        onDayButtonClick={handleDayClick}
+        onDayButtonMouseDown={(date, _modifiers, e) => {
+          if (e?.shiftKey) e.preventDefault(); // prevent text selection
+        }}
+      />
 
-      {/* Day-of-week headers */}
-      <div className={styles.monthCalDowRow}>
-        {DAY_LABELS.map(d => (
-          <span key={d} className={styles.monthCalDow}>{d}</span>
-        ))}
-      </div>
-
-      {/* Day grid */}
-      <div className={styles.monthCalGrid}>
-        {Array.from({ length: leadingBlanks }).map((_, i) => (
-          <div key={`blank-${i}`} className={styles.monthCalBlank} />
-        ))}
-
-        {Array.from({ length: daysInMonth }).map((_, i) => {
-          const dayNum = i + 1;
-          const dateObj = new Date(year, month, dayNum);
-          const ymd = toYMD(dateObj);
-          const isPast = dateObj < today;
-          const isToday = ymd === todayYMD;
-          const avail = isDayAvailable(ymd);
-
-          let cellClass = styles.monthCalDay;
-          if (isPast) {
-            cellClass += ` ${styles.monthCalDayPast}`;
-          } else if (avail) {
-            cellClass += ` ${styles.monthCalDayAvail}`;
-          } else {
-            cellClass += ` ${styles.monthCalDayUnavail}`;
-          }
-          if (isToday) cellClass += ` ${styles.monthCalDayToday}`;
-
-          return (
-            <button
-              key={ymd}
-              type="button"
-              className={cellClass}
-              onMouseDown={(e) => { if (e.shiftKey) e.preventDefault(); }}
-              onClick={(e) => handleDayClick(ymd, isPast, e)}
-              disabled={readOnly || isPast}
-              aria-label={`${ymd}${avail ? ' (available)' : ' (unavailable)'}`}
-              aria-pressed={!readOnly ? !avail : undefined}
-            >
-              {dayNum}
-            </button>
-          );
-        })}
-      </div>
+      {/* Legend */}
+      {!readOnly && (
+        <div className={styles.rdpLegend}>
+          <span className={styles.rdpLegendItem}>
+            <span className={styles.rdpLegendDot} style={{ background: '#EAF3DE', border: '1px solid #a3c98a' }} />
+            Available
+          </span>
+          <span className={styles.rdpLegendItem}>
+            <span className={styles.rdpLegendDot} style={{ background: '#FCE8DF', border: '1px solid #e4a98a' }} />
+            Unavailable
+          </span>
+          {blockedDates.length > 0 && (
+            <>
+              <span className={styles.rdpLegendItem}>
+                <span className={styles.rdpLegendDot} style={{ background: '#FEF3C7', border: '1px solid #f0c040' }} />
+                Booking
+              </span>
+              <span className={styles.rdpLegendItem}>
+                <span
+                  className={styles.rdpLegendDot}
+                  style={{
+                    background: 'repeating-linear-gradient(45deg, #FEF3C7, #FEF3C7 5px, #D1FAE5 5px, #D1FAE5 10px)',
+                    border: '1px solid #a3c98a',
+                  }}
+                />
+                Override
+              </span>
+            </>
+          )}
+        </div>
+      )}
 
       {!readOnly && (
-        <p className={styles.monthCalHint}>{hintText}</p>
+        <p className={styles.rdpHint}>{hintText}</p>
+      )}
+
+      {pendingOverride && (
+        <BlockedDateOverrideModal
+          date={pendingOverride}
+          onCancel={() => setPendingOverride(null)}
+          onConfirm={handleOverrideConfirm}
+        />
       )}
     </div>
   );
