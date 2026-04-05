@@ -6,6 +6,7 @@ import { Resend } from 'resend'
 import { renderToBuffer } from '@react-pdf/renderer'
 import { createElement } from 'react'
 import { AdoptionContractPDF } from '@/lib/adoptionContractPDF'
+import { AdoptionContractPDF_DE } from '@/lib/adoptionContractPDF_DE'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -42,11 +43,14 @@ const AGE_LABELS = {
 
 export async function POST(request) {
   try {
-    const { documentId } = await request.json()
+    const body = await request.json()
+    const { documentId, language = 'en' } = body
 
     if (!documentId) {
       return Response.json({ error: 'Document ID required' }, { status: 400 })
     }
+
+    const isGerman = language === 'de'
 
     const cleanId = documentId.replace(/^drafts\./, '')
 
@@ -109,13 +113,14 @@ export async function POST(request) {
     }
 
     const logoDataUrl = getLogoDataUrl()
-    const date = new Date().toLocaleDateString('en-IN', {
+    const date = new Date().toLocaleDateString(isGerman ? 'de-DE' : 'en-IN', {
       day: 'numeric', month: 'long', year: 'numeric',
     })
 
     // Generate PDF
+    const PdfComponent = isGerman ? AdoptionContractPDF_DE : AdoptionContractPDF
     const pdfBuffer = await renderToBuffer(
-      createElement(AdoptionContractPDF, {
+      createElement(PdfComponent, {
         applicantName: application.applicantName,
         applicantEmail: application.email,
         applicantPhone: application.phone || '',
@@ -130,7 +135,7 @@ export async function POST(request) {
       })
     )
 
-    // Email HTML
+    // Email content (language-aware)
     const colors = {
       hunterGreen: '#2C5F4F',
       tabbyBrown: '#C85C3F',
@@ -139,7 +144,13 @@ export async function POST(request) {
       textLight: '#6B6B6B',
     }
 
-    const emailHtml = `
+    const emailSubject = isGerman
+      ? `Ihre Adoptionsvereinbarung für ${catName} – Purrfect Love`
+      : `Your Adoption Agreement for ${catName} – Purrfect Love`
+
+    const emailHeading = isGerman ? 'Adoptionsvereinbarung' : 'Adoption Agreement'
+
+    const emailHtml = isGerman ? `
 <!DOCTYPE html>
 <html>
 <head>
@@ -155,7 +166,65 @@ export async function POST(request) {
           <tr>
             <td style="background-color: ${colors.hunterGreen}; padding: 32px; text-align: center;">
               <h1 style="margin: 0; font-family: 'Outfit', 'Trebuchet MS', sans-serif; font-size: 28px; color: ${colors.whiskerCream}; font-weight: 700;">Purrfect Love</h1>
-              <p style="margin: 8px 0 0 0; font-size: 14px; color: ${colors.whiskerCream}; opacity: 0.85; font-family: 'Lora', Georgia, serif;">Adoption Contract</p>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: ${colors.whiskerCream}; opacity: 0.85; font-family: 'Lora', Georgia, serif;">${emailHeading}</p>
+            </td>
+          </tr>
+          <tr>
+            <td style="padding: 40px 32px;">
+              <p style="margin: 0 0 20px 0; font-size: 18px; line-height: 1.5; color: ${colors.textDark};">
+                Hallo ${application.applicantName},
+              </p>
+              <p style="margin: 0 0 20px 0; font-size: 16px; line-height: 1.7; color: ${colors.textDark};">
+                Ihre Adoptionsbewerbung wurde geprüft. Wir freuen uns sehr, dass <strong>${catName}</strong> bei Ihnen einzieht! 🐱
+              </p>
+              <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: ${colors.textLight};">
+                Im Anhang finden Sie Ihre Adoptionsvereinbarung. Bitte lesen Sie diese sorgfältig durch, unterschreiben Sie beide Exemplare und schicken Sie uns eines zurück an
+                <a href="mailto:support@purrfectlove.org" style="color: ${colors.tabbyBrown}; text-decoration: none;">support@purrfectlove.org</a>.
+              </p>
+              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 28px 0;">
+                <tr>
+                  <td style="background-color: ${colors.whiskerCream}; border-left: 4px solid ${colors.hunterGreen}; border-radius: 8px; padding: 18px 20px;">
+                    <p style="margin: 0 0 6px 0; font-size: 13px; font-family: 'Outfit', sans-serif; color: ${colors.textLight}; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Ihre Adoptionsdetails</p>
+                    <p style="margin: 0 0 4px 0; font-size: 15px; font-family: 'Outfit', sans-serif; color: ${colors.textDark};"><strong>Katze:</strong> ${catName}</p>
+                    <p style="margin: 0 0 4px 0; font-size: 15px; font-family: 'Outfit', sans-serif; color: ${colors.textDark};"><strong>Bewerbungs-ID:</strong> #${application.applicationId}</p>
+                    <p style="margin: 0; font-size: 15px; font-family: 'Outfit', sans-serif; color: ${colors.textDark};"><strong>Datum:</strong> ${date}</p>
+                  </td>
+                </tr>
+              </table>
+              <p style="margin: 0; font-size: 14px; line-height: 1.7; color: ${colors.textLight};">
+                Bei Fragen antworten Sie einfach auf diese E-Mail oder schreiben Sie uns an
+                <a href="mailto:support@purrfectlove.org" style="color: ${colors.tabbyBrown}; text-decoration: none;">support@purrfectlove.org</a>.
+              </p>
+            </td>
+          </tr>
+          <tr>
+            <td style="background-color: ${colors.whiskerCream}; padding: 24px 32px; text-align: center;">
+              <p style="margin: 0 0 8px 0; font-size: 14px; font-family: 'Outfit', sans-serif; color: ${colors.textLight};">Bangalore • Stuttgart</p>
+              <p style="margin: 0; font-size: 13px; font-family: 'Lora', Georgia, serif; color: ${colors.textLight};">Mit 🧡 für Katzen und Katzenliebhaber</p>
+            </td>
+          </tr>
+        </table>
+      </td>
+    </tr>
+  </table>
+</body>
+</html>` : `
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
+</head>
+<body style="margin: 0; padding: 0; font-family: 'Lora', Georgia, serif; background-color: ${colors.whiskerCream}; color: ${colors.textDark};">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${colors.whiskerCream}; padding: 40px 20px;">
+    <tr>
+      <td align="center">
+        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
+          <tr>
+            <td style="background-color: ${colors.hunterGreen}; padding: 32px; text-align: center;">
+              <h1 style="margin: 0; font-family: 'Outfit', 'Trebuchet MS', sans-serif; font-size: 28px; color: ${colors.whiskerCream}; font-weight: 700;">Purrfect Love</h1>
+              <p style="margin: 8px 0 0 0; font-size: 14px; color: ${colors.whiskerCream}; opacity: 0.85; font-family: 'Lora', Georgia, serif;">${emailHeading}</p>
             </td>
           </tr>
           <tr>
@@ -167,7 +236,7 @@ export async function POST(request) {
                 Your adoption application has been reviewed. We're so excited you're taking <strong>${catName}</strong> home! 🐱
               </p>
               <p style="margin: 0 0 28px 0; font-size: 15px; line-height: 1.7; color: ${colors.textLight};">
-                Please find your adoption contract attached. Read through it carefully, sign both copies, and send one back to us at
+                Please find your adoption agreement attached. Read through it carefully, sign both copies, and send one back to us at
                 <a href="mailto:support@purrfectlove.org" style="color: ${colors.tabbyBrown}; text-decoration: none;">support@purrfectlove.org</a>.
               </p>
               <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 28px 0;">
@@ -199,16 +268,24 @@ export async function POST(request) {
 </body>
 </html>`
 
+    const emailText = isGerman
+      ? `Hallo ${application.applicantName},\n\nIhre Adoptionsbewerbung wurde geprüft. Wir freuen uns sehr, dass ${catName} bei Ihnen einzieht!\n\nIm Anhang finden Sie Ihre Adoptionsvereinbarung. Bitte lesen Sie diese sorgfältig durch, unterschreiben Sie beide Exemplare und schicken Sie uns eines zurück an support@purrfectlove.org.\n\nKatze: ${catName}\nBewerbungs-ID: #${application.applicationId}\nDatum: ${date}\n\n— Purrfect Love`
+      : `Hey ${application.applicantName},\n\nYour adoption application has been reviewed. We're so excited you're taking ${catName} home!\n\nPlease find your adoption agreement attached. Read through it, sign both copies, and send one back to support@purrfectlove.org.\n\nCat: ${catName}\nApplication ID: #${application.applicationId}\nDate: ${date}\n\n— Purrfect Love`
+
+    const pdfFilename = isGerman
+      ? `Adoptionsvereinbarung_${application.applicationId}.pdf`
+      : `Adoption_Agreement_${application.applicationId}.pdf`
+
     const { data, error } = await resend.emails.send({
       from: 'Purrfect Love <support@purrfectlove.org>',
       replyTo: 'support@purrfectlove.org',
       to: [application.email],
-      subject: `Your Adoption Contract for ${catName} – Purrfect Love`,
+      subject: emailSubject,
       html: emailHtml,
-      text: `Hey ${application.applicantName},\n\nYour adoption application has been reviewed. We're so excited you're taking ${catName} home!\n\nPlease find your adoption contract attached. Read through it, sign both copies, and send one back to support@purrfectlove.org.\n\nCat: ${catName}\nApplication ID: #${application.applicationId}\nDate: ${date}\n\n— Purrfect Love`,
+      text: emailText,
       attachments: [
         {
-          filename: `Adoption_Contract_${application.applicationId}.pdf`,
+          filename: pdfFilename,
           content: pdfBuffer,
         },
       ],
@@ -219,12 +296,12 @@ export async function POST(request) {
       return Response.json({ error: error.message }, { status: 500 })
     }
 
-    // Record contractSentAt on the published document
+    // Record contractSentAt and contractLanguage on the published document
     await serverClient
       .patch(cleanId)
-      .set({ contractSentAt: new Date().toISOString() })
+      .set({ contractSentAt: new Date().toISOString(), contractLanguage: language })
       .commit()
-      .catch(err => console.error('Failed to update contractSentAt:', err))
+      .catch(err => console.error('Failed to update contract fields:', err))
 
     console.log('Adoption contract sent:', data?.id, 'to', application.email)
     return Response.json({ success: true, emailId: data?.id })

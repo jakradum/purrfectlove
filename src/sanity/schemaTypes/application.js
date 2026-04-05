@@ -384,6 +384,15 @@ export default {
       readOnly: true,
       hidden: ({parent}) => !parent?.contractSentAt
     },
+    {
+      name: 'contractLanguage',
+      title: 'Contract Language',
+      type: 'string',
+      fieldset: 'officialUse',
+      readOnly: true,
+      options: { list: [{ title: 'English', value: 'en' }, { title: 'German (Deutsch)', value: 'de' }] },
+      hidden: ({parent}) => !parent?.contractLanguage
+    },
 
     // FOLLOW UP
     {

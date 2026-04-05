@@ -26,36 +26,36 @@ const s = StyleSheet.create({
   contactLabel: { fontSize: 9.5, fontFamily: 'Helvetica-Bold', color: DK },
   contactVal: { fontSize: 9.5, color: B, marginLeft: 4 },
 
-  // ── COVER ───────────────────────────────────────────────
-  cover: { flexDirection: 'row', alignItems: 'center', marginBottom: 24 },
-  coverLeft: { flex: 1, paddingRight: 20 },
-  coverDoc: { fontFamily: 'Helvetica-Bold', fontSize: 13, letterSpacing: 0.4, color: DK, marginBottom: 10 },
-  coverOrg: { fontFamily: 'Helvetica-Bold', fontSize: 13, color: G, marginBottom: 8 },
-  coverInsta: { fontFamily: 'Helvetica-Bold', fontSize: 10, color: DK, lineHeight: 1.5 },
-  catImg: { width: 180, height: 180, borderRadius: 90 },
-  catImgPlaceholder: { width: 180, height: 180, borderRadius: 90, backgroundColor: CR },
+  // ── TITLE ───────────────────────────────────────────────
+  docTitle: {
+    fontFamily: 'Helvetica-Bold', fontSize: 18, color: DK,
+    textAlign: 'center', letterSpacing: 0.5,
+    marginBottom: 20,
+    paddingBottom: 14,
+    borderBottomWidth: 1.5, borderBottomColor: DK,
+  },
 
   // ── PREAMBLE ────────────────────────────────────────────
-  preamble: { fontFamily: 'Helvetica-Bold', fontSize: 10.5, lineHeight: 1.8, color: DK, textTransform: 'uppercase', marginBottom: 24 },
-  preambleHL: { color: B },
+  preamble: { fontSize: 10, lineHeight: 1.8, color: DK, marginBottom: 20 },
+  preambleHL: { fontFamily: 'Helvetica-Bold' },
 
   // ── SECTION HEADER ──────────────────────────────────────
   sectionHead: {
-    fontFamily: 'Helvetica-Bold', fontSize: 12.5, color: DK,
-    textTransform: 'uppercase', letterSpacing: 0.4,
-    paddingBottom: 5,
-    borderBottomWidth: 2, borderBottomColor: DK, borderBottomStyle: 'solid',
+    fontFamily: 'Helvetica-Bold', fontSize: 11, color: DK,
+    textTransform: 'uppercase', letterSpacing: 0.3,
+    paddingBottom: 4,
+    borderBottomWidth: 1, borderBottomColor: DK,
     marginTop: 18, marginBottom: 10,
   },
 
   // ── SUB-SECTION HEADER ──────────────────────────────────
   subHead: {
-    fontFamily: 'Helvetica-Bold', fontSize: 10.5, color: DK,
-    marginTop: 11, marginBottom: 5,
+    fontFamily: 'Helvetica-Bold', fontSize: 10, color: DK,
+    marginTop: 10, marginBottom: 4,
   },
 
   // ── BODY TEXT ───────────────────────────────────────────
-  body: { fontSize: 10, lineHeight: 1.7, color: '#333', marginBottom: 6 },
+  body: { fontSize: 10, lineHeight: 1.7, color: '#333', marginBottom: 5 },
 
   // ── BULLET ──────────────────────────────────────────────
   bulletRow: { flexDirection: 'row', marginBottom: 5, paddingLeft: 6 },
@@ -73,15 +73,11 @@ const s = StyleSheet.create({
     flex: 1, height: 15,
     borderBottomWidth: 0.75, borderBottomColor: DK,
   },
-
-  // ── CALLOUT ─────────────────────────────────────────────
-  callout: {
-    backgroundColor: '#FFFFFF',
-    borderLeftWidth: 3, borderLeftColor: G, borderLeftStyle: 'solid',
-    padding: 10, marginTop: 6, marginBottom: 6,
-    fontSize: 10, lineHeight: 1.65, color: DK,
+  fieldMultiLine: {
+    flex: 1, height: 36,
+    borderBottomWidth: 0.75, borderBottomColor: DK,
+    marginBottom: 0,
   },
-  calloutBold: { fontFamily: 'Helvetica-Bold', color: B },
 
   // ── SIGNATURES ──────────────────────────────────────────
   sigGrid: { flexDirection: 'row', marginTop: 14 },
@@ -99,26 +95,19 @@ const s = StyleSheet.create({
     textAlign: 'center', fontSize: 7.5, color: '#AAAAAA',
     borderTopWidth: 0.5, borderTopColor: RU, paddingTop: 7,
   },
-  pageNum: {
-    position: 'absolute', bottom: 26, right: 50,
-    fontSize: 8, color: MT,
-  },
 })
 
-// ── Small helpers ──────────────────────────────────────────────────────────────
+// ── Helpers ────────────────────────────────────────────────────────────────────
 
 function SectionHead({ children }) {
   return <Text style={s.sectionHead}>{children}</Text>
 }
-
 function SubHead({ children }) {
   return <Text style={s.subHead}>{children}</Text>
 }
-
 function Body({ children }) {
   return <Text style={s.body}>{children}</Text>
 }
-
 function Bullet({ children }) {
   return (
     <View style={s.bulletRow}>
@@ -127,22 +116,20 @@ function Bullet({ children }) {
     </View>
   )
 }
-
-function FieldRow({ label, value }) {
+function FieldRow({ label, value, multiLine }) {
   return (
     <View style={s.fieldRow}>
       <Text style={s.fieldLabel}>{label}</Text>
       {value
         ? <Text style={s.fieldFilled}>{value}</Text>
-        : <View style={s.fieldBlank} />}
+        : <View style={multiLine ? s.fieldMultiLine : s.fieldBlank} />}
     </View>
   )
 }
-
 function Footer() {
   return (
     <Text style={s.footer} fixed>
-      Purrfect Love e.V. · Heusteigstraße 99, 70180 Stuttgart · VR 727528 · support@purrfectlove.org · www.purrfectlove.org
+      Purrfect Love e.V. · Heusteigstraße 99, 70180 Stuttgart · support@purrfectlove.org · www.purrfectlove.org
     </Text>
   )
 }
@@ -162,7 +149,6 @@ export function AdoptionContractPDF({
   applicantAddress,
   applicantEmail,
 }) {
-  const ageLabel = catAge || null
   const genderLabel = catGender ? (catGender === 'male' ? 'Male' : 'Female') : null
 
   return (
@@ -174,7 +160,6 @@ export function AdoptionContractPDF({
           {logoDataUrl
             ? <Image src={logoDataUrl} style={s.logo} />
             : <View style={{ width: 90, height: 90 }} />}
-
           <View style={s.contactBlock}>
             <View style={s.contactRow}>
               <Text style={s.contactLabel}>Telefon:</Text>
@@ -191,25 +176,16 @@ export function AdoptionContractPDF({
           </View>
         </View>
 
-        {/* ── COVER ──────────────────────────────────────────────────── */}
-        <View style={s.cover}>
-          <View style={s.coverLeft}>
-            <Text style={s.coverDoc}>ADOPTION AGREEMENT</Text>
-            <Text style={s.coverOrg}>PURRFECT LOVE</Text>
-            <Text style={s.coverInsta}>{'ON INSTAGRAM\n@PURRFECTLOVE.BANGALORE'}</Text>
-          </View>
-          {catPhotoUrl
-            ? <Image src={catPhotoUrl} style={s.catImg} />
-            : <View style={s.catImgPlaceholder} />}
-        </View>
+        {/* ── TITLE ──────────────────────────────────────────────────── */}
+        <Text style={s.docTitle}>ADOPTION AGREEMENT</Text>
 
         {/* ── PREAMBLE ───────────────────────────────────────────────── */}
         <Text style={s.preamble}>
-          {'THIS CAT ADOPTION AGREEMENT ("AGREEMENT") IS ENTERED INTO ON THIS ___ DAY OF ________, 20__, BY AND BETWEEN '}
-          <Text style={s.preambleHL}>PURRFECT LOVE</Text>
-          {' (THE "ORIGINAL CAREGIVER") AND '}
-          <Text style={s.preambleHL}>{applicantName.toUpperCase()}</Text>
-          {' (THE "ADOPTER").'}
+          {'This Adoption Agreement ("Agreement") is entered into on the ___ day of ________ 20__, between '}
+          <Text style={s.preambleHL}>Purrfect Love e.V.</Text>
+          {', represented by ________________________ (hereinafter referred to as the "Original Caregiver"), and '}
+          <Text style={s.preambleHL}>{applicantName}</Text>
+          {' (hereinafter referred to as the "Adopter").'}
         </Text>
 
         {/* ═══════════════════════════════════════════════════════════ */}
@@ -217,7 +193,7 @@ export function AdoptionContractPDF({
         {/* ═══════════════════════════════════════════════════════════ */}
         <SectionHead>1. Purpose</SectionHead>
         <Body>
-          This Agreement outlines the responsibilities and commitments of the Adopter in providing a safe and suitable home for the adopted cat. The Adopter agrees to abide by the terms outlined below to ensure the cat's well-being and safety.
+          This Agreement sets forth the responsibilities and obligations of the adopting person to provide a safe and suitable environment for the adopted cat. The adopting person agrees to comply with the following conditions in order to ensure the cat's well-being and safety.
         </Body>
 
         {/* ═══════════════════════════════════════════════════════════ */}
@@ -229,123 +205,150 @@ export function AdoptionContractPDF({
         <FieldRow label="Name:" value={catName} />
         <FieldRow label="Breed:" />
         <FieldRow label="Color / Markings:" />
-        <FieldRow label="Age / DOB:" value={ageLabel} />
-        <FieldRow label="Microchip Number:" />
-        <FieldRow label="Gender:" value={genderLabel} />
-        <FieldRow label="Spayed / Neutered:" />
+        <FieldRow label="Age / Date of Birth:" value={catAge} />
+        <FieldRow label="Microchip Number (if available):" />
+        <FieldRow label="Sex:" value={genderLabel} />
+        <FieldRow label="Spayed / Neutered (Yes/No):" />
 
         {/* ═══════════════════════════════════════════════════════════ */}
-        {/* 3. ADOPTION TERMS                                          */}
+        {/* 3. HEALTH CONDITION                                         */}
         {/* ═══════════════════════════════════════════════════════════ */}
-        <SectionHead>3. Adoption Terms</SectionHead>
-        <Body>The Adopter agrees to the following conditions:</Body>
+        <SectionHead>3. Health Condition</SectionHead>
+        <Body>The health condition of the cat at the time of adoption:</Body>
 
-        {/* 3.1 */}
-        <SubHead>3.1  Living Environment</SubHead>
-        <Bullet>The cat will reside in a private home as a companion animal.</Bullet>
-        <Bullet>Windows and balconies must be securely cat-proofed with rigid or strong mesh or netting before the cat's arrival.</Bullet>
+        <FieldRow label="Vaccination status:" />
+        <FieldRow label="Last veterinary examination:" />
+        <FieldRow label="Known illnesses / special conditions:" multiLine />
 
-        {/* 3.2 */}
-        <SubHead>3.2  Nutrition</SubHead>
-        <Bullet>The cat will be provided with sufficient quantities of nutritious wet and dry food and fresh water daily.</Bullet>
-        <Bullet>As obligate carnivores, cats require meat-based proteins and fats.</Bullet>
-        <Bullet>Rice and cow's milk must not be fed to the cat, as rice provides no nutritional value and most cats are lactose intolerant, which may cause significant health issues.</Bullet>
-
-        {/* 3.3 */}
-        <SubHead>3.3  Interaction and Handling</SubHead>
-        <Bullet>The Adopter agrees to speak gently and softly to the cat, as cats are highly sensitive to tone and volume.</Bullet>
-        <Bullet>The Adopter will never strike, mistreat, punish, or otherwise harm the cat.</Bullet>
-
-        {/* 3.4 */}
-        <SubHead>3.4  Declawing Prohibition</SubHead>
-        <Body>The Adopter will never declaw the cat under any circumstances.</Body>
-
-        {/* 3.5 */}
-        <SubHead>3.5  Spaying / Neutering</SubHead>
-        <Bullet>A cat younger than 5 months must be spayed or neutered before their first heat cycle, by five (5) months of age.</Bullet>
-        <Bullet>If the cat is not spayed or neutered prior to adoption, the Adopter must provide proof of the procedure within 30 days of completion.</Bullet>
-
-        {/* 3.6 */}
-        <SubHead>3.6  Veterinary Care</SubHead>
-        <Bullet>The Adopter agrees to keep the cat's vaccinations for rabies and distemper up to date (boosted every 3 years in accordance with WSAVA recommendations).</Bullet>
-        <Bullet>The Adopter will provide prompt veterinary care in case of sickness, disease, or injury.</Bullet>
-
-        {/* 3.7 */}
-        <SubHead>3.7  Visitation Rights</SubHead>
-        <Body>The Original Caregiver retains the right to visit the cat at a reasonable time to ensure compliance with this Agreement.</Body>
-
-        {/* 3.8 */}
-        <SubHead>3.8  Scratching Behavior</SubHead>
-        <Bullet>Scratching is a natural feline behavior. The Adopter will provide appropriate scratching outlets such as cat trees and scratching posts.</Bullet>
-        <Bullet>The Adopter agrees to contact the Original Caregiver for advice on managing inappropriate scratching behavior if needed.</Bullet>
-
-        {/* 3.9 */}
-        <SubHead>3.9  Interaction with Children</SubHead>
-        <Bullet>The Adopter will take particular care when allowing children to interact with the cat, recognizing that some animals may feel frightened or uncomfortable around children.</Bullet>
-        <Bullet>The Adopter accepts full responsibility for any incidents that may occur involving children and the cat.</Bullet>
-
-        {/* 3.10 */}
-        <SubHead>3.10  Adjustment Period</SubHead>
-        <Bullet>The Adopter will exercise patience and caution when introducing the cat to a new environment, understanding that adjustment may take weeks.</Bullet>
-        <Bullet>The Original Caregiver is available to provide guidance during the transition period.</Bullet>
-        <View style={s.callout}>
-          <Text>
-            {'If you observe any behavioral issues or have any concerns — even beyond the initial adjustment period — please '}
-            <Text style={s.calloutBold}>CONTACT US IMMEDIATELY</Text>
-            {' so we can address them promptly and prevent escalation.'}
-          </Text>
-        </View>
-
-        {/* 3.11 */}
-        <SubHead>3.11  Change of Residence</SubHead>
-        <Body>The Adopter must inform the Original Caregiver before moving to a new apartment, house, city, or country.</Body>
-
-        {/* 3.12 */}
-        <SubHead>3.12  Rehoming the Cat</SubHead>
-        <Bullet>If, for any reason, the Adopter can no longer care for the cat, the cat must not be surrendered to a shelter, humane society, or any third party.</Bullet>
-        <Bullet>The cat must be returned to the Original Caregiver or their designated representative.</Bullet>
-        <Bullet>If the Original Caregiver's contact information is no longer valid, the Adopter must make a good-faith effort to locate and notify them.</Bullet>
-
-        {/* Pet-sitting vs Fostering */}
-        <SubHead>Differentiation Between Pet-Sitting and Fostering</SubHead>
         <Body>
-          Pet-sitting is a short-term arrangement with a predetermined end date. It is defined as providing a temporary caregiver when needed, ensuring the cat's well-being while the Adopter is unavailable due to vacations, business trips, or temporary absence. In such cases, the cat must not be returned to Purrfect Love, the Original Caregiver, or their representative(s). However, the Original Caregiver can be notified to ensure the cat's welfare.
-        </Body>
-        <Body>
-          If the Adopter requires a longer-term solution such as fostering due to circumstances like illness, relocation, or other life changes, this will be considered a relinquishment of the cat and will be subject to Clause 3.12 (Rehoming the Cat).
-        </Body>
-        <Body>
-          The fundamental understanding in adopting a cat is that the cat remains with the Adopter as a permanent companion through all life changes and circumstances.
+          The adopting person confirms that they have been informed about the known health condition of the cat.
         </Body>
 
         {/* ═══════════════════════════════════════════════════════════ */}
-        {/* 4. BREACH OF AGREEMENT                                     */}
+        {/* 4. TRANSFER OF OWNERSHIP                                   */}
         {/* ═══════════════════════════════════════════════════════════ */}
-        <SectionHead>4. Breach of Agreement</SectionHead>
+        <SectionHead>4. Transfer of Ownership</SectionHead>
+        <Body>Ownership of the cat is transferred to the adopting person upon handover.</Body>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* 5. ADOPTION CONDITIONS                                      */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <SectionHead>5. Adoption Conditions</SectionHead>
+        <Body>The adopting person agrees to the following conditions:</Body>
+
+        <SubHead>5.1 Living Environment – Hygiene and Air Quality</SubHead>
+        <Bullet>The cat shall be kept as a pet in a private apartment (strictly indoor, no outdoor access).</Bullet>
+        <Bullet>Windows and balconies must be secured with stable cat netting or protective barriers before the cat's arrival.</Bullet>
+        <Bullet>The adopting person undertakes to regularly clean the apartment thoroughly, keep all surfaces clean, and ventilate the premises sufficiently several times a day. This is particularly intended to prevent health issues in the animal such as allergic reactions, skin diseases, and respiratory illnesses. In indoor environments, dust, allergens (e.g. dust mites, mold spores, skin flakes), and pollutants can accumulate significantly more than outdoors. Insufficient cleaning and ventilation may promote the accumulation of such substances and thereby increase the risk of illness in the animal.</Bullet>
+        <Bullet>The adopting person is therefore responsible for ensuring a healthy environment for the animal through appropriate hygiene measures and regular air exchange.</Bullet>
+
+        <SubHead>5.2 Nutrition</SubHead>
+        <Bullet>The cat shall receive sufficient high-quality wet and dry food daily, as well as fresh water.</Bullet>
+        <Bullet>As obligate carnivores, cats require animal protein and fat.</Bullet>
+        <Bullet>Rice and cow's milk intended for human consumption (i.e. standard commercial milk) are not suitable for animals, as they may be poorly tolerated and cause health problems. Therefore, they should not be fed.</Bullet>
+
+        <SubHead>5.3 Handling & Behavior</SubHead>
+        <Bullet>The adopting person shall speak calmly and gently to the cat.</Bullet>
+        <Bullet>Violence, abuse, or any form of harm is strictly prohibited. This includes, in particular, physical punishment, shouting at or punishing the animal, as well as rubbing the cat's face in urine or feces if the cat urinates outside the litter box.</Bullet>
+
+        <SubHead>5.4 Declawing</SubHead>
+        <Body>Declawing is strictly prohibited under all circumstances.</Body>
+
+        <SubHead>5.5 Spaying / Neutering</SubHead>
+        <Bullet>The young cat must be spayed/neutered no later than six (6) months of age.</Bullet>
+        <Bullet>If this has not yet been done at the time of adoption, proof must be provided within 30 days.</Bullet>
+
+        <SubHead>5.6 Veterinary Care</SubHead>
+        <Bullet>In case of illness or injury, a veterinarian must be consulted immediately.</Bullet>
+
+        <SubHead>5.7 Right of Visit</SubHead>
+        <Body>The original caregiver reserves the right to visit the cat upon prior agreement in order to verify compliance with this Agreement.</Body>
+
+        <SubHead>5.8 Scratching Behavior</SubHead>
+        <Bullet>The cat must be provided with appropriate scratching options (scratching post, board, etc.).</Bullet>
+        <Bullet>In case of problems, the original caregiver will provide advice.</Bullet>
+
+        <SubHead>5.9 Interaction with Children</SubHead>
+        <Bullet>The adopting person shall carefully supervise all interactions with children and assumes full responsibility for any incidents.</Bullet>
+
+        <SubHead>5.10 Adjustment Period</SubHead>
+        <Bullet>The adopting person must show patience during the adjustment period, which may take several weeks.</Bullet>
+        <Bullet>In case of behavioral issues or uncertainties, the original caregiver must be contacted immediately.</Bullet>
+
+        <SubHead>5.11 Change of Residence</SubHead>
+        <Bullet>Any change of residence (apartment, city, country) must be communicated to the original caregiver.</Bullet>
+
+        <SubHead>5.12 Transfer of the Cat</SubHead>
+        <Bullet>The cat may not be surrendered to shelters, third parties, or organizations.</Bullet>
+        <Bullet>The cat must be returned exclusively to the original caregiver or a person designated by them.</Bullet>
+        <Bullet>If contact cannot be established, a demonstrably serious effort to make contact is required.</Bullet>
+
+        <SubHead>5.13 Distinction Between Short-Term Pet Care and Long-Term Care</SubHead>
+        <Bullet>Pet care refers to the temporary care of the cat during a short-term absence of the adopting person (e.g. vacation, illness, business trip). In such cases, it is the responsibility of the adopting person to independently arrange a suitable care solution (e.g. cat sitter or foster care).</Bullet>
+        <Bullet>Long-term care needs resulting from permanent life changes (e.g. relocation abroad or health limitations of the adopting person) are considered a return of the cat in accordance with Clause 5.12. In such cases, the cat must be returned to the original caregiver. Any other transfer is not permitted.</Bullet>
+
+        <SubHead>5.14 Disclaimer for Future Veterinary Costs</SubHead>
+        <Bullet>After adoption, the original caregiver assumes no responsibility for veterinary costs, even if a pre-existing condition may have existed prior to adoption.</Bullet>
+
+        <SubHead>5.15 Microchip & Registration</SubHead>
+        <Bullet>If a microchip is present, the adopting person undertakes to register the cat in a pet registry and keep the data up to date.</Bullet>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* 6. LIABILITY                                                */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <SectionHead>6. Liability</SectionHead>
+        <Bullet>Upon handover, full responsibility for the cat passes to the adopting person.</Bullet>
+        <Bullet>The adopting person is liable for any damage caused by the cat.</Bullet>
+        <Bullet>It is recommended to take out pet liability insurance.</Bullet>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* 7. BREACH OF AGREEMENT                                     */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <SectionHead>7. Breach of Agreement</SectionHead>
         <Body>
-          Failure to adhere to the terms outlined in this Agreement constitutes a breach of contract. In such an event, the Adopter agrees that the Original Caregiver has the right to reclaim possession of the cat.
+          Any violation of these conditions shall be considered a breach of contract. In such a case, the original caregiver reserves the right to reclaim the cat.
         </Body>
 
         {/* ═══════════════════════════════════════════════════════════ */}
-        {/* 5. EXECUTION                                               */}
+        {/* 8. NON-REMUNERATIVE ADOPTION                               */}
         {/* ═══════════════════════════════════════════════════════════ */}
-        <SectionHead>5. Execution of Agreement</SectionHead>
+        <SectionHead>8. Non-Remunerative Adoption</SectionHead>
+        <Body>
+          The adoption of the cat is free of charge; no financial compensation or other monetary transaction has taken place between the adopting person and the original caregiver.
+        </Body>
 
-        {/* Execution line */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* 9. DATA PROTECTION                                         */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <SectionHead>9. Data Protection</SectionHead>
+        <Body>
+          The collected personal data shall be used exclusively within the framework of this Agreement and will not be shared with third parties.
+        </Body>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* 10. SEVERABILITY CLAUSE                                    */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <SectionHead>10. Severability Clause</SectionHead>
+        <Body>
+          Should any provision of this Agreement be invalid, the validity of the remaining provisions shall remain unaffected.
+        </Body>
+
+        {/* ═══════════════════════════════════════════════════════════ */}
+        {/* 11. SIGNATURE                                              */}
+        {/* ═══════════════════════════════════════════════════════════ */}
+        <SectionHead>11. Signature of the Agreement</SectionHead>
+
         <View style={{ flexDirection: 'row', marginBottom: 20, alignItems: 'flex-end' }}>
-          <Text style={{ fontSize: 10, color: DK, marginRight: 4 }}>This Agreement was executed at</Text>
-          <View style={{ width: 160, borderBottomWidth: 0.75, borderBottomColor: DK, height: 16, marginRight: 4 }} />
+          <Text style={{ fontSize: 10, color: DK, marginRight: 4 }}>This Agreement was concluded in</Text>
+          <View style={{ width: 130, borderBottomWidth: 0.75, borderBottomColor: DK, height: 16, marginRight: 4 }} />
           <Text style={{ fontSize: 10, color: DK, marginRight: 4 }}>on</Text>
           <View style={{ width: 100, borderBottomWidth: 0.75, borderBottomColor: DK, height: 16 }} />
         </View>
 
-        {/* Signature blocks */}
         <View style={s.sigGrid}>
-
           {/* Original Caregiver */}
           <View style={s.sigBox}>
             <Text style={s.sigTitle}>Original Caregiver</Text>
-
             <View style={s.sigField}>
               <Text style={s.sigLbl}>Name</Text>
               <View style={s.sigLine} />
@@ -362,14 +365,13 @@ export function AdoptionContractPDF({
 
           {/* Adopter */}
           <View style={s.sigBoxR}>
-            <Text style={s.sigTitle}>Adopter</Text>
-
+            <Text style={s.sigTitle}>Adopting Person</Text>
             <View style={s.sigField}>
               <Text style={s.sigLbl}>Name</Text>
               <Text style={s.sigFilled}>{applicantName}</Text>
             </View>
             <View style={s.sigField}>
-              <Text style={s.sigLbl}>Passport / ID Card Number</Text>
+              <Text style={s.sigLbl}>ID Number</Text>
               <View style={s.sigLine} />
             </View>
             <View style={s.sigField}>
