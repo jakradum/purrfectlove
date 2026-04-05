@@ -1,7 +1,8 @@
 import { createClient } from '@sanity/client'
-import { signToken } from '@/lib/careAuth'
+import { createServerClient } from '@supabase/ssr'
+import { createSupabaseAdminClient } from '@/lib/supabaseServer'
+import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
-import { generateUniqueUsername } from '@/lib/generateUsername'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -12,6 +13,12 @@ const sanity = createClient({
   apiVersion: '2024-01-01',
   useCdn: false,
 })
+
+function phoneVariants(raw) {
+  const norm = raw.replace(/\s+/g, '')
+  const spaced = norm.replace(/^(\+\d{2})(\d)/, '$1 $2')
+  return { norm, spaced }
+}
 
 function welcomeEmailHtml(firstName, unsubUrl, isDE) {
   const plusCodesUrl = 'https://plus.codes'
@@ -118,12 +125,6 @@ PS: We don't have a forum/notice board yet. We are working towards making this a
 Unsubscribe from community emails: ${unsubUrl}`
 }
 
-function phoneVariants(raw) {
-  const norm = raw.replace(/\s+/g, '')
-  const spaced = norm.replace(/^(\+\d{2})(\d)/, '$1 $2')
-  return { norm, spaced }
-}
-
 export async function POST(request) {
   try {
     const { identifier: rawIdentifier, type, code } = await request.json()
@@ -139,53 +140,42 @@ export async function POST(request) {
       identifier = rawIdentifier.trim().toLowerCase()
     }
 
-    const MAX_ATTEMPTS = 5
-
-    // Fetch OTP record by identifier only (not by code) so we can track failed attempts
-    let otpDoc
-    if (type === 'phone') {
-      otpDoc = await sanity.fetch(
-        `*[_type == "otpCode" && phone == $identifier][0]{ _id, code, expiresAt, attempts }`,
-        { identifier }
-      )
-    } else {
-      otpDoc = await sanity.fetch(
-        `*[_type == "otpCode" && email == $identifier][0]{ _id, code, expiresAt, attempts }`,
-        { identifier }
-      )
-    }
-
-    if (!otpDoc) {
-      return Response.json({ error: 'Invalid code' }, { status: 400 })
-    }
-
-    if (new Date(otpDoc.expiresAt) < new Date()) {
-      await sanity.delete(otpDoc._id)
-      return Response.json({ error: 'Code expired. Request a new one.' }, { status: 400 })
-    }
-
-    if (otpDoc.code !== code) {
-      const attempts = (otpDoc.attempts || 0) + 1
-      if (attempts >= MAX_ATTEMPTS) {
-        await sanity.delete(otpDoc._id)
-        await new Promise(r => setTimeout(r, 1000))
-        return Response.json({ error: 'Too many attempts, request a new code.' }, { status: 429 })
+    // Buffer cookies that Supabase wants to set on the response
+    const cookiesToSet = []
+    const supabase = createServerClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL,
+      process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+      {
+        cookies: {
+          getAll: () => request.cookies.getAll(),
+          setAll: (cookies) => cookiesToSet.push(...cookies),
+        },
       }
-      await sanity.patch(otpDoc._id).set({ attempts }).commit()
-      await new Promise(r => setTimeout(r, 1000))
-      return Response.json({ error: 'Invalid code' }, { status: 400 })
+    )
+
+    // Verify OTP with Supabase
+    const verifyPayload =
+      type === 'phone'
+        ? { phone: identifier, token: code, type: 'sms' }
+        : { email: identifier, token: code, type: 'email' }
+
+    const { data, error } = await supabase.auth.verifyOtp(verifyPayload)
+
+    if (error || !data.user) {
+      return Response.json(
+        { error: error?.message === 'Token has expired or is invalid' ? 'Code expired. Request a new one.' : 'Invalid code' },
+        { status: 400 }
+      )
     }
 
-    await sanity.delete(otpDoc._id)
-
-    // Find the account
+    // Look up the catSitter / teamMember in Sanity to get sitterId
     let catSitter, teamMember
 
     if (type === 'phone') {
       const { norm: phone, spaced: phoneSpaced } = phoneVariants(rawIdentifier)
       ;[catSitter, teamMember] = await Promise.all([
         sanity.fetch(
-          `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, username }`,
+          `*[_type == "catSitter" && (phone == $phone || phone == $phoneSpaced) && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
           { phone, phoneSpaced }
         ),
         sanity.fetch(
@@ -196,7 +186,7 @@ export async function POST(request) {
     } else {
       ;[catSitter, teamMember] = await Promise.all([
         sanity.fetch(
-          `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, username }`,
+          `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
           { email: identifier }
         ),
         sanity.fetch(
@@ -206,10 +196,10 @@ export async function POST(request) {
       ])
     }
 
-    // If teamMember matched but no catSitter did, find their linked catSitter by name
+    // If teamMember matched but no catSitter, find their linked catSitter by name
     if (!catSitter && teamMember) {
       catSitter = await sanity.fetch(
-        `*[_type == "catSitter" && name == $name && siteAdmin == true && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, username }`,
+        `*[_type == "catSitter" && name == $name && siteAdmin == true && memberVerified == true][0]{ _id, name, email, locale, welcomeSent }`,
         { name: teamMember.name }
       )
     }
@@ -219,34 +209,21 @@ export async function POST(request) {
       return Response.json({ error: 'Account not found or not verified' }, { status: 403 })
     }
 
-    const token = await signToken({
-      identifier,
-      identifierType: type,
-      sitterId: account._id,
-      name: account.name || '',
-      isTeamMember: !catSitter && !!teamMember,
+    const sitterId = account._id
+    const isTeamMember = !catSitter && !!teamMember
+
+    // Write sitterId + isTeamMember into Supabase user_metadata via service role
+    const supabaseAdmin = createSupabaseAdminClient()
+    await supabaseAdmin.auth.admin.updateUserById(data.user.id, {
+      user_metadata: { sitterId, isTeamMember },
     })
 
-    // Auto-generate username if catSitter has none (must happen before welcome email)
-    let resolvedUsername = catSitter?.username || null
-    if (catSitter && !catSitter.username) {
-      try {
-        resolvedUsername = await generateUniqueUsername(sanity)
-        const AVATAR_COLOURS = ['whisker-cream', 'paw-pink', 'hunter-green', 'tabby-brown']
-        const avatarColour = AVATAR_COLOURS[Math.floor(Math.random() * AVATAR_COLOURS.length)]
-        await sanity.patch(catSitter._id).set({ username: resolvedUsername, avatarColour }).commit()
-      } catch (err) {
-        console.error('username generation error:', err)
-        // Non-fatal
-      }
-    }
-
-    // Send welcome email on first login (catSitters only, not pure teamMembers)
+    // Send welcome email on first login (catSitters only)
     if (catSitter && !catSitter.welcomeSent) {
       const recipientEmail = catSitter.email || (type === 'email' ? identifier : null)
       if (recipientEmail && process.env.NODE_ENV === 'production') {
         const locale = catSitter.locale || 'en'
-        const firstName = resolvedUsername || (catSitter.name || '').split(' ')[0] || 'there'
+        const firstName = (catSitter.name || '').split(' ')[0] || 'there'
         const unsubUrl = `https://care.purrfectlove.org/api/care/unsubscribe?id=${catSitter._id}`
         const isDE = locale === 'de'
         try {
@@ -266,14 +243,12 @@ export async function POST(request) {
       }
     }
 
-    const isProduction = process.env.NODE_ENV === 'production'
-    const maxAge = 90 * 24 * 3600
-    const cookieValue = `auth_token=${token}; HttpOnly; Path=/; SameSite=Lax; Max-Age=${maxAge}${isProduction ? '; Secure' : ''}`
-
-    return new Response(JSON.stringify({ success: true }), {
-      status: 200,
-      headers: { 'Content-Type': 'application/json', 'Set-Cookie': cookieValue },
-    })
+    // Build response, applying Supabase session cookies
+    const response = NextResponse.json({ success: true })
+    for (const { name, value, options } of cookiesToSet) {
+      response.cookies.set(name, value, options)
+    }
+    return response
   } catch (error) {
     console.error('verify-otp error:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })

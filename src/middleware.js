@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server';
-import { verifyToken } from '@/lib/careAuth';
+import { createServerClient } from '@supabase/ssr';
 
 /**
  * Queries Sanity via the HTTP API (Edge Runtime-compatible — no Node.js SDK).
@@ -14,7 +14,7 @@ async function isDeletionPending(sitterId) {
     const query = '*[_type == "catSitter" && _id == $id][0].deletionRequested';
     const url = new URL(`https://${projectId}.api.sanity.io/v2024-01-01/data/query/${dataset}`);
     url.searchParams.set('query', query);
-    url.searchParams.set('$id', JSON.stringify(sitterId)); // Sanity expects JSON-encoded param value
+    url.searchParams.set('$id', JSON.stringify(sitterId));
     const res = await fetch(url.toString(), {
       headers: token ? { Authorization: `Bearer ${token}` } : {},
       cache: 'no-store',
@@ -45,6 +45,7 @@ export async function middleware(request) {
     '/care/login', '/care/privacy', '/care/join',
     '/de/care/login', '/de/care/privacy', '/de/care/join',
     '/api/care/send-otp', '/api/care/verify-otp', '/api/care/join', '/api/care/unsubscribe',
+    '/api/care/resend-webhook', // verified by Svix signature, not session cookie
     // Subdomain equivalents (before the /care rewrite is applied)
     '/login', '/privacy', '/join',
   ];
@@ -69,47 +70,73 @@ export async function middleware(request) {
       : new URL('/care/login', request.url);
   }
 
-  if (isProtectedCarePath) {
-    const token = request.cookies.get('auth_token')?.value;
-    if (!token) {
-      loginUrl.searchParams.set('reason', 'session');
-      return NextResponse.redirect(loginUrl);
+  // Build Supabase client — buffers any session-refresh cookies for the response
+  const cookiesToSet = [];
+  const supabase = createServerClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL,
+    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY,
+    {
+      cookies: {
+        getAll: () => request.cookies.getAll(),
+        setAll: (cookies) => cookiesToSet.push(...cookies),
+      },
     }
-    const payload = await verifyToken(token);
-    if (!payload) {
-      loginUrl.searchParams.set('reason', 'expired');
-      return NextResponse.redirect(loginUrl);
+  );
+
+  const { data: { user } } = await supabase.auth.getUser();
+
+  // Helper: apply any refreshed session cookies to a response before returning it
+  function withSessionCookies(response) {
+    for (const { name, value, options } of cookiesToSet) {
+      response.cookies.set(name, value, options);
+    }
+    return response;
+  }
+
+  if (isProtectedCarePath) {
+    if (!user) {
+      loginUrl.searchParams.set('reason', 'session');
+      return withSessionCookies(NextResponse.redirect(loginUrl));
     }
 
     // Deletion lockout: redirect all page routes (not API routes) to /profile
-    // for accounts with a pending deletion request.
     const isApiRoute = pathname.startsWith('/api/');
     if (!isApiRoute && !isProfilePage(pathname)) {
-      const deletionPending = await isDeletionPending(payload.sitterId);
-      if (deletionPending) {
-        // On subdomain the profile page is /profile; on main domain it's /care/profile
-        const profileRedirect = isCareDomain ? '/profile' : '/care/profile';
-        return NextResponse.redirect(new URL(profileRedirect, request.url));
+      const sitterId = user.user_metadata?.sitterId;
+      if (sitterId) {
+        const deletionPending = await isDeletionPending(sitterId);
+        if (deletionPending) {
+          const profileRedirect = isCareDomain ? '/profile' : '/care/profile';
+          return withSessionCookies(NextResponse.redirect(new URL(profileRedirect, request.url)));
+        }
       }
     }
+  }
+
+  // Block inbox routes — contact details are released via 2-day reminder email only
+  const INBOX_PREFIXES = ['/care/inbox', '/de/care/inbox', '/inbox'];
+  const isInboxPath = INBOX_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
+  if (isInboxPath) {
+    const home = isCareDomain ? '/' : '/care';
+    return withSessionCookies(NextResponse.redirect(new URL(home, request.url)));
   }
 
   // Rewrite care.purrfectlove.org/* → /care/* internally (after auth check)
   if (isCareDomain && !pathname.startsWith('/care') && !pathname.startsWith('/api')) {
     const url = request.nextUrl.clone();
     url.pathname = pathname === '/' ? '/care' : `/care${pathname}`;
-    return NextResponse.rewrite(url);
+    return withSessionCookies(NextResponse.rewrite(url));
   }
 
   // Clone the request headers and add the pathname
   const requestHeaders = new Headers(request.headers);
   requestHeaders.set('x-pathname', pathname);
 
-  return NextResponse.next({
-    request: {
-      headers: requestHeaders,
-    },
-  });
+  return withSessionCookies(
+    NextResponse.next({
+      request: { headers: requestHeaders },
+    })
+  );
 }
 
 // Run middleware on all routes except static files
