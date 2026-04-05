@@ -19,6 +19,7 @@ import notification from './notification'
 import sitRecord from './sitRecord'
 import memberReport from './memberReport'
 import broadcastMessage from './broadcastMessage'
+import bookingRequest from './bookingRequest'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -47,5 +48,6 @@ export const schema = {
     sitRecord,
     memberReport,
     broadcastMessage,
+    bookingRequest,
   ]
 }
