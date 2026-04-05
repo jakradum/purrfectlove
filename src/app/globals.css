@@ -3,6 +3,7 @@
 @tailwind utilities;
 
 @import 'leaflet/dist/leaflet.css';
+@import 'react-day-picker/dist/style.css';
 
 :root {
   --tabby-brown: #C85C3F;
@@ -52,4 +53,63 @@ a {
   body:has([data-ui="RootPortal"]) {
     padding-top: 0 !important;
   }
+}
+
+/* ====== react-day-picker theme overrides ====== */
+.purrfect-rdp.rdp-root {
+  --rdp-accent-color: #2C5F4F;
+  --rdp-accent-background-color: rgba(44, 95, 79, 0.1);
+  --rdp-day-height: 36px;
+  --rdp-day-width: 36px;
+  --rdp-day_button-height: 34px;
+  --rdp-day_button-width: 34px;
+  --rdp-day_button-border-radius: 6px;
+  --rdp-day_button-border: 1.5px solid transparent;
+  --rdp-today-color: #2C5F4F;
+  --rdp-disabled-opacity: 0.3;
+  --rdp-nav_button-height: 1.9rem;
+  --rdp-nav_button-width: 1.9rem;
+  font-family: var(--font-outfit), sans-serif;
+  font-size: 0.82rem;
+}
+
+.purrfect-rdp .rdp-month_caption {
+  font-weight: 700;
+  color: #2A2A2A;
+  font-size: 0.92rem;
+}
+
+.purrfect-rdp .rdp-weekday {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: #6B6B6B;
+  opacity: 1;
+}
+
+.purrfect-rdp .rdp-button_previous,
+.purrfect-rdp .rdp-button_next {
+  border: 1px solid rgba(44, 95, 79, 0.2);
+  border-radius: 6px;
+  color: #2C5F4F;
+}
+
+.purrfect-rdp .rdp-button_previous:hover,
+.purrfect-rdp .rdp-button_next:hover {
+  background: rgba(44, 95, 79, 0.08);
+}
+
+.purrfect-rdp .rdp-day_button {
+  border-radius: 6px;
+  transition: opacity 0.12s;
+}
+
+.purrfect-rdp .rdp-day_button:hover {
+  opacity: 0.85;
+}
+
+.purrfect-rdp .rdp-today:not(.rdp-outside) .rdp-day_button {
+  outline: 2px solid #2C5F4F;
+  outline-offset: -1px;
 }
