@@ -39,8 +39,9 @@ export async function POST(request) {
     }
 
     // Trigger Supabase email OTP.
-    // shouldCreateUser: false — non-members are blocked above, but if the gate
-    // fails for any reason we must not silently create a Supabase account.
+    // shouldCreateUser: true — required for first login during migration (no
+    // Supabase accounts exist yet). The Sanity memberVerified gate above is the
+    // real security guard; only verified members reach this point.
     const supabase = createSupabaseClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL,
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
@@ -48,7 +49,7 @@ export async function POST(request) {
 
     const { error: otpError } = await supabase.auth.signInWithOtp({
       email,
-      options: { shouldCreateUser: false },
+      options: { shouldCreateUser: true },
     })
 
     if (otpError) {
