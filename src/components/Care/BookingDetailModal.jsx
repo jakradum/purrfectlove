@@ -94,6 +94,9 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
   const [cancelReason, setCancelReason] = useState('');
   const [cancelError, setCancelError] = useState('');
 
+  // Accept / decline flow: 'idle' | 'submitting'
+  const [respondState, setRespondState] = useState('idle');
+
   // Mobile sheet drag-to-close
   const sheetRef = useRef(null);
   const dragStartY = useRef(null);
@@ -157,6 +160,50 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
     }
   };
 
+  const handleAccept = async () => {
+    setRespondState('submitting');
+    try {
+      const res = await fetch('/api/care/bookings/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to accept booking.');
+        setRespondState('idle');
+        return;
+      }
+      onCancelled?.(); // refresh parent list
+      onClose();
+    } catch {
+      setError('Network error. Please try again.');
+      setRespondState('idle');
+    }
+  };
+
+  const handleDecline = async () => {
+    setRespondState('submitting');
+    try {
+      const res = await fetch('/api/care/bookings/decline', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to decline booking.');
+        setRespondState('idle');
+        return;
+      }
+      onCancelled?.(); // refresh parent list
+      onClose();
+    } catch {
+      setError('Network error. Please try again.');
+      setRespondState('idle');
+    }
+  };
+
   const modalContent = () => {
     if (loading) {
       return <div className={styles.dtLoadingBody}>Loading…</div>;
@@ -183,7 +230,8 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
       ? `https://wa.me/${detail.other.phone.replace(/\D/g, '')}`
       : null;
     const emailUrl = detail.other.email ? `mailto:${detail.other.email}` : null;
-    const canCancel = CANCELLABLE.includes(detail.status);
+    // Sitters use Accept/Decline for pending; Cancel only applies post-confirmation
+    const canCancel = CANCELLABLE.includes(detail.status) && !(role === 'sitter' && detail.status === 'pending');
 
     return (
       <>
@@ -240,6 +288,28 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
               )}
               <p className={styles.dtContactNote}>Contact details will be shared 2 days before the sit.</p>
             </>
+          )}
+
+          {/* Accept / Decline — sitter only, pending bookings */}
+          {role === 'sitter' && detail.status === 'pending' && (
+            <div className={styles.dtActionRow}>
+              <button
+                type="button"
+                className={styles.dtAcceptBtn}
+                onClick={handleAccept}
+                disabled={respondState === 'submitting'}
+              >
+                {respondState === 'submitting' ? 'Accepting…' : 'Accept'}
+              </button>
+              <button
+                type="button"
+                className={styles.dtDeclineBtn}
+                onClick={handleDecline}
+                disabled={respondState === 'submitting'}
+              >
+                Decline
+              </button>
+            </div>
           )}
 
           {/* Cancel */}
