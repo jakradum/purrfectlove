@@ -1,6 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
-import { getSupabaseUser, createSupabaseAdminClient, createSupabaseDbClient } from '@/lib/supabaseServer'
+import { createSupabaseAdminClient, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -20,25 +20,23 @@ async function verifyToken(id, expiresAtMs, token) {
   )
   const data = encoder.encode(`${id}.${expiresAtMs}`)
   const sig = await crypto.subtle.sign('HMAC', key, data)
-  const expected = Buffer.from(sig).toString('hex')
-  return expected === token
+  return Buffer.from(sig).toString('hex') === token
 }
 
-// ── GET: email link click ──────────────────────────────────────────────────
+const html = (body) => new Response(
+  `<!DOCTYPE html><html><head><meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1.0">
+  <style>body{font-family:Georgia,serif;background:#FFF8F0;color:#2D2D2D;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+  .card{background:#fff;border-radius:16px;padding:40px 48px;box-shadow:0 4px 12px rgba(0,0,0,0.08);max-width:480px;text-align:center;}
+  a{color:#2C5F4F;font-weight:600;}</style></head>
+  <body><div class="card">${body}</div></body></html>`,
+  { headers: { 'Content-Type': 'text/html' } }
+)
+
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const id    = searchParams.get('id')
   const token = searchParams.get('token')
-
-  const html = (body) => new Response(
-    `<!DOCTYPE html><html><head><meta charset="utf-8">
-    <meta name="viewport" content="width=device-width,initial-scale=1.0">
-    <style>body{font-family:Georgia,serif;background:#FFF8F0;color:#2D2D2D;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
-    .card{background:#fff;border-radius:16px;padding:40px 48px;box-shadow:0 4px 12px rgba(0,0,0,0.08);max-width:480px;text-align:center;}
-    a{color:#2C5F4F;font-weight:600;}</style></head>
-    <body><div class="card">${body}</div></body></html>`,
-    { headers: { 'Content-Type': 'text/html' } }
-  )
 
   if (!id || !token) return html('<p>Invalid link.</p>')
 
@@ -52,18 +50,15 @@ export async function GET(request) {
 
     if (error || !req) return html('<p>Request not found.</p>')
 
-    // Validate HMAC
     const expiresAtMs = new Date(req.token_expires_at).getTime()
     const valid = await verifyToken(id, expiresAtMs, token)
-    if (!valid) return html('<p>Invalid or tampered link.</p>', 400)
+    if (!valid) return html('<p>Invalid or tampered link.</p>')
 
-    // Check expiry
-    if (Date.now() > expiresAtMs) return html('<p>This link has expired. Log in to the admin dashboard to action this request.</p>')
+    if (Date.now() > expiresAtMs) return html('<p>This link has expired. Please action this request manually.</p>')
 
-    // Check already actioned
     if (req.status !== 'pending') return html(`<p>Already actioned — this request has been <strong>${req.status}</strong>.</p><p><a href="https://care.purrfectlove.org">Back to portal →</a></p>`)
 
-    // 1. Create catSitter in Sanity
+    // Create catSitter in Sanity
     const sitter = await serverClient.create({
       _type: 'catSitter',
       name: req.name || null,
@@ -73,7 +68,7 @@ export async function GET(request) {
       welcomeSent: false,
     })
 
-    // 2. Create Supabase auth user
+    // Create Supabase auth user
     if (req.email) {
       const supabaseAdmin = createSupabaseAdminClient()
       await supabaseAdmin.auth.admin.createUser({
@@ -83,7 +78,7 @@ export async function GET(request) {
       })
     }
 
-    // 3. Send welcome email
+    // Send welcome email
     let emailSent = false
     if (req.email) {
       const displayName = (req.name || 'there').split(' ')[0]
@@ -98,101 +93,14 @@ export async function GET(request) {
       emailSent = true
     }
 
-    // 4. Mark welcomeSent on catSitter
     await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
-
-    // 5. Mark request approved in Supabase
     await db.from('membership_requests').update({ status: 'approved' }).eq('id', id)
 
     const displayName = req.name || 'Applicant'
     return html(`<p style="font-size:20px;margin:0 0 12px;">✓ Done</p><p><strong>${displayName}</strong> has been approved and sent a welcome email.</p><p style="margin-top:24px;"><a href="https://care.purrfectlove.org">Back to portal →</a></p>`)
   } catch (err) {
     console.error('approve-member GET error:', err)
-    return html('<p>Something went wrong. Please try again or use the admin dashboard.</p>')
-  }
-}
-
-// ── POST: admin dashboard ──────────────────────────────────────────────────
-export async function POST(request) {
-  try {
-    const user = await getSupabaseUser(request)
-    if (!user) {
-      return Response.json({ error: 'Unauthorized' }, { status: 401 })
-    }
-
-    const admin = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
-      { id: user.sitterId }
-    )
-    if (!admin?.siteAdmin) {
-      return Response.json({ error: 'Forbidden' }, { status: 403 })
-    }
-
-    const { requestId } = await request.json()
-    if (!requestId) {
-      return Response.json({ error: 'requestId is required' }, { status: 400 })
-    }
-
-    const db = createSupabaseDbClient()
-
-    const { data: req, error: fetchError } = await db
-      .from('membership_requests')
-      .select('*')
-      .eq('id', requestId)
-      .single()
-
-    if (fetchError || !req) {
-      return Response.json({ error: 'Join request not found' }, { status: 404 })
-    }
-    if (req.status === 'approved') {
-      return Response.json({ error: 'Already approved' }, { status: 409 })
-    }
-
-    // 1. Create catSitter document in Sanity
-    const sitter = await serverClient.create({
-      _type: 'catSitter',
-      name: req.name || null,
-      phone: req.phone || null,
-      email: req.email || null,
-      memberVerified: true,
-      welcomeSent: false,
-    })
-
-    // 2. Create Supabase auth user (email-based, confirmed)
-    if (req.email) {
-      const supabaseAdmin = createSupabaseAdminClient()
-      await supabaseAdmin.auth.admin.createUser({
-        email: req.email,
-        email_confirm: true,
-        user_metadata: { sitterId: sitter._id, isTeamMember: false },
-      })
-    }
-
-    // 3. Send welcome email
-    let emailSent = false
-    if (req.email) {
-      const displayName = (req.name || 'there').split(' ')[0]
-      await resend.emails.send({
-        from: 'Purrfect Love <no-reply@purrfectlove.org>',
-        replyTo: 'support@purrfectlove.org',
-        to: [req.email],
-        subject: 'Welcome to the Purrfect Love Community',
-        html: buildWelcomeHtml(displayName),
-        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nLog in at https://purrfectlove.org/care/login\n\n– The Purrfect Love Team`,
-      })
-      emailSent = true
-    }
-
-    // 4. Mark welcomeSent on the catSitter doc
-    await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
-
-    // 5. Mark request approved in Supabase
-    await db.from('membership_requests').update({ status: 'approved' }).eq('id', requestId)
-
-    return Response.json({ success: true, sitterId: sitter._id, emailSent })
-  } catch (error) {
-    console.error('approve-member error:', error)
-    return Response.json({ error: 'Internal server error' }, { status: 500 })
+    return html('<p>Something went wrong. Please try again.</p>')
   }
 }
 

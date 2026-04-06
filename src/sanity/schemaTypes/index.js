@@ -12,13 +12,11 @@ import message from './message'
 import blockedUser from './blockedUser'
 import contactShare from './contactShare'
 import sittingFeedback from './sittingFeedback'
-import membershipRequest from './membershipRequest'
 import deletedAccount from './deletedAccount'
 import notification from './notification'
 import sitRecord from './sitRecord'
 import memberReport from './memberReport'
 import broadcastMessage from './broadcastMessage'
-import bookingRequest from './bookingRequest'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -40,12 +38,10 @@ export const schema = {
     blockedUser,
     contactShare,
     sittingFeedback,
-    membershipRequest,
     deletedAccount,
     notification,
     sitRecord,
     memberReport,
     broadcastMessage,
-    bookingRequest,
   ]
 }

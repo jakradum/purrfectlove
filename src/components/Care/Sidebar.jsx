@@ -4,10 +4,10 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { House, User, LogOut, CalendarDays, ShieldCheck } from 'lucide-react';
+import { House, User, LogOut, CalendarDays } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
-export default function Sidebar({ locale = 'en', basePath = '', sitterId, isTeamMember = false }) {
+export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
   const pathname = usePathname();
   const router = useRouter();
   const [deletionPending, setDeletionPending] = useState(false);
@@ -73,7 +73,6 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId, isTeam
     { path: '', icon: House, label: t.network, lockable: true },
     { path: '/bookings', icon: CalendarDays, label: t.bookings, showDot: hasActiveBookings },
     { path: '/profile', icon: User, label: t.profile },
-    ...(isTeamMember ? [{ path: '/care/admin', icon: ShieldCheck, label: 'Admin' }] : []),
   ];
 
   return (
