@@ -73,7 +73,9 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
     sliderRef.current = el;
     if (el) paintTrack(el, Number(el.value));
   }, [paintTrack]);
-  useEffect(() => { paintTrack(sliderRef.current, radius); }, [radius, paintTrack]);
+  useEffect(() => {
+    paintTrack(sliderRef.current, radius);
+  }, [radius, paintTrack]);
 
   const datesValue = startDate && endDate
     ? `${formatMonthDay(startDate)} – ${formatMonthDay(endDate)}`
@@ -147,9 +149,9 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
           </div>
         )}
 
-        {/* Radius popover */}
+        {/* Radius popover — right-aligned under the radius section */}
         {openPopover === 'radius' && (
-          <div className={styles.filterPopover}>
+          <div className={`${styles.filterPopover} ${styles.filterPopoverRight}`}>
             <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Suchradius' : 'Search radius'}</p>
             <div className={styles.radiusDisplay}>
               <span className={styles.radiusNumber}>{radius}</span>

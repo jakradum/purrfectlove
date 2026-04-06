@@ -3043,6 +3043,11 @@
   min-width: 320px;
 }
 
+.filterPopoverRight {
+  left: auto;
+  right: 0;
+}
+
 .filterPopoverTitle {
   font-size: 0.8rem;
   font-weight: 700;
@@ -3134,6 +3139,7 @@
   font-family: var(--font-outfit);
   margin-top: 0.35rem;
 }
+
 
 /* ====== Results header ====== */
 
