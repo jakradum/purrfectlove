@@ -12,6 +12,107 @@ const serverClient = createClient({
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+async function verifyToken(id, expiresAtMs, token) {
+  const secret = process.env.APPROVAL_SECRET
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const data = encoder.encode(`${id}.${expiresAtMs}`)
+  const sig = await crypto.subtle.sign('HMAC', key, data)
+  const expected = Buffer.from(sig).toString('hex')
+  return expected === token
+}
+
+// ── GET: email link click ──────────────────────────────────────────────────
+export async function GET(request) {
+  const { searchParams } = new URL(request.url)
+  const id    = searchParams.get('id')
+  const token = searchParams.get('token')
+
+  const html = (body) => new Response(
+    `<!DOCTYPE html><html><head><meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1.0">
+    <style>body{font-family:Georgia,serif;background:#FFF8F0;color:#2D2D2D;display:flex;align-items:center;justify-content:center;min-height:100vh;margin:0;}
+    .card{background:#fff;border-radius:16px;padding:40px 48px;box-shadow:0 4px 12px rgba(0,0,0,0.08);max-width:480px;text-align:center;}
+    a{color:#2C5F4F;font-weight:600;}</style></head>
+    <body><div class="card">${body}</div></body></html>`,
+    { headers: { 'Content-Type': 'text/html' } }
+  )
+
+  if (!id || !token) return html('<p>Invalid link.</p>')
+
+  try {
+    const db = createSupabaseDbClient()
+    const { data: req, error } = await db
+      .from('membership_requests')
+      .select('*')
+      .eq('id', id)
+      .single()
+
+    if (error || !req) return html('<p>Request not found.</p>')
+
+    // Validate HMAC
+    const expiresAtMs = new Date(req.token_expires_at).getTime()
+    const valid = await verifyToken(id, expiresAtMs, token)
+    if (!valid) return html('<p>Invalid or tampered link.</p>', 400)
+
+    // Check expiry
+    if (Date.now() > expiresAtMs) return html('<p>This link has expired. Log in to the admin dashboard to action this request.</p>')
+
+    // Check already actioned
+    if (req.status !== 'pending') return html(`<p>Already actioned — this request has been <strong>${req.status}</strong>.</p><p><a href="https://care.purrfectlove.org">Back to portal →</a></p>`)
+
+    // 1. Create catSitter in Sanity
+    const sitter = await serverClient.create({
+      _type: 'catSitter',
+      name: req.name || null,
+      phone: req.phone || null,
+      email: req.email || null,
+      memberVerified: true,
+      welcomeSent: false,
+    })
+
+    // 2. Create Supabase auth user
+    if (req.email) {
+      const supabaseAdmin = createSupabaseAdminClient()
+      await supabaseAdmin.auth.admin.createUser({
+        email: req.email,
+        email_confirm: true,
+        user_metadata: { sitterId: sitter._id, isTeamMember: false },
+      })
+    }
+
+    // 3. Send welcome email
+    let emailSent = false
+    if (req.email) {
+      const displayName = (req.name || 'there').split(' ')[0]
+      await resend.emails.send({
+        from: 'Purrfect Love <no-reply@purrfectlove.org>',
+        replyTo: 'support@purrfectlove.org',
+        to: [req.email],
+        subject: 'Welcome to the Purrfect Love Community',
+        html: buildWelcomeHtml(displayName),
+        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nLog in at https://purrfectlove.org/care/login\n\n– The Purrfect Love Team`,
+      })
+      emailSent = true
+    }
+
+    // 4. Mark welcomeSent on catSitter
+    await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
+
+    // 5. Mark request approved in Supabase
+    await db.from('membership_requests').update({ status: 'approved' }).eq('id', id)
+
+    const displayName = req.name || 'Applicant'
+    return html(`<p style="font-size:20px;margin:0 0 12px;">✓ Done</p><p><strong>${displayName}</strong> has been approved and sent a welcome email.</p><p style="margin-top:24px;"><a href="https://care.purrfectlove.org">Back to portal →</a></p>`)
+  } catch (err) {
+    console.error('approve-member GET error:', err)
+    return html('<p>Something went wrong. Please try again or use the admin dashboard.</p>')
+  }
+}
+
+// ── POST: admin dashboard ──────────────────────────────────────────────────
 export async function POST(request) {
   try {
     const user = await getSupabaseUser(request)
@@ -34,7 +135,6 @@ export async function POST(request) {
 
     const db = createSupabaseDbClient()
 
-    // Fetch membership request from Supabase
     const { data: req, error: fetchError } = await db
       .from('membership_requests')
       .select('*')
@@ -71,14 +171,14 @@ export async function POST(request) {
     // 3. Send welcome email
     let emailSent = false
     if (req.email) {
-      const displayName = req.name || 'there'
+      const displayName = (req.name || 'there').split(' ')[0]
       await resend.emails.send({
         from: 'Purrfect Love <no-reply@purrfectlove.org>',
         replyTo: 'support@purrfectlove.org',
         to: [req.email],
-        subject: 'Welcome to the Purrfect Love Community 🐾',
+        subject: 'Welcome to the Purrfect Love Community',
         html: buildWelcomeHtml(displayName),
-        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nYou can now log in at purrfectlove.org/care/login using your email.\n\n– The Purrfect Love Team`,
+        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nLog in at https://purrfectlove.org/care/login\n\n– The Purrfect Love Team`,
       })
       emailSent = true
     }
@@ -86,8 +186,8 @@ export async function POST(request) {
     // 4. Mark welcomeSent on the catSitter doc
     await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
 
-    // 5. Delete the join request from Supabase
-    await db.from('membership_requests').delete().eq('id', requestId)
+    // 5. Mark request approved in Supabase
+    await db.from('membership_requests').update({ status: 'approved' }).eq('id', requestId)
 
     return Response.json({ success: true, sitterId: sitter._id, emailSent })
   } catch (error) {
@@ -113,7 +213,7 @@ function buildWelcomeHtml(displayName) {
           <td style="padding:40px 32px;">
             <p style="font-size:16px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">Hi ${displayName},</p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
-              Welcome to the <strong>Purrfect Love Community</strong>! 🐾 Your application has been approved and your account is ready.
+              Welcome to the <strong>Purrfect Love Community</strong>! Your application has been approved and your account is ready.
             </p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 24px;">
               You can log in using your email at the link below.

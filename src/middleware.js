@@ -46,6 +46,8 @@ export async function middleware(request) {
     '/de/care/login', '/de/care/privacy', '/de/care/join',
     '/api/care/send-otp', '/api/care/verify-otp', '/api/care/join', '/api/care/unsubscribe',
     '/api/care/resend-webhook', // verified by Svix signature, not session cookie
+    '/api/care/admin/approve-member', // verified by HMAC token, not session cookie
+    '/api/care/admin/reject-member',  // verified by HMAC token, not session cookie
     // Subdomain equivalents (before the /care rewrite is applied)
     '/login', '/privacy', '/join',
   ];
