@@ -174,14 +174,13 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
               </Link>
             );
           })}
+          <button onClick={handleLogout} className={styles.logoutBtn}>
+            <LogOut size={14} strokeWidth={1.75} />
+            <span className={styles.label}>{t.logout}</span>
+          </button>
         </nav>
 
         <div className={styles.spacer} />
-        <div className={styles.divider} />
-        <button onClick={handleLogout} className={styles.logoutBtn}>
-          <LogOut size={14} strokeWidth={1.75} />
-          <span className={styles.label}>{t.logout}</span>
-        </button>
       </aside>
 
       {/* Mobile bottom nav — hidden on login/join */}
