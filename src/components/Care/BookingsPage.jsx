@@ -44,7 +44,7 @@ function StatusBadge({ status }) {
 
 // ── Desktop table ──────────────────────────────────────────────────────────────
 
-function BookingsTable({ items, colHeader, onRowClick }) {
+function BookingsTable({ items, colHeader, onRowClick, onWithdraw }) {
   const upcoming = items.filter(b => isUpcoming(b.startDate));
   const past = items.filter(b => !isUpcoming(b.startDate));
 
@@ -71,7 +71,7 @@ function BookingsTable({ items, colHeader, onRowClick }) {
                   <td colSpan={4}>Upcoming</td>
                 </tr>
                 {upcoming.map(b => (
-                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} />
+                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} />
                 ))}
               </>
             )}
@@ -81,7 +81,7 @@ function BookingsTable({ items, colHeader, onRowClick }) {
                   <td colSpan={4}>Past</td>
                 </tr>
                 {past.map(b => (
-                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} />
+                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} />
                 ))}
               </>
             )}
@@ -92,10 +92,11 @@ function BookingsTable({ items, colHeader, onRowClick }) {
   );
 }
 
-function TableRow({ booking, colHeader, onClick }) {
+function TableRow({ booking, colHeader, onClick, onWithdraw }) {
   const name = colHeader === 'Sitter' ? (booking.sitterName || 'Member') : (booking.parentName || 'Member');
   const nights = nightCount(booking.startDate, booking.endDate);
   const cats = (booking.cats || []).join(', ');
+  const canWithdraw = colHeader === 'Sitter' && booking.status === 'pending';
 
   return (
     <tr className={`${styles.tableRow} ${styles.tableRowClickable}`} onClick={onClick}>
@@ -110,6 +111,16 @@ function TableRow({ booking, colHeader, onClick }) {
       <td className={styles.tdCats}>{cats || '—'}</td>
       <td className={styles.tdStatus}>
         <StatusBadge status={booking.status} />
+        {canWithdraw && (
+          <button
+            type="button"
+            className={styles.tdWithdrawBtn}
+            style={{ display: 'block', marginTop: '4px' }}
+            onClick={(e) => { e.stopPropagation(); onWithdraw(booking); }}
+          >
+            Withdraw
+          </button>
+        )}
       </td>
     </tr>
   );
@@ -117,7 +128,7 @@ function TableRow({ booking, colHeader, onClick }) {
 
 // ── Mobile list ────────────────────────────────────────────────────────────────
 
-function MobileList({ items, colHeader, onItemClick }) {
+function MobileList({ items, colHeader, onItemClick, onWithdraw }) {
   const upcoming = items.filter(b => isUpcoming(b.startDate));
   const past = items.filter(b => !isUpcoming(b.startDate));
 
@@ -130,23 +141,24 @@ function MobileList({ items, colHeader, onItemClick }) {
       {upcoming.length > 0 && (
         <>
           <div className={styles.bookingSectionHd}>Upcoming</div>
-          {upcoming.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} />)}
+          {upcoming.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} />)}
         </>
       )}
       {past.length > 0 && (
         <>
           {upcoming.length > 0 && <div className={styles.bookingDivider} />}
           <div className={styles.bookingSectionHd}>Past</div>
-          {past.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} />)}
+          {past.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} />)}
         </>
       )}
     </>
   );
 }
 
-function MobileItem({ booking, colHeader, onClick }) {
+function MobileItem({ booking, colHeader, onClick, onWithdraw }) {
   const name = colHeader === 'Sitter' ? (booking.sitterName || 'Member') : (booking.parentName || 'Member');
   const cats = (booking.cats || []).join(', ');
+  const canWithdraw = colHeader === 'Sitter' && booking.status === 'pending';
 
   return (
     <div className={`${styles.bookingItem} ${styles.bookingItemClickable}`} onClick={onClick}>
@@ -157,6 +169,15 @@ function MobileItem({ booking, colHeader, onClick }) {
           {cats ? ` · ${cats}` : ''}
         </div>
         {booking.bookingRef && <div className={styles.bookingRef}>#{booking.bookingRef}</div>}
+        {canWithdraw && (
+          <button
+            type="button"
+            className={styles.bookingWithdrawBtn}
+            onClick={(e) => { e.stopPropagation(); onWithdraw(booking); }}
+          >
+            Withdraw
+          </button>
+        )}
       </div>
       <div className={styles.bookingRight}>
         <StatusBadge status={booking.status} />
@@ -226,6 +247,19 @@ export default function BookingsPage({ locale }) {
     fetchBookings();
   };
 
+  const handleWithdraw = async (booking) => {
+    if (!confirm('Withdraw this request? The sitter will be notified.')) return;
+    await fetch('/api/care/bookings/cancel', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ bookingId: booking._id, reason: 'Request withdrawn by sender.' }),
+    });
+    fetchBookings();
+  };
+
+  const parentHasPending = asParent.some(b => b.status === 'pending');
+  const sitterHasPending = asSitter.some(b => b.status === 'pending');
+
   return (
     <div className={styles.bookingsPage}>
       <div className={styles.bookingsTitle}>Booking History</div>
@@ -238,12 +272,14 @@ export default function BookingsPage({ locale }) {
             onClick={() => setTab('parent')}
           >
             Seeking a sitter
+            {parentHasPending && <span className={styles.tabPendingDot} />}
           </button>
           <button
             className={`${styles.bookingsTab} ${tab === 'sitter' ? styles.bookingsTabActive : ''}`}
             onClick={() => setTab('sitter')}
           >
             I&apos;m sitting
+            {sitterHasPending && <span className={styles.tabPendingDot} />}
           </button>
         </div>
 
@@ -252,16 +288,16 @@ export default function BookingsPage({ locale }) {
         )}
 
         {loading ? (
-          <p className={styles.bookingEmpty}>Loading…</p>
+          <div className={styles.bookingsSpinner}><span className={styles.spinner} /></div>
         ) : (
           <>
             {/* Desktop table */}
             <div className={styles.bookingsTableWrap}>
-              <BookingsTable items={items} colHeader={colHeader} onRowClick={openModal} />
+              <BookingsTable items={items} colHeader={colHeader} onRowClick={openModal} onWithdraw={handleWithdraw} />
             </div>
             {/* Mobile list */}
             <div className={styles.bookingsMobileList}>
-              <MobileList items={items} colHeader={colHeader} onItemClick={openModal} />
+              <MobileList items={items} colHeader={colHeader} onItemClick={openModal} onWithdraw={handleWithdraw} />
             </div>
           </>
         )}

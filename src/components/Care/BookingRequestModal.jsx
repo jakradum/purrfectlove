@@ -120,7 +120,7 @@ export default function BookingRequestModal({ sitterId, sitterName, startDate: i
             <div style={{ marginBottom: '1.25rem' }}>
               <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#555', margin: '0 0 0.6rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Your cats</p>
               {cats === null ? (
-                <p style={{ fontSize: '0.875rem', color: '#aaa' }}>Loading…</p>
+                <p style={{ fontSize: '0.875rem', color: '#aaa' }}><span className={styles.spinner} /></p>
               ) : cats.length === 0 ? (
                 <p style={{ fontSize: '0.875rem', color: '#888', lineHeight: 1.5 }}>
                   You haven&apos;t added any cats yet.{' '}

@@ -248,8 +248,8 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
           </div>
 
           {loading && (
-            <p style={{ padding: '1.5rem', color: 'var(--text-light)', fontSize: '0.875rem' }}>
-              Loading…
+            <p style={{ padding: '1.5rem', textAlign: 'center' }}>
+              <span className={styles.spinner} />
             </p>
           )}
 

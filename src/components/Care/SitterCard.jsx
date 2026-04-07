@@ -310,7 +310,7 @@ export default function SitterCard({
             Select your cats so the sitter can know how many to expect
           </p>
           {myCats === null ? (
-            <p style={{ fontSize: '12px', color: '#aaa', marginBottom: 12 }}>Loading…</p>
+            <p style={{ marginBottom: 12 }}><span className={styles.spinner} style={{ width: 16, height: 16 }} /></p>
           ) : myCats.length === 0 ? (
             <p style={{ fontSize: '12px', color: '#888', lineHeight: 1.5, marginBottom: 12 }}>
               Add cats to your profile first.{' '}
