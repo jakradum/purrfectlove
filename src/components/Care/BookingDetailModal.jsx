@@ -97,6 +97,9 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
   // Accept / decline flow: 'idle' | 'submitting'
   const [respondState, setRespondState] = useState('idle');
 
+  // Withdraw flow (parent on pending): 'idle' | 'confirming' | 'submitting'
+  const [withdrawState, setWithdrawState] = useState('idle');
+
   // Mobile sheet drag-to-close
   const sheetRef = useRef(null);
   const dragStartY = useRef(null);
@@ -204,6 +207,28 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
     }
   };
 
+  const handleWithdraw = async () => {
+    setWithdrawState('submitting');
+    try {
+      const res = await fetch('/api/care/bookings/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId, reason: 'Request withdrawn by sender.' }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setError(data.error || 'Failed to withdraw request.');
+        setWithdrawState('idle');
+        return;
+      }
+      onCancelled?.();
+      onClose();
+    } catch {
+      setError('Network error. Please try again.');
+      setWithdrawState('idle');
+    }
+  };
+
   const modalContent = () => {
     if (loading) {
       return <div className={styles.dtLoadingBody}>Loading…</div>;
@@ -230,8 +255,8 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
       ? `https://wa.me/${detail.other.phone.replace(/\D/g, '')}`
       : null;
     const emailUrl = detail.other.email ? `mailto:${detail.other.email}` : null;
-    // Sitters use Accept/Decline for pending; Cancel only applies post-confirmation
-    const canCancel = CANCELLABLE.includes(detail.status) && !(role === 'sitter' && detail.status === 'pending');
+    // Pending bookings use role-specific actions (Withdraw for parent, Accept/Decline for sitter)
+    const canCancel = CANCELLABLE.includes(detail.status) && detail.status !== 'pending';
 
     return (
       <>
@@ -309,6 +334,36 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
               >
                 Decline
               </button>
+            </div>
+          )}
+
+          {/* Withdraw — parent only, pending bookings */}
+          {role === 'parent' && detail.status === 'pending' && withdrawState === 'idle' && (
+            <button type="button" className={styles.dtCancelLink} onClick={() => setWithdrawState('confirming')}>
+              Withdraw request
+            </button>
+          )}
+          {role === 'parent' && detail.status === 'pending' && withdrawState === 'confirming' && (
+            <div className={styles.dtCancelConfirm}>
+              <p className={styles.dtCancelQuestion}>Withdraw this request?</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', margin: '0 0 0.75rem' }}>The sitter will be notified and the request will be cancelled.</p>
+              <div className={styles.dtCancelBtnRow}>
+                <button
+                  type="button"
+                  className={styles.dtCancelKeepBtn}
+                  onClick={() => setWithdrawState('idle')}
+                >
+                  Keep request
+                </button>
+                <button
+                  type="button"
+                  className={styles.dtCancelConfirmBtn}
+                  onClick={handleWithdraw}
+                  disabled={withdrawState === 'submitting'}
+                >
+                  {withdrawState === 'submitting' ? 'Withdrawing…' : 'Yes, withdraw'}
+                </button>
+              </div>
             </div>
           )}
 

@@ -21,8 +21,9 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
       .catch(() => {});
   }, []);
 
-  // Supabase Realtime: subscribe to booking changes for this member.
-  // Replaces the 30-second polling interval on /api/care/bookings/active-count.
+  // Booking dot: Realtime + visibilitychange + 30s polling as fallback layers.
+  // Realtime can silently drop events when RLS uses custom JWT functions, so we
+  // don't rely on it alone.
   useEffect(() => {
     if (!sitterId) return;
 
@@ -51,13 +52,25 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
 
     fetchCount();
 
+    // Layer 1: Realtime (fires instantly when it works)
     const channel = supabase
       .channel(`sidebar-bookings-${sitterId}`)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `parent_id=eq.${sitterId}` }, fetchCount)
       .on('postgres_changes', { event: '*', schema: 'public', table: 'bookings', filter: `sitter_id=eq.${sitterId}` }, fetchCount)
       .subscribe();
 
-    return () => supabase.removeChannel(channel);
+    // Layer 2: visibilitychange — re-check when user switches back to this tab
+    const onVisible = () => { if (document.visibilityState === 'visible') fetchCount(); };
+    document.addEventListener('visibilitychange', onVisible);
+
+    // Layer 3: 30s polling — catches anything Realtime missed
+    const poll = setInterval(fetchCount, 30_000);
+
+    return () => {
+      supabase.removeChannel(channel);
+      document.removeEventListener('visibilitychange', onVisible);
+      clearInterval(poll);
+    };
   }, [sitterId]);
 
   const handleLogout = async () => {
