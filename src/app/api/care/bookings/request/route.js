@@ -76,6 +76,14 @@ function formatDate(ymd) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 export async function POST(request) {
   try {
     const user = await getSupabaseUser(request)
@@ -129,7 +137,7 @@ export async function POST(request) {
     // Send sit-request notification email + write notified_at for response-time tracking
     try {
       const sitter = await serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ name, email, notifEmailSitRequest }`,
+        `*[_type == "catSitter" && _id == $id][0]{ name, email, notifEmailSitRequest, location }`,
         { id: sitterId }
       )
       if (sitter?.email && sitter?.notifEmailSitRequest !== false) {
@@ -139,15 +147,32 @@ export async function POST(request) {
         const deepLink = `https://care.purrfectlove.org/bookings?booking=${bookingId}&role=sitter`
         const catList = (cats || []).join(', ') || 'not specified'
 
-        // Fetch parent name for a personalised email
+        // Fetch parent name + location for a personalised email
         let parentName = 'A member'
+        let parentNeighbourhood = null
+        let distanceStr = null
         try {
           const parent = await serverClient.fetch(
-            `*[_type == "catSitter" && _id == $id][0]{ name }`,
+            `*[_type == "catSitter" && _id == $id][0]{ name, location }`,
             { id: user.sitterId }
           )
           if (parent?.name) parentName = parent.name
+          if (parent?.location?.name) parentNeighbourhood = parent.location.name
+          if (
+            parent?.location?.lat && parent?.location?.lng &&
+            sitter?.location?.lat && sitter?.location?.lng
+          ) {
+            const km = haversineKm(parent.location.lat, parent.location.lng, sitter.location.lat, sitter.location.lng)
+            distanceStr = km < 1 ? `${Math.round(km * 1000)} m away` : `${km.toFixed(1)} km away`
+          }
         } catch { /* non-fatal */ }
+
+        const locationRow = parentNeighbourhood
+          ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">Location</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${parentNeighbourhood}${distanceStr ? ` <span style="color:#888;">(${distanceStr})</span>` : ''}</td></tr>`
+          : ''
+        const locationText = parentNeighbourhood
+          ? `\nLocation: ${parentNeighbourhood}${distanceStr ? ` (${distanceStr})` : ''}`
+          : ''
 
         const { error: resendError } = await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
@@ -163,6 +188,7 @@ export async function POST(request) {
               <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
                 <tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">Dates</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmt} – ${endFmt}</td></tr>
                 <tr><td style="padding:5px 0;font-size:14px;color:#666;">Cats</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${catList}</td></tr>
+                ${locationRow}
                 ${message ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;vertical-align:top;">Message</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-style:italic;">"${message}"</td></tr>` : ''}
                 <tr><td style="padding:5px 0;font-size:14px;color:#666;">Booking ID</td><td style="padding:5px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${bookingRef}</td></tr>
               </table>
@@ -170,7 +196,7 @@ export async function POST(request) {
               ${ctaButton({ label: 'View booking', url: deepLink })}
             `,
           }),
-          text: `Hi ${sitterFirstName},\n\n${parentName} has sent you a sit request.\n\nDates: ${startFmt} – ${endFmt}\nCats: ${catList}${message ? `\nMessage: "${message}"` : ''}\nBooking ID: #${bookingRef}\n\nAccept or decline: ${deepLink}\n\n– The Purrfect Love Community`,
+          text: `Hi ${sitterFirstName},\n\n${parentName} has sent you a sit request.\n\nDates: ${startFmt} – ${endFmt}\nCats: ${catList}${locationText}${message ? `\nMessage: "${message}"` : ''}\nBooking ID: #${bookingRef}\n\nAccept or decline: ${deepLink}\n\n– The Purrfect Love Community`,
         })
         if (!resendError) {
           await db.from('bookings').update({ notified_at: new Date().toISOString() }).eq('id', bookingId)

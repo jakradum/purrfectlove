@@ -52,20 +52,21 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
 
     const fetchCount = async () => {
       const today = new Date().toISOString().slice(0, 10);
-      const [sitterPending, parentConfirmed, parentDeclined] = await Promise.all([
+      const seen = new Set(JSON.parse(localStorage.getItem('pl_seen_bkgs') || '[]'));
+      const [sitterRes, parentConfRes, parentDeclRes] = await Promise.all([
         // Incoming sit requests I need to respond to (as sitter)
-        supabase.from('bookings').select('id', { count: 'exact', head: true })
-          .eq('sitter_id', sitterId).eq('status', 'pending'),
+        supabase.from('bookings').select('id').eq('sitter_id', sitterId).eq('status', 'pending'),
         // My requests that got accepted by sitter (as parent, upcoming only)
-        supabase.from('bookings').select('id', { count: 'exact', head: true })
-          .eq('parent_id', sitterId).in('status', ['confirmed', 'accepted'])
-          .gte('start_date', today),
+        supabase.from('bookings').select('id').eq('parent_id', sitterId).in('status', ['confirmed', 'accepted']).gte('start_date', today),
         // My requests that got declined by sitter (as parent, upcoming only)
-        supabase.from('bookings').select('id', { count: 'exact', head: true })
-          .eq('parent_id', sitterId).eq('status', 'declined')
-          .gte('start_date', today),
+        supabase.from('bookings').select('id').eq('parent_id', sitterId).eq('status', 'declined').gte('start_date', today),
       ]);
-      const count = (sitterPending.count || 0) + (parentConfirmed.count || 0) + (parentDeclined.count || 0);
+      const allIds = [
+        ...(sitterRes.data || []).map(r => r.id),
+        ...(parentConfRes.data || []).map(r => r.id),
+        ...(parentDeclRes.data || []).map(r => r.id),
+      ];
+      const count = allIds.filter(id => !seen.has(id)).length;
       if (count > prevNotifCount.current) playChime();
       prevNotifCount.current = count;
       setNotifCount(count);

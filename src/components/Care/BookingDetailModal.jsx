@@ -27,6 +27,7 @@ const STATUS_CHIP_CLS = {
 };
 
 const CANCELLABLE = ['pending', 'confirmed', 'accepted'];
+const TERMINAL_STATUSES = ['cancelled', 'declined'];
 
 function formatDateShort(ymd) {
   if (!ymd) return '';
@@ -122,6 +123,17 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
   const dragStartY = useRef(null);
   const [dragOffset, setDragOffset] = useState(0);
 
+  const fetchDetail = useCallback(() => {
+    if (!bookingId) return;
+    fetch(`/api/care/bookings/${bookingId}`)
+      .then(r => r.json())
+      .then(data => {
+        if (data.error) setError(data.error);
+        else setDetail(data);
+      })
+      .catch(() => setError('Failed to load booking details.'));
+  }, [bookingId]);
+
   useEffect(() => {
     if (!bookingId) return;
     setLoading(true);
@@ -135,6 +147,13 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
       .catch(() => setError('Failed to load booking details.'))
       .finally(() => setLoading(false));
   }, [bookingId]);
+
+  // Re-fetch while pending so status updates (e.g. sitter declines) are reflected
+  useEffect(() => {
+    if (!detail || detail.status !== 'pending') return;
+    const interval = setInterval(fetchDetail, 8000);
+    return () => clearInterval(interval);
+  }, [detail?.status, fetchDetail]);
 
   const handleOverlayClick = useCallback((e) => {
     if (e.target === e.currentTarget) onClose();
@@ -259,13 +278,14 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
     const days = daysUntilSit(detail.startDate);
     const contactLive = days <= 2;
     const cats = (detail.cats || []).join(', ') || '—';
+    const isTerminal = TERMINAL_STATUSES.includes(detail.status);
     const title = role === 'parent'
       ? `${firstName(detail.sitterName)} is sitting your cats`
       : `You are sitting ${firstName(detail.parentName)}'s cats`;
     const statusLabel = STATUS_MAP[detail.status] || detail.status;
     const statusChipCls = STATUS_CHIP_CLS[detail.status] || 'dtChipMuted';
     const dateRange = `${formatDateShort(detail.startDate)} – ${formatDateShort(detail.endDate)}`;
-    const mapsUrl = detail.other.lat && detail.other.lng
+    const mapsUrl = !isTerminal && detail.other.lat && detail.other.lng
       ? `https://maps.google.com/?q=${detail.other.lat},${detail.other.lng}`
       : null;
     const waUrl = detail.other.phone
@@ -299,60 +319,66 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
         </div>
 
         {/* ── Body ── */}
-        <div className={`${styles.dtBody} ${detail.status === 'cancelled' ? styles.dtBodyCancelled : ''}`}>
+        <div className={styles.dtBody}>
 
           {/* 2×2 stat grid */}
           <div className={styles.dtGrid}>
             <StatCell label="Duration" value={`${nights} night${nights !== 1 ? 's' : ''}`} />
             <StatCell label="Cats" value={cats} />
             <StatCell label="Area" value={detail.other.neighbourhood || '—'} />
-            <StatCell
-              label="Map"
-              value="View map →"
-              link={mapsUrl || undefined}
-            />
+            {!isTerminal && (
+              <StatCell
+                label="Map"
+                value="View map →"
+                link={mapsUrl || undefined}
+              />
+            )}
           </div>
 
-          {/* Contact */}
-          <div className={styles.dtSectionLabel}>Contact</div>
-          {contactLive ? (
+          {/* Contact — hidden for cancelled/declined bookings */}
+          {!isTerminal && (
             <>
-              {(waUrl || emailUrl) ? (
-                <div className={styles.dtContactIconRow}>
-                  {waUrl && (
-                    <a href={waUrl} target="_blank" rel="noopener noreferrer" className={styles.dtContactIconBtn} title="WhatsApp">
-                      <WhatsAppIcon />
-                    </a>
+              <div className={styles.dtSectionLabel}>Contact</div>
+              {contactLive ? (
+                <>
+                  {(waUrl || emailUrl) ? (
+                    <div className={styles.dtContactIconRow}>
+                      {waUrl && (
+                        <a href={waUrl} target="_blank" rel="noopener noreferrer" className={styles.dtContactIconBtn} title="WhatsApp">
+                          <WhatsAppIcon />
+                        </a>
+                      )}
+                      {emailUrl && (
+                        <a href={emailUrl} className={styles.dtContactIconBtn} title={detail.other.email}>
+                          <EmailIcon />
+                        </a>
+                      )}
+                    </div>
+                  ) : (
+                    <ContactRow label="Contact" value="No contact info available." muted />
                   )}
-                  {emailUrl && (
-                    <a href={emailUrl} className={styles.dtContactIconBtn} title={detail.other.email}>
-                      <EmailIcon />
-                    </a>
-                  )}
-                </div>
+                </>
               ) : (
-                <ContactRow label="Contact" value="No contact info available." muted />
-              )}
-            </>
-          ) : (
-            <>
-              {(detail.other.phone || detail.other.email) ? (
-                <div className={styles.dtContactIconRow}>
-                  {detail.other.phone && (
-                    <span className={styles.dtContactIconBtn} style={{ cursor: 'default', opacity: 0.4 }} title={detail.other.phone}>
-                      <WhatsAppIcon />
-                    </span>
+                <>
+                  {(detail.other.phone || detail.other.email) ? (
+                    <div className={styles.dtContactIconRow}>
+                      {detail.other.phone && (
+                        <span className={styles.dtContactIconBtn} style={{ cursor: 'default', opacity: 0.4 }} title={detail.other.phone}>
+                          <WhatsAppIcon />
+                        </span>
+                      )}
+                      {detail.other.email && (
+                        <span className={styles.dtContactIconBtn} style={{ cursor: 'default', opacity: 0.4 }} title={detail.other.email}>
+                          <EmailIcon />
+                        </span>
+                      )}
+                    </div>
+                  ) : (
+                    <ContactRow label="Contact" value="No contact info available." muted />
                   )}
-                  {detail.other.email && (
-                    <span className={styles.dtContactIconBtn} style={{ cursor: 'default', opacity: 0.4 }} title={detail.other.email}>
-                      <EmailIcon />
-                    </span>
-                  )}
-                </div>
-              ) : (
-                <ContactRow label="Contact" value="No contact info available." muted />
+                  <p className={styles.dtContactNote}>Contact details will be shared 2 days before the sit.</p>
+                </>
               )}
-              <p className={styles.dtContactNote}>Contact details will be shared 2 days before the sit.</p>
             </>
           )}
 
@@ -451,10 +477,12 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
     );
   };
 
+  const isTerminalModal = detail && TERMINAL_STATUSES.includes(detail.status);
+
   return (
     <div className={styles.dtOverlay} onClick={handleOverlayClick}>
       <div
-        className={styles.dtModal}
+        className={`${styles.dtModal} ${isTerminalModal ? styles.dtModalCancelled : ''}`}
         onClick={e => e.stopPropagation()}
         ref={sheetRef}
         style={dragOffset > 0 ? { transform: `translateY(${dragOffset}px)`, transition: 'none' } : undefined}

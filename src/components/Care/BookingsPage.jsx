@@ -46,7 +46,13 @@ function StatusBadge({ status }) {
 
 const CANCELLED_STATUSES = ['cancelled', 'declined'];
 
-function BookingsTable({ items, colHeader, onRowClick, onWithdraw }) {
+function isNotifWorthy(booking, role) {
+  if (role === 'sitter') return booking.status === 'pending';
+  // parent: sitter responded (confirmed or declined) and sit is upcoming
+  return ['confirmed', 'accepted', 'declined'].includes(booking.status) && isUpcoming(booking.startDate);
+}
+
+function BookingsTable({ items, colHeader, onRowClick, onWithdraw, notifIds }) {
   const active = items.filter(b => !CANCELLED_STATUSES.includes(b.status));
   const cancelled = items.filter(b => CANCELLED_STATUSES.includes(b.status));
   const upcoming = active.filter(b => isUpcoming(b.startDate));
@@ -75,7 +81,7 @@ function BookingsTable({ items, colHeader, onRowClick, onWithdraw }) {
                   <td colSpan={4}>Upcoming</td>
                 </tr>
                 {upcoming.map(b => (
-                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} />
+                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} isNew={notifIds?.has(b._id)} />
                 ))}
               </>
             )}
@@ -85,7 +91,7 @@ function BookingsTable({ items, colHeader, onRowClick, onWithdraw }) {
                   <td colSpan={4}>Past</td>
                 </tr>
                 {past.map(b => (
-                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} />
+                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} isNew={notifIds?.has(b._id)} />
                 ))}
               </>
             )}
@@ -95,7 +101,7 @@ function BookingsTable({ items, colHeader, onRowClick, onWithdraw }) {
                   <td colSpan={4}>Cancelled / Declined</td>
                 </tr>
                 {cancelled.map(b => (
-                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} />
+                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} isNew={false} />
                 ))}
               </>
             )}
@@ -106,14 +112,14 @@ function BookingsTable({ items, colHeader, onRowClick, onWithdraw }) {
   );
 }
 
-function TableRow({ booking, colHeader, onClick, onWithdraw }) {
+function TableRow({ booking, colHeader, onClick, onWithdraw, isNew }) {
   const name = colHeader === 'Sitter' ? (booking.sitterName || 'Member') : (booking.parentName || 'Member');
   const nights = nightCount(booking.startDate, booking.endDate);
   const cats = (booking.cats || []).join(', ');
   const canWithdraw = colHeader === 'Sitter' && booking.status === 'pending';
 
   return (
-    <tr className={`${styles.tableRow} ${styles.tableRowClickable}`} onClick={onClick}>
+    <tr className={`${styles.tableRow} ${styles.tableRowClickable} ${isNew ? styles.tableRowNew : ''}`} onClick={onClick}>
       <td>
         <div className={styles.tdName}>{name}</div>
         {booking.bookingRef && <div className={styles.tdRef}>#{booking.bookingRef}</div>}
@@ -143,7 +149,7 @@ function TableRow({ booking, colHeader, onClick, onWithdraw }) {
 
 // ── Mobile list ────────────────────────────────────────────────────────────────
 
-function MobileList({ items, colHeader, onItemClick, onWithdraw }) {
+function MobileList({ items, colHeader, onItemClick, onWithdraw, notifIds }) {
   const active = items.filter(b => !CANCELLED_STATUSES.includes(b.status));
   const cancelled = items.filter(b => CANCELLED_STATUSES.includes(b.status));
   const upcoming = active.filter(b => isUpcoming(b.startDate));
@@ -158,34 +164,34 @@ function MobileList({ items, colHeader, onItemClick, onWithdraw }) {
       {upcoming.length > 0 && (
         <>
           <div className={styles.bookingSectionHd}>Upcoming</div>
-          {upcoming.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} />)}
+          {upcoming.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} isNew={notifIds?.has(b._id)} />)}
         </>
       )}
       {past.length > 0 && (
         <>
           {upcoming.length > 0 && <div className={styles.bookingDivider} />}
           <div className={styles.bookingSectionHd}>Past</div>
-          {past.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} />)}
+          {past.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} isNew={notifIds?.has(b._id)} />)}
         </>
       )}
       {cancelled.length > 0 && (
         <>
           <div className={styles.bookingDivider} />
           <div className={styles.bookingSectionHd} style={{ opacity: 0.5 }}>Cancelled / Declined</div>
-          {cancelled.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} />)}
+          {cancelled.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} isNew={false} />)}
         </>
       )}
     </>
   );
 }
 
-function MobileItem({ booking, colHeader, onClick, onWithdraw }) {
+function MobileItem({ booking, colHeader, onClick, onWithdraw, isNew }) {
   const name = colHeader === 'Sitter' ? (booking.sitterName || 'Member') : (booking.parentName || 'Member');
   const cats = (booking.cats || []).join(', ');
   const canWithdraw = colHeader === 'Sitter' && booking.status === 'pending';
 
   return (
-    <div className={`${styles.bookingItem} ${styles.bookingItemClickable}`} onClick={onClick}>
+    <div className={`${styles.bookingItem} ${styles.bookingItemClickable} ${isNew ? styles.bookingItemNew : ''}`} onClick={onClick}>
       <div className={styles.bookingBody}>
         <div className={styles.bookingName}>{name}</div>
         <div className={styles.bookingDetail}>
@@ -219,6 +225,10 @@ export default function BookingsPage({ locale }) {
   const [asParent, setAsParent] = useState([]);
   const [asSitter, setAsSitter] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [seenIds, setSeenIds] = useState(() => {
+    if (typeof window === 'undefined') return new Set();
+    return new Set(JSON.parse(localStorage.getItem('pl_seen_bkgs') || '[]'));
+  });
 
   // Modal state
   const [selectedBooking, setSelectedBooking] = useState(null); // { id, role }
@@ -271,9 +281,17 @@ export default function BookingsPage({ locale }) {
   const items = tab === 'parent' ? asParent : asSitter;
   const colHeader = tab === 'parent' ? 'Sitter' : 'Parent';
   const role = tab === 'parent' ? 'parent' : 'sitter';
+  const notifIds = new Set(items.filter(b => isNotifWorthy(b, role) && !seenIds.has(b._id)).map(b => b._id));
 
   const openModal = (booking) => {
     setSelectedBooking({ id: booking._id, role });
+    // Mark as seen for notification tracking
+    if (!seenIds.has(booking._id)) {
+      const newSeen = new Set(seenIds);
+      newSeen.add(booking._id);
+      setSeenIds(newSeen);
+      localStorage.setItem('pl_seen_bkgs', JSON.stringify([...newSeen]));
+    }
     if (showHint) {
       setShowHint(false);
       localStorage.setItem('bookingDetailSeen', '1');
@@ -332,11 +350,11 @@ export default function BookingsPage({ locale }) {
           <>
             {/* Desktop table */}
             <div className={styles.bookingsTableWrap}>
-              <BookingsTable items={items} colHeader={colHeader} onRowClick={openModal} onWithdraw={handleWithdraw} />
+              <BookingsTable items={items} colHeader={colHeader} onRowClick={openModal} onWithdraw={handleWithdraw} notifIds={notifIds} />
             </div>
             {/* Mobile list */}
             <div className={styles.bookingsMobileList}>
-              <MobileList items={items} colHeader={colHeader} onItemClick={openModal} onWithdraw={handleWithdraw} />
+              <MobileList items={items} colHeader={colHeader} onItemClick={openModal} onWithdraw={handleWithdraw} notifIds={notifIds} />
             </div>
           </>
         )}

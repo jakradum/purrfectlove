@@ -73,6 +73,20 @@ function ctaButton({ label, url }) {
   </p>`
 }
 
+function haversineKm(lat1, lng1, lat2, lng2) {
+  const R = 6371
+  const dLat = (lat2 - lat1) * Math.PI / 180
+  const dLng = (lng2 - lng1) * Math.PI / 180
+  const a = Math.sin(dLat / 2) ** 2 + Math.cos(lat1 * Math.PI / 180) * Math.cos(lat2 * Math.PI / 180) * Math.sin(dLng / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
+function distanceStr(p1, p2) {
+  if (!p1?.lat || !p1?.lng || !p2?.lat || !p2?.lng) return null
+  const km = haversineKm(p1.lat, p1.lng, p2.lat, p2.lng)
+  return km < 1 ? `${Math.round(km * 1000)} m away` : `${km.toFixed(1)} km away`
+}
+
 function contactBlock({ name, email, phone }) {
   const wa = waLink(phone)
   const rows = [
@@ -125,7 +139,7 @@ export async function GET(request) {
     // Batch-fetch all profiles from Sanity
     const allIds = [...new Set(bookings.flatMap(b => [b.sitter_id, b.parent_id]))]
     const profiles = await serverClient.fetch(
-      `*[_type == "catSitter" && _id in $ids]{ _id, name, email, phone }`,
+      `*[_type == "catSitter" && _id in $ids]{ _id, name, email, phone, location }`,
       { ids: allIds }
     )
     const profileMap = Object.fromEntries(profiles.map(p => [p._id, p]))
@@ -143,6 +157,19 @@ export async function GET(request) {
       const parentDeepLink = `https://care.purrfectlove.org/bookings?booking=${booking.id}&role=parent`
       const sitterDeepLink = `https://care.purrfectlove.org/bookings?booking=${booking.id}&role=sitter`
 
+      const dist = distanceStr(parent?.location, sitter?.location)
+      const parentNeighbourhood = parent?.location?.name
+      const sitterNeighbourhood = sitter?.location?.name
+
+      const parentLocationHtml = parentNeighbourhood
+        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">Location</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${parentNeighbourhood}${dist ? ` <span style="color:#888;">(${dist})</span>` : ''}</td></tr>`
+        : ''
+      const sitterLocationHtml = sitterNeighbourhood
+        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">Location</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${sitterNeighbourhood}${dist ? ` <span style="color:#888;">(${dist})</span>` : ''}</td></tr>`
+        : ''
+      const parentLocationText = parentNeighbourhood ? `\nLocation: ${parentNeighbourhood}${dist ? ` (${dist})` : ''}` : ''
+      const sitterLocationText = sitterNeighbourhood ? `\nLocation: ${sitterNeighbourhood}${dist ? ` (${dist})` : ''}` : ''
+
       if (parent?.email) {
         await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
@@ -156,12 +183,13 @@ export async function GET(request) {
                 Your booking with <strong>${sitter?.name || 'your sitter'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
                 Here are their contact details so you can coordinate:
               </p>
+              ${sitterLocationHtml ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">${sitterLocationHtml}</table>` : ''}
               ${contactBlock({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}
               <p style="font-size:13px;color:#999;margin:0 0 4px;">Booking ID: #${bookingRef}</p>
               ${ctaButton({ label: 'View booking', url: parentDeepLink })}
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nSitter contact details:\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
+          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nSitter contact details:${sitterLocationText}\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
         })
         sent++
       }
@@ -179,12 +207,13 @@ export async function GET(request) {
                 Your sitting commitment for <strong>${parent?.name || 'your cat parent'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
                 Here are their contact details:
               </p>
+              ${parentLocationHtml ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">${parentLocationHtml}</table>` : ''}
               ${contactBlock({ name: parent?.name, email: parent?.email, phone: parent?.phone })}
               <p style="font-size:13px;color:#999;margin:0 0 4px;">Booking ID: #${bookingRef}</p>
               ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nCat parent contact details:\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
+          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nCat parent contact details:${parentLocationText}\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
         })
         sent++
       }
