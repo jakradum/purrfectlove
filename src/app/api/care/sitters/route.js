@@ -28,9 +28,9 @@ export async function GET(request) {
       return Response.json(member || null)
     }
 
-    // Seeker-only marketplace: always fetch members with canSit == true
+    // Seeker-only marketplace: exclude self, only show canSit members
     const sitters = await serverClient.fetch(
-      `*[_type == "catSitter" && canSit == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
+      `*[_type == "catSitter" && _id != $selfId && canSit == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
         _id, _createdAt, name, location, bio, contactPreference, siteAdmin, avatarColour,
         identityVerified, trustedSitter,
         "email": select(hideEmail == true => null, email),
@@ -41,7 +41,8 @@ export async function GET(request) {
         availableDates, alwaysAvailable, unavailableDates, unavailableRanges,
         availabilityDefault, unavailableDatesV2, blockedByBooking,
         "rating": sitterScore.rating
-      }`
+      }`,
+      { selfId: user.sitterId }
     )
     return Response.json(sitters)
   } catch (error) {
