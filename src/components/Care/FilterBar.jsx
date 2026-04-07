@@ -23,6 +23,16 @@ function CalendarIcon() {
   );
 }
 
+function RefreshIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C5F4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <polyline points="23 4 23 10 17 10"/>
+      <polyline points="1 20 1 14 7 14"/>
+      <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
+    </svg>
+  );
+}
+
 function PinIcon() {
   return (
     <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C5F4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -32,7 +42,7 @@ function PinIcon() {
   );
 }
 
-export default function FilterBar({ startDate, endDate, radius, onDatesChange, onRadiusChange, hasLocation, locale = 'en' }) {
+export default function FilterBar({ startDate, endDate, radius, onDatesChange, onRadiusChange, onRefresh, hasLocation, locale = 'en' }) {
   const [openPopover, setOpenPopover] = useState(null); // 'dates' | 'radius' | null
   const [seen, setSeen] = useState(true); // start true to avoid flash; corrected in effect
   const innerRef = useRef(null);
@@ -103,6 +113,19 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
               <span className={styles.filterLabel}>{locale === 'de' ? 'Datum' : 'Dates'}</span>
               <span className={styles.filterValue}>{datesValue}</span>
             </div>
+          </button>
+
+          <div className={styles.filterDivider} />
+
+          {/* Refresh button */}
+          <button
+            type="button"
+            className={styles.filterRefreshBtn}
+            onClick={onRefresh}
+            title="Refresh results"
+            aria-label="Refresh results"
+          >
+            <RefreshIcon />
           </button>
 
           <div className={styles.filterDivider} />

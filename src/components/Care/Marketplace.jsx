@@ -415,6 +415,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         radius={radius}
         onDatesChange={(s, e) => { setStartDate(s); setEndDate(e); }}
         onRadiusChange={handleRadiusChange}
+        onRefresh={handleSearch}
         hasLocation={userLocation?.lat != null}
         locale={locale}
       />
