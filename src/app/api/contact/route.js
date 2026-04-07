@@ -98,96 +98,61 @@ export async function POST(request) {
     // 7. SEND EMAIL NOTIFICATION
     const languageLabel = body.locale === 'de' ? 'German' : 'English';
     const languageFlag = body.locale === 'de' ? '🇩🇪' : '🇮🇳';
-    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://purrfectlove.org';
-    const sanityStudioUrl = `${siteUrl}/studio/structure/contactMessage;${result._id}`;
+    const sanityStudioUrl = `https://purrfectlove.org/studio/intent/edit/id=${result._id};type=contactMessage`;
+    const fullMessage = body.message.replace(/\n/g, '<br>');
 
-    const truncatedMessage = body.message.length > 150
-      ? body.message.substring(0, 150) + '...'
-      : body.message;
-
-    const colors = {
-      tabbyBrown: '#C85C3F',
-      hunterGreen: '#2C5F4F',
-      whiskerCream: '#F6F4F0',
-      textDark: '#2A2A2A',
-      textLight: '#6B6B6B',
-      pawPink: '#F5D5C8'
-    };
-
-    const emailHtml = `
-<!DOCTYPE html>
+    const emailHtml = `<!DOCTYPE html>
 <html>
-<head>
-  <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;600;700&family=Lora:wght@400;600&display=swap" rel="stylesheet">
-</head>
-<body style="margin: 0; padding: 0; font-family: 'Lora', Georgia, serif; background-color: ${colors.whiskerCream}; color: ${colors.textDark};">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color: ${colors.whiskerCream}; padding: 40px 20px;">
-    <tr>
-      <td align="center">
-        <table width="600" cellpadding="0" cellspacing="0" style="background-color: #ffffff; border-radius: 16px; overflow: hidden; box-shadow: 0 4px 12px rgba(0,0,0,0.08);">
-          <tr>
-            <td style="background-color: ${colors.hunterGreen}; padding: 32px; text-align: center;">
-              <h1 style="margin: 0; font-family: 'Outfit', 'Trebuchet MS', sans-serif; font-size: 28px; color: ${colors.whiskerCream}; font-weight: 700;">Purrfect Love</h1>
-              <p style="margin: 8px 0 0 0; font-size: 14px; color: ${colors.whiskerCream}; font-family: 'Lora', Georgia, serif;">New Message Notification</p>
-            </td>
-          </tr>
-          <tr>
-            <td style="padding: 40px 32px;">
-              <h2 style="margin: 0 0 24px 0; font-family: 'Outfit', 'Trebuchet MS', sans-serif; font-size: 24px; color: ${colors.hunterGreen}; font-weight: 600;">You have a new message on purrfectlove.org - ${languageLabel} ${languageFlag}</h2>
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 24px 0;">
-                <tr>
-                  <td style="background-color: ${colors.whiskerCream}; border-left: 4px solid ${colors.tabbyBrown}; border-radius: 8px; padding: 20px;">
-                    <p style="margin: 0 0 12px 0; font-size: 14px; font-family: 'Outfit', sans-serif; color: ${colors.textLight}; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">From</p>
-                    <p style="margin: 0 0 4px 0; font-size: 18px; font-family: 'Outfit', sans-serif; font-weight: 600; color: ${colors.textDark};">${body.name}</p>
-                    <p style="margin: 0; font-size: 15px; font-family: 'Lora', Georgia, serif; color: ${colors.textLight};"><a href="mailto:${body.email}" style="color: ${colors.tabbyBrown}; text-decoration: none;">${body.email}</a></p>
-                    <p style="margin: 12px 0 0 0; font-size: 13px; font-family: 'Lora', Georgia, serif; color: ${colors.textLight};">${new Date().toLocaleString('en-US', { dateStyle: 'medium', timeStyle: 'short' })}</p>
-                  </td>
-                </tr>
-              </table>
-              <table width="100%" cellpadding="0" cellspacing="0" style="margin: 0 0 32px 0;">
-                <tr>
-                  <td style="background-color: ${colors.pawPink}; border-radius: 12px; padding: 24px;">
-                    <p style="margin: 0 0 8px 0; font-size: 14px; font-family: 'Outfit', sans-serif; color: ${colors.textLight}; text-transform: uppercase; letter-spacing: 1px; font-weight: 600;">Message Preview</p>
-                    <p style="margin: 0; font-size: 16px; line-height: 1.6; font-family: 'Lora', Georgia, serif; color: ${colors.textDark};">${truncatedMessage.replace(/\n/g, '<br>')}</p>
-                  </td>
-                </tr>
-              </table>
-              <table width="100%" cellpadding="0" cellspacing="0">
-                <tr>
-                  <td align="center">
-                    <a href="${sanityStudioUrl}" style="display: inline-block; background-color: ${colors.hunterGreen}; color: ${colors.whiskerCream}; font-family: 'Outfit', 'Trebuchet MS', sans-serif; font-size: 16px; font-weight: 600; text-decoration: none; padding: 14px 32px; border-radius: 8px;">View Full Message in Message Board →</a>
-                  </td>
-                </tr>
-              </table>
-            </td>
-          </tr>
-          <tr>
-            <td style="background-color: ${colors.whiskerCream}; padding: 24px 32px; text-align: center;">
-              <p style="margin: 0 0 8px 0; font-size: 14px; font-family: 'Outfit', sans-serif; color: ${colors.textLight};">Bangalore • Stuttgart</p>
-              <p style="margin: 0; font-size: 13px; font-family: 'Lora', Georgia, serif; color: ${colors.textLight};">Made with 🧡 for cats and cat lovers</p>
-            </td>
-          </tr>
-        </table>
-      </td>
-    </tr>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,'Times New Roman',serif;background-color:#FFF8F0;color:#2D2D2D;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF8F0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#2C5F4F;padding:28px 32px;text-align:center;">
+            <h1 style="margin:0;font-family:'Trebuchet MS',sans-serif;font-size:24px;color:#F6F4F0;font-weight:700;">Purrfect Love</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px 32px;">
+            <h2 style="margin:0 0 20px;font-size:18px;color:#2C5F4F;font-family:'Trebuchet MS',sans-serif;">You have a new message on the Purrfect Love website message board</h2>
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
+              <tr><td style="padding:5px 0;font-size:14px;color:#666;width:80px;">From</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${body.name}</td></tr>
+              <tr><td style="padding:5px 0;font-size:14px;color:#666;">Email</td><td style="padding:5px 0;font-size:14px;"><a href="mailto:${body.email}" style="color:#C85C3F;text-decoration:none;">${body.email}</a></td></tr>
+              <tr><td style="padding:5px 0;font-size:14px;color:#666;">Language</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${languageLabel} ${languageFlag}</td></tr>
+            </table>
+            <div style="background:#F5F0E8;border-radius:8px;padding:20px;margin:0 0 24px;font-size:15px;line-height:1.7;color:#2D2D2D;">
+              ${fullMessage}
+            </div>
+            <p style="margin:0 0 24px;text-align:center;">
+              <a href="${sanityStudioUrl}" style="display:inline-block;background:#2C5F4F;color:#F6F4F0;text-decoration:none;font-family:'Trebuchet MS',sans-serif;font-size:15px;font-weight:700;padding:12px 28px;border-radius:8px;">Review here →</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#F5F0E8;padding:20px 32px;text-align:center;border-top:1px solid #E8E4DC;">
+            <p style="margin:0;font-size:13px;color:#6B6B6B;font-weight:600;">Purrfect Love · Cat Adoption &amp; Rescue</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
   </table>
 </body>
 </html>`;
 
-    // Send email notification (non-blocking)
-    resend.emails.send({
-      from: 'Purrfect Love <no-reply@purrfectlove.org>',
-      to: ['support@purrfectlove.org'],
-      cc: ['support@purrfectlove.org'],
-      subject: `New message from ${body.name} - ${languageLabel} ${languageFlag}`,
-      html: emailHtml
-    }).then(result => {
-      console.log('Contact notification email sent:', result.data?.id);
-    }).catch(err => {
+    try {
+      const { error: emailError } = await resend.emails.send({
+        from: 'Purrfect Love <no-reply@purrfectlove.org>',
+        to: ['support@purrfectlove.org'],
+        subject: `New message on the website message board — ${body.name} ${languageFlag}`,
+        html: emailHtml,
+        text: `New message on the Purrfect Love website message board\n\nFrom: ${body.name} (${body.email})\nLanguage: ${languageLabel}\n\n${body.message}\n\nReview: ${sanityStudioUrl}`,
+      });
+      if (emailError) console.error('Contact notification email error:', emailError);
+      else console.log('Contact notification email sent');
+    } catch (err) {
       console.error('Failed to send contact notification email:', err);
-    });
+    }
 
     // Update rate limit tracker
     submissions.set(ip, now);
