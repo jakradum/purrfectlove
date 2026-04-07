@@ -1031,6 +1031,16 @@
   color: #666;
 }
 
+/* Sitter card checklist section label */
+.cardChecklistLabel {
+  font-size: 10px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  color: #aaa;
+  margin: 2px 0 4px;
+}
+
 /* Capabilities checklist */
 .cardChecklist {
   display: grid;
@@ -1551,6 +1561,53 @@
 .profileSelect:focus {
   outline: none;
   border-color: var(--hunter-green);
+}
+
+/* Grouped trait grid for profile editor */
+.traitGrid {
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+
+.traitGroup {}
+
+.traitGroupLabel {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: #999;
+  margin-bottom: 0.4rem;
+  font-family: var(--font-outfit);
+}
+
+/* Compatibility chips in booking form */
+.traitCompatBlock {
+  margin-bottom: 12px;
+}
+
+.traitCompatRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.traitCompatChip {
+  font-size: 11px;
+  padding: 3px 9px;
+  border-radius: 12px;
+  border: 1px solid #e5e7eb;
+  color: #aaa;
+  background: #fafafa;
+  font-family: var(--font-outfit);
+}
+
+.traitCompatMatch {
+  border-color: #2C5F4F;
+  background: #EAF3DE;
+  color: #2C5F4F;
+  font-weight: 600;
 }
 
 .checkboxGroup {

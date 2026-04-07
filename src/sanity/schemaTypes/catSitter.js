@@ -60,7 +60,11 @@ export default {
         fields: [
           { name: 'name', title: 'Name', type: 'string' },
           { name: 'age', title: 'Age (years)', type: 'number' },
-          { name: 'personality', title: 'Personality', type: 'array', of: [{ type: 'string' }], options: { list: ['shy', 'energetic', 'senior', 'special needs'] } },
+          { name: 'personality', title: 'Personality & Care', type: 'array', of: [{ type: 'string' }], options: { layout: 'grid', list: [
+            { title: 'Shy', value: 'shy' }, { title: 'Confident', value: 'confident' }, { title: 'Gentle', value: 'gentle' }, { title: 'Playful', value: 'playful' }, { title: 'Independent', value: 'independent' },
+            { title: 'Good with other cats', value: 'good_with_cats' }, { title: 'Prefers to be only cat', value: 'prefers_solo' }, { title: 'Good with kids', value: 'good_with_kids' },
+            { title: 'Senior (10+ yrs)', value: 'senior' }, { title: 'Special needs', value: 'special_needs' }, { title: 'On medication', value: 'on_medication' }, { title: 'Indoor only', value: 'indoor_only' },
+          ] } },
           { name: 'diet', title: 'Diet', type: 'array', of: [{ type: 'string' }], options: { list: ['wet', 'dry', 'medication', 'special diet'] } },
         ],
         preview: { select: { title: 'name', subtitle: 'age' }, prepare({ title, subtitle }) { return { title: title || 'Unnamed cat', subtitle: subtitle ? `${subtitle} years old` : '' } } }
@@ -106,7 +110,11 @@ export default {
     { name: 'maxHomesPerDay', title: 'Max Homes Per Day (Visits)', type: 'number', readOnly: true },
     { name: 'maxCatsPerDay', title: 'Max Cats Per Day', type: 'number', description: 'Maximum number of cats this sitter is comfortable with per day.' },
     { name: 'feedingTypes', title: 'Can Feed', type: 'array', readOnly: true, of: [{ type: 'string' }], options: { list: ['wet', 'dry', 'medication', 'special diet'] } },
-    { name: 'behavioralTraits', title: 'Comfortable With', type: 'array', readOnly: true, of: [{ type: 'string' }], options: { list: ['shy', 'energetic', 'senior', 'special needs'] } },
+    { name: 'behavioralTraits', title: 'Comfortable With (cat types)', type: 'array', readOnly: true, of: [{ type: 'string' }], description: 'Temperament: shy, confident, gentle, playful, independent · Social: good_with_cats, prefers_solo, good_with_kids · Care: senior, special_needs, on_medication, indoor_only', options: { layout: 'grid', list: [
+      { title: 'Shy', value: 'shy' }, { title: 'Confident', value: 'confident' }, { title: 'Gentle', value: 'gentle' }, { title: 'Playful', value: 'playful' }, { title: 'Independent', value: 'independent' },
+      { title: 'Good with other cats', value: 'good_with_cats' }, { title: 'Prefers to be only cat', value: 'prefers_solo' }, { title: 'Good with kids', value: 'good_with_kids' },
+      { title: 'Senior (10+ yrs)', value: 'senior' }, { title: 'Special needs', value: 'special_needs' }, { title: 'On medication', value: 'on_medication' }, { title: 'Indoor only', value: 'indoor_only' },
+    ] } },
 
     // Toggles
     { name: 'canSit', title: 'I Can Sit', type: 'boolean', initialValue: false, readOnly: true },

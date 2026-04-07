@@ -7,11 +7,15 @@ import CatAvatar from './CatAvatar';
 
 const TAG_LABELS = {
   en: {
-    shy: 'Shy', energetic: 'Energetic', senior: 'Senior', 'special needs': 'Special Needs',
+    shy: 'Shy', confident: 'Confident', gentle: 'Gentle', playful: 'Playful', independent: 'Independent',
+    good_with_cats: 'Good with other cats', prefers_solo: 'Prefers to be only cat', good_with_kids: 'Good with kids',
+    senior: 'Senior', special_needs: 'Special needs', on_medication: 'On medication', indoor_only: 'Indoor only',
     wet: 'Wet food', dry: 'Dry food', medication: 'Medication', 'special diet': 'Special diet',
   },
   de: {
-    shy: 'Schüchtern', energetic: 'Energisch', senior: 'Senior', 'special needs': 'Besondere Bedürfnisse',
+    shy: 'Schüchtern', confident: 'Selbstbewusst', gentle: 'Sanft', playful: 'Verspielt', independent: 'Selbstständig',
+    good_with_cats: 'Verträgt andere Katzen', prefers_solo: 'Lieber allein', good_with_kids: 'Verträgt Kinder',
+    senior: 'Senior', special_needs: 'Besondere Bedürfnisse', on_medication: 'Medikamentenbedarf', indoor_only: 'Nur für drinnen',
     wet: 'Nassfutter', dry: 'Trockenfutter', medication: 'Medikamente', 'special diet': 'Spezialdiät',
   },
 };
@@ -110,24 +114,33 @@ export default function SitterCard({
   const hasDates = !!(startDate && endDate);
 
   // ── Inline booking form state ──────────────────────────────────────────────
-  const [myCats, setMyCats] = useState(null); // null = not yet fetched
+  const [myCatData, setMyCatData] = useState(null); // null = not yet fetched, [] = fetched but empty
+  const myCats = myCatData ? myCatData.map(c => c.name).filter(Boolean) : null;
   const [selectedCats, setSelectedCats] = useState([]);
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
 
+  // Compatibility: traits of selected cats that match sitter's behavioralTraits
+  const catTraitSet = new Set(
+    (myCatData || [])
+      .filter(c => selectedCats.includes(c.name))
+      .flatMap(c => c.personality || [])
+  );
+
   // Lazy-fetch the logged-in user's cats on first expand
   useEffect(() => {
-    if (!expanded || myCats !== null) return;
+    if (!expanded || myCatData !== null) return;
     fetch('/api/care/profile')
       .then(r => r.json())
       .then(doc => {
-        const names = (doc.cats || []).map(c => c.name).filter(Boolean);
-        setMyCats(names);
+        const cats = doc.cats || [];
+        setMyCatData(cats);
+        const names = cats.map(c => c.name).filter(Boolean);
         if (names.length === 1) setSelectedCats(names);
       })
-      .catch(() => setMyCats([]));
-  }, [expanded, myCats]);
+      .catch(() => setMyCatData([]));
+  }, [expanded, myCatData]);
 
   // Reset form when card collapses
   useEffect(() => {
@@ -255,17 +268,20 @@ export default function SitterCard({
 
         {/* Capabilities checklist */}
         {shownCaps.length > 0 && (
-          <div className={styles.cardChecklist}>
-            {shownCaps.map(cap => (
-              <div key={cap} className={styles.cardCheckItem}>
-                <CheckIcon />
-                <span>{tagLabels[cap] || cap}</span>
-              </div>
-            ))}
-            {extraCount > 0 && (
-              <div className={styles.cardCheckMore}>+{extraCount} more</div>
-            )}
-          </div>
+          <>
+            <div className={styles.cardChecklistLabel}>Comfortable with</div>
+            <div className={styles.cardChecklist}>
+              {shownCaps.map(cap => (
+                <div key={cap} className={styles.cardCheckItem}>
+                  <CheckIcon />
+                  <span>{tagLabels[cap] || cap}</span>
+                </div>
+              ))}
+              {extraCount > 0 && (
+                <div className={styles.cardCheckMore}>+{extraCount} more</div>
+              )}
+            </div>
+          </>
         )}
 
         <div className={styles.cardDivider} />
@@ -330,6 +346,23 @@ export default function SitterCard({
                   {catName}
                 </button>
               ))}
+            </div>
+          )}
+
+          {/* Compatibility signal — shown when cats selected and sitter has traits */}
+          {selectedCats.length > 0 && catTraitSet.size > 0 && (behavioralTraits || []).length > 0 && (
+            <div className={styles.traitCompatBlock}>
+              <p className={styles.cardFormLabel}>Compatibility</p>
+              <div className={styles.traitCompatRow}>
+                {(behavioralTraits || []).map(trait => (
+                  <span
+                    key={trait}
+                    className={`${styles.traitCompatChip} ${catTraitSet.has(trait) ? styles.traitCompatMatch : ''}`}
+                  >
+                    {tagLabels[trait] || trait}
+                  </span>
+                ))}
+              </div>
             </div>
           )}
 

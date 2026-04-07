@@ -9,7 +9,9 @@ import FeedbackDisplay from './FeedbackDisplay';
 import BookingRequestModal from './BookingRequestModal';
 
 const TAG_LABELS = {
-  shy: 'Shy', energetic: 'Energetic', senior: 'Senior', 'special needs': 'Special Needs',
+  shy: 'Shy', confident: 'Confident', gentle: 'Gentle', playful: 'Playful', independent: 'Independent',
+  good_with_cats: 'Good with other cats', prefers_solo: 'Prefers to be only cat', good_with_kids: 'Good with kids',
+  senior: 'Senior', special_needs: 'Special needs', on_medication: 'On medication', indoor_only: 'Indoor only',
   wet: 'Wet food', dry: 'Dry food', medication: 'Medication', 'special diet': 'Special diet',
 };
 
@@ -137,7 +139,7 @@ export default function SitterProfile({
   }, []);
 
   const activeCoverSrc = localCoverUrl || coverSrc;
-  const capabilities = [...new Set([...(feedingTypes || []), ...(behavioralTraits || [])])];
+  const capabilities = [...new Set([...(behavioralTraits || []), ...(feedingTypes || [])])];
 
   return (
     <div className={styles.sitterProfilePage}>
@@ -325,14 +327,25 @@ export default function SitterProfile({
               Can sit up to <strong>{maxCatsPerDay}</strong> cat{maxCatsPerDay !== 1 ? 's' : ''} per day
             </p>
           )}
-          {capabilities.length > 0 && (
-            <div className={styles.capabilityPills}>
-              {capabilities.map(tag => (
-                <span key={tag} className={styles.capabilityPill}>
-                  {TAG_LABELS[tag] || tag}
-                </span>
-              ))}
-            </div>
+          {(behavioralTraits || []).length > 0 && (
+            <>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Comfortable with</p>
+              <div className={styles.capabilityPills} style={{ marginBottom: (feedingTypes || []).length ? 14 : 0 }}>
+                {(behavioralTraits || []).map(tag => (
+                  <span key={tag} className={styles.capabilityPill}>{TAG_LABELS[tag] || tag}</span>
+                ))}
+              </div>
+            </>
+          )}
+          {(feedingTypes || []).length > 0 && (
+            <>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Can feed</p>
+              <div className={styles.capabilityPills}>
+                {(feedingTypes || []).map(tag => (
+                  <span key={tag} className={styles.capabilityPill}>{TAG_LABELS[tag] || tag}</span>
+                ))}
+              </div>
+            </>
           )}
         </div>
       )}

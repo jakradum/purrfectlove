@@ -22,13 +22,31 @@ const LocationMapPicker = dynamic(() => import('./LocationMapPicker'), {
   loading: () => <div style={{ height: '320px', background: '#f5f5f3', borderRadius: '8px' }} />,
 });
 
-const PERSONALITY_OPTIONS = ['shy', 'energetic', 'special needs']; // 'senior' is auto-calculated from age
 const DIET_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
 const FEEDING_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
-const BEHAVIORAL_OPTIONS = ['shy', 'energetic', 'senior', 'special needs']; // sitter traits keep senior
+
+// Grouped trait definitions — shared for cat personality and sitter "comfortable with"
+const TRAIT_GROUPS = [
+  { label: 'Temperament', options: ['shy', 'confident', 'gentle', 'playful', 'independent'] },
+  { label: 'Social', options: ['good_with_cats', 'prefers_solo', 'good_with_kids'] },
+  { label: 'Care needs', options: ['senior', 'special_needs', 'on_medication', 'indoor_only'] },
+];
+// All 12 traits flat
+const ALL_TRAITS = TRAIT_GROUPS.flatMap(g => g.options);
+// Cat personality: senior excluded (auto-calculated from age ≥ 10)
+const PERSONALITY_GROUPS = TRAIT_GROUPS.map(g => ({
+  ...g,
+  options: g.options.filter(o => o !== 'senior'),
+}));
+
+const TRAIT_LABELS = {
+  shy: 'Shy', confident: 'Confident', gentle: 'Gentle', playful: 'Playful', independent: 'Independent',
+  good_with_cats: 'Good with other cats', prefers_solo: 'Prefers to be only cat', good_with_kids: 'Good with kids',
+  senior: 'Senior (10+ yrs)', special_needs: 'Special needs', on_medication: 'On medication', indoor_only: 'Indoor only',
+};
 
 const TAG_LABELS = {
-  shy: 'Shy', energetic: 'Energetic', senior: 'Senior', 'special needs': 'Special Needs',
+  ...TRAIT_LABELS,
   wet: 'Wet food', dry: 'Dry food', medication: 'Medication', 'special diet': 'Special diet',
   email: 'Email', whatsapp: 'WhatsApp',
 };
@@ -178,6 +196,30 @@ function CheckboxGroup({ options, value = [], onChange, labelMap }) {
   );
 }
 
+function GroupedCheckboxGroup({ groups, value = [], onChange, labelMap }) {
+  const toggle = (opt) => {
+    const current = value || [];
+    onChange(current.includes(opt) ? current.filter((v) => v !== opt) : [...current, opt]);
+  };
+  return (
+    <div className={styles.traitGrid}>
+      {groups.map((group) => (
+        <div key={group.label} className={styles.traitGroup}>
+          <div className={styles.traitGroupLabel}>{group.label}</div>
+          <div className={styles.checkboxGroup}>
+            {group.options.map((opt) => (
+              <label key={opt} className={styles.checkboxLabel}>
+                <input type="checkbox" checked={(value || []).includes(opt)} onChange={() => toggle(opt)} />
+                {labelMap ? labelMap[opt] || opt : opt}
+              </label>
+            ))}
+          </div>
+        </div>
+      ))}
+    </div>
+  );
+}
+
 function formFromData(data) {
   return {
     name: data.name || '',
@@ -212,9 +254,8 @@ export default function ProfileEditor({ initialData }) {
   const router = useRouter();
 
   const tagMap = {
-    shy: tags.shy, energetic: tags.energetic, senior: tags.senior,
-    'special needs': tags.specialNeeds, wet: tags.wet, dry: tags.dry,
-    medication: tags.medication, 'special diet': tags.specialDiet,
+    ...TRAIT_LABELS,
+    wet: tags.wet, dry: tags.dry, medication: tags.medication, 'special diet': tags.specialDiet,
   };
 
   const savedForm = useRef(formFromData(initialData));
@@ -614,7 +655,7 @@ export default function ProfileEditor({ initialData }) {
             </div>
             <div className={styles.formGroup}>
               <label className={styles.profileLabel}>{t.fields.catPersonality}</label>
-              <CheckboxGroup options={PERSONALITY_OPTIONS} value={cat.personality || []} onChange={(v) => updateCat(idx, 'personality', v)} labelMap={tagMap} />
+              <GroupedCheckboxGroup groups={PERSONALITY_GROUPS} value={cat.personality || []} onChange={(v) => updateCat(idx, 'personality', v)} labelMap={tagMap} />
             </div>
             <div className={styles.formGroup}>
               <label className={styles.profileLabel}>{t.fields.catDiet}</label>
@@ -645,7 +686,7 @@ export default function ProfileEditor({ initialData }) {
           </div>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.behavioralTraits}</label>
-            <CheckboxGroup options={BEHAVIORAL_OPTIONS} value={form.behavioralTraits} onChange={(v) => update('behavioralTraits', v)} labelMap={tagMap} />
+            <GroupedCheckboxGroup groups={TRAIT_GROUPS} value={form.behavioralTraits} onChange={(v) => update('behavioralTraits', v)} labelMap={tagMap} />
           </div>
         </div>
       )}
