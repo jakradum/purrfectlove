@@ -351,6 +351,7 @@ export default function ProfileEditor({ initialData }) {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
+          canSit: form.canSit,
           availabilityDefault: form.availabilityDefault,
           unavailableDatesV2: form.unavailableDatesV2,
           blockedByBooking: updatedBlockedByBooking,
@@ -480,6 +481,10 @@ export default function ProfileEditor({ initialData }) {
         </button>
         <div className={styles.sitterSection}>
           <div className={styles.sitterSectionTitle}>Edit availability</div>
+          <div style={{ marginBottom: '1.25rem' }}>
+            <Toggle checked={form.canSit} onChange={(v) => update('canSit', v)} label="List me as available to sit" />
+            <p className={styles.hint} style={{ marginTop: '0.4rem' }}>Turns your profile on or off in the sitter search.</p>
+          </div>
           {blockedDatesLoading ? (
             <div style={{ color: '#999', fontSize: '0.875rem', padding: '1rem 0' }}>Loading calendar…</div>
           ) : (
@@ -570,6 +575,7 @@ export default function ProfileEditor({ initialData }) {
       {/* My Home */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>{t.sections.home}</h2>
+        <p className={styles.hint} style={{ marginBottom: '0.75rem' }}>Helps sitters understand your space before accepting a request.</p>
         <div className={styles.fieldRow}>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.bedrooms}</label>
@@ -586,6 +592,7 @@ export default function ProfileEditor({ initialData }) {
       {/* My Cats */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>{t.sections.myCats} <span style={{ color: '#e53e3e', fontWeight: 400 }}>*</span></h2>
+        <p className={styles.hint} style={{ marginBottom: '0.75rem' }}>Sitters check this to see if they can handle your cats&apos; needs before accepting.</p>
         {form.cats.map((cat, idx) => (
           <div key={idx} className={styles.catCard}>
             <div className={styles.catCardHeader}>
@@ -618,12 +625,6 @@ export default function ProfileEditor({ initialData }) {
         <button type="button" className={styles.addBtn} onClick={addCat}>{t.fields.addCat}</button>
       </div>
 
-      {/* My Status */}
-      <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>{t.sections.status}</h2>
-        <Toggle checked={form.canSit} onChange={(v) => update('canSit', v)} label="List me as available to sit" />
-      </div>
-
       {/* Sitting Capabilities — shown only when canSit is on */}
       {form.canSit && (
         <div className={styles.section}>
@@ -652,26 +653,32 @@ export default function ProfileEditor({ initialData }) {
       {/* Contact Privacy */}
       <div className={styles.section}>
         <h2 className={styles.sectionTitle}>Contact Privacy</h2>
-        <div className={styles.contactPrivacySection}>
-          <label className={styles.checkboxLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.75rem' }}>
-            <input
-              type="checkbox"
-              checked={form.hideEmail}
-              onChange={(e) => update('hideEmail', e.target.checked)}
-            />
-            Hide email from profile
-          </label>
-          <label className={styles.checkboxLabel} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <input
-              type="checkbox"
-              checked={form.hideWhatsApp}
-              onChange={(e) => update('hideWhatsApp', e.target.checked)}
-            />
-            Hide WhatsApp/phone from profile
-          </label>
-          <p className={styles.privacyHelp}>
-            Your contact info is visible by default. If both are hidden, members message you through the inbox instead.
-          </p>
+        <p className={styles.hint} style={{ marginBottom: '1rem' }}>Shared only with confirmed booking partners 2 days before the sit.</p>
+        <div className={styles.formGroup}>
+          <label className={styles.profileLabel}>Email</label>
+          <div className={styles.contactFilterGroup}>
+            <label className={styles.contactFilterOption}>
+              <input type="radio" name="hideEmail" value="show" checked={!form.hideEmail} onChange={() => update('hideEmail', false)} />
+              Visible
+            </label>
+            <label className={styles.contactFilterOption}>
+              <input type="radio" name="hideEmail" value="hide" checked={!!form.hideEmail} onChange={() => update('hideEmail', true)} />
+              Hidden
+            </label>
+          </div>
+        </div>
+        <div className={styles.formGroup}>
+          <label className={styles.profileLabel}>WhatsApp / Phone</label>
+          <div className={styles.contactFilterGroup}>
+            <label className={styles.contactFilterOption}>
+              <input type="radio" name="hideWhatsApp" value="show" checked={!form.hideWhatsApp} onChange={() => update('hideWhatsApp', false)} />
+              Visible
+            </label>
+            <label className={styles.contactFilterOption}>
+              <input type="radio" name="hideWhatsApp" value="hide" checked={!!form.hideWhatsApp} onChange={() => update('hideWhatsApp', true)} />
+              Hidden
+            </label>
+          </div>
         </div>
       </div>
 
