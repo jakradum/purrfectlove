@@ -4,7 +4,7 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { House, User, LogOut, CalendarDays } from 'lucide-react';
+import { Search, User, LogOut, History } from 'lucide-react';
 import styles from './Sidebar.module.css';
 
 export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
@@ -66,12 +66,12 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
   };
 
   const t = locale === 'de'
-    ? { network: 'Suchen', profile: 'Profil', logout: 'Abmelden', bookings: 'Verlauf' }
-    : { network: 'Search', profile: 'Profile', logout: 'Log out', bookings: 'History' };
+    ? { network: 'Sitter finden', profile: 'Profil', logout: 'Abmelden', bookings: 'Buchungsverlauf' }
+    : { network: 'Find a Sitter', profile: 'Profile', logout: 'Log out', bookings: 'Booking History' };
 
   const links = [
-    { path: '', icon: House, label: t.network, lockable: true },
-    { path: '/bookings', icon: CalendarDays, label: t.bookings, showDot: hasActiveBookings },
+    { path: '', icon: Search, label: t.network, lockable: true },
+    { path: '/bookings', icon: History, label: t.bookings, showDot: hasActiveBookings },
     { path: '/profile', icon: User, label: t.profile },
   ];
 

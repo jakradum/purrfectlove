@@ -4,7 +4,7 @@ import { redirect } from 'next/navigation'
 import { createServerClient } from '@supabase/ssr'
 import BookingsPage from '@/components/Care/BookingsPage'
 
-export const metadata = { title: 'History | Purrfect Love Community' }
+export const metadata = { title: 'Booking History | Purrfect Love Community' }
 
 export default async function Page() {
   const cookieStore = await cookies()

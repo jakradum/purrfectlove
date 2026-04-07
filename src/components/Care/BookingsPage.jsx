@@ -228,7 +228,7 @@ export default function BookingsPage({ locale }) {
 
   return (
     <div className={styles.bookingsPage}>
-      <div className={styles.bookingsTitle}>History</div>
+      <div className={styles.bookingsTitle}>Booking History</div>
       <div className={styles.bookingsSub}>Your upcoming and past cat sits</div>
 
       <div className={styles.bookingsCard}>
