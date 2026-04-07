@@ -199,7 +199,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         const map = {};
         for (const b of (bookings || [])) {
           const key = `${b.sitterId}__${b.startDate}__${b.endDate}`;
-          map[key] = { status: b.status, bookingRef: b.bookingRef };
+          map[key] = { status: b.status, bookingRef: b.bookingRef, _id: b._id };
         }
         setMyBookings(map);
       })
