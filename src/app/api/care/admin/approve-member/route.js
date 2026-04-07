@@ -88,7 +88,7 @@ export async function GET(request) {
         to: [req.email],
         subject: 'Welcome to the Purrfect Love Community',
         html: buildWelcomeHtml(displayName),
-        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nLog in at https://purrfectlove.org/care/login\n\n– The Purrfect Love Team`,
+        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nLog in at https://care.purrfectlove.org/login\n\n– The Purrfect Love Team`,
       })
       emailSent = true
     }
@@ -129,7 +129,7 @@ function buildWelcomeHtml(displayName) {
             <table cellpadding="0" cellspacing="0" style="margin:0 0 24px;">
               <tr>
                 <td style="background:#2C5F4F;border-radius:8px;padding:12px 24px;">
-                  <a href="https://purrfectlove.org/care/login" style="color:#F6F4F0;text-decoration:none;font-size:15px;font-weight:700;font-family:'Trebuchet MS',sans-serif;">Log in to the Community →</a>
+                  <a href="https://care.purrfectlove.org/login" style="color:#F6F4F0;text-decoration:none;font-size:15px;font-weight:700;font-family:'Trebuchet MS',sans-serif;">Log in to the Community →</a>
                 </td>
               </tr>
             </table>

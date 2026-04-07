@@ -118,10 +118,10 @@ export async function POST(request) {
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Unfortunately, <strong>${sitterName}</strong> is not available for your requested dates (${startFmt} – ${endFmt}).</p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Don't worry — there are other sitters in the community who may be a great fit. Browse available sitters and send another request.</p>
             <p style="font-size:14px;color:#555;margin:0;">Questions? Contact us at <a href="mailto:support@purrfectlove.org" style="color:#C85C3F;">support@purrfectlove.org</a>.</p>
-            ${ctaButton({ label: 'Find a sitter', url: 'https://purrfectlove.org/care' })}
+            ${ctaButton({ label: 'Find a sitter', url: 'https://care.purrfectlove.org' })}
           `,
         }),
-        text: `Hi ${parentName},\n\nUnfortunately, ${sitterName} is not available for your requested dates (${startFmt} – ${endFmt}).\n\nBrowse other available sitters: https://purrfectlove.org/care\n\n– The Purrfect Love Community`,
+        text: `Hi ${parentName},\n\nUnfortunately, ${sitterName} is not available for your requested dates (${startFmt} – ${endFmt}).\n\nBrowse other available sitters: https://care.purrfectlove.org\n\n– The Purrfect Love Community`,
       })
     }
 

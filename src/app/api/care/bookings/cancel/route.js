@@ -120,7 +120,7 @@ export async function POST(request) {
     if (otherEmail) {
       const otherRole = isParent ? 'sitter' : 'parent'
       const otherBookingId = booking.id
-      const deepLink = `https://purrfectlove.org/care/bookings?booking=${otherBookingId}&role=${otherRole}`
+      const deepLink = `https://care.purrfectlove.org/bookings?booking=${otherBookingId}&role=${otherRole}`
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
         replyTo: 'support@purrfectlove.org',

@@ -175,8 +175,8 @@ export async function POST(request) {
       createdAt: new Date().toISOString(),
     })
 
-    const parentDeepLink = `https://purrfectlove.org/care/bookings?booking=${bookingId}&role=parent`
-    const sitterDeepLink = `https://purrfectlove.org/care/bookings?booking=${bookingId}&role=sitter`
+    const parentDeepLink = `https://care.purrfectlove.org/bookings?booking=${bookingId}&role=parent`
+    const sitterDeepLink = `https://care.purrfectlove.org/bookings?booking=${bookingId}&role=sitter`
 
     // 6. Email to parent
     if (parentProfile?.email) {
@@ -216,7 +216,7 @@ export async function POST(request) {
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
               <tr><td style="padding:4px 0;font-size:14px;color:#666;">Booking ID</td><td style="padding:4px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${ref}</td></tr>
             </table>
-            <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 8px;">We've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar. If you'd like to override any of those dates, you can do so from your <a href="https://purrfectlove.org/care/profile" style="color:#C85C3F;text-decoration:none;font-weight:600;">profile page</a>.</p>
+            <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 8px;">We've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar. If you'd like to override any of those dates, you can do so from your <a href="https://care.purrfectlove.org/profile" style="color:#C85C3F;text-decoration:none;font-weight:600;">profile page</a>.</p>
             ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
           `,
         }),

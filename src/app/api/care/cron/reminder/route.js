@@ -140,8 +140,8 @@ export async function GET(request) {
       const endFmt = formatDate(booking.end_date)
       const bookingRef = booking.booking_ref
 
-      const parentDeepLink = `https://purrfectlove.org/care/bookings?booking=${booking.id}&role=parent`
-      const sitterDeepLink = `https://purrfectlove.org/care/bookings?booking=${booking.id}&role=sitter`
+      const parentDeepLink = `https://care.purrfectlove.org/bookings?booking=${booking.id}&role=parent`
+      const sitterDeepLink = `https://care.purrfectlove.org/bookings?booking=${booking.id}&role=sitter`
 
       if (parent?.email) {
         await resend.emails.send({

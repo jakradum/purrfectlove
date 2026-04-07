@@ -136,7 +136,7 @@ export async function POST(request) {
         const startFmt = formatDate(startDate)
         const endFmt = formatDate(endDate)
         const sitterFirstName = (sitter.name || '').split(' ')[0] || 'there'
-        const deepLink = `https://purrfectlove.org/care/bookings?booking=${bookingId}&role=sitter`
+        const deepLink = `https://care.purrfectlove.org/bookings?booking=${bookingId}&role=sitter`
         const catList = (cats || []).join(', ') || 'not specified'
 
         // Fetch parent name for a personalised email
