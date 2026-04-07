@@ -177,6 +177,15 @@
   border: 1.5px solid var(--hunter-green);
 }
 
+@keyframes dotPulse {
+  0%, 100% { opacity: 1; transform: scale(1); }
+  50% { opacity: 0.4; transform: scale(1.5); }
+}
+
+.bookingDotPulse {
+  animation: dotPulse 1.4s ease-in-out infinite;
+}
+
 /* ── Mobile bottom nav ── */
 .bottomNav {
   display: none;

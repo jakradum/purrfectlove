@@ -11,7 +11,8 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
   const pathname = usePathname();
   const router = useRouter();
   const [deletionPending, setDeletionPending] = useState(false);
-  const [hasActiveBookings, setHasActiveBookings] = useState(false);
+  // 'none' | 'confirmed' | 'pending'
+  const [bookingDotState, setBookingDotState] = useState('none');
 
   useEffect(() => {
     fetch('/api/care/profile')
@@ -31,13 +32,21 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
     );
 
     const fetchCount = async () => {
-      const [{ count: asParent }, { count: asSitter }] = await Promise.all([
+      const [parentPending, parentConfirmed, sitterPending, sitterConfirmed] = await Promise.all([
         supabase.from('bookings').select('id', { count: 'exact', head: true })
-          .eq('parent_id', sitterId).in('status', ['pending', 'confirmed', 'accepted']),
+          .eq('parent_id', sitterId).eq('status', 'pending'),
         supabase.from('bookings').select('id', { count: 'exact', head: true })
-          .eq('sitter_id', sitterId).in('status', ['pending', 'confirmed', 'accepted']),
+          .eq('parent_id', sitterId).in('status', ['confirmed', 'accepted']),
+        supabase.from('bookings').select('id', { count: 'exact', head: true })
+          .eq('sitter_id', sitterId).eq('status', 'pending'),
+        supabase.from('bookings').select('id', { count: 'exact', head: true })
+          .eq('sitter_id', sitterId).in('status', ['confirmed', 'accepted']),
       ]);
-      setHasActiveBookings(((asParent || 0) + (asSitter || 0)) > 0);
+      const pendingCount = (parentPending.count || 0) + (sitterPending.count || 0);
+      const confirmedCount = (parentConfirmed.count || 0) + (sitterConfirmed.count || 0);
+      if (pendingCount > 0) setBookingDotState('pending');
+      else if (confirmedCount > 0) setBookingDotState('confirmed');
+      else setBookingDotState('none');
     };
 
     fetchCount();
@@ -71,7 +80,7 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
 
   const links = [
     { path: '', icon: Search, label: t.network, lockable: true },
-    { path: '/bookings', icon: History, label: t.bookings, showDot: hasActiveBookings },
+    { path: '/bookings', icon: History, label: t.bookings, dotState: bookingDotState },
     { path: '/profile', icon: User, label: t.profile },
   ];
 
@@ -99,7 +108,7 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
         </div>
 
         <nav className={styles.nav}>
-          {links.map(({ path, icon: Icon, label, lockable, showDot }) => {
+          {links.map(({ path, icon: Icon, label, lockable, dotState }) => {
             const disabled = deletionPending && lockable;
             const active = isActive(path);
 
@@ -125,7 +134,8 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
                   <Icon size={16} strokeWidth={1.75} />
                 </span>
                 <span className={styles.label}>{label}</span>
-                {showDot && <span className={styles.bookingDot} />}
+                {dotState === 'pending' && <span className={`${styles.bookingDot} ${styles.bookingDotPulse}`} />}
+                {dotState === 'confirmed' && <span className={styles.bookingDot} />}
               </Link>
             );
           })}
@@ -141,7 +151,7 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
 
       {/* Mobile bottom nav — hidden on login/join */}
       <nav className={`${styles.bottomNav} ${isAuthPage ? styles.bottomNavHidden : ''}`}>
-        {links.map(({ path, icon: Icon, label, lockable, showDot }) => {
+        {links.map(({ path, icon: Icon, label, lockable, dotState }) => {
           const disabled = deletionPending && lockable;
           const active = isActive(path);
           if (disabled) {
@@ -164,7 +174,8 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
             >
               <span className={styles.iconWrap}>
                 <Icon size={22} strokeWidth={1.75} />
-                {showDot && <span className={styles.bottomBookingDot} />}
+                {dotState === 'pending' && <span className={`${styles.bottomBookingDot} ${styles.bookingDotPulse}`} />}
+                {dotState === 'confirmed' && <span className={styles.bottomBookingDot} />}
               </span>
               <span className={styles.bottomLabel}>{label}</span>
             </Link>
