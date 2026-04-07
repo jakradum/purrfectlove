@@ -1,9 +1,10 @@
+import { Suspense } from 'react'
 import { cookies } from 'next/headers'
 import { redirect } from 'next/navigation'
 import { createServerClient } from '@supabase/ssr'
 import BookingsPage from '@/components/Care/BookingsPage'
 
-export const metadata = { title: 'My Bookings | Purrfect Love Community' }
+export const metadata = { title: 'History | Purrfect Love Community' }
 
 export default async function Page() {
   const cookieStore = await cookies()
@@ -15,5 +16,9 @@ export default async function Page() {
   const { data: { user } } = await supabase.auth.getUser()
   if (!user) redirect('/care/login')
 
-  return <BookingsPage locale="en" />
+  return (
+    <Suspense fallback={null}>
+      <BookingsPage locale="en" />
+    </Suspense>
+  )
 }

@@ -32,6 +32,12 @@ function formatDate(ymd) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function ctaButton({ label, url }) {
+  return `<p style="margin:24px 0 0;text-align:center;">
+    <a href="${url}" style="display:inline-block;background:#2C5F4F;color:#F6F4F0;text-decoration:none;font-family:'Trebuchet MS',sans-serif;font-size:15px;font-weight:700;padding:12px 28px;border-radius:8px;">${label} →</a>
+  </p>`
+}
+
 function brandedEmail({ heading, body }) {
   return `<!DOCTYPE html>
 <html>
@@ -169,6 +175,9 @@ export async function POST(request) {
       createdAt: new Date().toISOString(),
     })
 
+    const parentDeepLink = `https://purrfectlove.org/care/bookings?booking=${bookingId}&role=parent`
+    const sitterDeepLink = `https://purrfectlove.org/care/bookings?booking=${bookingId}&role=sitter`
+
     // 6. Email to parent
     if (parentProfile?.email) {
       await resend.emails.send({
@@ -186,9 +195,10 @@ export async function POST(request) {
             </table>
             <p style="font-size:14px;color:#555;margin:0 0 8px;">${sitterName}&apos;s approximate location:</p>
             ${mapsUrl ? `<a href="${mapsUrl}" style="display:inline-block;color:#C85C3F;font-size:14px;font-weight:600;">View on Google Maps →</a>` : '<p style="font-size:14px;color:#999;margin:0;">Location not available.</p>'}
+            ${ctaButton({ label: 'View booking', url: parentDeepLink })}
           `,
         }),
-        text: `Your booking is confirmed! #${ref}\n\n${sitterName} has accepted your booking.\n\nDates: ${startFmt} – ${endFmt}\nBooking ID: #${ref}${mapsUrl ? `\n\n${sitterName}'s approximate location:\n${mapsUrl}` : ''}\n\n– The Purrfect Love Community`,
+        text: `Your booking is confirmed! #${ref}\n\n${sitterName} has accepted your booking.\n\nDates: ${startFmt} – ${endFmt}\nBooking ID: #${ref}${mapsUrl ? `\n\n${sitterName}'s approximate location:\n${mapsUrl}` : ''}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
       })
     }
 
@@ -207,9 +217,10 @@ export async function POST(request) {
               <tr><td style="padding:4px 0;font-size:14px;color:#666;">Booking ID</td><td style="padding:4px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${ref}</td></tr>
             </table>
             <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 8px;">We've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar. If you'd like to override any of those dates, you can do so from your <a href="https://purrfectlove.org/care/profile" style="color:#C85C3F;text-decoration:none;font-weight:600;">profile page</a>.</p>
+            ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
           `,
         }),
-        text: `Booking confirmed! #${ref}\n\n${parentName} has booked you from ${startFmt} – ${endFmt}.\n\nBooking ID: #${ref}\n\nWe've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar. To override any dates, visit: https://purrfectlove.org/care/profile\n\n– The Purrfect Love Community`,
+        text: `Booking confirmed! #${ref}\n\n${parentName} has booked you from ${startFmt} – ${endFmt}.\n\nBooking ID: #${ref}\n\nWe've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar.\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
       })
     }
 

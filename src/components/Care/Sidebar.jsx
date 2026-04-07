@@ -66,8 +66,8 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
   };
 
   const t = locale === 'de'
-    ? { network: 'Startseite', profile: 'Profil', logout: 'Abmelden', bookings: 'Meine Buchungen' }
-    : { network: 'Home', profile: 'Profile', logout: 'Log out', bookings: 'My Bookings' };
+    ? { network: 'Suchen', profile: 'Profil', logout: 'Abmelden', bookings: 'Verlauf' }
+    : { network: 'Search', profile: 'Profile', logout: 'Log out', bookings: 'History' };
 
   const links = [
     { path: '', icon: House, label: t.network, lockable: true },

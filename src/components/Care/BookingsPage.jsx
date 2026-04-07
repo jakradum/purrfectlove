@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
+import { useSearchParams } from 'next/navigation';
 import styles from './Care.module.css';
 import BookingDetailModal from './BookingDetailModal';
 
@@ -167,14 +168,25 @@ function MobileItem({ booking, colHeader, onClick }) {
 // ── Page ───────────────────────────────────────────────────────────────────────
 
 export default function BookingsPage({ locale }) {
+  const searchParams = useSearchParams();
   const [tab, setTab] = useState('parent');
   const [asParent, setAsParent] = useState([]);
   const [asSitter, setAsSitter] = useState([]);
   const [loading, setLoading] = useState(true);
 
   // Modal state
-  const [selectedBooking, setSelectedBooking] = useState(null); // { _id, role }
+  const [selectedBooking, setSelectedBooking] = useState(null); // { id, role }
   const [showHint, setShowHint] = useState(false);
+
+  // Auto-open modal from deep link (?booking=<id>&role=sitter|parent)
+  useEffect(() => {
+    const bookingId = searchParams.get('booking');
+    const role = searchParams.get('role');
+    if (bookingId && (role === 'parent' || role === 'sitter')) {
+      if (role === 'sitter') setTab('sitter');
+      setSelectedBooking({ id: bookingId, role });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
     if (typeof window !== 'undefined') {
@@ -216,7 +228,7 @@ export default function BookingsPage({ locale }) {
 
   return (
     <div className={styles.bookingsPage}>
-      <div className={styles.bookingsTitle}>My Bookings</div>
+      <div className={styles.bookingsTitle}>History</div>
       <div className={styles.bookingsSub}>Your upcoming and past cat sits</div>
 
       <div className={styles.bookingsCard}>

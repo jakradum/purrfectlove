@@ -67,6 +67,12 @@ function brandedEmail({ heading, body }) {
 </html>`
 }
 
+function ctaButton({ label, url }) {
+  return `<p style="margin:24px 0 0;text-align:center;">
+    <a href="${url}" style="display:inline-block;background:#2C5F4F;color:#F6F4F0;text-decoration:none;font-family:'Trebuchet MS',sans-serif;font-size:15px;font-weight:700;padding:12px 28px;border-radius:8px;">${label} →</a>
+  </p>`
+}
+
 function contactBlock({ name, email, phone }) {
   const wa = waLink(phone)
   const rows = [
@@ -134,6 +140,9 @@ export async function GET(request) {
       const endFmt = formatDate(booking.end_date)
       const bookingRef = booking.booking_ref
 
+      const parentDeepLink = `https://purrfectlove.org/care/bookings?booking=${booking.id}&role=parent`
+      const sitterDeepLink = `https://purrfectlove.org/care/bookings?booking=${booking.id}&role=sitter`
+
       if (parent?.email) {
         await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
@@ -148,10 +157,11 @@ export async function GET(request) {
                 Here are their contact details so you can coordinate:
               </p>
               ${contactBlock({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}
-              <p style="font-size:13px;color:#999;margin:0;">Booking ID: #${bookingRef}</p>
+              <p style="font-size:13px;color:#999;margin:0 0 4px;">Booking ID: #${bookingRef}</p>
+              ${ctaButton({ label: 'View booking', url: parentDeepLink })}
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nSitter contact details:\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\n– The Purrfect Love Community`,
+          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nSitter contact details:\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
         })
         sent++
       }
@@ -170,10 +180,11 @@ export async function GET(request) {
                 Here are their contact details:
               </p>
               ${contactBlock({ name: parent?.name, email: parent?.email, phone: parent?.phone })}
-              <p style="font-size:13px;color:#999;margin:0;">Booking ID: #${bookingRef}</p>
+              <p style="font-size:13px;color:#999;margin:0 0 4px;">Booking ID: #${bookingRef}</p>
+              ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nCat parent contact details:\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\n– The Purrfect Love Community`,
+          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nCat parent contact details:\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
         })
         sent++
       }

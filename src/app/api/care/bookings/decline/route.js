@@ -18,6 +18,12 @@ function formatDate(ymd) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function ctaButton({ label, url }) {
+  return `<p style="margin:24px 0 0;text-align:center;">
+    <a href="${url}" style="display:inline-block;background:#2C5F4F;color:#F6F4F0;text-decoration:none;font-family:'Trebuchet MS',sans-serif;font-size:15px;font-weight:700;padding:12px 28px;border-radius:8px;">${label} →</a>
+  </p>`
+}
+
 function brandedEmail({ heading, body }) {
   return `<!DOCTYPE html>
 <html>
@@ -110,11 +116,12 @@ export async function POST(request) {
           body: `
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Hi ${parentName},</p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Unfortunately, <strong>${sitterName}</strong> is not available for your requested dates (${startFmt} – ${endFmt}).</p>
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">You can browse other available sitters in the <a href="https://purrfectlove.org/care" style="color:#C85C3F;text-decoration:none;font-weight:600;">community</a> and send another request.</p>
-            <p style="font-size:14px;color:#555;margin:0;">If you have any questions, contact us at <a href="mailto:support@purrfectlove.org" style="color:#C85C3F;">support@purrfectlove.org</a>.</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Don't worry — there are other sitters in the community who may be a great fit. Browse available sitters and send another request.</p>
+            <p style="font-size:14px;color:#555;margin:0;">Questions? Contact us at <a href="mailto:support@purrfectlove.org" style="color:#C85C3F;">support@purrfectlove.org</a>.</p>
+            ${ctaButton({ label: 'Find a sitter', url: 'https://purrfectlove.org/care' })}
           `,
         }),
-        text: `Hi ${parentName},\n\nUnfortunately, ${sitterName} is not available for your requested dates (${startFmt} – ${endFmt}).\n\nYou can browse other available sitters at https://purrfectlove.org/care\n\n– The Purrfect Love Community`,
+        text: `Hi ${parentName},\n\nUnfortunately, ${sitterName} is not available for your requested dates (${startFmt} – ${endFmt}).\n\nBrowse other available sitters: https://purrfectlove.org/care\n\n– The Purrfect Love Community`,
       })
     }
 

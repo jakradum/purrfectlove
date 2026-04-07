@@ -18,6 +18,12 @@ function formatDate(ymd) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
+function ctaButton({ label, url }) {
+  return `<p style="margin:24px 0 0;text-align:center;">
+    <a href="${url}" style="display:inline-block;background:#2C5F4F;color:#F6F4F0;text-decoration:none;font-family:'Trebuchet MS',sans-serif;font-size:15px;font-weight:700;padding:12px 28px;border-radius:8px;">${label} →</a>
+  </p>`
+}
+
 function brandedEmail({ heading, body }) {
   return `<!DOCTYPE html>
 <html>
@@ -112,6 +118,9 @@ export async function POST(request) {
     const otherName = isParent ? (sitterProfile?.name || 'there') : (parentProfile?.name || 'there')
 
     if (otherEmail) {
+      const otherRole = isParent ? 'sitter' : 'parent'
+      const otherBookingId = booking.id
+      const deepLink = `https://purrfectlove.org/care/bookings?booking=${otherBookingId}&role=${otherRole}`
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
         replyTo: 'support@purrfectlove.org',
@@ -136,10 +145,11 @@ export async function POST(request) {
                 <td style="padding:10px 12px;font-size:13px;color:#2D2D2D;border-bottom:1px solid #eee;">${reason.trim()}</td>
               </tr>
             </table>
-            <p style="font-size:14px;color:#555;margin:0;">If you have any questions, please reply to this email or contact us at <a href="mailto:support@purrfectlove.org" style="color:#C85C3F;">support@purrfectlove.org</a>.</p>
+            <p style="font-size:14px;color:#555;margin:0;">Questions? Contact us at <a href="mailto:support@purrfectlove.org" style="color:#C85C3F;">support@purrfectlove.org</a>.</p>
+            ${ctaButton({ label: 'View booking', url: deepLink })}
           `,
         }),
-        text: `Booking #${ref} has been cancelled\n\nHi ${otherName},\n\n${cancellerName} has cancelled booking #${ref} (${startFmt} – ${endFmt}).\n\nReason: ${reason.trim()}\n\n– The Purrfect Love Community`,
+        text: `Booking #${ref} has been cancelled\n\nHi ${otherName},\n\n${cancellerName} has cancelled booking #${ref} (${startFmt} – ${endFmt}).\n\nReason: ${reason.trim()}\n\nView booking: ${deepLink}\n\n– The Purrfect Love Community`,
       })
     }
 
