@@ -227,6 +227,20 @@ export default function BookingsPage({ locale }) {
 
   useEffect(() => {
     fetchBookings().finally(() => setLoading(false));
+
+    // Refresh on tab focus
+    const onVisible = () => {
+      if (document.visibilityState === 'visible') fetchBookings();
+    };
+    document.addEventListener('visibilitychange', onVisible);
+
+    // Poll every 60 seconds
+    const poll = setInterval(fetchBookings, 60_000);
+
+    return () => {
+      document.removeEventListener('visibilitychange', onVisible);
+      clearInterval(poll);
+    };
   }, [fetchBookings]);
 
   const items = tab === 'parent' ? asParent : asSitter;
