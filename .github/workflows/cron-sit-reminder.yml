@@ -1,0 +1,18 @@
+name: Sit Reminder Emails
+
+on:
+  schedule:
+    - cron: '30 2 * * *'  # 02:30 UTC daily
+  workflow_dispatch:       # allow manual trigger from GitHub UI
+
+jobs:
+  remind:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call reminder endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://care.purrfectlove.org/api/care/cron/reminder)
+          echo "HTTP $response"
+          [ "$response" = "200" ] || exit 1
