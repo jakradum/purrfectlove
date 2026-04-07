@@ -131,7 +131,6 @@ export async function POST(request) {
 
     const { error: resendError } = await resend.emails.send({
       from: 'Purrfect Love <no-reply@purrfectlove.org>',
-      replyTo: 'support@purrfectlove.org',
       to: [email],
       subject: 'Your Purrfect Love verification code',
       html: otpEmailHtml(otp),

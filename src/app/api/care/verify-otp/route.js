@@ -202,7 +202,6 @@ export async function POST(request) {
         try {
           await resend.emails.send({
             from: 'Purrfect Love <no-reply@purrfectlove.org>',
-            replyTo: 'support@purrfectlove.org',
             to: [recipientEmail],
             subject: 'Welcome to the Purrfect Love Community',
             html: welcomeEmailHtml(firstName, unsubUrl, isDE),

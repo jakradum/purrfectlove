@@ -50,7 +50,6 @@ export async function GET(request) {
         sends.push(
           resend.emails.send({
             from: 'Purrfect Love <no-reply@purrfectlove.org>',
-            replyTo: 'support@purrfectlove.org',
             to: [sitter.email],
             subject: `How did the sit go? Quick confirmation needed`,
             html: buildPromptEmail(sitter.username || sitter.name || 'there', parent.username || parent.name || 'your cat parent', record.startDate, record.endDate, confirmUrl, 'sitter'),
@@ -63,7 +62,6 @@ export async function GET(request) {
         sends.push(
           resend.emails.send({
             from: 'Purrfect Love <no-reply@purrfectlove.org>',
-            replyTo: 'support@purrfectlove.org',
             to: [parent.email],
             subject: `How did the sit go? Quick confirmation needed`,
             html: buildPromptEmail(parent.username || parent.name || 'there', sitter.username || sitter.name || 'your sitter', record.startDate, record.endDate, confirmUrl, 'parent'),

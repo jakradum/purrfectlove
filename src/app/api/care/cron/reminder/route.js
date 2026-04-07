@@ -173,7 +173,6 @@ export async function GET(request) {
       if (parent?.email) {
         await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
-          replyTo: 'support@purrfectlove.org',
           to: [parent.email],
           subject,
           html: brandedEmail({
@@ -197,7 +196,6 @@ export async function GET(request) {
       if (sitter?.email) {
         await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
-          replyTo: 'support@purrfectlove.org',
           to: [sitter.email],
           subject,
           html: brandedEmail({

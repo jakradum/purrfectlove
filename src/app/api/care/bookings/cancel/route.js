@@ -123,7 +123,6 @@ export async function POST(request) {
       const deepLink = `https://care.purrfectlove.org/bookings?booking=${otherBookingId}&role=${otherRole}`
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
-        replyTo: 'support@purrfectlove.org',
         to: [otherEmail],
         subject: `Booking #${ref} has been cancelled`,
         html: brandedEmail({

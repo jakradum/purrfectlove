@@ -182,7 +182,6 @@ export async function POST(request) {
     if (parentProfile?.email) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
-        replyTo: 'support@purrfectlove.org',
         to: [parentProfile.email],
         subject: `Booking confirmed! #${ref}`,
         html: brandedEmail({
@@ -206,7 +205,6 @@ export async function POST(request) {
     if (sitterProfile?.email) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
-        replyTo: 'support@purrfectlove.org',
         to: [sitterProfile.email],
         subject: `Booking confirmed! #${ref}`,
         html: brandedEmail({

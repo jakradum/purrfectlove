@@ -84,7 +84,6 @@ export async function GET(request) {
       const displayName = (req.name || 'there').split(' ')[0]
       await resend.emails.send({
         from: 'Purrfect Love <no-reply@purrfectlove.org>',
-        replyTo: 'support@purrfectlove.org',
         to: [req.email],
         subject: 'Welcome to the Purrfect Love Community',
         html: buildWelcomeHtml(displayName),

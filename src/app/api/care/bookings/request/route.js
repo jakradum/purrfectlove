@@ -176,7 +176,6 @@ export async function POST(request) {
 
         const { error: resendError } = await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
-          replyTo: 'support@purrfectlove.org',
           to: [sitter.email],
           subject: `New sit request #${bookingRef}`,
           tags: [{ name: 'booking_id', value: bookingId }],

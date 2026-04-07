@@ -240,7 +240,6 @@ ${t.disclaimer}
   try {
     const { data, error } = await resend.emails.send({
       from: 'Purrfect Love <no-reply@purrfectlove.org>',
-      replyTo: 'support@purrfectlove.org',
       to: [to],
       subject: t.subject(applicationId),
       html,

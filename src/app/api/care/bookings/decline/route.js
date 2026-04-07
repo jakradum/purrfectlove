@@ -108,7 +108,6 @@ export async function POST(request) {
     if (parentProfile?.email) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
-        replyTo: 'support@purrfectlove.org',
         to: [parentProfile.email],
         subject: `Booking request #${ref} was not available`,
         html: brandedEmail({

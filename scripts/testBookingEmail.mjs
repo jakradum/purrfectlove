@@ -124,7 +124,6 @@ const deepLink = `https://purrfectlove.org/care/bookings?booking=${bookingId}&ro
 
 const { error: emailError } = await resend.emails.send({
   from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
-  replyTo: 'support@purrfectlove.org',
   to: [sitter.email],
   subject: `New sit request #${BOOKING_REF}`,
   html: brandedEmail({

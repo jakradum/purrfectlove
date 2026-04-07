@@ -51,7 +51,6 @@ export async function POST(request) {
     if (doc.email) {
       await resend.emails.send({
         from: 'Purrfect Love <no-reply@purrfectlove.org>',
-        replyTo: 'support@purrfectlove.org',
         to: [doc.email],
         subject: 'Your Purrfect Love Community account has been deleted',
         html: `<!DOCTYPE html>
