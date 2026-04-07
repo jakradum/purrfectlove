@@ -1,0 +1,22 @@
+name: Cron Test
+
+on:
+  schedule:
+    - cron: '30 0 8 4 *'  # 00:30 UTC = 06:00 IST on 8 April
+  workflow_dispatch:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Send test email
+        run: |
+          curl -s -X POST https://api.resend.com/emails \
+            -H "Authorization: Bearer ${{ secrets.RESEND_API_KEY }}" \
+            -H "Content-Type: application/json" \
+            -d '{
+              "from": "Purrfect Love Community <no-reply@purrfectlove.org>",
+              "to": ["pranavkarnad@gmail.com"],
+              "subject": "test",
+              "text": "test"
+            }'
