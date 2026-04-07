@@ -44,9 +44,13 @@ function StatusBadge({ status }) {
 
 // ── Desktop table ──────────────────────────────────────────────────────────────
 
+const CANCELLED_STATUSES = ['cancelled', 'declined'];
+
 function BookingsTable({ items, colHeader, onRowClick, onWithdraw }) {
-  const upcoming = items.filter(b => isUpcoming(b.startDate));
-  const past = items.filter(b => !isUpcoming(b.startDate));
+  const active = items.filter(b => !CANCELLED_STATUSES.includes(b.status));
+  const cancelled = items.filter(b => CANCELLED_STATUSES.includes(b.status));
+  const upcoming = active.filter(b => isUpcoming(b.startDate));
+  const past = active.filter(b => !isUpcoming(b.startDate));
 
   return (
     <table className={styles.bookingsTable}>
@@ -81,6 +85,16 @@ function BookingsTable({ items, colHeader, onRowClick, onWithdraw }) {
                   <td colSpan={4}>Past</td>
                 </tr>
                 {past.map(b => (
+                  <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} />
+                ))}
+              </>
+            )}
+            {cancelled.length > 0 && (
+              <>
+                <tr className={styles.tableGroupHd} style={{ opacity: 0.5 }}>
+                  <td colSpan={4}>Cancelled / Declined</td>
+                </tr>
+                {cancelled.map(b => (
                   <TableRow key={b._id} booking={b} colHeader={colHeader} onClick={() => onRowClick(b)} onWithdraw={onWithdraw} />
                 ))}
               </>
@@ -130,8 +144,10 @@ function TableRow({ booking, colHeader, onClick, onWithdraw }) {
 // ── Mobile list ────────────────────────────────────────────────────────────────
 
 function MobileList({ items, colHeader, onItemClick, onWithdraw }) {
-  const upcoming = items.filter(b => isUpcoming(b.startDate));
-  const past = items.filter(b => !isUpcoming(b.startDate));
+  const active = items.filter(b => !CANCELLED_STATUSES.includes(b.status));
+  const cancelled = items.filter(b => CANCELLED_STATUSES.includes(b.status));
+  const upcoming = active.filter(b => isUpcoming(b.startDate));
+  const past = active.filter(b => !isUpcoming(b.startDate));
 
   if (items.length === 0) {
     return <p className={styles.bookingEmpty}>No bookings here yet.</p>;
@@ -150,6 +166,13 @@ function MobileList({ items, colHeader, onItemClick, onWithdraw }) {
           {upcoming.length > 0 && <div className={styles.bookingDivider} />}
           <div className={styles.bookingSectionHd}>Past</div>
           {past.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} />)}
+        </>
+      )}
+      {cancelled.length > 0 && (
+        <>
+          <div className={styles.bookingDivider} />
+          <div className={styles.bookingSectionHd} style={{ opacity: 0.5 }}>Cancelled / Declined</div>
+          {cancelled.map(b => <MobileItem key={b._id} booking={b} colHeader={colHeader} onClick={() => onItemClick(b)} onWithdraw={onWithdraw} />)}
         </>
       )}
     </>
