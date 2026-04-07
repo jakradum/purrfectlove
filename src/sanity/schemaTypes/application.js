@@ -2,6 +2,7 @@ import {DuplicateNotice} from '../components/DuplicateNotice'
 import {CatAdoptedNotice} from '../components/CatAdoptedNotice'
 import {OpenToAnyCatNotice} from '../components/OpenToAnyCatNotice'
 import {SendContractButton} from '../components/SendContractButton'
+import {StatusInput} from '../components/StatusInput'
 
 // Helper to check if application is marked as duplicate
 const isMarkedAsDuplicate = ({parent}) => !!parent?.isDuplicateOf
@@ -193,7 +194,8 @@ export default {
         ]
       },
       initialValue: 'new',
-      readOnly: isMarkedAsDuplicate
+      readOnly: isMarkedAsDuplicate,
+      components: { input: StatusInput },
     },
 
     // Cat adopted notice - shows when the original cat is already adopted
