@@ -78,7 +78,7 @@ export default function SitterCard({
   const {
     _id, _createdAt, name,
     identityVerified, trustedSitter, siteAdmin,
-    photoUrl, avatarColour,
+    photoUrl, avatarColour, coverImageUrl,
     feedingTypes, behavioralTraits,
     cats, _distance,
     availabilityDefault, maxCatsPerDay,
@@ -109,7 +109,7 @@ export default function SitterCard({
   }
 
   const idx = coverIndex(_id || '');
-  const coverSrc = COVERS[idx];
+  const coverSrc = coverImageUrl || COVERS[idx];
   const coverBg = COVER_FALLBACKS[idx];
   const hasDates = !!(startDate && endDate);
 
@@ -196,7 +196,10 @@ export default function SitterCard({
       {/* Cover */}
       <div
         className={styles.cardCover}
-        style={{ backgroundImage: `url(${coverSrc})`, backgroundColor: coverBg }}
+        style={coverImageUrl
+          ? { backgroundImage: `url(${coverSrc})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+          : { backgroundImage: `url(${coverSrc})`, backgroundColor: coverBg }
+        }
         aria-hidden="true"
       >
         <div className={styles.cardAvatarWrap}>

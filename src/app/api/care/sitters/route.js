@@ -36,6 +36,7 @@ export async function GET(request) {
         "email": select(hideEmail == true => null, email),
         "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
+        "coverImageUrl": coverImage.asset->url,
         hideEmail, hideWhatsApp,
         maxHomesPerDay, maxCatsPerDay, feedingTypes, behavioralTraits,
         availableDates, alwaysAvailable, unavailableDates, unavailableRanges,
