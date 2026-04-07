@@ -340,41 +340,37 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
             <>
               <div className={styles.dtSectionLabel}>Contact</div>
               {contactLive ? (
-                <>
-                  {(waUrl || emailUrl) ? (
-                    <div className={styles.dtContactIconRow}>
-                      {waUrl && (
-                        <a href={waUrl} target="_blank" rel="noopener noreferrer" className={styles.dtContactIconBtn} title="WhatsApp">
-                          <WhatsAppIcon />
-                        </a>
-                      )}
-                      {emailUrl && (
-                        <a href={emailUrl} className={styles.dtContactIconBtn} title={detail.other.email}>
-                          <EmailIcon />
-                        </a>
-                      )}
-                    </div>
-                  ) : (
-                    <ContactRow label="Contact" value="No contact info available." muted />
-                  )}
-                </>
+                // Sit is within 2 days — show real contact icons if available, hide section silently if not
+                (waUrl || emailUrl) ? (
+                  <div className={styles.dtContactIconRow}>
+                    {waUrl && (
+                      <a href={waUrl} target="_blank" rel="noopener noreferrer" className={styles.dtContactIconBtn} aria-label="WhatsApp">
+                        <WhatsAppIcon />
+                      </a>
+                    )}
+                    {emailUrl && (
+                      <a href={emailUrl} className={styles.dtContactIconBtn} aria-label="Email">
+                        <EmailIcon />
+                      </a>
+                    )}
+                  </div>
+                ) : null
               ) : (
+                // Sit is more than 2 days away — show dimmed placeholder icons (no title tooltip)
                 <>
-                  {(detail.other.phone || detail.other.email) ? (
+                  {(detail.other.phone || detail.other.email) && (
                     <div className={styles.dtContactIconRow}>
                       {detail.other.phone && (
-                        <span className={styles.dtContactIconBtn} style={{ cursor: 'default', opacity: 0.4 }} title={detail.other.phone}>
+                        <span className={styles.dtContactIconBtn} style={{ cursor: 'default', opacity: 0.4 }}>
                           <WhatsAppIcon />
                         </span>
                       )}
                       {detail.other.email && (
-                        <span className={styles.dtContactIconBtn} style={{ cursor: 'default', opacity: 0.4 }} title={detail.other.email}>
+                        <span className={styles.dtContactIconBtn} style={{ cursor: 'default', opacity: 0.4 }}>
                           <EmailIcon />
                         </span>
                       )}
                     </div>
-                  ) : (
-                    <ContactRow label="Contact" value="No contact info available." muted />
                   )}
                   <p className={styles.dtContactNote}>Contact details will be shared 2 days before the sit.</p>
                 </>
