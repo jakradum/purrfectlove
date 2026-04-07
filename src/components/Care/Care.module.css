@@ -1134,6 +1134,31 @@
   50% { opacity: 0.4; transform: scale(0.75); }
 }
 
+.cardWithdrawBtn {
+  margin-top: 6px;
+  width: 100%;
+  padding: 7px 14px;
+  border-radius: 8px;
+  border: none;
+  background: transparent;
+  color: var(--alert-red-eyes);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  cursor: pointer;
+  text-align: center;
+  transition: background 0.12s;
+}
+
+.cardWithdrawBtn:hover {
+  background: rgba(240, 87, 72, 0.07);
+}
+
+.cardWithdrawBtn:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+}
+
 .cardBookConfirmed {
   display: flex;
   align-items: center;

@@ -501,9 +501,13 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
                       startDate={startDate}
                       endDate={endDate}
                       bookingState={myBookings[`${sitter._id}__${startDate}__${endDate}`] ?? null}
-                      onBooked={(bookingRef) => {
+                      onBooked={(bookingRef, bookingId) => {
                         const key = `${sitter._id}__${startDate}__${endDate}`;
-                        setMyBookings(prev => ({ ...prev, [key]: { status: 'pending', bookingRef } }));
+                        setMyBookings(prev => ({ ...prev, [key]: { status: 'pending', bookingRef, _id: bookingId } }));
+                      }}
+                      onWithdrawn={() => {
+                        const key = `${sitter._id}__${startDate}__${endDate}`;
+                        setMyBookings(prev => ({ ...prev, [key]: null }));
                       }}
                       expanded={expandedCardId === sitter._id}
                       onExpand={() => setExpandedCardId(prev => prev === sitter._id ? null : sitter._id)}

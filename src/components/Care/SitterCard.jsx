@@ -70,6 +70,7 @@ export default function SitterCard({
   endDate,
   bookingState = null,
   onBooked,
+  onWithdrawn,
   expanded = false,
   onExpand,
 }) {
@@ -120,6 +121,7 @@ export default function SitterCard({
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
+  const [withdrawing, setWithdrawing] = useState(false);
 
   // Compatibility: traits of selected cats that match sitter's behavioralTraits
   const catTraitSet = new Set(
@@ -158,6 +160,20 @@ export default function SitterCard({
     );
   };
 
+  const handleWithdraw = async () => {
+    if (!bookingState?._id) return;
+    setWithdrawing(true);
+    try {
+      await fetch('/api/care/bookings/cancel', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ bookingId: bookingState._id, reason: 'Request withdrawn by sender.' }),
+      });
+      onWithdrawn?.();
+    } catch { /* silent */ }
+    setWithdrawing(false);
+  };
+
   const handleSubmit = async () => {
     setFormError('');
     if (selectedCats.length === 0) {
@@ -182,7 +198,7 @@ export default function SitterCard({
         setFormError(data.error || 'Failed to send request.');
         return;
       }
-      onBooked?.(data.bookingRef);
+      onBooked?.(data.bookingRef, data.bookingId);
       onExpand?.(); // collapse the card
     } catch {
       setFormError('Network error. Please try again.');
@@ -299,10 +315,20 @@ export default function SitterCard({
             Booking confirmed · #{bookingState.bookingRef}
           </div>
         ) : hasDates && bookingState?.status === 'pending' ? (
-          <div className={styles.cardBookPending}>
-            <span className={styles.cardBookPendingDot} />
-            Awaiting approval
-          </div>
+          <>
+            <div className={styles.cardBookPending}>
+              <span className={styles.cardBookPendingDot} />
+              Awaiting approval
+            </div>
+            <button
+              type="button"
+              className={styles.cardWithdrawBtn}
+              onClick={handleWithdraw}
+              disabled={withdrawing}
+            >
+              {withdrawing ? 'Withdrawing…' : 'Withdraw request'}
+            </button>
+          </>
         ) : hasDates && !expanded ? (
           <button
             type="button"
