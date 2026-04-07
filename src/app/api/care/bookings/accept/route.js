@@ -186,7 +186,7 @@ export async function POST(request) {
         to: [parentProfile.email],
         subject: `Booking confirmed! #${ref}`,
         html: brandedEmail({
-          heading: 'Your booking is confirmed! 🐾',
+          heading: 'Your booking is confirmed!',
           body: `
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${sitterName}</strong> has accepted your booking.</p>
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
@@ -210,7 +210,7 @@ export async function POST(request) {
         to: [sitterProfile.email],
         subject: `Booking confirmed! #${ref}`,
         html: brandedEmail({
-          heading: 'Booking confirmed! 🐾',
+          heading: 'Booking confirmed!',
           body: `
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${parentName}</strong> has booked you from ${startFmt} – ${endFmt}.</p>
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">

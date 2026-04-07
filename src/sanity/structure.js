@@ -264,7 +264,7 @@ export const structure = (S) =>
               // Community Join Requests
               S.listItem()
                 .title('Community Join Requests')
-                .icon(() => '🐾')
+                .icon(() => '🐱')
                 .child(
                   S.documentTypeList('membershipRequest')
                     .title('Community Join Requests')

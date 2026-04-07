@@ -59,7 +59,7 @@ export default function GuidelinesGate({ locale = 'en' }) {
       <div className={styles.guidelinesCard}>
         {/* Header */}
         <div className={styles.guidelinesHeader}>
-          <span style={{ fontSize: '2rem' }}>🐾</span>
+          
           <h1 className={styles.guidelinesTitle}>
             {isDE ? 'Community-Richtlinien' : 'Community Guidelines'}
           </h1>

@@ -474,7 +474,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
               </div>
             ) : results !== null && results.length === 0 ? (
               <div className={styles.datesEmptyState}>
-                <div className={styles.datesEmptyIcon}>🐾</div>
+                <div className={styles.datesEmptyIcon}>🔍</div>
                 <h2 className={styles.datesEmptyHeading}>No sitters found nearby</h2>
                 <p className={styles.datesEmptyText}>
                   {locale === 'de'

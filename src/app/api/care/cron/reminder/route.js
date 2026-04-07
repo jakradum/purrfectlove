@@ -150,7 +150,7 @@ export async function GET(request) {
           to: [parent.email],
           subject,
           html: brandedEmail({
-            heading: 'Your sit starts in 2 days 🐾',
+            heading: 'Your sit starts in 2 days',
             body: `
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
                 Your booking with <strong>${sitter?.name || 'your sitter'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
@@ -173,7 +173,7 @@ export async function GET(request) {
           to: [sitter.email],
           subject,
           html: brandedEmail({
-            heading: 'Your sit starts in 2 days 🐾',
+            heading: 'Your sit starts in 2 days',
             body: `
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
                 Your sitting commitment for <strong>${parent?.name || 'your cat parent'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.

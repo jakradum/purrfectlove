@@ -156,7 +156,7 @@ export async function POST(request) {
           subject: `New sit request #${bookingRef}`,
           tags: [{ name: 'booking_id', value: bookingId }],
           html: brandedEmail({
-            heading: `New sit request from ${parentName} 🐾`,
+            heading: `New sit request from ${parentName}`,
             body: `
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">Hi ${sitterFirstName},</p>
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;"><strong>${parentName}</strong> has sent you a sit request. Here are the details:</p>
