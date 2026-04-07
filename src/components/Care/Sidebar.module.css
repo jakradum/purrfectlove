@@ -244,3 +244,39 @@
     pointer-events: none;
   }
 }
+
+.notifBadge {
+  margin-left: auto;
+  min-width: 18px;
+  height: 18px;
+  border-radius: 9px;
+  background: #F05748;
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: var(--font-outfit);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 5px;
+  flex-shrink: 0;
+}
+
+.bottomNotifBadge {
+  position: absolute;
+  top: -4px;
+  right: -6px;
+  min-width: 16px;
+  height: 16px;
+  border-radius: 8px;
+  background: #F05748;
+  color: #fff;
+  font-size: 10px;
+  font-weight: 700;
+  font-family: var(--font-outfit);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0 4px;
+  border: 1.5px solid var(--hunter-green);
+}

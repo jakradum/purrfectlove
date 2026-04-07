@@ -110,17 +110,18 @@ function TableRow({ booking, colHeader, onClick, onWithdraw }) {
       </td>
       <td className={styles.tdCats}>{cats || '—'}</td>
       <td className={styles.tdStatus}>
-        <StatusBadge status={booking.status} />
-        {canWithdraw && (
-          <button
-            type="button"
-            className={styles.tdWithdrawBtn}
-            style={{ display: 'block', marginTop: '4px' }}
-            onClick={(e) => { e.stopPropagation(); onWithdraw(booking); }}
-          >
-            Withdraw
-          </button>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'flex-end', gap: 8 }}>
+          {canWithdraw && (
+            <button
+              type="button"
+              className={styles.tdWithdrawBtn}
+              onClick={(e) => { e.stopPropagation(); onWithdraw(booking); }}
+            >
+              Withdraw
+            </button>
+          )}
+          <StatusBadge status={booking.status} />
+        </div>
       </td>
     </tr>
   );
@@ -169,18 +170,19 @@ function MobileItem({ booking, colHeader, onClick, onWithdraw }) {
           {cats ? ` · ${cats}` : ''}
         </div>
         {booking.bookingRef && <div className={styles.bookingRef}>#{booking.bookingRef}</div>}
+      </div>
+      <div className={styles.bookingRight} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>
+        <StatusBadge status={booking.status} />
         {canWithdraw && (
           <button
             type="button"
             className={styles.bookingWithdrawBtn}
+            style={{ marginTop: 0 }}
             onClick={(e) => { e.stopPropagation(); onWithdraw(booking); }}
           >
             Withdraw
           </button>
         )}
-      </div>
-      <div className={styles.bookingRight}>
-        <StatusBadge status={booking.status} />
       </div>
     </div>
   );

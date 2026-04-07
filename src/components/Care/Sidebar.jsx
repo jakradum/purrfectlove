@@ -2,7 +2,7 @@
 
 import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
 import { Search, User, LogOut, History } from 'lucide-react';
 import styles from './Sidebar.module.css';
@@ -11,8 +11,8 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
   const pathname = usePathname();
   const router = useRouter();
   const [deletionPending, setDeletionPending] = useState(false);
-  // 'none' | 'confirmed' | 'pending'
-  const [bookingDotState, setBookingDotState] = useState('none');
+  const [notifCount, setNotifCount] = useState(0);
+  const prevNotifCount = useRef(0);
 
   useEffect(() => {
     fetch('/api/care/profile')
@@ -21,9 +21,10 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
       .catch(() => {});
   }, []);
 
-  // Booking dot: Realtime + visibilitychange + 30s polling as fallback layers.
-  // Realtime can silently drop events when RLS uses custom JWT functions, so we
-  // don't rely on it alone.
+  // Notification count: Realtime + visibilitychange + 30s polling as fallback layers.
+  // Only counts "unknown" updates — excludes the user's own pending requests (they know they booked).
+  // - As sitter: pending incoming requests (need to respond)
+  // - As parent: upcoming bookings that got accepted or declined (sitter responded)
   useEffect(() => {
     if (!sitterId) return;
 
@@ -32,22 +33,42 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
       process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
     );
 
+    const playChime = () => {
+      try {
+        const ctx = new (window.AudioContext || window.webkitAudioContext)();
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.type = 'sine';
+        osc.frequency.setValueAtTime(880, ctx.currentTime);
+        osc.frequency.setValueAtTime(1100, ctx.currentTime + 0.1);
+        gain.gain.setValueAtTime(0.25, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.5);
+        osc.start();
+        osc.stop(ctx.currentTime + 0.5);
+      } catch { /* silent — AudioContext may be blocked */ }
+    };
+
     const fetchCount = async () => {
-      const [parentPending, parentConfirmed, sitterPending, sitterConfirmed] = await Promise.all([
-        supabase.from('bookings').select('id', { count: 'exact', head: true })
-          .eq('parent_id', sitterId).eq('status', 'pending'),
-        supabase.from('bookings').select('id', { count: 'exact', head: true })
-          .eq('parent_id', sitterId).in('status', ['confirmed', 'accepted']),
+      const today = new Date().toISOString().slice(0, 10);
+      const [sitterPending, parentConfirmed, parentDeclined] = await Promise.all([
+        // Incoming sit requests I need to respond to (as sitter)
         supabase.from('bookings').select('id', { count: 'exact', head: true })
           .eq('sitter_id', sitterId).eq('status', 'pending'),
+        // My requests that got accepted by sitter (as parent, upcoming only)
         supabase.from('bookings').select('id', { count: 'exact', head: true })
-          .eq('sitter_id', sitterId).in('status', ['confirmed', 'accepted']),
+          .eq('parent_id', sitterId).in('status', ['confirmed', 'accepted'])
+          .gte('start_date', today),
+        // My requests that got declined by sitter (as parent, upcoming only)
+        supabase.from('bookings').select('id', { count: 'exact', head: true })
+          .eq('parent_id', sitterId).eq('status', 'declined')
+          .gte('start_date', today),
       ]);
-      const pendingCount = (parentPending.count || 0) + (sitterPending.count || 0);
-      const confirmedCount = (parentConfirmed.count || 0) + (sitterConfirmed.count || 0);
-      if (pendingCount > 0) setBookingDotState('pending');
-      else if (confirmedCount > 0) setBookingDotState('confirmed');
-      else setBookingDotState('none');
+      const count = (sitterPending.count || 0) + (parentConfirmed.count || 0) + (parentDeclined.count || 0);
+      if (count > prevNotifCount.current) playChime();
+      prevNotifCount.current = count;
+      setNotifCount(count);
     };
 
     fetchCount();
@@ -93,7 +114,7 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
 
   const links = [
     { path: '', icon: Search, label: t.network, lockable: true },
-    { path: '/bookings', icon: History, label: t.bookings, dotState: bookingDotState },
+    { path: '/bookings', icon: History, label: t.bookings, showCount: true },
     { path: '/profile', icon: User, label: t.profile },
   ];
 
@@ -121,7 +142,7 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
         </div>
 
         <nav className={styles.nav}>
-          {links.map(({ path, icon: Icon, label, lockable, dotState }) => {
+          {links.map(({ path, icon: Icon, label, lockable, showCount }) => {
             const disabled = deletionPending && lockable;
             const active = isActive(path);
 
@@ -147,8 +168,9 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
                   <Icon size={16} strokeWidth={1.75} />
                 </span>
                 <span className={styles.label}>{label}</span>
-                {dotState === 'pending' && <span className={`${styles.bookingDot} ${styles.bookingDotPulse}`} />}
-                {dotState === 'confirmed' && <span className={styles.bookingDot} />}
+                {showCount && notifCount > 0 && (
+                  <span className={styles.notifBadge}>{notifCount}</span>
+                )}
               </Link>
             );
           })}
@@ -164,7 +186,7 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
 
       {/* Mobile bottom nav — hidden on login/join */}
       <nav className={`${styles.bottomNav} ${isAuthPage ? styles.bottomNavHidden : ''}`}>
-        {links.map(({ path, icon: Icon, label, lockable, dotState }) => {
+        {links.map(({ path, icon: Icon, label, lockable, showCount }) => {
           const disabled = deletionPending && lockable;
           const active = isActive(path);
           if (disabled) {
@@ -187,8 +209,9 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
             >
               <span className={styles.iconWrap}>
                 <Icon size={22} strokeWidth={1.75} />
-                {dotState === 'pending' && <span className={`${styles.bottomBookingDot} ${styles.bookingDotPulse}`} />}
-                {dotState === 'confirmed' && <span className={styles.bottomBookingDot} />}
+                {showCount && notifCount > 0 && (
+                  <span className={styles.bottomNotifBadge}>{notifCount}</span>
+                )}
               </span>
               <span className={styles.bottomLabel}>{label}</span>
             </Link>

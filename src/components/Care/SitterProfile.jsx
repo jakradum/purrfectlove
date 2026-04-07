@@ -329,7 +329,7 @@ export default function SitterProfile({
           )}
           {(behavioralTraits || []).length > 0 && (
             <>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Comfortable with</p>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Cats I can handle</p>
               <div className={styles.capabilityPills} style={{ marginBottom: (feedingTypes || []).length ? 14 : 0 }}>
                 {(behavioralTraits || []).map(tag => (
                   <span key={tag} className={styles.capabilityPill}>{TAG_LABELS[tag] || tag}</span>

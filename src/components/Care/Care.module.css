@@ -1203,16 +1203,33 @@
   padding: 5px 10px;
   font-size: 12px;
   font-family: var(--font-outfit);
+  position: relative;
   color: #2C2C2A;
   background: #fff;
   cursor: pointer;
   transition: background 0.12s, border-color 0.12s, color 0.12s;
 }
 
+.catChipUnselected {
+  color: #aaa;
+  border-color: #eee;
+  background: #fafafa;
+}
+
 .catChipSelected {
   background: #EAF3DE;
   border-color: #2C5F4F;
   color: #2C5F4F;
+  padding-left: 24px;
+}
+
+.catChipCheck {
+  position: absolute;
+  left: 8px;
+  top: 50%;
+  transform: translateY(-50%);
+  display: flex;
+  align-items: center;
 }
 
 .cardNoteField {
@@ -3836,9 +3853,9 @@
 }
 
 .statusBadgeCancelled {
-  background: #f0f0f0;
-  color: #888;
-  border: 0.5px solid #ddd;
+  background: rgba(240, 87, 72, 0.1);
+  color: var(--alert-red-eyes);
+  border: 0.5px solid rgba(240, 87, 72, 0.3);
 }
 
 .statusBadgeCompleted {
@@ -4103,12 +4120,24 @@
   color: rgba(255, 255, 255, 0.65);
 }
 
+.dtChipCancelled {
+  background: rgba(240, 87, 72, 0.25);
+  color: #fff;
+  border: 0.5px solid rgba(240, 87, 72, 0.5);
+}
+
 /* Body */
 .dtBody {
   padding: 16px;
   overflow-y: auto;
   flex: 1;
   min-height: 0;
+}
+
+.dtBodyCancelled {
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
 }
 
 .dtLoadingBody {

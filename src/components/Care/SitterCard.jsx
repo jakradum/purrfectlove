@@ -272,7 +272,7 @@ export default function SitterCard({
         {/* Capabilities checklist */}
         {shownCaps.length > 0 && (
           <>
-            <div className={styles.cardChecklistLabel}>Comfortable with</div>
+            <div className={styles.cardChecklistLabel}>Cats I can handle</div>
             <div className={styles.cardChecklist}>
               {shownCaps.map(cap => (
                 <div key={cap} className={styles.cardCheckItem}>
@@ -339,16 +339,26 @@ export default function SitterCard({
             </p>
           ) : (
             <div className={styles.catChips}>
-              {myCats.map(catName => (
-                <button
-                  key={catName}
-                  type="button"
-                  className={`${styles.catChip} ${selectedCats.includes(catName) ? styles.catChipSelected : ''}`}
-                  onClick={() => toggleCat(catName)}
-                >
-                  {catName}
-                </button>
-              ))}
+              {myCats.map(catName => {
+                const selected = selectedCats.includes(catName);
+                return (
+                  <button
+                    key={catName}
+                    type="button"
+                    className={`${styles.catChip} ${selected ? styles.catChipSelected : styles.catChipUnselected}`}
+                    onClick={() => toggleCat(catName)}
+                  >
+                    {selected && (
+                      <span className={styles.catChipCheck}>
+                        <svg viewBox="0 0 8 8" fill="none" width="8" height="8">
+                          <path d="M1 4l2 2 4-4" stroke="#2C5F4F" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                      </span>
+                    )}
+                    {catName}
+                  </button>
+                );
+              })}
             </div>
           )}
 

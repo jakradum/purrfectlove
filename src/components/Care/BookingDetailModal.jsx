@@ -21,7 +21,7 @@ const STATUS_CHIP_CLS = {
   accepted:    'dtChipConfirmed',
   declined:    'dtChipMuted',
   expired:     'dtChipMuted',
-  cancelled:   'dtChipMuted',
+  cancelled:   'dtChipCancelled',
   completed:   'dtChipCompleted',
   unavailable: 'dtChipMuted',
 };
@@ -299,7 +299,7 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
         </div>
 
         {/* ── Body ── */}
-        <div className={styles.dtBody}>
+        <div className={`${styles.dtBody} ${detail.status === 'cancelled' ? styles.dtBodyCancelled : ''}`}>
 
           {/* 2×2 stat grid */}
           <div className={styles.dtGrid}>
