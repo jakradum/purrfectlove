@@ -267,9 +267,13 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
             <button type="button" className={styles.availBackBtn} onClick={handleCancel}>
               ← Cancel
             </button>
-            <span className={styles.availStripLabel}>Your availability</span>
+          </div>
+          <div className={styles.availEditTitle}>
+            <span className={styles.availEditTitleSub}>You are editing</span>
+            <span className={styles.availEditTitleMain}>Your available dates for cat sitting</span>
           </div>
 
+          <div className={styles.availCalWrap}>
           <ExpandedCalendar
             localDates={localDates}
             availabilityDefault={availabilityDefault}
@@ -278,6 +282,7 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
             onPrevMonth={handlePrevMonth}
             onNextMonth={handleNextMonth}
           />
+          </div>
 
           {saveError && <p className={styles.availSaveError}>{saveError}</p>}
 

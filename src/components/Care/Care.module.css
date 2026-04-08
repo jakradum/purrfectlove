@@ -4762,6 +4762,35 @@
   text-decoration: underline;
 }
 
+.availEditTitle {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 4px;
+}
+
+.availEditTitleSub {
+  font-size: 10px;
+  font-weight: 500;
+  color: #888;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+  font-family: var(--font-outfit);
+}
+
+.availEditTitleMain {
+  font-size: 14px;
+  font-weight: 700;
+  color: #2C5F4F;
+  font-family: var(--font-outfit);
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+}
+
+.availCalWrap {
+  max-width: 340px;
+}
+
 .availExpanded {
   display: flex;
   flex-direction: column;
@@ -4885,6 +4914,7 @@
 /* Save button */
 .availSaveBtn {
   width: 100%;
+  max-width: 340px;
   background: #2C5F4F;
   color: #fff;
   border: none;
