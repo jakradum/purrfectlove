@@ -86,12 +86,17 @@ export async function GET(request, { params }) {
     const otherNeighbourhood = other?.location?.name || await reverseGeocode(lat, lng)
     const myNeighbourhood    = myProfile?.location?.name || null
 
+    const statusNote = booking.status === 'unavailable'
+      ? 'The cat parent found a sitter for these dates — no action needed from you.'
+      : null
+
     return Response.json({
       _id:                booking.id,
       bookingRef:         booking.booking_ref,
       startDate:          booking.start_date,
       endDate:            booking.end_date,
       status:             booking.status,
+      statusNote,
       cats:               booking.cats || [],
       message:            booking.message || null,
       cancellationReason: booking.cancellation_reason || null,

@@ -98,6 +98,24 @@ export async function POST(request) {
       return Response.json({ error: 'Already confirmed' }, { status: 409 })
     }
 
+    // Race-condition pre-check: parent may have already confirmed with another sitter
+    const { data: parentAlreadyConfirmed } = await db
+      .from('bookings')
+      .select('id')
+      .eq('parent_id', booking.parent_id)
+      .in('status', ['confirmed', 'accepted'])
+      .neq('id', bookingId)
+      .lte('start_date', booking.end_date)
+      .gte('end_date', booking.start_date)
+      .limit(1)
+
+    if (parentAlreadyConfirmed?.length > 0) {
+      return Response.json(
+        { error: 'This sit has already been confirmed with another sitter.' },
+        { status: 409 }
+      )
+    }
+
     // Fetch sitter + parent profiles from Sanity
     const [sitterProfile, parentProfile] = await Promise.all([
       serverClient.fetch(
@@ -119,7 +137,7 @@ export async function POST(request) {
     const lng = sitterProfile?.location?.lng
     const mapsUrl = lat && lng ? `https://maps.google.com/?q=${lat},${lng}` : null
 
-    // 1. Mark booking as confirmed; write responded_at and response_time_hours for scoring
+    // 1. Mark booking as confirmed — atomic: only succeeds if still pending
     const respondedAt = new Date().toISOString()
     const acceptPatch = { status: 'confirmed', responded_at: respondedAt }
     if (booking.notification_delivered && booking.notified_at) {
@@ -128,10 +146,23 @@ export async function POST(request) {
       )
       acceptPatch.response_time_hours = hours
     }
-    await db.from('bookings').update(acceptPatch).eq('id', bookingId)
+    const { data: confirmed } = await db
+      .from('bookings')
+      .update(acceptPatch)
+      .eq('id', bookingId)
+      .eq('status', 'pending')   // idempotency guard — noop if already changed
+      .select('id')
 
-    // 2. Mark overlapping pending bookings for this sitter as unavailable
-    const { data: overlapping } = await db
+    if (!confirmed || confirmed.length === 0) {
+      // Another sitter accepted in the ~ms between our pre-check and this update
+      return Response.json(
+        { error: 'This sit has already been confirmed with another sitter.' },
+        { status: 409 }
+      )
+    }
+
+    // 2a. Mark overlapping pending bookings for this sitter as unavailable
+    const { data: sitterOverlap } = await db
       .from('bookings')
       .select('id')
       .neq('id', bookingId)
@@ -140,10 +171,69 @@ export async function POST(request) {
       .lte('start_date', booking.end_date)
       .gte('end_date', booking.start_date)
 
-    if (overlapping?.length > 0) {
+    if (sitterOverlap?.length > 0) {
       await db.from('bookings')
         .update({ status: 'unavailable' })
-        .in('id', overlapping.map(b => b.id))
+        .in('id', sitterOverlap.map(b => b.id))
+    }
+
+    // 2b. Cancel other pending requests the parent sent to other sitters for overlapping dates
+    const { data: parentOverlap } = await db
+      .from('bookings')
+      .select('id, booking_ref, start_date, end_date, sitter_id')
+      .eq('parent_id', booking.parent_id)
+      .eq('status', 'pending')
+      .neq('id', bookingId)
+      .lte('start_date', booking.end_date)
+      .gte('end_date', booking.start_date)
+
+    if (parentOverlap?.length > 0) {
+      await db.from('bookings')
+        .update({ status: 'unavailable' })
+        .in('id', parentOverlap.map(b => b.id))
+
+      // Fetch each affected sitter's profile and send a "sit filled" email
+      const uniqueSitterIds = [...new Set(parentOverlap.map(b => b.sitter_id))]
+      const affectedProfiles = await Promise.all(
+        uniqueSitterIds.map(id =>
+          serverClient.fetch(
+            `*[_type == "catSitter" && _id == $id][0]{ name, email }`,
+            { id }
+          )
+        )
+      )
+      const profileBySitterId = Object.fromEntries(
+        uniqueSitterIds.map((id, i) => [id, affectedProfiles[i]])
+      )
+
+      await Promise.allSettled(
+        parentOverlap.map(async (b) => {
+          const sitter = profileBySitterId[b.sitter_id]
+          if (!sitter?.email) return
+          const bStart = formatDate(b.start_date)
+          const bEnd   = formatDate(b.end_date)
+          await resend.emails.send({
+            from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
+            to:   [sitter.email],
+            subject: `Sit request #${b.booking_ref} — dates filled`,
+            html: brandedEmail({
+              heading: 'The sit has been filled',
+              body: `
+                <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Hi ${sitter.name?.split(' ')[0] || 'there'},</p>
+                <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">
+                  Thanks so much for being willing to help — it means a lot to the community.
+                  The cat parent found a sitter for <strong>${bStart} – ${bEnd}</strong>, so your request <strong>#${b.booking_ref}</strong> has been marked as filled.
+                </p>
+                <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">
+                  No action needed from you. Keep your availability up to date and you'll be the first one families reach out to next time.
+                </p>
+                ${ctaButton({ label: 'View your bookings', url: 'https://care.purrfectlove.org/bookings' })}
+              `,
+            }),
+            text: `Hi ${sitter.name?.split(' ')[0] || 'there'},\n\nThanks for being willing to help. The cat parent found a sitter for ${bStart} – ${bEnd}, so request #${b.booking_ref} has been marked as filled.\n\nNo action needed from you. Keep your availability up to date and you'll hear from more families soon.\n\nhttps://care.purrfectlove.org/bookings\n\n– The Purrfect Love Community`,
+          })
+        })
+      )
     }
 
     // 3. Create sitRecord in Sanity (post-sit confirmation record)

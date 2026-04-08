@@ -27,7 +27,7 @@ const STATUS_CHIP_CLS = {
 };
 
 const CANCELLABLE = ['pending', 'confirmed', 'accepted'];
-const TERMINAL_STATUSES = ['cancelled', 'declined'];
+const TERMINAL_STATUSES = ['cancelled', 'declined', 'unavailable'];
 
 function formatDateShort(ymd) {
   if (!ymd) return '';
@@ -361,7 +361,12 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
             )}
           </div>
 
-          {/* Contact — hidden for cancelled/declined bookings */}
+          {/* Status note — shown for unavailable bookings */}
+          {detail.statusNote && (
+            <p className={styles.dtContactNote} style={{ marginBottom: 4 }}>{detail.statusNote}</p>
+          )}
+
+          {/* Contact — hidden for cancelled/declined/unavailable bookings */}
           {!isTerminal && (
             <>
               <div className={styles.dtSectionLabel}>Contact</div>
