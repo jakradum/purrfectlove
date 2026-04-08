@@ -4341,6 +4341,12 @@
   border-color: #2C5F4F;
 }
 
+.dtCancelCounter {
+  font-size: 11px;
+  margin: -4px 0 8px;
+  transition: color 0.2s;
+}
+
 .dtCancelError {
   font-size: 11px;
   color: #C85C3F;

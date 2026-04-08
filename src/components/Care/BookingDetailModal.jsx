@@ -112,7 +112,7 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
   const [cancelReason, setCancelReason] = useState('');
   const [cancelError, setCancelError] = useState('');
 
-  // Accept / decline flow: 'idle' | 'submitting'
+  // Accept / decline flow: 'idle' | 'confirming' | 'submitting'
   const [respondState, setRespondState] = useState('idle');
 
   // Withdraw flow (parent on pending): 'idle' | 'confirming' | 'submitting'
@@ -222,6 +222,7 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
   };
 
   const handleDecline = async () => {
+    if (respondState !== 'confirming') { setRespondState('confirming'); return; }
     setRespondState('submitting');
     try {
       const res = await fetch('/api/care/bookings/decline', {
@@ -379,7 +380,7 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
           )}
 
           {/* Accept / Decline — sitter only, pending bookings */}
-          {role === 'sitter' && detail.status === 'pending' && (
+          {role === 'sitter' && detail.status === 'pending' && respondState !== 'confirming' && (
             <div className={styles.dtActionRow}>
               <button
                 type="button"
@@ -397,6 +398,29 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
               >
                 Decline
               </button>
+            </div>
+          )}
+          {role === 'sitter' && detail.status === 'pending' && respondState === 'confirming' && (
+            <div className={styles.dtCancelConfirm}>
+              <p className={styles.dtCancelQuestion}>Decline this request?</p>
+              <p style={{ fontSize: '0.8rem', color: 'var(--text-light)', margin: '0 0 0.75rem' }}>The cat parent will be notified and can request another sitter.</p>
+              <div className={styles.dtCancelBtnRow}>
+                <button
+                  type="button"
+                  className={styles.dtCancelKeepBtn}
+                  onClick={() => setRespondState('idle')}
+                >
+                  Keep pending
+                </button>
+                <button
+                  type="button"
+                  className={styles.dtDeclineBtn}
+                  style={{ flex: 1 }}
+                  onClick={handleDecline}
+                >
+                  Yes, decline
+                </button>
+              </div>
             </div>
           )}
 
@@ -442,11 +466,14 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
               <p className={styles.dtCancelQuestion}>Are you sure you want to cancel?</p>
               <textarea
                 className={styles.dtCancelTextarea}
-                placeholder="Reason for cancelling (required, min. 20 characters)…"
+                placeholder="Why are you cancelling? This helps the other party plan ahead. (minimum 20 characters)"
                 value={cancelReason}
                 onChange={e => setCancelReason(e.target.value)}
                 disabled={cancelState === 'submitting'}
               />
+              <p className={styles.dtCancelCounter} style={{ color: cancelReason.trim().length >= 20 ? '#2C5F4F' : '#aaa' }}>
+                {cancelReason.trim().length}/20 — {cancelReason.trim().length >= 20 ? 'Good to go' : `${20 - cancelReason.trim().length} more needed to continue`}
+              </p>
               {cancelError && <p className={styles.dtCancelError}>{cancelError}</p>}
               <div className={styles.dtCancelBtnRow}>
                 <button
