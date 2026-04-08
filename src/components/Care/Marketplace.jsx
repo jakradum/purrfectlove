@@ -144,6 +144,12 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   const locale = localeProp || 'en';
   const t = locale === 'de' ? contentDE.marketplace : contentEN.marketplace;
 
+  const [startDate, setStartDate] = useState('');
+  const [endDate, setEndDate] = useState('');
+  const [radius, setRadius] = useState(10);
+  const [searching, setSearching] = useState(false);
+  const [searched, setSearched] = useState(false);
+
   // Local copy of myProfile so we can update unavailableDatesV2 after strip saves
   const [myProfile, setMyProfile] = useState(myProfileProp ?? null);
   const handleAvailabilitySaved = useCallback((newDates) => {
@@ -151,12 +157,6 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     // Refetch sitters so own card updates if in results
     if (searched) handleSearch();
   }, [searched]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const [startDate, setStartDate] = useState('');
-  const [endDate, setEndDate] = useState('');
-  const [radius, setRadius] = useState(10);
-  const [searching, setSearching] = useState(false);
-  const [searched, setSearched] = useState(false);
   const [searchError, setSearchError] = useState('');
   const [fetchedSitters, setFetchedSitters] = useState([]);
   const [shimmer, setShimmer] = useState(false);
