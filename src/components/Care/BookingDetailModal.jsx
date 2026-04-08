@@ -320,7 +320,7 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
         </div>
 
         {/* ── Body ── */}
-        <div className={styles.dtBody}>
+        <div className={`${styles.dtBody}${isTerminal ? ` ${styles.dtBodyCancelled}` : ''}`}>
 
           {/* 2×2 stat grid */}
           <div className={styles.dtGrid}>
@@ -495,17 +495,20 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
               </div>
             </div>
           )}
+
+          {/* Cancelled / declined stamp */}
+          {isTerminal && (
+            <div className={styles.dtCancelledStamp}>{statusLabel}</div>
+          )}
         </div>
       </>
     );
   };
 
-  const isTerminalModal = detail && TERMINAL_STATUSES.includes(detail.status);
-
   return (
     <div className={styles.dtOverlay} onClick={handleOverlayClick}>
       <div
-        className={`${styles.dtModal} ${isTerminalModal ? styles.dtModalCancelled : ''}`}
+        className={styles.dtModal}
         onClick={e => e.stopPropagation()}
         ref={sheetRef}
         style={dragOffset > 0 ? { transform: `translateY(${dragOffset}px)`, transition: 'none' } : undefined}

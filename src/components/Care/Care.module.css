@@ -4178,17 +4178,37 @@
   min-height: 0;
   box-sizing: border-box;
   width: 100%;
+  position: relative;
 }
 
 .dtBodyCancelled {
-  opacity: 0.5;
   pointer-events: none;
   user-select: none;
 }
 
-.dtModalCancelled {
-  opacity: 0.65;
-  filter: grayscale(0.35);
+.dtBodyCancelled .dtCell {
+  opacity: 0.45;
+  filter: grayscale(0.4);
+}
+
+/* Rubber-stamp overlay for cancelled/declined bookings */
+.dtCancelledStamp {
+  position: absolute;
+  bottom: 28px;
+  right: 20px;
+  transform: rotate(-30deg);
+  transform-origin: center center;
+  font-size: 20px;
+  font-weight: 800;
+  color: rgba(200, 92, 63, 0.38);
+  border: 2.5px solid rgba(200, 92, 63, 0.38);
+  padding: 5px 14px;
+  border-radius: 3px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  pointer-events: none;
+  white-space: nowrap;
+  font-family: var(--font-outfit);
 }
 
 .dtLoadingBody {
