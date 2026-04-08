@@ -81,7 +81,7 @@ export default function SitterCard({
     identityVerified, trustedSitter, siteAdmin,
     photoUrl, avatarColour, coverImageUrl,
     feedingTypes, behavioralTraits,
-    cats, _distance,
+    cats, _distance, location,
     availabilityDefault, maxCatsPerDay,
   } = sitter;
 
@@ -252,8 +252,12 @@ export default function SitterCard({
               {identityVerified && <span className={styles.verifiedBadge} title="Identity verified"> ✓</span>}
               {trustedSitter && <span className={styles.trustedBadge} title="Trusted sitter"> ⭐</span>}
             </div>
-            {_distance !== undefined && (
-              <div className={styles.cardDistLabel}>~{_distance.toFixed(1)} km</div>
+            {(_distance !== undefined || location?.name) && (
+              <div className={styles.cardDistLabel}>
+                {_distance !== undefined ? `~${_distance.toFixed(1)} km` : ''}
+                {_distance !== undefined && location?.name ? ' · ' : ''}
+                {location?.name || ''}
+              </div>
             )}
           </div>
           <div className={styles.cardIconRow}>
