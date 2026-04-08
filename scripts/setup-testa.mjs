@@ -49,7 +49,8 @@ async function run() {
     bio: '[TEST ACCOUNT] Auto-accepts all booking requests. Do not use for real sits.',
     locale: 'en',
     alwaysAvailable: true,
-    isActive: true,
+    canSit: true,
+    memberVerified: true,
     createdAt: new Date().toISOString(),
   });
 
