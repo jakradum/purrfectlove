@@ -321,6 +321,10 @@
   display: none;
 }
 
+.heroLogoBlob {
+  display: none;
+}
+
 .pageTitle {
   font-size: 2rem;
   font-weight: 700;
@@ -336,11 +340,21 @@
 }
 
 @media (max-width: 768px) {
+  .heroLogoBlob {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 96px;
+    height: 88px;
+    border: 1.5px solid var(--hunter-green, #2C5F4F);
+    border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+    margin-bottom: 0.75rem;
+  }
+
   .heroLogo {
     display: block;
-    width: 160px;
+    width: 62px;
     height: auto;
-    margin-bottom: 0.75rem;
   }
 
   .pageTitle {
@@ -4641,7 +4655,7 @@
 
 /* ── Availability strip ─────────────────────────────────────────────────────── */
 
-.availStrip {
+.availStripCard {
   background: var(--color-background-primary, #fff);
   border: 0.5px solid var(--color-border-secondary, #ddd);
   border-radius: 10px;
@@ -4898,8 +4912,16 @@
   font-family: var(--font-outfit);
 }
 
+.availHelpText {
+  font-size: 10px;
+  color: #aaa;
+  margin: 6px 0 0;
+  font-family: var(--font-outfit);
+  line-height: 1.4;
+}
+
 @media (max-width: 768px) {
-  .availStrip {
+  .availStripCard {
     margin-left: 0;
     margin-right: 0;
   }

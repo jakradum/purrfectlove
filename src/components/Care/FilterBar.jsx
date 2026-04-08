@@ -91,7 +91,7 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
     ? `${formatMonthDay(startDate)} – ${formatMonthDay(endDate)}`
     : startDate
     ? `${formatMonthDay(startDate)} – ?`
-    : locale === 'de' ? 'Datum wählen' : 'Add dates';
+    : locale === 'de' ? 'Datum wählen' : 'Choose dates you need sitting';
 
   const toggle = (name) => setOpenPopover(p => p === name ? null : name);
 

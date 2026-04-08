@@ -134,6 +134,27 @@ export async function POST(request) {
 
     const bookingId = booking.id
 
+    // Auto-block the parent's own availability for the requested dates
+    try {
+      const parentProfile = await serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ unavailableDatesV2, availabilityDefault }`,
+        { id: user.sitterId }
+      )
+      // Only auto-block when default is 'available' (the normal case — mark exceptions unavailable)
+      if (!parentProfile || parentProfile.availabilityDefault !== 'unavailable') {
+        const existing = new Set(parentProfile?.unavailableDatesV2 || [])
+        const cur = new Date(startDate)
+        const stop = new Date(endDate)
+        while (cur <= stop) {
+          existing.add(cur.toISOString().slice(0, 10))
+          cur.setDate(cur.getDate() + 1)
+        }
+        await serverClient.patch(user.sitterId).set({ unavailableDatesV2: Array.from(existing).sort() }).commit()
+      }
+    } catch (blockErr) {
+      console.error('auto-block availability error:', blockErr)
+    }
+
     // Send sit-request notification email + write notified_at for response-time tracking
     try {
       const sitter = await serverClient.fetch(

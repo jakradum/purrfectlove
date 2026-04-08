@@ -243,7 +243,7 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
   };
 
   return (
-    <div className={styles.availStrip}>
+    <div className={styles.availStripCard}>
       {!expanded ? (
         /* Collapsed strip */
         <div className={styles.availStripCollapsed}>
@@ -258,6 +258,7 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
             unavailableDatesV2={unavailableDatesV2}
             availabilityDefault={availabilityDefault}
           />
+          <p className={styles.availHelpText}>Days when you need a sitter are automatically marked unavailable for you.</p>
         </div>
       ) : (
         /* Expanded calendar */
