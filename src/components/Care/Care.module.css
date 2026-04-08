@@ -4046,10 +4046,18 @@
   }
   .dtModal {
     border-radius: 18px 18px 0 0;
-    max-width: 100%;
+    width: 100%;
+    max-width: 100vw;
+    min-height: 50vh;
     max-height: 92vh;
     border: none;
+    box-sizing: border-box;
+    background: #2C5F4F;
     animation: dtSheetUp 0.28s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+  .dtBody {
+    border-radius: 14px 14px 0 0;
+    background: #fff;
   }
   @keyframes dtSheetUp {
     from { transform: translateY(100%); }
@@ -4060,7 +4068,7 @@
 .dtHandle {
   width: 36px;
   height: 4px;
-  background: #ddd;
+  background: rgba(255, 255, 255, 0.4);
   border-radius: 999px;
   margin: 10px auto 0;
   flex-shrink: 0;
@@ -4165,8 +4173,11 @@
 .dtBody {
   padding: 16px;
   overflow-y: auto;
+  overflow-x: hidden;
   flex: 1;
   min-height: 0;
+  box-sizing: border-box;
+  width: 100%;
 }
 
 .dtBodyCancelled {
