@@ -4,14 +4,16 @@ import { usePathname, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
-import { Search, User, LogOut, History } from 'lucide-react';
+import { Search, User, LogOut, History, Bug } from 'lucide-react';
 import styles from './Sidebar.module.css';
+import BugReportPanel from './BugReportPanel';
 
 export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
   const pathname = usePathname();
   const router = useRouter();
   const [deletionPending, setDeletionPending] = useState(false);
   const [notifCount, setNotifCount] = useState(0);
+  const [bugPanelOpen, setBugPanelOpen] = useState(false);
   const prevNotifCount = useRef(0);
 
   useEffect(() => {
@@ -175,6 +177,14 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
               </Link>
             );
           })}
+          <button
+            type="button"
+            className={styles.bugBtn}
+            onClick={() => setBugPanelOpen(v => !v)}
+          >
+            <Bug size={14} strokeWidth={1.75} />
+            <span className={styles.label}>Report a bug</span>
+          </button>
           <button onClick={handleLogout} className={styles.logoutBtn}>
             <LogOut size={14} strokeWidth={1.75} />
             <span className={styles.label}>{t.logout}</span>
@@ -217,11 +227,27 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
             </Link>
           );
         })}
+        <button
+          type="button"
+          className={`${styles.bottomLink} ${bugPanelOpen ? styles.bottomLinkActive : ''}`}
+          onClick={() => setBugPanelOpen(v => !v)}
+        >
+          <Bug size={22} strokeWidth={1.75} />
+          <span className={styles.bottomLabel}>Bugs</span>
+        </button>
         <button onClick={handleLogout} className={styles.bottomLink}>
           <LogOut size={22} strokeWidth={1.75} />
           <span className={styles.bottomLabel}>{t.logout}</span>
         </button>
       </nav>
+
+      {/* Bug report panel — desktop (right of sidebar) or mobile (bottom sheet) */}
+      {bugPanelOpen && (
+        <BugReportPanel
+          onClose={() => setBugPanelOpen(false)}
+          isMobile={typeof window !== 'undefined' && window.innerWidth <= 768}
+        />
+      )}
     </>
   );
 }

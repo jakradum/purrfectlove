@@ -305,6 +305,16 @@ export const structure = (S) =>
                     ])
                 ),
 
+              // Portal Feedback (bug reports + suggestions)
+              S.listItem()
+                .title('Portal Feedback')
+                .icon(() => '🐛')
+                .child(
+                  S.documentTypeList('portalFeedback')
+                    .title('Portal Feedback')
+                    .defaultOrdering([{ field: 'date', direction: 'desc' }])
+                ),
+
               // Member Reports
               S.listItem()
                 .title('Member Reports')

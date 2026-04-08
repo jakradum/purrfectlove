@@ -134,6 +134,29 @@
   margin: 10px 0;
 }
 
+.bugBtn {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 9px 10px;
+  border-radius: 8px;
+  color: #aaa;
+  background: none;
+  border: none;
+  font-size: 12px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  width: 100%;
+  text-align: left;
+  font-family: var(--font-outfit);
+}
+
+.bugBtn:hover {
+  background: #EEECE8;
+  color: #2C5F4F;
+}
+
 .logoutBtn {
   display: flex;
   align-items: center;
