@@ -268,7 +268,14 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
 
   const modalContent = () => {
     if (loading) {
-      return <div className={styles.dtLoadingBody}><span className={styles.spinner} /></div>;
+      return (
+        <>
+          <div className={styles.dtHeader} style={{ minHeight: 82 }} aria-hidden="true" />
+          <div className={`${styles.dtBody} ${styles.dtLoadingBody}`}>
+            <div className={styles.dtSpinner} />
+          </div>
+        </>
+      );
     }
     if (error) {
       return <div className={styles.dtLoadingBody} style={{ color: '#C85C3F' }}>{error}</div>;
@@ -326,7 +333,25 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
           <div className={styles.dtGrid}>
             <StatCell label="Duration" value={`${nights} night${nights !== 1 ? 's' : ''}`} />
             <StatCell label="Cats" value={cats} />
-            <StatCell label="Area" value={detail.other.neighbourhood || '—'} />
+            {/* Area row — spans full width, shows both neighbourhoods */}
+            <div className={`${styles.dtCell} ${styles.dtCellSpan2}`}>
+              <div className={styles.dtCellLabel}>Area</div>
+              <div className={styles.dtAreaRow}>
+                <span className={styles.dtCellVal}>
+                  {detail.other.neighbourhood || '—'}
+                  <span className={styles.dtAreaWho}> ({role === 'parent' ? 'sitter' : 'cat parent'})</span>
+                </span>
+                {detail.myNeighbourhood && (
+                  <>
+                    <span className={styles.dtAreaSep}>·</span>
+                    <span className={styles.dtCellVal}>
+                      {detail.myNeighbourhood}
+                      <span className={styles.dtAreaWho}> (you)</span>
+                    </span>
+                  </>
+                )}
+              </div>
+            </div>
             {!isTerminal && (
               <StatCell
                 label="Map"

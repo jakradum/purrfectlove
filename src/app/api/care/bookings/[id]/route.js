@@ -64,20 +64,27 @@ export async function GET(request, { params }) {
 
     const role = isParent ? 'parent' : 'sitter'
     const otherId = isParent ? booking.sitter_id : booking.parent_id
+    const myId   = isParent ? booking.parent_id  : booking.sitter_id
 
-    const other = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ name, email, phone, location }`,
-      { id: otherId }
-    )
-
-    const [sitterProfile, parentProfile] = await Promise.all([
+    const [other, myProfile, sitterProfile, parentProfile] = await Promise.all([
+      serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ name, email, phone, location }`,
+        { id: otherId }
+      ),
+      serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ location }`,
+        { id: myId }
+      ),
       serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.sitter_id }),
       serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.parent_id }),
     ])
 
     const lat = other?.location?.lat
     const lng = other?.location?.lng
-    const neighbourhood = await reverseGeocode(lat, lng)
+
+    // Prefer the stored location name; fall back to reverse geocoding only if absent
+    const otherNeighbourhood = other?.location?.name || await reverseGeocode(lat, lng)
+    const myNeighbourhood    = myProfile?.location?.name || null
 
     return Response.json({
       _id:                booking.id,
@@ -91,15 +98,16 @@ export async function GET(request, { params }) {
       cancelledBy:        booking.cancelled_by || null,
       cancelledAt:        booking.cancelled_at || null,
       role,
-      sitterName: sitterProfile?.name || 'Member',
-      parentName: parentProfile?.name || 'Member',
+      sitterName:      sitterProfile?.name || 'Member',
+      parentName:      parentProfile?.name || 'Member',
+      myNeighbourhood: myNeighbourhood || null,
       other: {
         name:          other?.name || 'Member',
         email:         other?.email || null,
         phone:         other?.phone || null,
         lat:           lat || null,
         lng:           lng || null,
-        neighbourhood: neighbourhood || null,
+        neighbourhood: otherNeighbourhood || null,
       },
     })
   } catch (error) {
