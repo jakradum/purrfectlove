@@ -6,8 +6,8 @@
  *
  * Copy the printed _id into scripts/testa-auto-accept.mjs as TESTA_SITTER_ID.
  *
- * Location: VGRX+MF Bengaluru ≈ 12.9784° N, 77.5918° E (Shivajinagar area).
- * Verify / adjust at: https://maps.google.com/?q=VGRX%2BMF+Bengaluru
+ * Location: JP Nagar, Bengaluru ≈ 12.9116° N, 77.5857° E (~5 km from Subramanyapura/Anjanapura).
+ * Verify / adjust at: https://maps.google.com/?q=12.9116,77.5857
  */
 
 import { createClient } from '@sanity/client';
@@ -42,9 +42,9 @@ async function run() {
     name:  'TESTA Sharma',
     email: 'test+testa@purrfectlove.org',
     location: {
-      lat:  12.9784,
-      lng:  77.5918,
-      name: 'Shivajinagar',  // VGRX+MF Bengaluru approximate
+      lat:  12.9116,
+      lng:  77.5857,
+      name: 'JP Nagar',  // ~5 km from Subramanyapura/Anjanapura test accounts
     },
     bio: '[TEST ACCOUNT] Auto-accepts all booking requests. Do not use for real sits.',
     locale: 'en',

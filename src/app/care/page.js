@@ -36,7 +36,7 @@ export default async function CarePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location { lat, lng, name }, guidelinesAccepted }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location { lat, lng, name }, guidelinesAccepted, canSit, availabilityDefault, unavailableDatesV2 }`,
       { id: sitterId }
     );
   } catch (err) {
@@ -52,10 +52,18 @@ export default async function CarePage() {
     return <GuidelinesGate locale="en" />;
   }
 
+  const myProfile = profile ? {
+    _id: profile._id,
+    canSit: profile.canSit ?? false,
+    availabilityDefault: profile.availabilityDefault || 'available',
+    unavailableDatesV2: profile.unavailableDatesV2 || [],
+  } : null;
+
   return (
     <Marketplace
       userLocation={profile?.location ?? null}
       sitterId={sitterId}
+      myProfile={myProfile}
     />
   );
 }

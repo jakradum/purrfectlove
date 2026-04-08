@@ -338,8 +338,8 @@
 @media (max-width: 768px) {
   .heroLogo {
     display: block;
-    height: 72px;
-    width: auto;
+    width: 160px;
+    height: auto;
     margin-bottom: 0.75rem;
   }
 
@@ -4637,4 +4637,270 @@
 
 .tdWithdrawBtn:hover {
   background: #d4453a;
+}
+
+/* ── Availability strip ─────────────────────────────────────────────────────── */
+
+.availStrip {
+  background: var(--color-background-primary, #fff);
+  border: 0.5px solid var(--color-border-secondary, #ddd);
+  border-radius: 10px;
+  padding: 10px 14px;
+  margin-bottom: 12px;
+}
+
+/* Collapsed */
+.availStripCollapsed {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.availStripTop {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.availStripLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: #2C5F4F;
+  font-family: var(--font-outfit);
+}
+
+.availEditBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2C5F4F;
+  font-family: var(--font-outfit);
+  padding: 0;
+  white-space: nowrap;
+}
+
+.availEditBtn:hover {
+  text-decoration: underline;
+}
+
+/* Mini day strip */
+.availMiniStrip {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.availMiniDay {
+  width: 26px;
+  height: 26px;
+  border-radius: 4px;
+  font-size: 9px;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  line-height: 1;
+}
+
+.availMiniDay_available {
+  background: #EAF3DE;
+  color: #2C5F4F;
+}
+
+.availMiniDay_unavailable {
+  background: #FAECE7;
+  color: #993C1D;
+}
+
+.availMiniDay_today {
+  background: #2C5F4F;
+  color: #fff;
+}
+
+/* Expanded */
+.availStripExpandedWrap {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.availExpandedHeader {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.availBackBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+  color: #2C5F4F;
+  font-family: var(--font-outfit);
+  padding: 0;
+}
+
+.availBackBtn:hover {
+  text-decoration: underline;
+}
+
+.availExpanded {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.availMonthNav {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 4px;
+}
+
+.availMonthLabel {
+  font-size: 13px;
+  font-weight: 700;
+  color: #2C5F4F;
+  font-family: var(--font-outfit);
+}
+
+.availMonthBtn {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 18px;
+  color: #2C5F4F;
+  padding: 0 6px;
+  line-height: 1;
+}
+
+.availMonthBtn:hover {
+  opacity: 0.7;
+}
+
+/* 7-col calendar grid */
+.availCalGrid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  gap: 4px;
+}
+
+.availDowHeader {
+  font-size: 10px;
+  font-weight: 600;
+  color: #888;
+  font-family: var(--font-outfit);
+  text-align: center;
+  padding: 2px 0;
+}
+
+.availCalCell {
+  aspect-ratio: 1;
+  border-radius: 5px;
+  font-size: 11px;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.availCalCell_available {
+  background: #EAF3DE;
+  color: #2C5F4F;
+}
+
+.availCalCell_available:hover {
+  background: #d2ebbb;
+}
+
+.availCalCell_unavailable {
+  background: #FAECE7;
+  color: #993C1D;
+}
+
+.availCalCell_unavailable:hover {
+  background: #f5d6cc;
+}
+
+.availCalCell_today {
+  background: #2C5F4F;
+  color: #fff;
+  cursor: pointer;
+}
+
+.availCalCell_today:hover {
+  background: #245042;
+}
+
+.availCalCell_past {
+  background: #f5f5f5;
+  color: #ccc;
+  cursor: default;
+}
+
+/* Legend */
+.availLegend {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 4px;
+}
+
+.availLegendDot {
+  display: inline-block;
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  flex-shrink: 0;
+}
+
+.availLegendLabel {
+  font-size: 11px;
+  color: #666;
+  font-family: var(--font-outfit);
+  margin-right: 8px;
+}
+
+/* Save button */
+.availSaveBtn {
+  width: 100%;
+  background: #2C5F4F;
+  color: #fff;
+  border: none;
+  border-radius: 8px;
+  padding: 10px;
+  font-size: 13px;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  cursor: pointer;
+}
+
+.availSaveBtn:hover:not(:disabled) {
+  background: #245042;
+}
+
+.availSaveBtn:disabled {
+  opacity: 0.6;
+  cursor: default;
+}
+
+.availSaveError {
+  font-size: 12px;
+  color: #993C1D;
+  margin: 0;
+  font-family: var(--font-outfit);
+}
+
+@media (max-width: 768px) {
+  .availStrip {
+    margin-left: 0;
+    margin-right: 0;
+  }
 }
