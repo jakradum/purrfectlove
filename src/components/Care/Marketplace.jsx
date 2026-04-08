@@ -405,6 +405,8 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   return (
     <div className={styles.pageWide}>
       <div className={styles.marketplaceHeader}>
+        {/* Mobile: show the catpaw logo mark instead of the text heading */}
+        <img src="/logo.svg" alt="Purrfect Love Community" className={styles.heroLogo} />
         <h1 className={styles.pageTitle}>{t.title}</h1>
         <p className={styles.pageSubtitle}>{t.subtitle}</p>
       </div>

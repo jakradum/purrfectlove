@@ -316,6 +316,11 @@
   margin-bottom: 2rem;
 }
 
+/* Mobile logo — hidden on desktop */
+.heroLogo {
+  display: none;
+}
+
 .pageTitle {
   font-size: 2rem;
   font-weight: 700;
@@ -328,6 +333,19 @@
   color: var(--text-light);
   margin: 0;
   line-height: 1.6;
+}
+
+@media (max-width: 768px) {
+  .heroLogo {
+    display: block;
+    height: 72px;
+    width: auto;
+    margin-bottom: 0.75rem;
+  }
+
+  .pageTitle {
+    display: none;
+  }
 }
 
 .statusCard {
