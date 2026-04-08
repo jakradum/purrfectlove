@@ -158,7 +158,7 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
         {/* Dates popover */}
         {openPopover === 'dates' && (
           <div className={styles.filterPopover}>
-            <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Reisedaten' : 'Select dates'}</p>
+            <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Reisedaten' : 'You are editing dates you need cat sitting help'}</p>
             <DateRangePicker
               startDate={startDate}
               endDate={endDate}
