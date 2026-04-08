@@ -23,7 +23,7 @@ const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '../.env.local') });
 
 // ── CONFIGURE THIS ────────────────────────────────────────────────────────────
-const TESTA_SITTER_ID = 'PASTE_SANITY_ID_HERE'; // from setup-testa.mjs output
+const TESTA_SITTER_ID = 'jSzIV9KGh2VLJ9xNYx3zjB'; // TESTA Sharma — created 2026-04-08
 // ─────────────────────────────────────────────────────────────────────────────
 
 if (TESTA_SITTER_ID === 'PASTE_SANITY_ID_HERE') {
