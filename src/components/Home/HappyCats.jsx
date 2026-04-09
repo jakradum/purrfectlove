@@ -8,7 +8,7 @@ const builder = imageUrlBuilder(client);
 
 export default async function HappyCats({ content, locale }) {
   const stories = await client.fetch(
-    `*[_type == "successStory" && defined(quote[$locale]) && quote[$locale] != ""] | order(adoptionDate desc) {
+    `*[_type == "successStory" && defined(quote[$locale]) && quote[$locale] != ""] | order(adoptionDate desc)[0...8] {
       _id,
       catName,
       adopterName,

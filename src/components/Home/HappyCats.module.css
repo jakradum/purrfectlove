@@ -23,17 +23,62 @@
   margin-bottom: 3rem;
 }
 
-/* ── Grid ── */
-.grid {
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: 20px;
-  align-items: start;
-  max-width: 860px;
+/* ── Single card fallback ── */
+.singleCardWrap {
+  max-width: 300px;
   margin: 0 auto;
 }
 
+/* ── Carousel ── */
+.carouselWrap {
+  position: relative;
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.carouselTrack {
+  display: flex;
+  gap: 20px;
+  overflow-x: auto;
+  scroll-snap-type: x mandatory;
+  -webkit-overflow-scrolling: touch;
+  padding: 8px 4px 16px;
+  scrollbar-width: none;
+}
+.carouselTrack::-webkit-scrollbar {
+  display: none;
+}
+
+.carouselArrow {
+  position: absolute;
+  top: 50%;
+  transform: translateY(-50%);
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: #fff;
+  border: 1px solid #e0e0e0;
+  box-shadow: 0 2px 8px rgba(0,0,0,0.10);
+  font-size: 22px;
+  line-height: 1;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  color: #444;
+  z-index: 2;
+  transition: box-shadow 0.15s;
+  padding: 0;
+}
+.carouselArrow:hover {
+  box-shadow: 0 4px 14px rgba(0,0,0,0.15);
+}
+.carouselArrowLeft  { left: -18px; }
+.carouselArrowRight { right: -18px; }
+
 .card {
+  flex: 0 0 calc(33.333% - 14px);
+  scroll-snap-align: start;
   border: 0.5px solid #ddd;
   border-radius: 14px;
   overflow: hidden;
@@ -102,7 +147,9 @@
 .overlay {
   position: fixed;
   inset: 0;
-  background: rgba(0, 0, 0, 0.4);
+  background: rgba(0, 0, 0, 0.35);
+  backdrop-filter: blur(6px);
+  -webkit-backdrop-filter: blur(6px);
   display: flex;
   align-items: center;
   justify-content: center;
@@ -114,11 +161,18 @@
 .modal {
   background: #fff;
   border-radius: 16px;
-  max-width: 460px;
+  max-width: 760px;
   width: 100%;
-  overflow-y: auto;
+  overflow: hidden;
   max-height: 90vh;
   position: relative;
+}
+
+.modalInner {
+  display: flex;
+  flex-direction: row;
+  align-items: stretch;
+  min-height: 0;
 }
 
 .handle {
@@ -144,12 +198,20 @@
 
 .modalImg {
   display: block;
-  width: 100%;
-  height: auto;
+  width: 45%;
+  flex-shrink: 0;
+  object-fit: cover;
+  border-radius: 16px 0 0 16px;
+  align-self: stretch;
 }
 
 .modalBody {
-  padding: 18px 20px 24px;
+  padding: 28px 24px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 }
 
 .modalCatName {
@@ -204,8 +266,24 @@
 
 /* ── Mobile ── */
 @media (max-width: 640px) {
-  .grid {
-    grid-template-columns: 1fr;
+  .carouselArrow {
+    display: none;
+  }
+
+  .card {
+    flex: 0 0 86%;
+  }
+
+  .carouselWrap::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    width: 48px;
+    height: 100%;
+    background: linear-gradient(to right, transparent, rgba(255,255,255,0.85));
+    pointer-events: none;
+    z-index: 1;
   }
 
   .overlay {
@@ -217,7 +295,19 @@
     border-radius: 18px 18px 0 0;
     max-width: 100%;
     max-height: 85vh;
+    overflow-y: auto;
     animation: sheetSlideUp 0.32s cubic-bezier(0.32, 0.72, 0, 1);
+  }
+
+  .modalInner {
+    flex-direction: column;
+  }
+
+  .modalImg {
+    width: 100%;
+    height: auto;
+    object-fit: contain;
+    border-radius: 18px 18px 0 0;
   }
 
   .modalClosing {

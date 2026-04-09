@@ -53,15 +53,20 @@ export default function BugReportPanel({ onClose, isMobile }) {
 
   const uploadScreenshot = async (file) => {
     const timestamp = Date.now();
-    const safeName = file.name.replace(/[^a-zA-Z0-9._-]/g, '_');
-    const path = `bug-reports/${timestamp}-${safeName}`;
+    const ext = file.type.split('/')[1] || 'png';
+    const rawName = file.name || `screenshot.${ext}`;
+    const safeName = rawName.replace(/[^a-zA-Z0-9._-]/g, '_') || `screenshot.${ext}`;
+    const path = `${timestamp}-${safeName}`;
 
     const res = await fetch(`/api/care/bugreport/upload?path=${encodeURIComponent(path)}&type=${encodeURIComponent(file.type)}`, {
       method: 'POST',
       body: file,
       headers: { 'Content-Type': file.type },
     });
-    if (!res.ok) throw new Error('Upload failed');
+    if (!res.ok) {
+      const data = await res.json().catch(() => ({}));
+      throw new Error(data.error || 'Upload failed');
+    }
     const { url } = await res.json();
     return url;
   };
@@ -93,8 +98,8 @@ export default function BugReportPanel({ onClose, isMobile }) {
 
       setSuccess(true);
       setTimeout(() => onClose(), 2000);
-    } catch {
-      setError('Network error. Please try again.');
+    } catch (err) {
+      setError(err?.message || 'Network error. Please try again.');
     } finally {
       setSubmitting(false);
       setUploading(false);
