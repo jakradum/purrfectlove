@@ -7,6 +7,7 @@ import CatAvatar from './CatAvatar';
 import ReportModal from './ReportModal';
 import FeedbackDisplay from './FeedbackDisplay';
 import BookingRequestModal from './BookingRequestModal';
+import WaiverModal from './WaiverModal';
 
 const TAG_LABELS = {
   shy: 'Shy', confident: 'Confident', gentle: 'Gentle', playful: 'Playful', independent: 'Independent',
@@ -87,6 +88,7 @@ function AvailabilityStrip({ markedDates = [], availabilityDefault = 'available'
  */
 export default function SitterProfile({
   sitter,
+  locale = 'en',
   isOwnProfile = false,
   onEdit,
   onEditAvailability,
@@ -118,6 +120,7 @@ export default function SitterProfile({
   const [showReport, setShowReport] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
+  const [showWaiver, setShowWaiver] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [localCoverUrl, setLocalCoverUrl] = useState(null);
   const coverInputRef = useRef(null);
@@ -265,7 +268,7 @@ export default function SitterProfile({
               <button
                 type="button"
                 className={styles.sitterRequestBtn}
-                onClick={() => setShowBooking(true)}
+                onClick={() => setShowWaiver(true)}
               >
                 Request a sit
               </button>
@@ -396,6 +399,14 @@ export default function SitterProfile({
           memberName={displayName}
           memberId={_id}
           onClose={() => setShowReport(false)}
+        />
+      )}
+
+      {showWaiver && (
+        <WaiverModal
+          locale={locale}
+          onAgree={() => { setShowWaiver(false); setShowBooking(true); }}
+          onCancel={() => setShowWaiver(false)}
         />
       )}
 

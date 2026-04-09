@@ -67,7 +67,22 @@ export default function BookingRequestModal({ sitterId, sitterName, startDate: i
 
   return (
     <div className={styles.modalOverlay} onClick={(e) => e.target === e.currentTarget && onClose?.()}>
-      <div className={styles.modal} style={{ maxWidth: 460 }}>
+      <div className={styles.modal} style={{ maxWidth: 460, maxHeight: '90vh', overflowY: 'auto', position: 'relative' }}>
+        <button
+          type="button"
+          onClick={onClose}
+          aria-label="Close"
+          style={{
+            position: 'absolute', top: 12, right: 14,
+            background: 'none', border: 'none', cursor: 'pointer',
+            color: '#aaa', padding: 4, display: 'flex', alignItems: 'center', borderRadius: 4,
+          }}
+        >
+          <svg viewBox="0 0 12 12" fill="none" width="13" height="13">
+            <path d="M1.5 1.5l9 9M10.5 1.5l-9 9" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" />
+          </svg>
+        </button>
+
         {submitted ? (
           <>
             <p className={styles.modalTitle} style={{ color: '#2C5F4F' }}>Request sent!</p>

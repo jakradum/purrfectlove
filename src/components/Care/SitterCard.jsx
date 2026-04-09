@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import styles from './Care.module.css';
 import CatAvatar from './CatAvatar';
+import WaiverModal from './WaiverModal';
 
 const TAG_LABELS = {
   en: {
@@ -115,6 +116,7 @@ export default function SitterCard({
   const hasDates = !!(startDate && endDate);
 
   // ── Inline booking form state ──────────────────────────────────────────────
+  const [waiverOpen, setWaiverOpen] = useState(false);
   const [myCatData, setMyCatData] = useState(null); // null = not yet fetched, [] = fetched but empty
   const myCats = myCatData ? myCatData.map(c => c.name).filter(Boolean) : null;
   const [selectedCats, setSelectedCats] = useState([]);
@@ -208,6 +210,7 @@ export default function SitterCard({
   };
 
   return (
+    <>
     <div className={styles.card}>
       {/* Cover */}
       <div
@@ -337,7 +340,7 @@ export default function SitterCard({
           <button
             type="button"
             className={styles.cardBookBtn}
-            onClick={onExpand}
+            onClick={() => setWaiverOpen(true)}
           >
             {locale === 'de' ? 'Für diese Daten anfragen' : 'Book for these dates'}
           </button>
@@ -442,5 +445,14 @@ export default function SitterCard({
 
       </div>
     </div>
+
+    {waiverOpen && (
+      <WaiverModal
+        locale={locale}
+        onAgree={() => { setWaiverOpen(false); onExpand(); }}
+        onCancel={() => setWaiverOpen(false)}
+      />
+    )}
+    </>
   );
 }

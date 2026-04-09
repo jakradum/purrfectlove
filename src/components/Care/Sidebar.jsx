@@ -241,13 +241,28 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
         </button>
       </nav>
 
-      {/* Bug report panel — desktop (right of sidebar) or mobile (bottom sheet) */}
-      {bugPanelOpen && (
-        <BugReportPanel
-          onClose={() => setBugPanelOpen(false)}
-          isMobile={typeof window !== 'undefined' && window.innerWidth <= 768}
-        />
-      )}
+      {/* Bug report panel — desktop floating or mobile bottom sheet */}
+      {bugPanelOpen && (() => {
+        const isMobile = typeof window !== 'undefined' && window.innerWidth <= 768;
+        return (
+          <>
+            {/* Backdrop: dimmed on mobile, transparent click-catcher on desktop */}
+            <div
+              style={{
+                position: 'fixed',
+                inset: 0,
+                zIndex: 199,
+                background: isMobile ? 'rgba(0,0,0,0.35)' : 'transparent',
+              }}
+              onClick={() => setBugPanelOpen(false)}
+            />
+            <BugReportPanel
+              onClose={() => setBugPanelOpen(false)}
+              isMobile={isMobile}
+            />
+          </>
+        );
+      })()}
     </>
   );
 }
