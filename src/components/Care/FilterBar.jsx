@@ -14,7 +14,7 @@ function formatMonthDay(ymd) {
 
 function CalendarIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C5F4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C85C3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/>
       <line x1="16" y1="2" x2="16" y2="6"/>
       <line x1="8" y1="2" x2="8" y2="6"/>
@@ -25,7 +25,7 @@ function CalendarIcon() {
 
 function RefreshIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C5F4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C85C3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <polyline points="23 4 23 10 17 10"/>
       <polyline points="1 20 1 14 7 14"/>
       <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"/>
@@ -35,18 +35,23 @@ function RefreshIcon() {
 
 function PinIcon() {
   return (
-    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2C5F4F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C85C3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
       <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"/>
       <circle cx="12" cy="10" r="3"/>
     </svg>
   );
 }
 
+const CLOSE_DURATION = 180; // ms — must match filterPopoverOut animation
+
 export default function FilterBar({ startDate, endDate, radius, onDatesChange, onRadiusChange, onRefresh, hasLocation, locale = 'en' }) {
   const [openPopover, setOpenPopover] = useState(null); // 'dates' | 'radius' | null
+  const [closingPopover, setClosingPopover] = useState(null);
   const [seen, setSeen] = useState(true); // start true to avoid flash; corrected in effect
   const innerRef = useRef(null);
   const sliderRef = useRef(null);
+  const openPopoverRef = useRef(null);
+  openPopoverRef.current = openPopover;
 
   // Read localStorage on mount (client only)
   useEffect(() => {
@@ -62,16 +67,26 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
     try { localStorage.setItem(SEEN_KEY, '1'); } catch { /* ignore */ }
   }, [seen]);
 
+  // Animated close helper
+  const closePopover = useCallback((name) => {
+    setClosingPopover(name);
+    setTimeout(() => {
+      setOpenPopover(p => p === name ? null : p);
+      setClosingPopover(c => c === name ? null : c);
+    }, CLOSE_DURATION);
+  }, []);
+
   // Close popover on outside click
   useEffect(() => {
     const onDown = (e) => {
       if (innerRef.current && !innerRef.current.contains(e.target)) {
-        setOpenPopover(null);
+        const current = openPopoverRef.current;
+        if (current) closePopover(current);
       }
     };
     document.addEventListener('mousedown', onDown);
     return () => document.removeEventListener('mousedown', onDown);
-  }, []);
+  }, [closePopover]);
 
   // Radius slider track fill
   const paintTrack = useCallback((el, val) => {
@@ -93,7 +108,14 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
     ? `${formatMonthDay(startDate)} – ?`
     : locale === 'de' ? 'Datum wählen' : 'Choose dates you need sitting';
 
-  const toggle = (name) => setOpenPopover(p => p === name ? null : name);
+  const toggle = (name) => {
+    if (openPopover === name || closingPopover === name) {
+      closePopover(name);
+    } else {
+      if (openPopover) closePopover(openPopover);
+      setOpenPopover(name);
+    }
+  };
 
   return (
     <div className={styles.filterBarWrap}>
@@ -156,8 +178,8 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
         )}
 
         {/* Dates popover */}
-        {openPopover === 'dates' && (
-          <div className={styles.filterPopover}>
+        {(openPopover === 'dates' || closingPopover === 'dates') && (
+          <div className={`${styles.filterPopover}${closingPopover === 'dates' ? ` ${styles.filterPopoverClosing}` : ''}`}>
             <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Reisedaten' : 'You are editing dates you need cat sitting help'}</p>
             <DateRangePicker
               startDate={startDate}
@@ -165,7 +187,7 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
               locale={locale}
               onChange={({ startDate: s, endDate: e }) => {
                 onDatesChange(s, e);
-                if (s && e) setOpenPopover(null);
+                if (s && e) closePopover('dates');
               }}
               onClear={() => onDatesChange('', '')}
             />
@@ -173,8 +195,8 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
         )}
 
         {/* Radius popover — right-aligned under the radius section */}
-        {openPopover === 'radius' && (
-          <div className={`${styles.filterPopover} ${styles.filterPopoverRight}`}>
+        {(openPopover === 'radius' || closingPopover === 'radius') && (
+          <div className={`${styles.filterPopover} ${styles.filterPopoverRight}${closingPopover === 'radius' ? ` ${styles.filterPopoverClosing}` : ''}`}>
             <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Suchradius' : 'Search radius'}</p>
             <div className={styles.radiusDisplay}>
               <span className={styles.radiusNumber}>{radius}</span>

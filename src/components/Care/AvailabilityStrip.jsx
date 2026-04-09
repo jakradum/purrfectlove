@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useCallback } from 'react';
+import { useState, useCallback, useEffect, useRef } from 'react';
 import styles from './Care.module.css';
 
 function toYMD(date) {
@@ -39,12 +39,10 @@ function dayStatus(ymd, unavailableDatesV2, availabilityDefault) {
 // Build array of Date objects for a full month calendar grid (Mon-aligned)
 function buildMonthGrid(year, month) {
   const firstOfMonth = new Date(year, month, 1);
-  // day of week: 0=Sun ... 6=Sat. We want Mon=0.
   let startDow = firstOfMonth.getDay(); // 0=Sun
   startDow = (startDow + 6) % 7; // convert: Mon=0, Tue=1, ... Sun=6
 
   const days = [];
-  // pad before
   for (let i = 0; i < startDow; i++) {
     days.push(null);
   }
@@ -52,12 +50,19 @@ function buildMonthGrid(year, month) {
   for (let d = 1; d <= daysInMonth; d++) {
     days.push(new Date(year, month, d));
   }
-  // pad after to complete last row
   while (days.length % 7 !== 0) days.push(null);
   return days;
 }
 
+function formatSummaryDate(ymd) {
+  if (!ymd) return 'Pick date';
+  const [y, m, d] = ymd.split('-').map(Number);
+  return new Date(y, m - 1, d).toLocaleDateString('en-US', { month: 'short', day: 'numeric' });
+}
+
 // ─── Mini day strip (collapsed) ──────────────────────────────────────────────
+
+const DOW_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
 
 function MiniDayStrip({ days, unavailableDatesV2, availabilityDefault }) {
   const today = new Date();
@@ -83,20 +88,83 @@ function MiniDayStrip({ days, unavailableDatesV2, availabilityDefault }) {
   );
 }
 
-// ─── Expanded month calendar ──────────────────────────────────────────────────
+// ─── Expanded month calendar with range picker ────────────────────────────────
 
-const DOW_LABELS = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su'];
-
-function ExpandedCalendar({ localDates, availabilityDefault, onToggle, viewMonth, onPrevMonth, onNextMonth }) {
+function ExpandedCalendar({ localDates, availabilityDefault, onApplyRange, viewMonth, onPrevMonth, onNextMonth }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+  const todayYMD = toYMD(today);
+
+  const [picking, setPicking] = useState('start'); // 'start' | 'end'
+  const [rangeStart, setRangeStart] = useState('');
+  const [rangeEnd, setRangeEnd] = useState('');
 
   const grid = buildMonthGrid(viewMonth.year, viewMonth.month);
   const monthLabel = new Date(viewMonth.year, viewMonth.month, 1)
     .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
 
+  const handleDayClick = (ymd) => {
+    if (ymd < todayYMD) return;
+
+    if (picking === 'start' || !rangeStart) {
+      setRangeStart(ymd);
+      setRangeEnd('');
+      setPicking('end');
+    } else {
+      if (ymd < rangeStart) {
+        // Restart selection
+        setRangeStart(ymd);
+        setRangeEnd('');
+        setPicking('end');
+      } else {
+        // Complete the range (single day if same as start)
+        setRangeEnd(ymd);
+        setPicking('start');
+        onApplyRange(rangeStart, ymd);
+        setRangeStart('');
+        setRangeEnd('');
+      }
+    }
+  };
+
+  const handleClearRange = () => {
+    setRangeStart('');
+    setRangeEnd('');
+    setPicking('start');
+  };
+
   return (
     <div className={styles.availExpanded}>
+      {/* From / To summary */}
+      <div className={styles.availSummary}>
+        <button
+          type="button"
+          className={`${styles.availSummaryBtn} ${picking === 'start' ? styles.availSummaryBtnActive : ''}`}
+          onClick={handleClearRange}
+        >
+          <span className={styles.availSummaryLabel}>From</span>
+          <span className={styles.availSummaryValue}>{formatSummaryDate(rangeStart)}</span>
+        </button>
+        <span className={styles.availSummaryArrow}>→</span>
+        <button
+          type="button"
+          className={`${styles.availSummaryBtn} ${picking === 'end' ? styles.availSummaryBtnActive : ''}`}
+          onClick={() => { if (rangeStart) setPicking('end'); }}
+          disabled={!rangeStart}
+        >
+          <span className={styles.availSummaryLabel}>To</span>
+          <span className={styles.availSummaryValue}>{formatSummaryDate(rangeEnd)}</span>
+        </button>
+      </div>
+
+      {/* Hint */}
+      {picking === 'start' && !rangeStart && (
+        <p className={styles.availCalHint}>Tap a start date to toggle availability</p>
+      )}
+      {picking === 'end' && rangeStart && (
+        <p className={styles.availCalHint}>Now tap an end date</p>
+      )}
+
       {/* Month nav */}
       <div className={styles.availMonthNav}>
         <button type="button" className={styles.availMonthBtn} onClick={onPrevMonth}>‹</button>
@@ -104,36 +172,61 @@ function ExpandedCalendar({ localDates, availabilityDefault, onToggle, viewMonth
         <button type="button" className={styles.availMonthBtn} onClick={onNextMonth}>›</button>
       </div>
 
-      {/* Day-of-week headers */}
+      {/* Day-of-week headers + grid */}
       <div className={styles.availCalGrid}>
         {DOW_LABELS.map(d => (
           <div key={d} className={styles.availDowHeader}>{d}</div>
         ))}
 
         {grid.map((date, i) => {
-          if (!date) {
-            return <div key={`pad-${i}`} />;
-          }
+          if (!date) return <div key={`pad-${i}`} />;
+
           const ymd = toYMD(date);
           const isPast = date < today;
           const isToday = sameDay(date, today);
           const status = dayStatus(ymd, localDates, availabilityDefault);
 
-          let cellClass = styles.availCalCell;
-          if (isPast) cellClass += ` ${styles.availCalCell_past}`;
-          else if (isToday) cellClass += ` ${styles.availCalCell_today}`;
-          else if (status === 'available') cellClass += ` ${styles.availCalCell_available}`;
-          else cellClass += ` ${styles.availCalCell_unavailable}`;
+          // Range selection highlight
+          const isSingleDay = rangeStart === rangeEnd && rangeStart === ymd;
+          const isRangeStart = ymd === rangeStart && rangeStart !== rangeEnd;
+          const isRangeEnd = ymd === rangeEnd && rangeStart !== rangeEnd;
+          const isInRange = rangeStart && rangeEnd && ymd > rangeStart && ymd < rangeEnd;
+          const isRangeEndpoint = ymd === rangeStart || ymd === rangeEnd;
+
+          // Outer: handles the range-strip background
+          let outerCls = styles.availCalOuter;
+          if (isRangeStart && rangeEnd) outerCls += ` ${styles.availCalOuter_start}`;
+          else if (isRangeEnd) outerCls += ` ${styles.availCalOuter_end}`;
+          else if (isInRange) outerCls += ` ${styles.availCalOuter_mid}`;
+
+          // Inner: the visible circle
+          let innerCls = styles.availCalInner;
+          if (isPast) innerCls += ` ${styles.availCalInner_past}`;
+          else if (isToday && !isRangeEndpoint) innerCls += ` ${styles.availCalInner_today}`;
+          else if (isRangeEndpoint || isSingleDay) innerCls += ` ${styles.availCalInner_endpoint}`;
+          else if (isInRange) innerCls += ` ${styles.availCalInner_inRange}`;
+          else if (status === 'available') innerCls += ` ${styles.availCalInner_available}`;
+          else innerCls += ` ${styles.availCalInner_unavailable}`;
+
+          // Show ✓ / strikethrough only for non-special states
+          const showStatus = !isPast && !isRangeEndpoint && !isInRange && !isSingleDay && !isToday;
 
           return (
             <button
               key={ymd}
               type="button"
-              className={cellClass}
+              className={outerCls}
               disabled={isPast}
-              onClick={() => !isPast && onToggle(ymd)}
+              onClick={() => handleDayClick(ymd)}
             >
-              {date.getDate()}
+              <span className={innerCls}>
+                <span className={showStatus && status === 'unavailable' ? styles.availCalDayNumStrike : styles.availCalDayNum}>
+                  {date.getDate()}
+                </span>
+                {showStatus && status === 'available' && (
+                  <span className={styles.availCalCheck}>✓</span>
+                )}
+              </span>
             </button>
           );
         })}
@@ -141,9 +234,9 @@ function ExpandedCalendar({ localDates, availabilityDefault, onToggle, viewMonth
 
       {/* Legend */}
       <div className={styles.availLegend}>
-        <span className={styles.availLegendDot} style={{ background: '#EAF3DE', border: '1px solid #2C5F4F' }} />
-        <span className={styles.availLegendLabel}>Available</span>
-        <span className={styles.availLegendDot} style={{ background: '#FAECE7', border: '1px solid #993C1D' }} />
+        <span className={styles.availLegendDot} style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)' }} />
+        <span className={styles.availLegendLabel}>Available ✓</span>
+        <span className={styles.availLegendDot} style={{ background: 'rgba(200,92,63,0.5)', border: 'none' }} />
         <span className={styles.availLegendLabel}>Unavailable</span>
       </div>
     </div>
@@ -175,31 +268,63 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
 
   const monthLabel = today.toLocaleDateString('en-US', { month: 'long' });
 
+  const COLLAPSE_MS = 200; // must match availPanelOut duration
+
   const [expanded, setExpanded] = useState(false);
+  const [isCollapsing, setIsCollapsing] = useState(false);
   const [localDates, setLocalDates] = useState(unavailableDatesV2);
   const [viewMonth, setViewMonth] = useState({ year: today.getFullYear(), month: today.getMonth() });
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const stripRef = useRef(null);
+  const collapseRef = useRef(null);
+
+  const collapse = useCallback(() => {
+    setIsCollapsing(true);
+    collapseRef.current = setTimeout(() => {
+      setExpanded(false);
+      setIsCollapsing(false);
+    }, COLLAPSE_MS);
+  }, []);
+
+  // Cleanup timer on unmount
+  useEffect(() => () => clearTimeout(collapseRef.current), []);
+
+  // Collapse on outside click
+  useEffect(() => {
+    if (!expanded) return;
+    const onDown = (e) => {
+      if (stripRef.current && !stripRef.current.contains(e.target)) {
+        collapse();
+      }
+    };
+    document.addEventListener('mousedown', onDown);
+    document.addEventListener('touchstart', onDown);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+    };
+  }, [expanded, collapse]);
 
   const handleEdit = () => {
     setLocalDates(unavailableDatesV2);
     setViewMonth({ year: today.getFullYear(), month: today.getMonth() });
     setSaveError('');
     setExpanded(true);
+    setIsCollapsing(false);
   };
 
-  const handleCancel = () => {
-    setExpanded(false);
-    setSaveError('');
-  };
-
-  const handleToggle = useCallback((ymd) => {
+  // Toggle all dates in a range
+  const handleApplyRange = useCallback((start, end) => {
     setLocalDates(prev => {
       const set = new Set(prev);
-      if (set.has(ymd)) {
-        set.delete(ymd);
-      } else {
-        set.add(ymd);
+      const cur = parseYMD(start);
+      const stop = parseYMD(end);
+      while (cur <= stop) {
+        const ymd = toYMD(cur);
+        if (set.has(ymd)) set.delete(ymd);
+        else set.add(ymd);
+        cur.setDate(cur.getDate() + 1);
       }
       return Array.from(set).sort();
     });
@@ -233,7 +358,7 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
         setSaveError(err.error || 'Save failed. Please try again.');
         return;
       }
-      setExpanded(false);
+      collapse();
       onSaved?.(localDates);
     } catch {
       setSaveError('Network error. Please try again.');
@@ -242,16 +367,26 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
     }
   };
 
+  const isOpen = expanded || isCollapsing;
+
   return (
-    <div className={styles.availStripCard}>
-      {!expanded ? (
+    <div
+      className={`${styles.availStripCard}${isOpen ? ` ${styles.availStripCard_expanded}` : ''}`}
+      ref={stripRef}
+      onClick={(e) => {
+        if (!expanded && !isCollapsing) {
+          handleEdit();
+        } else if (expanded && !isCollapsing && !e.target.closest('button, input')) {
+          collapse();
+        }
+      }}
+      style={{ cursor: 'pointer' }}
+    >
+      {!expanded && !isCollapsing ? (
         /* Collapsed strip */
         <div className={styles.availStripCollapsed}>
           <div className={styles.availStripTop}>
             <span className={styles.availStripLabel}>Your availability · {monthLabel}</span>
-            <button type="button" className={styles.availEditBtn} onClick={handleEdit}>
-              Edit →
-            </button>
           </div>
           <MiniDayStrip
             days={miniDays}
@@ -262,26 +397,21 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
         </div>
       ) : (
         /* Expanded calendar */
-        <div className={styles.availStripExpandedWrap}>
-          <div className={styles.availExpandedHeader}>
-            <button type="button" className={styles.availBackBtn} onClick={handleCancel}>
-              ← Cancel
-            </button>
-          </div>
+        <div className={`${styles.availStripExpandedWrap}${isCollapsing ? ` ${styles.availStripExpandedWrap_closing}` : ''}`}>
           <div className={styles.availEditTitle}>
-            <span className={styles.availEditTitleSub}>You are editing</span>
             <span className={styles.availEditTitleMain}>Your available dates for cat sitting</span>
+            <span className={styles.availEditTitleClose}>Tap anywhere to close</span>
           </div>
 
           <div className={styles.availCalWrap}>
-          <ExpandedCalendar
-            localDates={localDates}
-            availabilityDefault={availabilityDefault}
-            onToggle={handleToggle}
-            viewMonth={viewMonth}
-            onPrevMonth={handlePrevMonth}
-            onNextMonth={handleNextMonth}
-          />
+            <ExpandedCalendar
+              localDates={localDates}
+              availabilityDefault={availabilityDefault}
+              onApplyRange={handleApplyRange}
+              viewMonth={viewMonth}
+              onPrevMonth={handlePrevMonth}
+              onNextMonth={handleNextMonth}
+            />
           </div>
 
           {saveError && <p className={styles.availSaveError}>{saveError}</p>}
