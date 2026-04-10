@@ -56,7 +56,40 @@ export async function GET(request) {
 
     if (Date.now() > expiresAtMs) return html('<p>This link has expired. Please action this request manually.</p>')
 
-    if (req.status !== 'pending') return html(`<p>Already actioned — this request has been <strong>${req.status}</strong>.</p><p><a href="https://care.purrfectlove.org">Back to portal →</a></p>`)
+    if (req.status !== 'pending') return html(`
+      <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#aaa;margin:0 0 12px;">Ticket closed</p>
+      <p>This application has already been <strong>${req.status === 'entry_denied' ? 'denied' : req.status}</strong>.</p>
+      <p><a href="https://care.purrfectlove.org">Back to portal →</a></p>
+    `)
+
+    // Block if applicant was previously denied (admitted: false in Sanity)
+    if (req.email) {
+      const denied = await serverClient.fetch(
+        `*[_type == "catSitter" && email == $email && admitted == false][0]._id`,
+        { email: req.email }
+      )
+      if (denied) return html(`
+        <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#C85C3F;margin:0 0 12px;">Entry denied — blocked</p>
+        <p>This applicant was previously denied. Inbox approval is permanently blocked.</p>
+        <p style="font-size:13px;color:#aaa;">To override, update the <code>admitted</code> field in Sanity and approve manually via the codebase.</p>
+        <p><a href="https://care.purrfectlove.org">Back to portal →</a></p>
+      `)
+    }
+
+    // Atomic update — only succeeds if still pending (prevents double-fire from email prefetch)
+    const { data: locked } = await db
+      .from('membership_requests')
+      .update({ status: 'approved' })
+      .eq('id', id)
+      .eq('status', 'pending')
+      .select('id')
+      .single()
+
+    if (!locked) return html(`
+      <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#aaa;margin:0 0 12px;">Ticket closed</p>
+      <p>This application was already actioned by another admin.</p>
+      <p><a href="https://care.purrfectlove.org">Back to portal →</a></p>
+    `)
 
     // Create catSitter in Sanity
     const sitter = await serverClient.create({
@@ -64,6 +97,7 @@ export async function GET(request) {
       name: req.name || null,
       phone: req.phone || null,
       email: req.email || null,
+      admitted: true,
       memberVerified: true,
       welcomeSent: false,
     })
@@ -93,10 +127,14 @@ export async function GET(request) {
     }
 
     await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
-    await db.from('membership_requests').update({ status: 'approved' }).eq('id', id)
 
     const displayName = req.name || 'Applicant'
-    return html(`<p style="font-size:20px;margin:0 0 12px;">✓ Done</p><p><strong>${displayName}</strong> has been approved and sent a welcome email.</p><p style="margin-top:24px;"><a href="https://care.purrfectlove.org">Back to portal →</a></p>`)
+    return html(`
+      <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#2C5F4F;margin:0 0 12px;">Ticket closed · Approved</p>
+      <p style="font-size:20px;margin:0 0 12px;">✓ Done</p>
+      <p><strong>${displayName}</strong> has been approved and sent a welcome email.</p>
+      <p style="margin-top:24px;"><a href="https://care.purrfectlove.org">Back to portal →</a></p>
+    `)
   } catch (err) {
     console.error('approve-member GET error:', err)
     return html('<p>Something went wrong. Please try again.</p>')
