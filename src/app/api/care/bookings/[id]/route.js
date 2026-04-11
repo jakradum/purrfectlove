@@ -45,7 +45,7 @@ export async function GET(request, { params }) {
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
     const userId = user.sitterId
-    const bookingId = params.id
+    const { id: bookingId } = await params
     const db = createSupabaseDbClient()
 
     const { data: booking, error: fetchError } = await db

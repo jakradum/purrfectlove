@@ -221,9 +221,6 @@ export default function AvailabilityCalendar({
         modifiers={modifiers}
         modifiersStyles={modifiersStyles}
         onDayClick={handleDayClick}
-        onDayMouseDown={(date, _modifiers, e) => {
-          if (e?.shiftKey) e.preventDefault(); // prevent text selection
-        }}
       />
 
       {/* Legend */}
