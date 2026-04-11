@@ -48,6 +48,7 @@ export async function middleware(request) {
     '/api/care/resend-webhook', // verified by Svix signature, not session cookie
     '/api/care/admin/approve-member', // verified by HMAC token, not session cookie
     '/api/care/admin/reject-member',  // verified by HMAC token, not session cookie
+    '/api/care/health',               // public health check, no auth required
     // Subdomain equivalents (before the /care rewrite is applied)
     '/login', '/privacy', '/join',
   ];
