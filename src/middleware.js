@@ -49,6 +49,8 @@ export async function middleware(request) {
     '/api/care/admin/approve-member', // verified by HMAC token, not session cookie
     '/api/care/admin/reject-member',  // verified by HMAC token, not session cookie
     '/api/care/health',               // public health check, no auth required
+    '/api/care/cron/reminder',        // verified by CRON_SECRET, not session cookie
+    '/api/care/cron/expire-bookings', // verified by CRON_SECRET, not session cookie
     // Subdomain equivalents (before the /care rewrite is applied)
     '/login', '/privacy', '/join',
   ];
