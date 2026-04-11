@@ -27,11 +27,13 @@ import { createClient as createSupabaseClient } from '@supabase/supabase-js';
 import * as dotenv from 'dotenv';
 import { fileURLToPath } from 'url';
 import { dirname, join } from 'path';
+import { computeCohort } from '../src/lib/cohort.js';
 
 const __dirname = dirname(fileURLToPath(import.meta.url));
 dotenv.config({ path: join(__dirname, '../.env.local') });
 
 const DRY_RUN = process.argv.includes('--dry-run');
+const BACKFILL = process.argv.includes('--backfill');
 
 const SKIP_NAMES = new Set(['sanjeev kumar', 'deutschland dude']);
 
@@ -59,8 +61,75 @@ const supabaseAdmin = createSupabaseClient(
   { auth: { autoRefreshToken: false, persistSession: false } }
 );
 
+// ── Backfill: assign cohort to all existing users that lack one ───────────────
+async function backfill() {
+  if (DRY_RUN) console.log('⚙  DRY RUN — no Supabase writes\n');
+  console.log('── Cohort backfill ──────────────────────────────────────────\n');
+
+  const results = { updated: 0, skipped: 0, errors: [] };
+  let page = 1;
+
+  while (true) {
+    const { data, error } = await supabaseAdmin.auth.admin.listUsers({ page, perPage: 1000 });
+    if (error) { console.error('listUsers error:', error.message); break; }
+    const users = data?.users ?? [];
+    if (!users.length) break;
+
+    for (const user of users) {
+      const meta = user.user_metadata ?? {};
+
+      // Never overwrite an existing cohort assignment
+      if (meta.cohort != null) {
+        results.skipped++;
+        continue;
+      }
+
+      // Team members stay null — skip
+      if (meta.isTeamMember === true) {
+        results.skipped++;
+        continue;
+      }
+
+      const cohort = computeCohort(user.id, false);
+
+      if (DRY_RUN) {
+        console.log(`  [dry-run] uid=${user.id} → cohort=${cohort}`);
+        continue;
+      }
+
+      const { error: updateErr } = await supabaseAdmin.auth.admin.updateUserById(user.id, {
+        user_metadata: { ...meta, cohort },
+      });
+
+      if (updateErr) {
+        results.errors.push({ id: user.id, message: updateErr.message });
+        console.log(`  ✗  uid=${user.id} — ${updateErr.message}`);
+      } else {
+        results.updated++;
+        console.log(`  ✓  uid=${user.id} → cohort=${cohort}`);
+      }
+    }
+
+    if (!data.nextPage) break;
+    page++;
+  }
+
+  if (!DRY_RUN) {
+    console.log('\n── Summary ──────────────────────────────────────────────');
+    console.log(`  Updated        : ${results.updated}`);
+    console.log(`  Skipped        : ${results.skipped} (already had cohort or team member)`);
+    console.log(`  Errors         : ${results.errors.length}`);
+    if (results.errors.length) {
+      console.log('\n  Error details:');
+      for (const e of results.errors) console.log(`    uid=${e.id}: ${e.message}`);
+    }
+    if (results.errors.length === 0) console.log('\n✅ Done.');
+  }
+}
+
 // ── Main ─────────────────────────────────────────────────────────────────────
 async function main() {
+  if (BACKFILL) return backfill();
   if (DRY_RUN) console.log('⚙  DRY RUN — no Supabase writes\n');
 
   const catSitters = await sanity.fetch(
@@ -121,7 +190,11 @@ async function main() {
       }
     } else {
       results.created++;
-      console.log(`  ✓  ${label} (${via}) — created uid=${data.user.id}`);
+      const cohort = computeCohort(data.user.id, false);
+      await supabaseAdmin.auth.admin.updateUserById(data.user.id, {
+        user_metadata: { sitterId: cs._id, isTeamMember: false, cohort },
+      });
+      console.log(`  ✓  ${label} (${via}) — created uid=${data.user.id} cohort=${cohort}`);
     }
   }
 

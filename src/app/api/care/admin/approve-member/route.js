@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
 import { createSupabaseAdminClient, createSupabaseDbClient } from '@/lib/supabaseServer'
+import { computeCohort } from '@/lib/cohort'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -105,11 +106,17 @@ export async function GET(request) {
     // Create Supabase auth user
     if (req.email) {
       const supabaseAdmin = createSupabaseAdminClient()
-      await supabaseAdmin.auth.admin.createUser({
+      const { data: userData } = await supabaseAdmin.auth.admin.createUser({
         email: req.email,
         email_confirm: true,
         user_metadata: { sitterId: sitter._id, isTeamMember: false },
       })
+      if (userData?.user?.id) {
+        const cohort = computeCohort(userData.user.id, false)
+        await supabaseAdmin.auth.admin.updateUserById(userData.user.id, {
+          user_metadata: { sitterId: sitter._id, isTeamMember: false, cohort },
+        })
+      }
     }
 
     // Send welcome email
