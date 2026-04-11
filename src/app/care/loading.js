@@ -1,2 +1,2 @@
-import PageLoading from '@/components/Care/PageLoading';
-export default function Loading() { return <PageLoading />; }
+import { MarketplaceSkeleton } from '@/components/Care/Skeletons';
+export default function Loading() { return <MarketplaceSkeleton />; }

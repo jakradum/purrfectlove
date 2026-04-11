@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './Care.module.css';
+import { BookingDetailSkeleton } from './Skeletons';
 
 const STATUS_MAP = {
   pending:     'Awaiting',
@@ -268,14 +269,7 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
 
   const modalContent = () => {
     if (loading) {
-      return (
-        <>
-          <div className={styles.dtHeader} style={{ minHeight: 82 }} aria-hidden="true" />
-          <div className={`${styles.dtBody} ${styles.dtLoadingBody}`}>
-            <div className={styles.dtSpinner} />
-          </div>
-        </>
-      );
+      return <BookingDetailSkeleton />;
     }
     if (error) {
       return <div className={styles.dtLoadingBody} style={{ color: '#C85C3F' }}>{error}</div>;

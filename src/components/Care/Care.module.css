@@ -775,8 +775,171 @@
 
 /* ====== Shimmer skeleton ====== */
 @keyframes shimmer {
-  0%   { background-position: -400px 0; }
-  100% { background-position: 400px 0; }
+  0%   { background-position: -800px 0; }
+  100% { background-position: 800px 0; }
+}
+
+/* Reusable shimmer block — apply inline height/width/border-radius as needed */
+.shimmer {
+  background: linear-gradient(90deg, #eeeeee 25%, #f5f5f5 50%, #eeeeee 75%);
+  background-size: 1600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+}
+
+/* ── Marketplace page skeleton ── */
+.skeletonFilterBar {
+  height: 56px;
+  border-radius: 999px;
+  max-width: 640px;
+  margin: 0 auto 2rem;
+}
+
+/* ── Bookings page skeleton ── */
+.skeletonBookingsWrap {
+  max-width: 860px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.skeletonTabs {
+  display: flex;
+  gap: 0.5rem;
+  margin-bottom: 1.5rem;
+}
+.skeletonTab {
+  height: 36px;
+  width: 140px;
+  border-radius: 8px;
+}
+.skeletonTableRow {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+.skeletonTableRow + .skeletonTableRow {
+  border-top: none;
+}
+
+/* ── Inbox page skeleton ── */
+.skeletonInboxLayout {
+  display: flex;
+  height: calc(100vh - 130px);
+  overflow: hidden;
+}
+.skeletonThreadSidebar {
+  width: 300px;
+  flex-shrink: 0;
+  border-right: 1px solid #f0f0f0;
+  padding: 1rem 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+}
+.skeletonThreadItem {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.875rem 1rem;
+  border-bottom: 1px solid #f5f5f5;
+}
+.skeletonThreadText {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.4rem;
+}
+.skeletonChatPane {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+  padding: 2rem 1.5rem;
+}
+.skeletonBubble {
+  height: 40px;
+  border-radius: 12px;
+}
+
+/* ── Profile page skeleton ── */
+.skeletonProfileWrap {
+  max-width: 600px;
+  margin: 0 auto;
+  padding: 2rem 1rem;
+}
+.skeletonCover {
+  height: 160px;
+  border-radius: 16px 16px 0 0;
+}
+.skeletonProfileCard {
+  background: #fff;
+  border-radius: 0 0 16px 16px;
+  padding: 1.25rem 1.5rem 1.5rem;
+  border: 0.5px solid #ddd;
+  margin-bottom: 12px;
+}
+.skeletonAvatarLg {
+  width: 72px;
+  height: 72px;
+  border-radius: 50%;
+  margin-top: -36px;
+  margin-bottom: 1rem;
+  border: 3px solid #fff;
+}
+.skeletonSection {
+  background: #fff;
+  border-radius: 16px;
+  border: 0.5px solid #ddd;
+  padding: 1.25rem 1.5rem;
+  margin-bottom: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 0.6rem;
+}
+
+/* ── Notifications page skeleton ── */
+.skeletonNotifWrap {
+  max-width: 700px;
+  margin: 0 auto;
+  padding: 2rem 1.5rem;
+}
+.skeletonNotifItem {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.875rem 0;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+/* ── Booking detail modal skeleton ── */
+.skeletonDtHeader {
+  background: #2C5F4F;
+  border-radius: 16px 16px 0 0;
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 0.75rem;
+}
+.skeletonDtHeaderShimmer {
+  background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0.12) 75%);
+  background-size: 1600px 100%;
+  animation: shimmer 1.4s ease-in-out infinite;
+  border-radius: 6px;
+}
+.skeletonDtBody {
+  padding: 1.5rem;
+  display: flex;
+  flex-direction: column;
+  gap: 1rem;
+}
+.skeletonDtGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 0.75rem;
+}
+.skeletonDtCell {
+  height: 60px;
+  border-radius: 10px;
 }
 
 .skeletonCard {

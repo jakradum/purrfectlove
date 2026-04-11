@@ -7,6 +7,7 @@ import styles from './Care.module.css'
 import contentEN from '@/data/careMessaging.en.json'
 import contentDE from '@/data/careMessaging.de.json'
 import ContactShareModal from './ContactShareModal'
+import { ThreadListSkeleton } from './Skeletons'
 
 function formatTime(isoString) {
   if (!isoString) return ''
@@ -247,11 +248,7 @@ export default function InboxPage({ currentUserId, currentUserName, locale = 'en
             </span>
           </div>
 
-          {loading && (
-            <p style={{ padding: '1.5rem', textAlign: 'center' }}>
-              <span className={styles.spinner} />
-            </p>
-          )}
+          {loading && <ThreadListSkeleton />}
 
           {!loading && threads.length === 0 && (
             <div style={{ padding: '3rem 1.5rem', textAlign: 'center' }}>

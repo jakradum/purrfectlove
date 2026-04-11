@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'next/navigation';
 import styles from './Care.module.css';
 import BookingDetailModal from './BookingDetailModal';
+import { BookingRowsSkeleton } from './Skeletons';
 
 const TODAY = new Date().toISOString().slice(0, 10);
 
@@ -346,7 +347,7 @@ export default function BookingsPage({ locale }) {
         )}
 
         {loading ? (
-          <div className={styles.bookingsSpinner}><span className={styles.spinner} /></div>
+          <BookingRowsSkeleton />
         ) : (
           <>
             {/* Desktop table */}
