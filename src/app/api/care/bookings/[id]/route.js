@@ -52,6 +52,7 @@ export async function GET(request, { params }) {
       .from('bookings')
       .select('*')
       .eq('id', bookingId)
+      .is('deleted_at', null)
       .single()
 
     if (fetchError || !booking) return Response.json({ error: 'Not found' }, { status: 404 })

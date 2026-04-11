@@ -18,6 +18,7 @@ export async function GET(request) {
       .eq('status', 'pending')
       .not('notified_at', 'is', null)
       .lt('notified_at', cutoff)
+      .is('deleted_at', null)
 
     if (!expired || expired.length === 0) {
       return Response.json({ expired: 0 })

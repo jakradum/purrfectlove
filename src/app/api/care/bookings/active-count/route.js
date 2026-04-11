@@ -14,11 +14,13 @@ export async function GET(request) {
       db.from('bookings')
         .select('id', { count: 'exact', head: true })
         .eq('parent_id', userId)
-        .in('status', ['pending', 'confirmed', 'accepted']),
+        .in('status', ['pending', 'confirmed', 'accepted'])
+        .is('deleted_at', null),
       db.from('bookings')
         .select('id', { count: 'exact', head: true })
         .eq('sitter_id', userId)
-        .in('status', ['pending', 'confirmed', 'accepted']),
+        .in('status', ['pending', 'confirmed', 'accepted'])
+        .is('deleted_at', null),
     ])
 
     return Response.json({ count: (asParent || 0) + (asSitter || 0) })

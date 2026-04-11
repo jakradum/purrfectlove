@@ -57,11 +57,11 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
       const seen = new Set(JSON.parse(localStorage.getItem('pl_seen_bkgs') || '[]'));
       const [sitterRes, parentConfRes, parentDeclRes] = await Promise.all([
         // Incoming sit requests I need to respond to (as sitter)
-        supabase.from('bookings').select('id').eq('sitter_id', sitterId).eq('status', 'pending'),
+        supabase.from('bookings').select('id').eq('sitter_id', sitterId).eq('status', 'pending').is('deleted_at', null),
         // My requests that got accepted by sitter (as parent, upcoming only)
-        supabase.from('bookings').select('id').eq('parent_id', sitterId).in('status', ['confirmed', 'accepted']).gte('start_date', today),
+        supabase.from('bookings').select('id').eq('parent_id', sitterId).in('status', ['confirmed', 'accepted']).gte('start_date', today).is('deleted_at', null),
         // My requests that got declined by sitter (as parent, upcoming only)
-        supabase.from('bookings').select('id').eq('parent_id', sitterId).eq('status', 'declined').gte('start_date', today),
+        supabase.from('bookings').select('id').eq('parent_id', sitterId).eq('status', 'declined').gte('start_date', today).is('deleted_at', null),
       ]);
       const allIds = [
         ...(sitterRes.data || []).map(r => r.id),

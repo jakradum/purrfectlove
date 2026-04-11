@@ -23,10 +23,12 @@ export async function GET(request) {
       db.from('bookings')
         .select('id, booking_ref, start_date, end_date, status, cats, sitter_id, parent_id')
         .eq('parent_id', userId)
+        .is('deleted_at', null)
         .order('start_date', { ascending: true }),
       db.from('bookings')
         .select('id, booking_ref, start_date, end_date, status, cats, sitter_id, parent_id')
         .eq('sitter_id', userId)
+        .is('deleted_at', null)
         .order('start_date', { ascending: true }),
     ])
 

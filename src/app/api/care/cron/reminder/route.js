@@ -131,6 +131,7 @@ export async function GET(request) {
       .select('id, booking_ref, start_date, end_date, sitter_id, parent_id')
       .in('status', ['confirmed', 'accepted']) // include legacy 'accepted' for migrated rows
       .eq('start_date', date)
+      .is('deleted_at', null)
 
     if (!bookings || bookings.length === 0) {
       return Response.json({ ok: true, date, bookings: 0, sent: 0 })

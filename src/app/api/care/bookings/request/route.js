@@ -109,6 +109,7 @@ export async function POST(request) {
         .from('bookings')
         .select('id')
         .eq('booking_ref', bookingRef)
+        .is('deleted_at', null)
         .maybeSingle()
       if (!existing) break
     } while (++attempts < 5)

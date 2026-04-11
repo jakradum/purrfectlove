@@ -28,6 +28,7 @@ export async function GET(request) {
       .select('start_date, end_date')
       .eq('sitter_id', user.sitterId)
       .in('status', ['confirmed', 'accepted']) // include 'accepted' for migrated legacy rows
+      .is('deleted_at', null)
 
     const blocked = new Set()
     for (const b of (bookings || [])) {

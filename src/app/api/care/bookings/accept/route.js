@@ -88,6 +88,7 @@ export async function POST(request) {
       .from('bookings')
       .select('*')
       .eq('id', bookingId)
+      .is('deleted_at', null)
       .single()
 
     if (fetchError || !booking) return Response.json({ error: 'Booking not found' }, { status: 404 })
@@ -107,6 +108,7 @@ export async function POST(request) {
       .neq('id', bookingId)
       .lte('start_date', booking.end_date)
       .gte('end_date', booking.start_date)
+      .is('deleted_at', null)
       .limit(1)
 
     if (parentAlreadyConfirmed?.length > 0) {
@@ -170,6 +172,7 @@ export async function POST(request) {
       .eq('status', 'pending')
       .lte('start_date', booking.end_date)
       .gte('end_date', booking.start_date)
+      .is('deleted_at', null)
 
     if (sitterOverlap?.length > 0) {
       await db.from('bookings')
@@ -186,6 +189,7 @@ export async function POST(request) {
       .neq('id', bookingId)
       .lte('start_date', booking.end_date)
       .gte('end_date', booking.start_date)
+      .is('deleted_at', null)
 
     if (parentOverlap?.length > 0) {
       await db.from('bookings')

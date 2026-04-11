@@ -80,6 +80,7 @@ export async function POST(request) {
       .from('bookings')
       .select('*')
       .eq('id', bookingId)
+      .is('deleted_at', null)
       .single()
 
     if (fetchError || !booking) return Response.json({ error: 'Booking not found' }, { status: 404 })
