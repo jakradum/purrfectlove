@@ -87,12 +87,17 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
     const onVisible = () => { if (document.visibilityState === 'visible') fetchCount(); };
     document.addEventListener('visibilitychange', onVisible);
 
+    // Layer 2b: instant dismiss when BookingsPage marks a booking as seen
+    const onSeenUpdated = () => fetchCount();
+    window.addEventListener('pl_seen_updated', onSeenUpdated);
+
     // Layer 3: 30s polling — catches anything Realtime missed
     const poll = setInterval(fetchCount, 30_000);
 
     return () => {
       supabase.removeChannel(channel);
       document.removeEventListener('visibilitychange', onVisible);
+      window.removeEventListener('pl_seen_updated', onSeenUpdated);
       clearInterval(poll);
     };
   }, [sitterId]);

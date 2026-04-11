@@ -291,6 +291,7 @@ export default function BookingsPage({ locale }) {
       newSeen.add(booking._id);
       setSeenIds(newSeen);
       localStorage.setItem('pl_seen_bkgs', JSON.stringify([...newSeen]));
+      window.dispatchEvent(new CustomEvent('pl_seen_updated'));
     }
     if (showHint) {
       setShowHint(false);
