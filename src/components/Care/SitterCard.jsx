@@ -69,6 +69,7 @@ export default function SitterCard({
   availabilityUnconfirmed = false,
   startDate,
   endDate,
+  sitType = null,
   bookingState = null,
   onBooked,
   onWithdrawn,
@@ -193,6 +194,7 @@ export default function SitterCard({
           endDate,
           cats: selectedCats,
           message: note.trim() || null,
+          sitType: sitType || null,
         }),
       });
       const data = await res.json();
@@ -409,6 +411,16 @@ export default function SitterCard({
                   </span>
                 ))}
               </div>
+            </div>
+          )}
+
+          {/* Sit type confirmation — read-only, shown when filter was applied */}
+          {sitType && (
+            <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: 8, background: '#F0F7F4', border: '1px solid #C8E6C9' }}>
+              <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: '#2C5F4F', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Sit type</p>
+              <p style={{ margin: '0.15rem 0 0', fontSize: '0.875rem', color: '#2D2D2D' }}>
+                {sitType === 'home_visit' ? 'Home visit — sitter comes to you' : 'Drop off — you bring your cat to the sitter'}
+              </p>
             </div>
           )}
 

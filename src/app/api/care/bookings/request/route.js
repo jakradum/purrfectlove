@@ -89,7 +89,7 @@ export async function POST(request) {
     const user = await getSupabaseUser(request)
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { sitterId, startDate, endDate, cats, message } = await request.json()
+    const { sitterId, startDate, endDate, cats, message, sitType } = await request.json()
 
     if (!sitterId || !startDate || !endDate) {
       return Response.json({ error: 'sitterId, startDate and endDate are required' }, { status: 400 })
@@ -125,6 +125,7 @@ export async function POST(request) {
         end_date:    endDate,
         cats:        cats || [],
         message:     message || null,
+        sit_type:    sitType || null,
         status:      'pending',
         created_at:  new Date().toISOString(),
       })

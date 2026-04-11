@@ -38,7 +38,7 @@ export async function GET(request) {
         "photoUrl": photo.asset->url,
         "coverImageUrl": coverImage.asset->url,
         hideEmail, hideWhatsApp,
-        maxHomesPerDay, maxCatsPerDay, feedingTypes, behavioralTraits,
+        maxHomesPerDay, maxCatsPerDay, feedingTypes, behavioralTraits, canDoHomeVisit, canHostCats,
         availableDates, alwaysAvailable, unavailableDates, unavailableRanges,
         availabilityDefault, unavailableDatesV2, blockedByBooking,
         "rating": sitterScore.rating

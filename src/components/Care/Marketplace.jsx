@@ -147,6 +147,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   const [startDate, setStartDate] = useState('');
   const [endDate, setEndDate] = useState('');
   const [radius, setRadius] = useState(10);
+  const [sitType, setSitType] = useState(null); // null | 'home_visit' | 'drop_off'
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
 
@@ -374,6 +375,11 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     if (!searched) return null;
     return fetchedSitters
       .filter((s) => s._distance == null || s._distance <= radius)
+      .filter((s) => {
+        if (sitType === 'home_visit') return s.canDoHomeVisit === true;
+        if (sitType === 'drop_off') return s.canHostCats === true;
+        return true;
+      })
       .sort((a, b) => {
         // Tier 1: confirmed availability first
         const aUnconfirmed = a._availabilityUnconfirmed ? 1 : 0;
@@ -438,8 +444,10 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         startDate={startDate}
         endDate={endDate}
         radius={radius}
+        sitType={sitType}
         onDatesChange={(s, e) => { setStartDate(s); setEndDate(e); }}
         onRadiusChange={handleRadiusChange}
+        onSitTypeChange={setSitType}
         onRefresh={handleSearch}
         hasLocation={userLocation?.lat != null}
         locale={locale}
@@ -537,6 +545,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
                       availabilityUnconfirmed={!!sitter._availabilityUnconfirmed}
                       startDate={startDate}
                       endDate={endDate}
+                      sitType={sitType}
                       bookingState={myBookings[`${sitter._id}__${startDate}__${endDate}`] ?? null}
                       onBooked={(bookingRef, bookingId) => {
                         const key = `${sitter._id}__${startDate}__${endDate}`;

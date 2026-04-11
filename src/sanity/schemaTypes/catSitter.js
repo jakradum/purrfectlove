@@ -120,6 +120,8 @@ export default {
     // Toggles
     { name: 'canSit', title: 'I Can Sit', type: 'boolean', initialValue: false, readOnly: true },
     { name: 'needsSitting', title: 'I Need Sitting', type: 'boolean', initialValue: false, readOnly: true },
+    { name: 'canDoHomeVisit', title: 'Can Do Home Visits', type: 'boolean', initialValue: false, readOnly: true, description: 'Sitter travels to the cat\'s home. Set by member via portal.' },
+    { name: 'canHostCats', title: 'Can Host Cats', type: 'boolean', initialValue: false, readOnly: true, description: 'Cat parents drop off their cat with this sitter. Set by member via portal.' },
 
     // Email preferences
     { name: 'welcomeSent', title: 'Welcome Email Sent', type: 'boolean', initialValue: false, description: 'Set to true after first login welcome email is sent. Never send again.' },

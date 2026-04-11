@@ -42,9 +42,18 @@ function PinIcon() {
   );
 }
 
+function SitTypeIcon() {
+  return (
+    <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#C85C3F" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/>
+      <polyline points="9 22 9 12 15 12 15 22"/>
+    </svg>
+  );
+}
+
 const CLOSE_DURATION = 180; // ms — must match filterPopoverOut animation
 
-export default function FilterBar({ startDate, endDate, radius, onDatesChange, onRadiusChange, onRefresh, hasLocation, locale = 'en' }) {
+export default function FilterBar({ startDate, endDate, radius, sitType, onDatesChange, onRadiusChange, onSitTypeChange, onRefresh, hasLocation, locale = 'en' }) {
   const [openPopover, setOpenPopover] = useState(null); // 'dates' | 'radius' | null
   const [closingPopover, setClosingPopover] = useState(null);
   const [seen, setSeen] = useState(true); // start true to avoid flash; corrected in effect
@@ -139,6 +148,25 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
 
           <div className={styles.filterDivider} />
 
+          {/* Sit type section */}
+          <button
+            type="button"
+            className={`${styles.filterSection} ${openPopover === 'sitType' ? styles.filterSectionActive : ''} ${sitType ? styles.filterSectionActive : ''}`}
+            onClick={() => toggle('sitType')}
+          >
+            <div className={styles.filterIcon}>
+              <SitTypeIcon />
+            </div>
+            <div className={styles.filterTextGroup}>
+              <span className={styles.filterLabel}>{locale === 'de' ? 'Art' : 'Sit type'}</span>
+              <span className={styles.filterValue}>
+                {sitType === 'home_visit' ? 'Home visits' : sitType === 'drop_off' ? 'Drop off' : 'Any'}
+              </span>
+            </div>
+          </button>
+
+          <div className={styles.filterDivider} />
+
           {/* Refresh button */}
           <button
             type="button"
@@ -191,6 +219,36 @@ export default function FilterBar({ startDate, endDate, radius, onDatesChange, o
               }}
               onClear={() => onDatesChange('', '')}
             />
+          </div>
+        )}
+
+        {/* Sit type popover */}
+        {(openPopover === 'sitType' || closingPopover === 'sitType') && (
+          <div className={`${styles.filterPopover}${closingPopover === 'sitType' ? ` ${styles.filterPopoverClosing}` : ''}`}>
+            <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Art des Sittings' : 'What kind of sitting do you need?'}</p>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+              {[
+                { value: null, label: 'Any' },
+                { value: 'home_visit', label: 'Home visits — sitter comes to you' },
+                { value: 'drop_off', label: 'Drop off — you bring your cat to the sitter' },
+              ].map(({ value, label }) => (
+                <button
+                  key={String(value)}
+                  type="button"
+                  onClick={() => { onSitTypeChange(value); closePopover('sitType'); }}
+                  style={{
+                    textAlign: 'left', padding: '0.6rem 0.75rem', borderRadius: 8, cursor: 'pointer',
+                    fontSize: '0.875rem', fontFamily: 'inherit',
+                    border: sitType === value ? '1.5px solid #2C5F4F' : '1.5px solid #e5e7eb',
+                    background: sitType === value ? '#EAF3DE' : '#fafafa',
+                    color: sitType === value ? '#2C5F4F' : '#555',
+                    fontWeight: sitType === value ? 600 : 400,
+                  }}
+                >
+                  {label}
+                </button>
+              ))}
+            </div>
           </div>
         )}
 

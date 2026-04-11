@@ -242,6 +242,8 @@ function formFromData(data) {
     feedingTypes: data.feedingTypes || [],
     behavioralTraits: data.behavioralTraits || [],
     canSit: data.canSit ?? false,
+    canDoHomeVisit: data.canDoHomeVisit ?? false,
+    canHostCats: data.canHostCats ?? false,
     hideEmail: data.hideEmail ?? false,
     hideWhatsApp: data.hideWhatsApp ?? false,
   };
@@ -669,15 +671,64 @@ export default function ProfileEditor({ initialData }) {
       {form.canSit && (
         <div className={styles.section}>
           <h2 className={styles.sectionTitle}>{t.sections.sittingCapabilities}</h2>
+
+          {/* How I can sit */}
           <div className={styles.formGroup}>
-            <label className={styles.profileLabel}>{t.fields.maxHomesPerDay}</label>
-            <input type="number" min={1} max={10} className={styles.profileInput} value={form.maxHomesPerDay} onChange={(e) => update('maxHomesPerDay', e.target.value)} placeholder="e.g. 2" style={{ maxWidth: '140px' }} />
-            <p className={styles.hint}>For planning multiple visits in one day</p>
-          </div>
-          <div className={styles.formGroup}>
-            <label className={styles.profileLabel}>Max cats per day</label>
-            <input type="number" min={1} max={10} className={styles.profileInput} value={form.maxCatsPerDay} onChange={(e) => update('maxCatsPerDay', e.target.value)} placeholder="e.g. 3" style={{ maxWidth: '140px' }} />
-            <p className={styles.hint}>Maximum number of cats you&apos;re comfortable caring for per day</p>
+            <label className={styles.profileLabel}>How I can sit</label>
+
+            {/* Home visits */}
+            <div style={{ marginBottom: '0.75rem' }}>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#2D2D2D' }}>
+                <input
+                  type="checkbox"
+                  checked={!!form.canDoHomeVisit}
+                  onChange={(e) => update('canDoHomeVisit', e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: '#2C5F4F', cursor: 'pointer' }}
+                />
+                Home visits <span style={{ color: '#888', fontWeight: 400 }}>(I travel to the cat&apos;s home)</span>
+              </label>
+              {form.canDoHomeVisit && (
+                <div style={{ marginTop: '0.5rem', marginLeft: '1.5rem' }}>
+                  <label className={styles.profileLabel} style={{ fontSize: '0.8rem' }}>{t.fields.maxHomesPerDay}</label>
+                  <input
+                    type="number" min={1} max={10}
+                    className={styles.profileInput}
+                    value={form.maxHomesPerDay}
+                    onChange={(e) => update('maxHomesPerDay', e.target.value)}
+                    placeholder="e.g. 2"
+                    style={{ maxWidth: '120px' }}
+                  />
+                  <p className={styles.hint}>Homes you can visit in a single day</p>
+                </div>
+              )}
+            </div>
+
+            {/* Host cats */}
+            <div>
+              <label style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', cursor: 'pointer', fontSize: '0.9rem', color: '#2D2D2D' }}>
+                <input
+                  type="checkbox"
+                  checked={!!form.canHostCats}
+                  onChange={(e) => update('canHostCats', e.target.checked)}
+                  style={{ width: 16, height: 16, accentColor: '#2C5F4F', cursor: 'pointer' }}
+                />
+                Host cats at my place <span style={{ color: '#888', fontWeight: 400 }}>(cat parents drop off with me)</span>
+              </label>
+              {form.canHostCats && (
+                <div style={{ marginTop: '0.5rem', marginLeft: '1.5rem' }}>
+                  <label className={styles.profileLabel} style={{ fontSize: '0.8rem' }}>Max cats per day</label>
+                  <input
+                    type="number" min={1} max={10}
+                    className={styles.profileInput}
+                    value={form.maxCatsPerDay}
+                    onChange={(e) => update('maxCatsPerDay', e.target.value)}
+                    placeholder="e.g. 3"
+                    style={{ maxWidth: '120px' }}
+                  />
+                  <p className={styles.hint}>Maximum cats you&apos;re comfortable hosting per day</p>
+                </div>
+              )}
+            </div>
           </div>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.feedingTypes}</label>
