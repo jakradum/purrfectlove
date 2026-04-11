@@ -85,7 +85,11 @@ export default function SitterCard({
     feedingTypes, behavioralTraits,
     cats, _distance, location,
     availabilityDefault, maxCatsPerDay,
+    canDoHomeVisit, canHostCats,
   } = sitter;
+
+  // Whether the sitter can do both types — requires user to pick one if no filter applied
+  const sitterDoesBoth = !!(canDoHomeVisit && canHostCats);
 
   const displayName = name || 'Member';
 
@@ -121,6 +125,7 @@ export default function SitterCard({
   const [myCatData, setMyCatData] = useState(null); // null = not yet fetched, [] = fetched but empty
   const myCats = myCatData ? myCatData.map(c => c.name).filter(Boolean) : null;
   const [selectedCats, setSelectedCats] = useState([]);
+  const [localSitType, setLocalSitType] = useState(sitType); // null until user picks when sitter does both
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
   const [formError, setFormError] = useState('');
@@ -151,11 +156,12 @@ export default function SitterCard({
   useEffect(() => {
     if (!expanded) {
       setSelectedCats([]);
+      setLocalSitType(sitType);
       setNote('');
       setFormError('');
       setSubmitting(false);
     }
-  }, [expanded]);
+  }, [expanded, sitType]);
 
   const toggleCat = (catName) => {
     setSelectedCats(prev =>
@@ -179,6 +185,10 @@ export default function SitterCard({
 
   const handleSubmit = async () => {
     setFormError('');
+    if (sitterDoesBoth && !sitType && !localSitType) {
+      setFormError('Please choose a sit type.');
+      return;
+    }
     if (selectedCats.length === 0) {
       setFormError('Please select at least one cat.');
       return;
@@ -194,7 +204,7 @@ export default function SitterCard({
           endDate,
           cats: selectedCats,
           message: note.trim() || null,
-          sitType: sitType || null,
+          sitType: localSitType || null,
         }),
       });
       const data = await res.json();
@@ -414,15 +424,48 @@ export default function SitterCard({
             </div>
           )}
 
-          {/* Sit type confirmation — read-only, shown when filter was applied */}
-          {sitType && (
+          {/* Sit type — picker when sitter does both and no filter applied, else read-only confirmation */}
+          {sitterDoesBoth && !sitType ? (
+            <div style={{ marginBottom: '0.75rem' }}>
+              <p className={styles.cardFormLabel}>Sit type <span style={{ color: '#C85C3F' }}>*</span></p>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                {[
+                  { value: 'home_visit', label: 'Home visit', desc: 'sitter comes to you' },
+                  { value: 'drop_off',   label: 'Drop off',   desc: 'you bring your cat to the sitter' },
+                ].map(({ value, label, desc }) => (
+                  <label
+                    key={value}
+                    style={{
+                      display: 'flex', alignItems: 'center', gap: '0.6rem',
+                      padding: '0.5rem 0.75rem', borderRadius: 8, cursor: 'pointer',
+                      border: localSitType === value ? '1.5px solid #2C5F4F' : '1.5px solid #e5e7eb',
+                      background: localSitType === value ? '#F0F7F4' : '#fafafa',
+                    }}
+                  >
+                    <input
+                      type="radio"
+                      name={`sittype-${_id}`}
+                      value={value}
+                      checked={localSitType === value}
+                      onChange={() => setLocalSitType(value)}
+                      style={{ accentColor: '#2C5F4F', width: 15, height: 15 }}
+                    />
+                    <span style={{ fontSize: '0.875rem', color: '#2D2D2D' }}>
+                      <strong style={{ fontWeight: 600 }}>{label}</strong>
+                      <span style={{ color: '#888', fontWeight: 400 }}> — {desc}</span>
+                    </span>
+                  </label>
+                ))}
+              </div>
+            </div>
+          ) : sitType ? (
             <div style={{ marginBottom: '0.75rem', padding: '0.5rem 0.75rem', borderRadius: 8, background: '#F0F7F4', border: '1px solid #C8E6C9' }}>
               <p style={{ margin: 0, fontSize: '0.8rem', fontWeight: 600, color: '#2C5F4F', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Sit type</p>
               <p style={{ margin: '0.15rem 0 0', fontSize: '0.875rem', color: '#2D2D2D' }}>
                 {sitType === 'home_visit' ? 'Home visit — sitter comes to you' : 'Drop off — you bring your cat to the sitter'}
               </p>
             </div>
-          )}
+          ) : null}
 
           {/* Note field — optional */}
           <p className={styles.cardFormLabel}>Note <span style={{ fontWeight: 400, textTransform: 'none', letterSpacing: 0, color: '#bbb' }}>(optional)</span></p>
