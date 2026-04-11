@@ -555,7 +555,6 @@ export default function ProfileEditor({ initialData }) {
     <form className={styles.profilePage} onSubmit={handleSave}>
       <div className={styles.profileHeader}>
         <h1 className={styles.pageTitle}>Edit Profile</h1>
-        <button type="button" className={styles.cancelBtn} onClick={handleCancel}>Cancel</button>
       </div>
 
       {/* About Me */}
@@ -726,6 +725,7 @@ export default function ProfileEditor({ initialData }) {
       {/* Save Bar */}
       <div className={styles.saveBar}>
         {saveError && <span className={styles.saveError}>{saveError}</span>}
+        <button type="button" className={styles.cancelBtnText} onClick={handleCancel}>Cancel</button>
         <button
           type="submit"
           className={styles.saveBtn}

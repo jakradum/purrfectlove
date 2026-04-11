@@ -445,14 +445,16 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         locale={locale}
       />
 
-      {/* Availability strip — only for sitters */}
+      {/* Availability strip — only for sitters, wrapped to match filterBarWrap width exactly */}
       {myProfile?.canSit && (
-        <AvailabilityStrip
-          myProfile={myProfile}
-          startDate={startDate}
-          endDate={endDate}
-          onSaved={handleAvailabilitySaved}
-        />
+        <div className={styles.filterBarWrap} style={{ position: 'static', padding: 0 }}>
+          <AvailabilityStrip
+            myProfile={myProfile}
+            startDate={startDate}
+            endDate={endDate}
+            onSaved={handleAvailabilitySaved}
+          />
+        </div>
       )}
 
       {/* Empty state — no dates selected */}
