@@ -85,8 +85,9 @@ function computeCompletion(form) {
   if (!form.location?.lat || !form.location?.lng) required.push('Location (Plus Code)');
 
   if (form.canSit) {
-    if (!form.maxHomesPerDay) required.push('Homes you can visit per day');
-    if (!form.maxCatsPerDay) required.push('Max cats per day');
+    if (!form.canDoHomeVisit && !form.canHostCats) required.push('How I can sit (select at least one)');
+    if (form.canDoHomeVisit && !form.maxHomesPerDay) required.push('Homes you can visit per day');
+    if (form.canHostCats && !form.maxCatsPerDay) required.push('Max cats per day');
     if (!form.feedingTypes?.length) required.push('Feeding types you can handle');
     if (!form.behavioralTraits?.length) required.push('Cat behaviors you\'re comfortable with');
     // Availability is optional in new system — all days available by default
@@ -95,13 +96,20 @@ function computeCompletion(form) {
   if (!form.bedrooms) optional.push('Number of bedrooms');
   if (!form.householdSize) optional.push('Household size');
 
-  const totalRequired = 2 + (form.canSit ? 4 : 0);
+  // totalRequired is dynamic based on which sit types are selected
+  let totalRequired = 2; // name + location
+  if (form.canSit) {
+    totalRequired += 1; // sit type selection
+    if (form.canDoHomeVisit) totalRequired += 1; // maxHomesPerDay
+    if (form.canHostCats) totalRequired += 1; // maxCatsPerDay
+    totalRequired += 2; // feedingTypes + behavioralTraits
+  }
   const totalOptional = 2;
   const total = totalRequired + totalOptional;
   const completed = (totalRequired - required.length) + (totalOptional - optional.length);
   const percent = total > 0 ? Math.round((completed / total) * 100) : 100;
 
-  return { required, optional, completed, total, percent, isComplete: percent === 100 };
+  return { required, optional, completed, total, percent, isComplete: required.length === 0 };
 }
 
 function CompletionIndicator({ form, onEdit }) {
@@ -490,6 +498,11 @@ export default function ProfileEditor({ initialData }) {
         {deletionPending && (
           <div style={{ background: '#fef2f2', border: '1px solid #fecaca', borderRadius: '10px', padding: '1rem 1.25rem', marginBottom: '1.25rem', color: '#b91c1c', fontSize: '0.9rem', lineHeight: 1.6 }}>
             <strong>Your deletion request is pending.</strong> Your account will be removed within 48 hours. You cannot use the community during this time.
+          </div>
+        )}
+        {!deletionPending && (
+          <div style={{ maxWidth: 600, margin: '0 auto', padding: '2.5rem 1rem 1.25rem' }}>
+            <CompletionIndicator form={form} onEdit={() => setEditMode('profile')} />
           </div>
         )}
         <SitterProfile

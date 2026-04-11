@@ -26,7 +26,7 @@ export default async function CareLayout({ children }) {
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
         <div style={{ display: 'flex', flex: 1, minHeight: 'calc(100vh - 64px)' }}>
           <Sidebar locale="en" basePath="" sitterId={sitterId} />
-          <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px' }}>
+          <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px', fontFamily: 'var(--font-outfit)' }}>
             {children}
           </main>
         </div>
