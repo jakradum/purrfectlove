@@ -1,6 +1,7 @@
 import { Outfit, Lora } from 'next/font/google';
 import { headers } from 'next/headers';
 import "./globals.css";
+import DeploymentWatcher from '@/components/DeploymentWatcher';
 
 const outfit = Outfit({
   subsets: ['latin'],
@@ -80,6 +81,7 @@ export default async function RootLayout({ children }) {
   return (
     <html lang={locale}>
       <body className={`${outfit.variable} ${lora.variable}`}>
+        <DeploymentWatcher />
         {children}
       </body>
     </html>
