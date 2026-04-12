@@ -1,4 +1,5 @@
 import { createSupabaseDbClient } from '@/lib/supabaseServer'
+import { captureServerEvent } from '@/lib/posthogServer'
 
 // Runs hourly. Finds pending bookings where notified_at is 48+ hrs ago
 // and the sitter has not responded — sets them to 'expired'.
@@ -30,6 +31,12 @@ export async function GET(request) {
       .in('id', expired.map(b => b.id))
 
     console.log(`[expire-bookings] Expired ${expired.length} booking(s):`, expired.map(b => b.booking_ref))
+
+    // Fire one event per expired booking (non-blocking)
+    await Promise.allSettled(
+      expired.map(b => captureServerEvent('system', 'booking_expired', { booking_ref: b.booking_ref }))
+    )
+
     return Response.json({ expired: expired.length, refs: expired.map(b => b.booking_ref) })
   } catch (error) {
     console.error('[expire-bookings] error:', error)

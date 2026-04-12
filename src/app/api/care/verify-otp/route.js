@@ -3,6 +3,7 @@ import { createServerClient } from '@supabase/ssr'
 import { createSupabaseAdminClient } from '@/lib/supabaseServer'
 import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
+import { captureServerEvent } from '@/lib/posthogServer'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -214,6 +215,12 @@ export async function POST(request) {
         }
       }
     }
+
+    // Fire analytics event (non-blocking)
+    captureServerEvent(sitterId, 'user_logged_in', {
+      locale: resolvedCatSitter?.locale || 'en',
+      is_team_member: isTeamMember,
+    }).catch(() => {})
 
     // Build response, applying Supabase session cookies
     const response = NextResponse.json({ success: true })

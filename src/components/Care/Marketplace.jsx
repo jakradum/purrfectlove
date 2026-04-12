@@ -2,6 +2,7 @@
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
 import { createBrowserClient } from '@supabase/ssr';
+import posthog from 'posthog-js';
 import styles from './Care.module.css';
 import SitterCard from './SitterCard';
 import FilterBar from './FilterBar';
@@ -359,6 +360,16 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         .map((s) => ({ ...s, _availabilityUnconfirmed: !hasAvailabilityData(s) }));
       setFetchedSitters(filtered);
       animateCards(filtered.length);
+
+      if (posthog.__loaded) {
+        posthog.capture('marketplace_searched', {
+          start_date: startDate || null,
+          end_date: endDate || null,
+          radius_km: radius,
+          sit_type: sitType || 'any',
+          results_count: filtered.length,
+        });
+      }
     } catch (err) {
       console.error('Search error:', err);
       setSearchError('Network error. Please try again.');

@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useRef, useCallback } from 'react';
+import { useState, useRef, useCallback, useEffect } from 'react';
 import Link from 'next/link';
+import posthog from 'posthog-js';
 import styles from './Care.module.css';
 import CatAvatar from './CatAvatar';
 import ReportModal from './ReportModal';
@@ -123,6 +124,13 @@ export default function SitterProfile({
   const [showWaiver, setShowWaiver] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
   const [localCoverUrl, setLocalCoverUrl] = useState(null);
+
+  // Analytics: fire sitter_profile_opened on mount (only for other members' profiles)
+  useEffect(() => {
+    if (!isOwnProfile && sitter?._id && posthog.__loaded) {
+      posthog.capture('sitter_profile_opened', { sitter_id: sitter._id });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
   const coverInputRef = useRef(null);
 
   const handleCoverUpload = useCallback(async (e) => {

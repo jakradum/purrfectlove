@@ -1,7 +1,8 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
+import posthog from 'posthog-js';
 import styles from './Care.module.css';
 import CatAvatar from './CatAvatar';
 import WaiverModal from './WaiverModal';
@@ -131,6 +132,24 @@ export default function SitterCard({
   const [formError, setFormError] = useState('');
   const [withdrawing, setWithdrawing] = useState(false);
 
+  // Analytics: fire sitter_card_viewed once when card scrolls into view
+  const cardRef = useRef(null);
+  useEffect(() => {
+    const el = cardRef.current;
+    if (!el || !_id) return;
+    const observer = new IntersectionObserver(
+      ([entry]) => {
+        if (entry.isIntersecting) {
+          if (posthog.__loaded) posthog.capture('sitter_card_viewed', { sitter_id: _id });
+          observer.disconnect();
+        }
+      },
+      { threshold: 0.5 }
+    );
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [_id]);
+
   // Compatibility: traits of selected cats that match sitter's behavioralTraits
   const catTraitSet = new Set(
     (myCatData || [])
@@ -223,7 +242,7 @@ export default function SitterCard({
 
   return (
     <>
-    <div className={styles.card}>
+    <div className={styles.card} ref={cardRef}>
       {/* Cover */}
       <div
         className={styles.cardCover}
@@ -352,7 +371,10 @@ export default function SitterCard({
           <button
             type="button"
             className={styles.cardBookBtn}
-            onClick={() => setWaiverOpen(true)}
+            onClick={() => {
+              if (posthog.__loaded) posthog.capture('booking_initiated', { sitter_id: _id });
+              setWaiverOpen(true);
+            }}
           >
             {locale === 'de' ? 'Für diese Daten anfragen' : 'Book for these dates'}
           </button>

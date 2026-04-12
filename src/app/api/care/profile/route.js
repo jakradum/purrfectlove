@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { getSupabaseUser } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
+import { captureServerEvent } from '@/lib/posthogServer'
 import { createRequire } from 'module'
 const require = createRequire(import.meta.url)
 const { OpenLocationCode } = require('open-location-code')
@@ -134,6 +135,22 @@ export async function PATCH(request) {
       .patch(user.sitterId)
       .set(patch)
       .commit()
+
+    // Analytics (non-blocking)
+    const AVAILABILITY_FIELDS = new Set([
+      'alwaysAvailable', 'unavailableDates', 'unavailableRanges', 'availableDates',
+      'availabilityDefault', 'unavailableDatesV2',
+    ])
+    const isAvailabilityUpdate = Object.keys(patch).some(k => AVAILABILITY_FIELDS.has(k))
+    const isCanSitToggle = 'canSit' in patch
+
+    captureServerEvent(user.sitterId, 'profile_updated').catch(() => {})
+    if (isAvailabilityUpdate) {
+      captureServerEvent(user.sitterId, 'availability_updated').catch(() => {})
+    }
+    if (isCanSitToggle) {
+      captureServerEvent(user.sitterId, 'can_sit_toggled', { new_value: !!patch.canSit }).catch(() => {})
+    }
 
     return Response.json(updated)
   } catch (error) {

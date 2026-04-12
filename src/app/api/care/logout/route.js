@@ -1,5 +1,6 @@
 import { createServerClient } from '@supabase/ssr'
 import { cookies } from 'next/headers'
+import { captureServerEvent } from '@/lib/posthogServer'
 
 export async function POST() {
   const cookieStore = await cookies()
@@ -15,6 +16,13 @@ export async function POST() {
       },
     }
   )
+
+  // Capture before signing out while we still have the session
+  const { data: { user: currentUser } } = await supabase.auth.getUser()
+  const sitterIdForEvent = currentUser?.user_metadata?.sitterId
+  if (sitterIdForEvent) {
+    captureServerEvent(sitterIdForEvent, 'user_logged_out').catch(() => {})
+  }
 
   await supabase.auth.signOut()
 

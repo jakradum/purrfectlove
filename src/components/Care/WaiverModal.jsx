@@ -1,6 +1,7 @@
 'use client';
 
 import { createPortal } from 'react-dom';
+import posthog from 'posthog-js';
 import styles from './Care.module.css';
 
 const STRINGS = {
@@ -45,7 +46,10 @@ export default function WaiverModal({ onAgree, onCancel, locale = 'en' }) {
         <button
           type="button"
           className={styles.waiverContinueBtn}
-          onClick={onAgree}
+          onClick={() => {
+            if (posthog.__loaded) posthog.capture('waiver_accepted');
+            onAgree();
+          }}
         >
           {t.agreeBtn}
         </button>

@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
 import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
+import { captureServerEvent } from '@/lib/posthogServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -152,6 +153,8 @@ export async function POST(request) {
         text: `Booking #${ref} has been cancelled\n\nHi ${otherName},\n\n${cancellerName} has cancelled booking #${ref} (${startFmt} – ${endFmt}).\n\nReason: ${reason.trim()}\n\nView booking: ${deepLink}\n\n– The Purrfect Love Community`,
       })
     }
+
+    captureServerEvent(userId, 'booking_cancelled', { cancelled_by: cancelledBy }).catch(() => {})
 
     return Response.json({ success: true })
   } catch (error) {

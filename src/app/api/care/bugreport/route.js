@@ -1,5 +1,6 @@
 import { createClient } from '@sanity/client'
 import { getSupabaseUser, createSupabaseAdminClient } from '@/lib/supabaseServer'
+import { captureServerEvent } from '@/lib/posthogServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -34,6 +35,8 @@ export async function POST(request) {
       date: new Date().toISOString().slice(0, 10),
       status: 'new',
     })
+
+    captureServerEvent(user.sitterId, 'bug_report_submitted').catch(() => {})
 
     return Response.json({ success: true })
   } catch (error) {

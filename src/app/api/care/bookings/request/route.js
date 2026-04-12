@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
 import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
+import { captureServerEvent } from '@/lib/posthogServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -227,6 +228,14 @@ export async function POST(request) {
     } catch (notifError) {
       console.error('bookings/request notification error:', notifError)
     }
+
+    const start = new Date(startDate)
+    const end = new Date(endDate)
+    const durationNights = Math.round((end - start) / (1000 * 60 * 60 * 24))
+    captureServerEvent(user.sitterId, 'booking_requested', {
+      sit_type: sitType || null,
+      duration_nights: durationNights,
+    }).catch(() => {})
 
     return Response.json({ bookingRef, bookingId })
   } catch (error) {
