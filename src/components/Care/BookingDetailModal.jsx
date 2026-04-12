@@ -316,6 +316,11 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
           </div>
           <div className={styles.dtChips}>
             <span className={`${styles.dtChip} ${styles.dtChipDate}`}>{dateRange}</span>
+            {detail.sitType && (
+              <span className={`${styles.dtChip} ${styles.dtChipType}`}>
+                {detail.sitType === 'home_visit' ? 'Home visit' : 'Drop-off'}
+              </span>
+            )}
             <span className={`${styles.dtChip} ${styles[statusChipCls]}`}>{statusLabel}</span>
           </div>
         </div>

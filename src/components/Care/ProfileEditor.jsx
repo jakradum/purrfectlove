@@ -358,6 +358,7 @@ export default function ProfileEditor({ initialData }) {
           maxHomesPerDay: form.maxHomesPerDay !== '' ? Number(form.maxHomesPerDay) : undefined,
           maxCatsPerDay: form.maxCatsPerDay !== '' ? Number(form.maxCatsPerDay) : undefined,
           cats: form.cats.map((cat) => ({
+            _key: cat._key || Math.random().toString(36).slice(2, 14),
             ...cat,
             age: cat.age !== '' && cat.age !== undefined ? Number(cat.age) : undefined,
           })),
@@ -443,7 +444,7 @@ export default function ProfileEditor({ initialData }) {
   };
 
   // Cats helpers
-  const addCat = () => update('cats', [...form.cats, { name: '', age: '', personality: [], diet: [] }]);
+  const addCat = () => update('cats', [...form.cats, { _key: Math.random().toString(36).slice(2, 14), name: '', age: '', personality: [], diet: [] }]);
   const updateCat = (idx, field, value) => {
     const updated = form.cats.map((c, i) => {
       if (i !== idx) return c;

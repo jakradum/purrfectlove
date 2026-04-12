@@ -27,6 +27,17 @@ function formatDateRange(start, end) {
   return `${fmt(start)} – ${fmt(end)}`;
 }
 
+const SIT_TYPE_LABELS = {
+  home_visit: 'Home visit',
+  drop_off:   'Drop-off',
+};
+
+function SitTypeBadge({ type }) {
+  const label = SIT_TYPE_LABELS[type];
+  if (!label) return null;
+  return <span className={styles.sitTypeBadge}>{label}</span>;
+}
+
 const STATUS_MAP = {
   pending:     { label: 'Awaiting',    cls: 'statusBadgePending' },
   confirmed:   { label: 'Confirmed',   cls: 'statusBadgeConfirmed' },
@@ -123,6 +134,7 @@ function TableRow({ booking, colHeader, onClick, onWithdraw, isNew }) {
     <tr className={`${styles.tableRow} ${styles.tableRowClickable} ${isNew ? styles.tableRowNew : ''}`} onClick={onClick}>
       <td>
         <div className={styles.tdName}>{name}</div>
+        {booking.sitType && <SitTypeBadge type={booking.sitType} />}
         {booking.bookingRef && <div className={styles.tdRef}>#{booking.bookingRef}</div>}
       </td>
       <td>
@@ -199,6 +211,7 @@ function MobileItem({ booking, colHeader, onClick, onWithdraw, isNew }) {
           {formatDateRange(booking.startDate, booking.endDate)}
           {cats ? ` · ${cats}` : ''}
         </div>
+        {booking.sitType && <SitTypeBadge type={booking.sitType} />}
         {booking.bookingRef && <div className={styles.bookingRef}>#{booking.bookingRef}</div>}
       </div>
       <div className={styles.bookingRight} style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: 6 }}>

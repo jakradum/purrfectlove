@@ -50,7 +50,7 @@ export async function GET(request, { params }) {
 
     const { data: booking, error: fetchError } = await db
       .from('bookings')
-      .select('*')
+      .select('id, booking_ref, start_date, end_date, status, cats, message, cancellation_reason, cancelled_by, cancelled_at, sitter_id, parent_id, sit_type')
       .eq('id', bookingId)
       .is('deleted_at', null)
       .single()
@@ -80,11 +80,20 @@ export async function GET(request, { params }) {
       serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.parent_id }),
     ])
 
-    const lat = other?.location?.lat
-    const lng = other?.location?.lng
+    const sitType = booking.sit_type
+
+    // Location is shared only in the direction travel goes:
+    // - home visit: sitter travels to parent → sitter sees parent's location, parent does not see sitter's
+    // - drop-off:   parent travels to sitter → parent sees sitter's location, sitter does not see parent's
+    const showOtherLocation = sitType === 'home_visit' ? role === 'sitter' : role === 'parent'
+
+    const lat = showOtherLocation ? (other?.location?.lat || null) : null
+    const lng = showOtherLocation ? (other?.location?.lng || null) : null
 
     // Prefer the stored location name; fall back to reverse geocoding only if absent
-    const otherNeighbourhood = other?.location?.name || await reverseGeocode(lat, lng)
+    const otherNeighbourhood = showOtherLocation
+      ? (other?.location?.name || await reverseGeocode(other?.location?.lat, other?.location?.lng))
+      : null
     const myNeighbourhood    = myProfile?.location?.name || null
 
     const statusNote = booking.status === 'unavailable'
@@ -105,6 +114,7 @@ export async function GET(request, { params }) {
       endDate:            booking.end_date,
       status:             booking.status,
       statusNote,
+      sitType:            sitType || null,
       cats:               booking.cats || [],
       message:            booking.message || null,
       cancellationReason: booking.cancellation_reason || null,

@@ -4021,6 +4021,17 @@
   border: 0.5px solid #ddd;
 }
 
+.sitTypeBadge {
+  display: inline-block;
+  font-size: 10px;
+  border-radius: 5px;
+  padding: 3px 8px;
+  font-weight: 500;
+  background: #EDF5F3;
+  color: #2C5F4F;
+  border: 0.5px solid rgba(44, 95, 79, 0.3);
+}
+
 /* ── Mobile list (hidden on desktop) ── */
 .bookingsTableWrap { display: block; }
 .bookingsMobileList { display: none; }
@@ -4283,6 +4294,11 @@
   background: rgba(240, 87, 72, 0.25);
   color: #fff;
   border: 0.5px solid rgba(240, 87, 72, 0.5);
+}
+
+.dtChipType {
+  background: rgba(255, 255, 255, 0.18);
+  color: #fff;
 }
 
 /* Body */

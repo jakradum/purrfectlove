@@ -21,12 +21,12 @@ export async function GET(request) {
 
     const [{ data: asParentRows }, { data: asSitterRows }] = await Promise.all([
       db.from('bookings')
-        .select('id, booking_ref, start_date, end_date, status, cats, sitter_id, parent_id')
+        .select('id, booking_ref, start_date, end_date, status, cats, sitter_id, parent_id, sit_type')
         .eq('parent_id', userId)
         .is('deleted_at', null)
         .order('start_date', { ascending: true }),
       db.from('bookings')
-        .select('id, booking_ref, start_date, end_date, status, cats, sitter_id, parent_id')
+        .select('id, booking_ref, start_date, end_date, status, cats, sitter_id, parent_id, sit_type')
         .eq('sitter_id', userId)
         .is('deleted_at', null)
         .order('start_date', { ascending: true }),
@@ -53,6 +53,7 @@ export async function GET(request) {
       endDate:    row.end_date,
       status:     row.status,
       cats:       row.cats || [],
+      sitType:    row.sit_type || null,
       sitterId:   row.sitter_id,
       sitterName: nameMap[row.sitter_id] || 'Member',
       parentName: nameMap[row.parent_id] || 'Member',
