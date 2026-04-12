@@ -17,7 +17,15 @@ async function verifyToken(id, expiresAtMs, token) {
   )
   const data = encoder.encode(`${id}.${expiresAtMs}`)
   const sig = await crypto.subtle.sign('HMAC', key, data)
-  return Buffer.from(sig).toString('hex') === token
+  const expected = Buffer.from(sig)
+  let received
+  try {
+    received = Buffer.from(token, 'hex')
+  } catch {
+    return false
+  }
+  if (expected.length !== received.length) return false
+  return crypto.timingSafeEqual(expected, received)
 }
 
 const html = (body) => new Response(

@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { getSupabaseUser } from '@/lib/supabaseServer'
+import { getSupabaseUser, createSupabaseAdminClient, createSupabaseDbClient } from '@/lib/supabaseServer'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -38,6 +38,48 @@ export async function POST(request) {
 
     // Delete the catSitter document
     await serverClient.delete(sitterId)
+
+    // Purge all Sanity documents containing the user's personal data
+    await Promise.allSettled([
+      // Messages (sent or received)
+      serverClient.delete({
+        query: `*[_type == "message" && (from._ref == $id || to._ref == $id)]`,
+        params: { id: sitterId },
+      }),
+      // Bug reports / portal feedback submitted by this user
+      serverClient.delete({
+        query: `*[_type == "portalFeedback" && submittedBy._ref == $id]`,
+        params: { id: sitterId },
+      }),
+      // Member reports (as reporter or subject)
+      serverClient.delete({
+        query: `*[_type == "memberReport" && (reporter._ref == $id || reportedMember._ref == $id)]`,
+        params: { id: sitterId },
+      }),
+      // In-app notifications addressed to this user
+      serverClient.delete({
+        query: `*[_type == "notification" && recipient._ref == $id]`,
+        params: { id: sitterId },
+      }),
+      // Block relationships involving this user
+      serverClient.delete({
+        query: `*[_type == "blockedUser" && (blocker._ref == $id || blocked._ref == $id)]`,
+        params: { id: sitterId },
+      }),
+    ])
+
+    // Soft-delete all bookings involving this user in Supabase
+    // (preserves booking history for the other party while removing the association)
+    const db = createSupabaseDbClient()
+    await db
+      .from('bookings')
+      .update({ deleted_at: new Date().toISOString() })
+      .or(`parent_id.eq.${sitterId},sitter_id.eq.${sitterId}`)
+      .is('deleted_at', null)
+
+    // Delete the Supabase auth user — completes GDPR right to erasure
+    const supabaseAdmin = createSupabaseAdminClient()
+    await supabaseAdmin.auth.admin.deleteUser(user.user.id)
 
     return Response.json({ success: true })
   } catch (error) {

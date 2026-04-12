@@ -91,6 +91,13 @@ export async function GET(request, { params }) {
       ? 'The cat parent found a sitter for these dates — no action needed from you.'
       : null
 
+    // Contact details are released only when the booking is confirmed AND
+    // the sit starts within 2 days (or has already started).
+    const twoDaysBeforeStart = new Date(booking.start_date)
+    twoDaysBeforeStart.setDate(twoDaysBeforeStart.getDate() - 2)
+    const contactReleased =
+      booking.status === 'confirmed' && new Date() >= twoDaysBeforeStart
+
     return Response.json({
       _id:                booking.id,
       bookingRef:         booking.booking_ref,
@@ -107,10 +114,11 @@ export async function GET(request, { params }) {
       sitterName:      sitterProfile?.name || 'Member',
       parentName:      parentProfile?.name || 'Member',
       myNeighbourhood: myNeighbourhood || null,
+      contactReleased,
       other: {
         name:          other?.name || 'Member',
-        email:         other?.email || null,
-        phone:         other?.phone || null,
+        email:         contactReleased ? (other?.email || null) : null,
+        phone:         contactReleased ? (other?.phone || null) : null,
         lat:           lat || null,
         lng:           lng || null,
         neighbourhood: otherNeighbourhood || null,

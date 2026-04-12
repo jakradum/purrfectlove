@@ -28,13 +28,14 @@ export async function GET(request) {
       return Response.json(member || null)
     }
 
-    // Seeker-only marketplace: exclude self, only show canSit members
+    // Seeker-only marketplace: exclude self, only show canSit members.
+    // Contact details (email, phone) are intentionally omitted here — they are
+    // only released in the booking detail endpoint once the sit is confirmed and
+    // within 2 days of the start date.
     const sitters = await serverClient.fetch(
       `*[_type == "catSitter" && _id != $selfId && canSit == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
         _id, _createdAt, name, location, bio, contactPreference, siteAdmin, avatarColour,
         identityVerified, trustedSitter,
-        "email": select(hideEmail == true => null, email),
-        "phone": select(hideWhatsApp == true => null, phone),
         "photoUrl": photo.asset->url,
         "coverImageUrl": coverImage.asset->url,
         hideEmail, hideWhatsApp,

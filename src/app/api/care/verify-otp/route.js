@@ -5,6 +5,18 @@ import { NextResponse } from 'next/server'
 import { Resend } from 'resend'
 import { captureServerEvent } from '@/lib/posthogServer'
 
+/** Generate a permanent HMAC token for an unsubscribe link. No expiry — links should work forever. */
+async function generateUnsubToken(sitterId) {
+  const secret = process.env.APPROVAL_SECRET
+  if (!secret) return null
+  const encoder = new TextEncoder()
+  const key = await crypto.subtle.importKey(
+    'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  )
+  const sig = await crypto.subtle.sign('HMAC', key, encoder.encode(`unsub.${sitterId}`))
+  return Buffer.from(sig).toString('hex')
+}
+
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 const sanity = createClient({
@@ -198,7 +210,10 @@ export async function POST(request) {
       if (recipientEmail && process.env.NODE_ENV === 'production') {
         const locale = resolvedCatSitter.locale || 'en'
         const firstName = (resolvedCatSitter.name || '').split(' ')[0] || 'there'
-        const unsubUrl = `https://care.purrfectlove.org/api/care/unsubscribe?id=${resolvedCatSitter._id}`
+        const unsubToken = await generateUnsubToken(resolvedCatSitter._id).catch(() => null)
+        const unsubUrl = unsubToken
+          ? `https://care.purrfectlove.org/api/care/unsubscribe?id=${resolvedCatSitter._id}&token=${unsubToken}`
+          : `https://care.purrfectlove.org/api/care/unsubscribe?id=${resolvedCatSitter._id}`
         const isDE = locale === 'de'
         try {
           await resend.emails.send({

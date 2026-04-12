@@ -13,6 +13,10 @@ export default function PostHogProvider({ children, sitterId, name, locale, isTe
       api_host: process.env.NEXT_PUBLIC_POSTHOG_HOST || 'https://eu.i.posthog.com',
       capture_pageview: false, // handled by PostHogPageView
       persistence: 'localStorage+cookie',
+      session_recording: {
+        maskAllInputs: true,
+        maskTextSelector: '[data-sensitive]',
+      },
     })
   }, [])
 

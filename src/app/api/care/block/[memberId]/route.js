@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { getSupabaseUser } from '@/lib/supabaseServer'
 import { adjustScore } from '@/lib/memberScore'
+import { rateLimit } from '@/lib/rateLimit'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -20,8 +21,22 @@ export async function POST(request, { params }) {
     const { memberId } = await params
     const sitterId = user.sitterId
 
+    // 5 block actions per hour per user
+    if (!rateLimit(`block:${sitterId}`, 5, 60 * 60 * 1000)) {
+      return Response.json({ error: 'Too many requests. Please wait before blocking again.' }, { status: 429 })
+    }
+
     if (memberId === sitterId) {
       return Response.json({ error: 'Cannot block yourself' }, { status: 400 })
+    }
+
+    // Prevent blocking team members / admins
+    const target = await serverClient.fetch(
+      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
+      { id: memberId }
+    )
+    if (target?.siteAdmin === true) {
+      return Response.json({ error: 'You cannot block a team member.' }, { status: 403 })
     }
 
     const body = await request.json().catch(() => ({}))
