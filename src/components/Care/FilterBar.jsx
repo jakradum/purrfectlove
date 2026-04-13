@@ -142,7 +142,6 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
             </div>
             <div className={styles.filterTextGroup}>
               <span className={styles.filterLabel}>{locale === 'de' ? 'Datum' : 'Dates'}</span>
-              <span className={styles.filterValue}>{datesValue}</span>
             </div>
           </button>
 
@@ -159,9 +158,6 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
             </div>
             <div className={styles.filterTextGroup}>
               <span className={styles.filterLabel}>{locale === 'de' ? 'Art' : 'Sit type'}</span>
-              <span className={styles.filterValue}>
-                {sitType === 'home_visit' ? 'Home visits' : sitType === 'drop_off' ? 'Drop off' : 'Any'}
-              </span>
             </div>
           </button>
 
@@ -192,7 +188,6 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
             </div>
             <div className={styles.filterTextGroup}>
               <span className={styles.filterLabel}>{locale === 'de' ? 'Radius' : 'Radius'}</span>
-              <span className={styles.filterValue}>{hasLocation ? `Within ${radius} km` : 'No location'}</span>
             </div>
           </button>
         </div>
