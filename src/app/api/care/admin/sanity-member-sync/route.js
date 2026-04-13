@@ -1,5 +1,14 @@
 import { createHmac, timingSafeEqual } from 'crypto'
+import { createClient } from '@sanity/client'
 import { createSupabaseAdminClient } from '@/lib/supabaseServer'
+
+const sanity = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
+  token: process.env.SANITY_API_TOKEN,
+  apiVersion: '2024-01-01',
+  useCdn: false,
+})
 
 // Verifies the sanity-webhook-signature header.
 // Sanity format: "t=<timestamp>,v1=<hex_hmac>"
@@ -57,11 +66,14 @@ export async function POST(request) {
   if (existingUser) {
     // User exists — update sitterId if it's pointing somewhere else
     if (existingUser.user_metadata?.sitterId === sitterId) {
+      // Still ensure memberVerified is true in Sanity (idempotent)
+      await sanity.patch(sitterId).set({ memberVerified: true }).commit().catch(() => {})
       return Response.json({ status: 'already_synced' })
     }
     await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
       user_metadata: { ...existingUser.user_metadata, sitterId },
     })
+    await sanity.patch(sitterId).set({ memberVerified: true }).commit().catch(() => {})
     return Response.json({ status: 'updated', userId: existingUser.id })
   }
 
@@ -76,6 +88,9 @@ export async function POST(request) {
     console.error('sanity-member-sync createUser error:', error)
     return Response.json({ error: error.message }, { status: 500 })
   }
+
+  // Mark as verified in Sanity so the OTP gate in send-otp passes
+  await sanity.patch(sitterId).set({ memberVerified: true }).commit().catch(() => {})
 
   return Response.json({ status: 'created', userId: created.user.id })
 }
