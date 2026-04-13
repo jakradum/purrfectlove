@@ -661,10 +661,40 @@ export default function SitterCard({
               </div>
             )}
 
-            {catNamesDisplay && (
+            {(cats || []).length > 0 && (
               <div className={styles.sitterModalSection}>
                 <p className={styles.sitterModalSectionTitle}>Their cats</p>
-                <p style={{ margin: 0, fontSize: '0.875rem', color: '#555' }}>{catNamesDisplay}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                  {(cats || []).map((cat, i) => {
+                    const meta = [
+                      cat.breed || null,
+                      cat.age != null ? `${cat.age} yr${cat.age !== 1 ? 's' : ''}` : null,
+                    ].filter(Boolean).join(' · ');
+                    const personalityTags = (cat.personality || []);
+                    return (
+                      <div key={cat.name || i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
+                        {cat.photoUrl ? (
+                          <img src={cat.photoUrl} alt={cat.name} style={{ width: 36, height: 36, borderRadius: '50%', objectFit: 'cover', flexShrink: 0, border: '2px solid #e5e7eb' }} />
+                        ) : (
+                          <div style={{ width: 36, height: 36, borderRadius: '50%', background: '#EAF3DE', flexShrink: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18 }}>🐱</div>
+                        )}
+                        <div>
+                          <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#2D2D2D' }}>{cat.name || 'Cat'}</p>
+                          {meta && <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#888' }}>{meta}</p>}
+                          {personalityTags.length > 0 && (
+                            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.3rem' }}>
+                              {personalityTags.map(tag => (
+                                <span key={tag} style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: 999, background: '#F5F0E8', color: '#5A4033', fontWeight: 500 }}>
+                                  {tagLabels[tag] || tag}
+                                </span>
+                              ))}
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
               </div>
             )}
 

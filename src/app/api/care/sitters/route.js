@@ -42,7 +42,8 @@ export async function GET(request) {
         maxHomesPerDay, maxCatsPerDay, feedingTypes, behavioralTraits, canDoHomeVisit, canHostCats,
         availableDates, alwaysAvailable, unavailableDates, unavailableRanges,
         availabilityDefault, unavailableDatesV2, blockedByBooking,
-        "rating": sitterScore.rating
+        "rating": sitterScore.rating,
+        cats[]{ name, breed, age, personality, feedingNotes, "photoUrl": photo.asset->url }
       }`,
       { selfId: user.sitterId }
     )
