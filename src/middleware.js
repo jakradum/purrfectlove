@@ -54,6 +54,7 @@ export async function middleware(request) {
     '/api/care/cron/expire-bookings', // verified by CRON_SECRET, not session cookie
     // Subdomain equivalents (before the /care rewrite is applied)
     '/login', '/privacy', '/join',
+    '/profile/privacy', '/care/profile/privacy',
   ];
 
   const isPublic = PUBLIC_PREFIXES.some(p => pathname === p || pathname.startsWith(p + '/'));
