@@ -1,7 +1,7 @@
 import { createClient } from '@sanity/client'
 import { getSupabaseUser } from '@/lib/supabaseServer'
 import { adjustScore } from '@/lib/memberScore'
-import { rateLimit } from '@/lib/rateLimit'
+import { rateLimit, shouldRateLimit } from '@/lib/rateLimit'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -18,8 +18,8 @@ export async function POST(request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    // 10 feedback submissions per hour per user
-    if (!rateLimit(`feedback:${user.sitterId}`, 10, 60 * 60 * 1000)) {
+    // 10 feedback submissions per hour per user (only when ≥25 real members; team always exempt)
+    if (!user.isTeamMember && await shouldRateLimit() && !rateLimit(`feedback:${user.sitterId}`, 10, 60 * 60 * 1000)) {
       return Response.json({ error: 'Too many requests. Please wait before submitting again.' }, { status: 429 })
     }
 

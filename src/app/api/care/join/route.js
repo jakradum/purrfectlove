@@ -1,6 +1,6 @@
 import { Resend } from 'resend'
 import { createSupabaseDbClient } from '@/lib/supabaseServer'
-import { rateLimit } from '@/lib/rateLimit'
+import { rateLimit, shouldRateLimit } from '@/lib/rateLimit'
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -17,9 +17,9 @@ async function generateToken(id, expiresAtMs) {
 
 export async function POST(request) {
   try {
-    // IP-based rate limit: 3 join requests per hour per IP
+    // IP-based rate limit: 3 join requests per hour per IP (only when ≥25 real members)
     const ip = request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() || 'unknown'
-    if (!rateLimit(`join:${ip}`, 3, 60 * 60 * 1000)) {
+    if (await shouldRateLimit() && !rateLimit(`join:${ip}`, 3, 60 * 60 * 1000)) {
       return Response.json({ error: 'Too many requests. Please wait before trying again.' }, { status: 429 })
     }
 
