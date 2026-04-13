@@ -163,19 +163,6 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
 
           <div className={styles.filterDivider} />
 
-          {/* Refresh button */}
-          <button
-            type="button"
-            className={styles.filterRefreshBtn}
-            onClick={onRefresh}
-            title="Refresh results"
-            aria-label="Refresh results"
-          >
-            <RefreshIcon />
-          </button>
-
-          <div className={styles.filterDivider} />
-
           {/* Radius section */}
           <button
             type="button"

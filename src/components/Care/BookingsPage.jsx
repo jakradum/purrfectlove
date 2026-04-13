@@ -329,8 +329,8 @@ export default function BookingsPage({ locale }) {
     fetchBookings();
   };
 
-  const parentHasPending = asParent.some(b => b.status === 'pending');
-  const sitterHasPending = asSitter.some(b => b.status === 'pending');
+  const parentHasPending = asParent.some(b => isNotifWorthy(b, 'parent') && !seenIds.has(b._id));
+  const sitterHasPending = asSitter.some(b => b.status === 'pending' && !seenIds.has(b._id));
 
   return (
     <div className={styles.bookingsPage}>

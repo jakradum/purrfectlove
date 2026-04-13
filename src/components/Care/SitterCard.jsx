@@ -1,11 +1,13 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import Link from 'next/link';
 import posthog from 'posthog-js';
 import styles from './Care.module.css';
 import CatAvatar from './CatAvatar';
 import WaiverModal from './WaiverModal';
+import BookingRequestModal from './BookingRequestModal';
 
 const TAG_LABELS = {
   en: {
@@ -123,10 +125,21 @@ export default function SitterCard({
 
   // ── UX-10: traits expand toggle ───────────────────────────────────────────
   const [traitsExpanded, setTraitsExpanded] = useState(false);
-  // ── UX-11: profile modal ──────────────────────────────────────────────────
+  // ── Profile modal ─────────────────────────────────────────────────────────
   const [profileOpen, setProfileOpen] = useState(false);
-  // ── Inline booking form state ──────────────────────────────────────────────
+  // ── Booking flow state ────────────────────────────────────────────────────
   const [waiverOpen, setWaiverOpen] = useState(false);
+  const [bookingModalOpen, setBookingModalOpen] = useState(false);
+
+  const openBookingFlow = () => {
+    if (posthog.__loaded) posthog.capture('booking_initiated', { sitter_id: _id });
+    const waiverAccepted = typeof window !== 'undefined' && localStorage.getItem('pl_waiver_accepted');
+    if (waiverAccepted) {
+      setBookingModalOpen(true);
+    } else {
+      setWaiverOpen(true);
+    }
+  };
   const [myCatData, setMyCatData] = useState(null); // null = not yet fetched, [] = fetched but empty
   const myCats = myCatData ? myCatData.map(c => c.name).filter(Boolean) : null;
   const [selectedCats, setSelectedCats] = useState([]);
@@ -246,7 +259,7 @@ export default function SitterCard({
 
   return (
     <>
-    <div className={styles.card} ref={cardRef} onClick={() => setProfileOpen(true)} style={{ cursor: 'pointer' }}>
+    <div className={styles.card} ref={cardRef}>
       {/* Cover */}
       <div
         className={styles.cardCover}
@@ -298,10 +311,15 @@ export default function SitterCard({
               </div>
             )}
           </div>
-          <div className={styles.cardIconRow} onClick={e => e.stopPropagation()}>
-            <Link href={`/care/${_id}`} className={styles.cardIconBtn} title="View full profile">
+          <div className={styles.cardIconRow}>
+            <button
+              type="button"
+              className={styles.cardIconBtn}
+              title="View profile"
+              onClick={() => setProfileOpen(true)}
+            >
               <IconPerson />
-            </Link>
+            </button>
           </div>
         </div>
 
@@ -398,11 +416,7 @@ export default function SitterCard({
           <button
             type="button"
             className={styles.cardBookBtn}
-            onClick={e => {
-              e.stopPropagation();
-              if (posthog.__loaded) posthog.capture('booking_initiated', { sitter_id: _id });
-              setWaiverOpen(true);
-            }}
+            onClick={e => { e.stopPropagation(); openBookingFlow(); }}
           >
             {locale === 'de' ? 'Für diese Daten anfragen' : 'Book for these dates'}
           </button>
@@ -554,16 +568,35 @@ export default function SitterCard({
     {waiverOpen && (
       <WaiverModal
         locale={locale}
-        onAgree={() => { setWaiverOpen(false); onExpand(); }}
+        onAgree={() => {
+          localStorage.setItem('pl_waiver_accepted', '1');
+          setWaiverOpen(false);
+          setBookingModalOpen(true);
+        }}
         onCancel={() => setWaiverOpen(false)}
       />
     )}
 
-    {/* ── UX-11: Profile modal / bottom sheet ── */}
-    {profileOpen && (
+    {bookingModalOpen && (
+      <BookingRequestModal
+        sitterId={_id}
+        sitterName={displayName}
+        startDate={startDate}
+        endDate={endDate}
+        canDoHomeVisit={canDoHomeVisit}
+        canHostCats={canHostCats}
+        sitterProfile={sitter}
+        onClose={() => setBookingModalOpen(false)}
+        onSuccess={({ bookingRef, bookingId }) => {
+          onBooked?.(bookingRef, bookingId);
+        }}
+      />
+    )}
+
+    {/* ── Profile modal ── */}
+    {profileOpen && createPortal(
       <div className={styles.sitterModalOverlay} onClick={() => setProfileOpen(false)}>
         <div className={styles.sitterModal} onClick={e => e.stopPropagation()}>
-          {/* Cover */}
           <div
             className={styles.sitterModalCover}
             style={coverImageUrl
@@ -578,7 +611,6 @@ export default function SitterCard({
           </div>
 
           <div className={styles.sitterModalBody}>
-            {/* Name + meta */}
             <p className={styles.sitterModalName}>
               {displayName}
               {identityVerified && <span className={styles.verifiedBadge} title="Identity verified"> ✓</span>}
@@ -592,10 +624,8 @@ export default function SitterCard({
               ].filter(Boolean).join(' · ')}
             </p>
 
-            {/* Bio */}
             {bio && <p className={styles.sitterModalBio}>{bio}</p>}
 
-            {/* Availability */}
             {availLabel && (
               <div className={styles.sitterModalSection}>
                 <p className={styles.sitterModalSectionTitle}>Availability</p>
@@ -606,19 +636,17 @@ export default function SitterCard({
               </div>
             )}
 
-            {/* Sit types */}
             {(canDoHomeVisit || canHostCats) && (
               <div className={styles.sitterModalSection}>
                 <p className={styles.sitterModalSectionTitle}>Sits offered</p>
                 <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
                   {canDoHomeVisit && <span className={styles.capabilityPill}>Home visits</span>}
-                  {canHostCats && <span className={styles.capabilityPill}>Drop off</span>}
+                  {canHostCats && <span className={styles.capabilityPill}>Drop-off</span>}
                   {maxCatsPerDay > 0 && <span className={styles.capabilityPill}>Up to {maxCatsPerDay} cat{maxCatsPerDay !== 1 ? 's' : ''}/day</span>}
                 </div>
               </div>
             )}
 
-            {/* All capabilities */}
             {allCaps.length > 0 && (
               <div className={styles.sitterModalSection}>
                 <p className={styles.sitterModalSectionTitle}>Cats I can handle</p>
@@ -633,7 +661,6 @@ export default function SitterCard({
               </div>
             )}
 
-            {/* Cat names */}
             {catNamesDisplay && (
               <div className={styles.sitterModalSection}>
                 <p className={styles.sitterModalSectionTitle}>Their cats</p>
@@ -641,16 +668,11 @@ export default function SitterCard({
               </div>
             )}
 
-            {/* Book button */}
             {hasDates && !bookingState?.status ? (
               <button
                 type="button"
                 className={styles.sitterModalBookBtn}
-                onClick={() => {
-                  setProfileOpen(false);
-                  if (posthog.__loaded) posthog.capture('booking_initiated', { sitter_id: _id, source: 'modal' });
-                  setWaiverOpen(true);
-                }}
+                onClick={() => { setProfileOpen(false); openBookingFlow(); }}
               >
                 {locale === 'de' ? 'Für diese Daten anfragen' : 'Book for these dates'}
               </button>
@@ -661,7 +683,8 @@ export default function SitterCard({
             ) : null}
           </div>
         </div>
-      </div>
+      </div>,
+      document.body
     )}
     </>
   );

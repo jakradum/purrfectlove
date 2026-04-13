@@ -5434,7 +5434,7 @@
   position: fixed;
   inset: 0;
   background: rgba(0, 0, 0, 0.45);
-  z-index: 900;
+  z-index: 1100;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -5558,10 +5558,121 @@
 
 /* ── Filter summary line (UX-13) ── */
 .filterSummary {
-  max-width: 720px;
-  margin: 0 auto;
-  padding: 0.35rem 1rem 0;
+  display: block;
+  width: fit-content;
+  margin: 0.5rem auto 0.75rem;
+  padding: 0.3rem 1rem;
+  font-size: 0.76rem;
+  font-weight: 600;
+  color: #2C5F4F;
+  font-family: var(--font-outfit);
+  background: #EAF3DE;
+  border-radius: 999px;
+  letter-spacing: 0.01em;
+}
+
+/* ── Booking request bottom sheet ── */
+.bookReqOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 1000;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+@keyframes bookReqSlideUp {
+  from { transform: translateY(48px); opacity: 0; }
+  to   { transform: translateY(0);    opacity: 1; }
+}
+
+.bookReqSheet {
+  width: 100%;
+  max-width: 520px;
+  max-height: 92vh;
+  overflow-y: auto;
+  background: #fff;
+  border-radius: 16px 16px 0 0;
+  animation: bookReqSlideUp 0.22s ease;
+  position: relative;
+  -webkit-overflow-scrolling: touch;
+}
+
+.bookReqHandle {
+  width: 36px;
+  height: 4px;
+  background: rgba(0, 0, 0, 0.15);
+  border-radius: 2px;
+  margin: 10px auto 0;
+}
+
+.bookReqCover {
+  height: 90px;
+  position: relative;
+  flex-shrink: 0;
+  overflow: hidden;
+}
+
+.bookReqCloseBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255,255,255,0.9);
+  border: none;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #555;
+  font-size: 18px;
+  line-height: 1;
+  padding: 0;
+}
+
+.bookReqAvatarRow {
+  display: flex;
+  align-items: flex-end;
+  padding: 0 18px;
+  margin-top: -24px;
+  gap: 10px;
+}
+
+.bookReqProfileInfo {
+  padding: 8px 18px 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.bookReqSitterName {
+  font-size: 1rem;
+  font-weight: 700;
+  color: #1a1a1a;
+  margin: 0 0 2px;
+}
+
+.bookReqSitterMeta {
   font-size: 0.78rem;
   color: #888;
-  font-family: var(--font-outfit);
+  margin: 0 0 6px;
+}
+
+.bookReqSitterBio {
+  font-size: 0.85rem;
+  color: #444;
+  line-height: 1.5;
+  margin: 6px 0 8px;
+}
+
+.bookReqSitsPills {
+  display: flex;
+  gap: 6px;
+  flex-wrap: wrap;
+  margin-top: 6px;
+}
+
+.bookReqForm {
+  padding: 18px 18px 28px;
 }
