@@ -5,9 +5,9 @@ export default {
   fields: [
     // Team-set fields
     { name: 'name', title: 'Display Name', type: 'string' },
-    { name: 'email', title: 'Email', type: 'string', readOnly: true, description: 'Set by member via profile — do not edit manually. Required for members to log in via email.', validation: Rule => Rule.email() },
+    { name: 'email', title: 'Email', type: 'string', description: 'Login email. If set here without going through the email flow, also create a matching Supabase auth user with this sitterId in user_metadata.', validation: Rule => Rule.email() },
     { name: 'phone', title: 'Phone (used for login)', type: 'string', description: 'Optional. Format: +91XXXXXXXXXX or +49XXXXXXXXXX. Spaces are ignored automatically. Used for SMS OTP login.' },
-    { name: 'memberVerified', title: 'Member Verified', type: 'boolean', initialValue: false },
+    { name: 'memberVerified', title: 'Member Verified', type: 'boolean', initialValue: false, readOnly: true, description: 'Set automatically when member authenticates for the first time — do not edit manually.' },
     { name: 'admitted', title: 'Admitted', type: 'boolean', description: 'Set to true when approved, false when entry denied. If false, inbox-based approval is permanently blocked — override only via codebase.' },
     { name: 'siteAdmin', title: 'Site Admin', type: 'boolean', initialValue: false, description: 'Core team member — shown with Site Admin badge on the portal' },
     { name: 'photo', title: 'Photo', type: 'image', options: { hotspot: true }, description: 'Team members: set from Sanity. Regular members set their photo via their profile.' },
