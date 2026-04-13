@@ -113,6 +113,8 @@ export async function POST(request) {
       .limit(1)
 
     if (parentAlreadyConfirmed?.length > 0) {
+      // Mark this booking unavailable so sitter's UI stops showing it as pending
+      await db.from('bookings').update({ status: 'unavailable' }).eq('id', bookingId).eq('status', 'pending')
       return Response.json(
         { error: 'This sit has already been confirmed with another sitter.' },
         { status: 409 }
@@ -163,6 +165,8 @@ export async function POST(request) {
 
     if (!confirmed || confirmed.length === 0) {
       // Another sitter accepted in the ~ms between our pre-check and this update
+      // The booking is no longer pending — if it's still pending somehow, mark it unavailable
+      await db.from('bookings').update({ status: 'unavailable' }).eq('id', bookingId).eq('status', 'pending')
       return Response.json(
         { error: 'This sit has already been confirmed with another sitter.' },
         { status: 409 }
