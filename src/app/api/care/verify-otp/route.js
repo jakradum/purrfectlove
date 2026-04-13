@@ -204,8 +204,8 @@ export async function POST(request) {
       user_metadata: { sitterId, isTeamMember },
     })
 
-    // Send welcome email on first login (catSitters only)
-    if (resolvedCatSitter && !resolvedCatSitter.welcomeSent) {
+    // Welcome email disabled — content needs updating before re-enabling
+    if (false && resolvedCatSitter && !resolvedCatSitter.welcomeSent) {
       const recipientEmail = resolvedCatSitter.email || email
       if (recipientEmail && process.env.NODE_ENV === 'production') {
         const locale = resolvedCatSitter.locale || 'en'
