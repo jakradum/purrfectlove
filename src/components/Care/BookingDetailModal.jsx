@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './Care.module.css';
 import { BookingDetailSkeleton } from './Skeletons';
+import { createSupabaseBrowserClient } from '@/lib/supabaseClient';
 
 const STATUS_MAP = {
   pending:     'Awaiting',
@@ -155,6 +156,27 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
     const interval = setInterval(fetchDetail, 8000);
     return () => clearInterval(interval);
   }, [detail?.status, fetchDetail]);
+
+  // Realtime subscription: if this booking becomes unavailable while the modal is open,
+  // update status immediately so sitter sees it before trying to accept.
+  useEffect(() => {
+    if (!bookingId || !detail || detail.status !== 'pending') return;
+    const supabase = createSupabaseBrowserClient();
+    const channel = supabase
+      .channel(`booking-${bookingId}`)
+      .on(
+        'postgres_changes',
+        { event: 'UPDATE', schema: 'public', table: 'bookings', filter: `id=eq.${bookingId}` },
+        (payload) => {
+          const newStatus = payload.new?.status;
+          if (newStatus && newStatus !== detail.status) {
+            setDetail(prev => prev ? { ...prev, status: newStatus, statusNote: newStatus === 'unavailable' ? 'This sit has been confirmed with another sitter.' : prev.statusNote } : prev);
+          }
+        }
+      )
+      .subscribe();
+    return () => { supabase.removeChannel(channel); };
+  }, [bookingId, detail?.status]); // eslint-disable-line react-hooks/exhaustive-deps
 
   const handleOverlayClick = useCallback((e) => {
     if (e.target === e.currentTarget) onClose();
@@ -328,10 +350,21 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
         {/* ── Body ── */}
         <div className={`${styles.dtBody}${isTerminal ? ` ${styles.dtBodyCancelled}` : ''}`}>
 
-          {/* 2×2 stat grid */}
+          {/* stat grid: Duration | Cats / Sit type | Map / Area (full width) */}
           <div className={styles.dtGrid}>
             <StatCell label="Duration" value={`${nights} night${nights !== 1 ? 's' : ''}`} />
             <StatCell label="Cats" value={cats} />
+            <StatCell
+              label="Sit type"
+              value={detail.sitType === 'home_visit' ? 'Home visit' : detail.sitType === 'drop_off' ? 'Drop-off' : '—'}
+            />
+            {!isTerminal && (
+              <StatCell
+                label="Map"
+                value={contactLive && mapsUrl ? 'View map →' : 'Directions soon'}
+                link={contactLive && mapsUrl ? mapsUrl : undefined}
+              />
+            )}
             {/* Area row — spans full width, shows both neighbourhoods */}
             <div className={`${styles.dtCell} ${styles.dtCellSpan2}`}>
               <div className={styles.dtCellLabel}>Area</div>
@@ -351,13 +384,6 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
                 )}
               </div>
             </div>
-            {!isTerminal && (
-              <StatCell
-                label="Map"
-                value="View map →"
-                link={mapsUrl || undefined}
-              />
-            )}
           </div>
 
           {/* Status note — shown for unavailable bookings */}

@@ -128,7 +128,7 @@ export async function GET(request) {
     // Fixed: was querying status == "accepted" — correct value is "confirmed"
     const { data: bookings } = await db
       .from('bookings')
-      .select('id, booking_ref, start_date, end_date, sitter_id, parent_id')
+      .select('id, booking_ref, start_date, end_date, sitter_id, parent_id, sit_type')
       .in('status', ['confirmed', 'accepted']) // include legacy 'accepted' for migrated rows
       .eq('start_date', date)
       .is('deleted_at', null)
@@ -161,6 +161,11 @@ export async function GET(request) {
       const dist = distanceStr(parent?.location, sitter?.location)
       const parentNeighbourhood = parent?.location?.name
       const sitterNeighbourhood = sitter?.location?.name
+      const sitTypeLabel = booking.sit_type === 'home_visit' ? 'Home visit' : booking.sit_type === 'drop_off' ? 'Drop-off' : null
+      const sitTypeRow = sitTypeLabel
+        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">Sit type</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabel}</td></tr>`
+        : ''
+      const sitTypeText = sitTypeLabel ? `\nSit type: ${sitTypeLabel}` : ''
 
       const parentLocationHtml = parentNeighbourhood
         ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">Location</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${parentNeighbourhood}${dist ? ` <span style="color:#888;">(${dist})</span>` : ''}</td></tr>`
@@ -183,13 +188,14 @@ export async function GET(request) {
                 Your booking with <strong>${sitter?.name || 'your sitter'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
                 Here are their contact details so you can coordinate:
               </p>
+              ${sitTypeLabel ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 12px;width:100%;">${sitTypeRow}</table>` : ''}
               ${sitterLocationHtml ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">${sitterLocationHtml}</table>` : ''}
               ${contactBlock({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}
               <p style="font-size:13px;color:#999;margin:0 0 4px;">Booking ID: #${bookingRef}</p>
               ${ctaButton({ label: 'View booking', url: parentDeepLink })}
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nSitter contact details:${sitterLocationText}\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
+          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.${sitTypeText}\n\nSitter contact details:${sitterLocationText}\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
         })
         sent++
       }
@@ -206,13 +212,14 @@ export async function GET(request) {
                 Your sitting commitment for <strong>${parent?.name || 'your cat parent'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
                 Here are their contact details:
               </p>
+              ${sitTypeLabel ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 12px;width:100%;">${sitTypeRow}</table>` : ''}
               ${parentLocationHtml ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">${parentLocationHtml}</table>` : ''}
               ${contactBlock({ name: parent?.name, email: parent?.email, phone: parent?.phone })}
               <p style="font-size:13px;color:#999;margin:0 0 4px;">Booking ID: #${bookingRef}</p>
               ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.\n\nCat parent contact details:${parentLocationText}\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
+          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.${sitTypeText}\n\nCat parent contact details:${parentLocationText}\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
         })
         sent++
       }

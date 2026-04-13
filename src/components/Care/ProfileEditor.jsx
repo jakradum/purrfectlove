@@ -79,10 +79,9 @@ function CheckIcon() {
 
 function computeCompletion(form) {
   const required = [];
-  const optional = [];
 
   if (!form.name?.trim()) required.push('Display name');
-  if (!form.location?.lat || !form.location?.lng) required.push('Location (Plus Code)');
+  if (!form.location?.lat || !form.location?.lng) required.push('Location');
 
   if (form.canSit) {
     if (!form.canDoHomeVisit && !form.canHostCats) required.push('How I can sit (select at least one)');
@@ -90,30 +89,23 @@ function computeCompletion(form) {
     if (form.canHostCats && !form.maxCatsPerDay) required.push('Max cats per day');
     if (!form.feedingTypes?.length) required.push('Feeding types you can handle');
     if (!form.behavioralTraits?.length) required.push('Cat behaviors you\'re comfortable with');
-    // Availability is optional in new system — all days available by default
   }
 
-  if (!form.bedrooms) optional.push('Number of bedrooms');
-  if (!form.householdSize) optional.push('Household size');
-
-  // totalRequired is dynamic based on which sit types are selected
-  let totalRequired = 2; // name + location
+  let total = 2; // name + location
   if (form.canSit) {
-    totalRequired += 1; // sit type selection
-    if (form.canDoHomeVisit) totalRequired += 1; // maxHomesPerDay
-    if (form.canHostCats) totalRequired += 1; // maxCatsPerDay
-    totalRequired += 2; // feedingTypes + behavioralTraits
+    total += 1; // sit type selection
+    if (form.canDoHomeVisit) total += 1;
+    if (form.canHostCats) total += 1;
+    total += 2; // feedingTypes + behavioralTraits
   }
-  const totalOptional = 2;
-  const total = totalRequired + totalOptional;
-  const completed = (totalRequired - required.length) + (totalOptional - optional.length);
+  const completed = total - required.length;
   const percent = total > 0 ? Math.round((completed / total) * 100) : 100;
 
-  return { required, optional, completed, total, percent, isComplete: required.length === 0 };
+  return { required, completed, total, percent, isComplete: required.length === 0 };
 }
 
 function CompletionIndicator({ form, onEdit }) {
-  const { required, optional, completed, total, percent, isComplete } = computeCompletion(form);
+  const { required, completed, total, percent, isComplete } = computeCompletion(form);
   if (isComplete) return null;
 
   return (
@@ -131,24 +123,12 @@ function CompletionIndicator({ form, onEdit }) {
         <div style={{ width: `${percent}%`, height: '100%', background: 'var(--hunter-green)', borderRadius: '6px', transition: 'width 0.4s ease' }} />
       </div>
 
-      {/* Missing fields */}
       {required.length > 0 && (
-        <div style={{ marginBottom: optional.length ? '0.75rem' : '1rem' }}>
+        <div style={{ marginBottom: '1rem' }}>
           <p style={{ fontSize: '0.72rem', fontWeight: 700, color: '#c0392b', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Required</p>
           <ul style={{ margin: 0, paddingLeft: '1.1rem', listStyle: 'disc' }}>
             {required.map((f) => (
               <li key={f} style={{ fontSize: '0.82rem', color: '#c0392b', lineHeight: 1.7 }}>{f}</li>
-            ))}
-          </ul>
-        </div>
-      )}
-
-      {optional.length > 0 && (
-        <div style={{ marginBottom: '1rem' }}>
-          <p style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-light)', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '0.35rem' }}>Optional to complete</p>
-          <ul style={{ margin: 0, paddingLeft: '1.1rem', listStyle: 'disc' }}>
-            {optional.map((f) => (
-              <li key={f} style={{ fontSize: '0.82rem', color: 'var(--text-light)', lineHeight: 1.7 }}>{f}</li>
             ))}
           </ul>
         </div>
@@ -254,6 +234,7 @@ function formFromData(data) {
     canHostCats: data.canHostCats ?? false,
     hideEmail: data.hideEmail ?? false,
     hideWhatsApp: data.hideWhatsApp ?? false,
+    phone: data.phone || '',
   };
 }
 
@@ -480,7 +461,7 @@ export default function ProfileEditor({ initialData }) {
       location: form.location || initialData.location,
       bio: form.bio,
       email: initialData.email,
-      phone: initialData.phone,
+      phone: form.phone || initialData.phone,
       hideEmail: form.hideEmail ?? initialData.hideEmail,
       hideWhatsApp: form.hideWhatsApp ?? initialData.hideWhatsApp,
       cats: form.cats,
@@ -587,7 +568,7 @@ export default function ProfileEditor({ initialData }) {
         </div>
         <div className={styles.formGroup}>
           <label className={styles.profileLabel}>{t.fields.bio}</label>
-          <textarea className={styles.profileTextarea} value={form.bio} onChange={(e) => update('bio', e.target.value.slice(0, 250))} placeholder="Tell other members about yourself..." rows={4} maxLength={250} />
+          <textarea className={styles.profileTextarea} value={form.bio} onChange={(e) => update('bio', e.target.value.slice(0, 250))} placeholder="I've been owned by cats for years. Ask me about the time my cat..." rows={4} maxLength={250} />
           <p className={styles.hint}>{form.bio.length}/250 — {t.fields.bioHint}</p>
         </div>
         <div className={styles.formGroup}>
@@ -617,18 +598,27 @@ export default function ProfileEditor({ initialData }) {
         />
       </div>
 
-      {/* Account Info (read-only) */}
+      {/* Account Info */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>{t.sections.account}</h2>
-        <p className={styles.readOnlyNote}>{t.readOnly}</p>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>{t.sections.account}</h2>
+          <a href="/profile/privacy" style={{ fontSize: '0.78rem', color: 'var(--hunter-green)', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>How we protect your data ↗</a>
+        </div>
+        <p className={styles.hint} style={{ marginBottom: '0.75rem' }}>Shared only with confirmed booking partners 2 days before the sit.</p>
         <div className={styles.fieldRow}>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>Email</label>
-            <input className={styles.profileInput} value={initialData.email || ''} disabled />
+            <input className={styles.profileInput} value={initialData.email || ''} disabled style={{ cursor: 'not-allowed', opacity: 0.6 }} />
+            <div style={{ marginTop: '0.5rem' }}>
+              <Toggle checked={!form.hideEmail} onChange={(v) => update('hideEmail', !v)} label="Visible to booking partner" />
+            </div>
           </div>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>Phone</label>
-            <input className={styles.profileInput} value={initialData.phone || ''} disabled />
+            <input className={styles.profileInput} value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+1 555 000 0000" />
+            <div style={{ marginTop: '0.5rem' }}>
+              <Toggle checked={!form.hideWhatsApp} onChange={(v) => update('hideWhatsApp', !v)} label="Visible to booking partner" />
+            </div>
           </div>
         </div>
       </div>
@@ -645,7 +635,7 @@ export default function ProfileEditor({ initialData }) {
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.householdSize}</label>
             <input type="number" min={1} max={20} className={styles.profileInput} value={form.householdSize} onChange={(e) => update('householdSize', e.target.value)} placeholder="e.g. 2" />
-            <p className={styles.hint}>Number of people living in your home</p>
+            <p className={styles.hint}>(how many people at your home including you)</p>
           </div>
         </div>
       </div>
@@ -760,40 +750,6 @@ export default function ProfileEditor({ initialData }) {
         </div>
       )}
 
-      {/* Contact Privacy */}
-      <div className={styles.section}>
-        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
-          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Contact Privacy</h2>
-          <a href="/profile/privacy" style={{ fontSize: '0.78rem', color: 'var(--hunter-green)', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>How we protect your data ↗</a>
-        </div>
-        <p className={styles.hint} style={{ marginBottom: '1rem' }}>Shared only with confirmed booking partners 2 days before the sit.</p>
-        <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>Email</label>
-          <div className={styles.contactFilterGroup}>
-            <label className={styles.contactFilterOption}>
-              <input type="radio" name="hideEmail" value="show" checked={!form.hideEmail} onChange={() => update('hideEmail', false)} />
-              Visible
-            </label>
-            <label className={styles.contactFilterOption}>
-              <input type="radio" name="hideEmail" value="hide" checked={!!form.hideEmail} onChange={() => update('hideEmail', true)} />
-              Hidden
-            </label>
-          </div>
-        </div>
-        <div className={styles.formGroup}>
-          <label className={styles.profileLabel}>WhatsApp / Phone</label>
-          <div className={styles.contactFilterGroup}>
-            <label className={styles.contactFilterOption}>
-              <input type="radio" name="hideWhatsApp" value="show" checked={!form.hideWhatsApp} onChange={() => update('hideWhatsApp', false)} />
-              Visible
-            </label>
-            <label className={styles.contactFilterOption}>
-              <input type="radio" name="hideWhatsApp" value="hide" checked={!!form.hideWhatsApp} onChange={() => update('hideWhatsApp', true)} />
-              Hidden
-            </label>
-          </div>
-        </div>
-      </div>
 
       {/* Save Bar */}
       <div className={styles.saveBar}>

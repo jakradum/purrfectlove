@@ -43,6 +43,7 @@ export default {
         { name: 'lng', title: 'Longitude', type: 'number' },
       ],
     },
+    { name: 'locationName', title: 'Location Name (cached)', type: 'string', readOnly: true, description: 'Human-readable neighbourhood name cached from reverse geocoding. Auto-populated by the booking detail API.' },
     { name: 'contactPreference', title: 'Contact Preference', type: 'string', readOnly: true, options: { list: [{ title: 'Email', value: 'email' }, { title: 'WhatsApp', value: 'whatsapp' }] } },
     { name: 'bio', title: 'Bio', type: 'text', rows: 4, readOnly: true, validation: Rule => Rule.max(250) },
 

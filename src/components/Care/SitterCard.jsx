@@ -83,7 +83,7 @@ export default function SitterCard({
     _id, _createdAt, name,
     identityVerified, trustedSitter, siteAdmin,
     photoUrl, avatarColour, coverImageUrl,
-    feedingTypes, behavioralTraits,
+    feedingTypes, behavioralTraits, bio,
     cats, _distance, location,
     availabilityDefault, maxCatsPerDay,
     canDoHomeVisit, canHostCats,
@@ -121,6 +121,10 @@ export default function SitterCard({
   const coverBg = COVER_FALLBACKS[idx];
   const hasDates = !!(startDate && endDate);
 
+  // ── UX-10: traits expand toggle ───────────────────────────────────────────
+  const [traitsExpanded, setTraitsExpanded] = useState(false);
+  // ── UX-11: profile modal ──────────────────────────────────────────────────
+  const [profileOpen, setProfileOpen] = useState(false);
   // ── Inline booking form state ──────────────────────────────────────────────
   const [waiverOpen, setWaiverOpen] = useState(false);
   const [myCatData, setMyCatData] = useState(null); // null = not yet fetched, [] = fetched but empty
@@ -242,7 +246,7 @@ export default function SitterCard({
 
   return (
     <>
-    <div className={styles.card} ref={cardRef}>
+    <div className={styles.card} ref={cardRef} onClick={() => setProfileOpen(true)} style={{ cursor: 'pointer' }}>
       {/* Cover */}
       <div
         className={styles.cardCover}
@@ -294,8 +298,8 @@ export default function SitterCard({
               </div>
             )}
           </div>
-          <div className={styles.cardIconRow}>
-            <Link href={`/care/${_id}`} className={styles.cardIconBtn} title="View profile">
+          <div className={styles.cardIconRow} onClick={e => e.stopPropagation()}>
+            <Link href={`/care/${_id}`} className={styles.cardIconBtn} title="View full profile">
               <IconPerson />
             </Link>
           </div>
@@ -323,19 +327,40 @@ export default function SitterCard({
           </div>
         )}
 
-        {/* Capabilities checklist */}
-        {shownCaps.length > 0 && (
+        {/* Capabilities checklist — UX-10: tap "+N more" to expand inline */}
+        {allCaps.length > 0 && (
           <>
             <div className={styles.cardChecklistLabel}>Cats I can handle</div>
             <div className={styles.cardChecklist}>
-              {shownCaps.map(cap => (
+              {(traitsExpanded ? allCaps : shownCaps).map(cap => (
                 <div key={cap} className={styles.cardCheckItem}>
                   <CheckIcon />
                   <span>{tagLabels[cap] || cap}</span>
                 </div>
               ))}
-              {extraCount > 0 && (
-                <div className={styles.cardCheckMore}>+{extraCount} more</div>
+              {!traitsExpanded && extraCount > 0 && (
+                <div
+                  className={styles.cardCheckMore}
+                  role="button"
+                  tabIndex={0}
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
+                  onClick={e => { e.stopPropagation(); setTraitsExpanded(true); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setTraitsExpanded(true); } }}
+                >
+                  +{extraCount} more
+                </div>
+              )}
+              {traitsExpanded && extraCount > 0 && (
+                <div
+                  className={styles.cardCheckMore}
+                  role="button"
+                  tabIndex={0}
+                  style={{ cursor: 'pointer', userSelect: 'none' }}
+                  onClick={e => { e.stopPropagation(); setTraitsExpanded(false); }}
+                  onKeyDown={e => { if (e.key === 'Enter' || e.key === ' ') { e.stopPropagation(); setTraitsExpanded(false); } }}
+                >
+                  show less
+                </div>
               )}
             </div>
           </>
@@ -343,17 +368,19 @@ export default function SitterCard({
 
         <div className={styles.cardDivider} />
 
-        {/* Primary CTA */}
+        {/* Primary CTA — stopPropagation so card click doesn't fire */}
         {hasDates && (bookingState?.status === 'confirmed' || bookingState?.status === 'accepted') ? (
-          <div className={styles.cardBookConfirmed}>
-            <svg width="13" height="13" viewBox="0 0 13 13" fill="none">
-              <circle cx="6.5" cy="6.5" r="6.5" fill="#2C5F4F"/>
-              <path d="M3.5 6.5l2 2 4-4" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
-            </svg>
-            Booking confirmed · #{bookingState.bookingRef}
+          <div style={{ display: 'flex', justifyContent: 'center' }} onClick={e => e.stopPropagation()}>
+            <div className={styles.cardBookConfirmed}>
+              <svg width="10" height="10" viewBox="0 0 13 13" fill="none">
+                <circle cx="6.5" cy="6.5" r="6.5" fill="#2C5F4F"/>
+                <path d="M3.5 6.5l2 2 4-4" stroke="#fff" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round"/>
+              </svg>
+              Confirmed · #{bookingState.bookingRef}
+            </div>
           </div>
         ) : hasDates && bookingState?.status === 'pending' ? (
-          <>
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 6 }} onClick={e => e.stopPropagation()}>
             <div className={styles.cardBookPending}>
               <span className={styles.cardBookPendingDot} />
               Awaiting approval
@@ -366,12 +393,13 @@ export default function SitterCard({
             >
               {withdrawing ? 'Withdrawing…' : 'Withdraw request'}
             </button>
-          </>
+          </div>
         ) : hasDates && !expanded ? (
           <button
             type="button"
             className={styles.cardBookBtn}
-            onClick={() => {
+            onClick={e => {
+              e.stopPropagation();
               if (posthog.__loaded) posthog.capture('booking_initiated', { sitter_id: _id });
               setWaiverOpen(true);
             }}
@@ -379,13 +407,13 @@ export default function SitterCard({
             {locale === 'de' ? 'Für diese Daten anfragen' : 'Book for these dates'}
           </button>
         ) : !hasDates ? (
-          <Link href={`/care/${_id}`} className={styles.cardBookBtn}>
+          <Link href={`/care/${_id}`} className={styles.cardBookBtn} onClick={e => e.stopPropagation()}>
             {locale === 'de' ? 'Profil ansehen' : 'View profile'}
           </Link>
         ) : null}
 
         {/* ── Inline booking form (expands below CTA) ── */}
-        <div className={`${styles.cardExpand} ${expanded ? styles.cardExpandOpen : ''}`}>
+        <div className={`${styles.cardExpand} ${expanded ? styles.cardExpandOpen : ''}`} onClick={e => e.stopPropagation()}>
           <div className={styles.cardFormDivider} />
 
           {/* Cat selector — required */}
@@ -529,6 +557,111 @@ export default function SitterCard({
         onAgree={() => { setWaiverOpen(false); onExpand(); }}
         onCancel={() => setWaiverOpen(false)}
       />
+    )}
+
+    {/* ── UX-11: Profile modal / bottom sheet ── */}
+    {profileOpen && (
+      <div className={styles.sitterModalOverlay} onClick={() => setProfileOpen(false)}>
+        <div className={styles.sitterModal} onClick={e => e.stopPropagation()}>
+          {/* Cover */}
+          <div
+            className={styles.sitterModalCover}
+            style={coverImageUrl
+              ? { backgroundImage: `url(${coverImageUrl})`, backgroundSize: 'cover', backgroundPosition: 'center' }
+              : { backgroundImage: `url(${coverSrc})`, backgroundColor: coverBg }
+            }
+          >
+            <button type="button" className={styles.sitterModalCloseBtn} onClick={() => setProfileOpen(false)} aria-label="Close">×</button>
+            <div style={{ position: 'absolute', bottom: -26, left: 20 }}>
+              <CatAvatar photoUrl={photoUrl} avatarColour={avatarColour} name={displayName} size={52} style={{ border: '3px solid #fff', boxShadow: '0 2px 8px rgba(0,0,0,0.12)' }} />
+            </div>
+          </div>
+
+          <div className={styles.sitterModalBody}>
+            {/* Name + meta */}
+            <p className={styles.sitterModalName}>
+              {displayName}
+              {identityVerified && <span className={styles.verifiedBadge} title="Identity verified"> ✓</span>}
+              {trustedSitter && <span className={styles.trustedBadge} title="Trusted sitter"> ⭐</span>}
+            </p>
+            <p className={styles.sitterModalMeta}>
+              {[
+                _distance != null ? `~${_distance.toFixed(1)} km away` : null,
+                location?.name || null,
+                memberSince ? `Member since ${memberSince}` : null,
+              ].filter(Boolean).join(' · ')}
+            </p>
+
+            {/* Bio */}
+            {bio && <p className={styles.sitterModalBio}>{bio}</p>}
+
+            {/* Availability */}
+            {availLabel && (
+              <div className={styles.sitterModalSection}>
+                <p className={styles.sitterModalSectionTitle}>Availability</p>
+                <div className={styles.cardAvailRow}>
+                  <div className={styles.cardAvailDot} />
+                  <span className={styles.cardAvailText}>{availLabel}</span>
+                </div>
+              </div>
+            )}
+
+            {/* Sit types */}
+            {(canDoHomeVisit || canHostCats) && (
+              <div className={styles.sitterModalSection}>
+                <p className={styles.sitterModalSectionTitle}>Sits offered</p>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {canDoHomeVisit && <span className={styles.capabilityPill}>Home visits</span>}
+                  {canHostCats && <span className={styles.capabilityPill}>Drop off</span>}
+                  {maxCatsPerDay > 0 && <span className={styles.capabilityPill}>Up to {maxCatsPerDay} cat{maxCatsPerDay !== 1 ? 's' : ''}/day</span>}
+                </div>
+              </div>
+            )}
+
+            {/* All capabilities */}
+            {allCaps.length > 0 && (
+              <div className={styles.sitterModalSection}>
+                <p className={styles.sitterModalSectionTitle}>Cats I can handle</p>
+                <div className={styles.cardChecklist}>
+                  {allCaps.map(cap => (
+                    <div key={cap} className={styles.cardCheckItem}>
+                      <CheckIcon />
+                      <span>{tagLabels[cap] || cap}</span>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {/* Cat names */}
+            {catNamesDisplay && (
+              <div className={styles.sitterModalSection}>
+                <p className={styles.sitterModalSectionTitle}>Their cats</p>
+                <p style={{ margin: 0, fontSize: '0.875rem', color: '#555' }}>{catNamesDisplay}</p>
+              </div>
+            )}
+
+            {/* Book button */}
+            {hasDates && !bookingState?.status ? (
+              <button
+                type="button"
+                className={styles.sitterModalBookBtn}
+                onClick={() => {
+                  setProfileOpen(false);
+                  if (posthog.__loaded) posthog.capture('booking_initiated', { sitter_id: _id, source: 'modal' });
+                  setWaiverOpen(true);
+                }}
+              >
+                {locale === 'de' ? 'Für diese Daten anfragen' : 'Book for these dates'}
+              </button>
+            ) : !hasDates ? (
+              <Link href={`/care/${_id}`} className={styles.sitterModalBookBtn}>
+                View full profile
+              </Link>
+            ) : null}
+          </div>
+        </div>
+      </div>
     )}
     </>
   );

@@ -139,6 +139,11 @@ export async function POST(request) {
     const lat = sitterProfile?.location?.lat
     const lng = sitterProfile?.location?.lng
     const mapsUrl = lat && lng ? `https://maps.google.com/?q=${lat},${lng}` : null
+    const sitTypeLabel = booking.sit_type === 'home_visit' ? 'Home visit' : booking.sit_type === 'drop_off' ? 'Drop-off' : null
+    const sitTypeRow = sitTypeLabel
+      ? `<tr><td style="padding:4px 0;font-size:14px;color:#666;">Sit type</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabel}</td></tr>`
+      : ''
+    const sitTypeText = sitTypeLabel ? `\nSit type: ${sitTypeLabel}` : ''
 
     // 1. Mark booking as confirmed — atomic: only succeeds if still pending
     const respondedAt = new Date().toISOString()
@@ -285,6 +290,7 @@ export async function POST(request) {
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${sitterName}</strong> has accepted your booking.</p>
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
               <tr><td style="padding:4px 0;font-size:14px;color:#666;">Dates</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmt} – ${endFmt}</td></tr>
+              ${sitTypeRow}
               <tr><td style="padding:4px 0;font-size:14px;color:#666;">Booking ID</td><td style="padding:4px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${ref}</td></tr>
             </table>
             <p style="font-size:14px;color:#555;margin:0 0 8px;">${sitterName}&apos;s approximate location:</p>
@@ -292,7 +298,7 @@ export async function POST(request) {
             ${ctaButton({ label: 'View booking', url: parentDeepLink })}
           `,
         }),
-        text: `Your booking is confirmed! #${ref}\n\n${sitterName} has accepted your booking.\n\nDates: ${startFmt} – ${endFmt}\nBooking ID: #${ref}${mapsUrl ? `\n\n${sitterName}'s approximate location:\n${mapsUrl}` : ''}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
+        text: `Your booking is confirmed! #${ref}\n\n${sitterName} has accepted your booking.\n\nDates: ${startFmt} – ${endFmt}${sitTypeText}\nBooking ID: #${ref}${mapsUrl ? `\n\n${sitterName}'s approximate location:\n${mapsUrl}` : ''}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
       })
     }
 
@@ -307,13 +313,15 @@ export async function POST(request) {
           body: `
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${parentName}</strong> has booked you from ${startFmt} – ${endFmt}.</p>
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
+              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Dates</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmt} – ${endFmt}</td></tr>
+              ${sitTypeRow}
               <tr><td style="padding:4px 0;font-size:14px;color:#666;">Booking ID</td><td style="padding:4px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${ref}</td></tr>
             </table>
             <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 8px;">We've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar. If you'd like to override any of those dates, you can do so from your <a href="https://care.purrfectlove.org/profile" style="color:#C85C3F;text-decoration:none;font-weight:600;">profile page</a>.</p>
             ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
           `,
         }),
-        text: `Booking confirmed! #${ref}\n\n${parentName} has booked you from ${startFmt} – ${endFmt}.\n\nBooking ID: #${ref}\n\nWe've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar.\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
+        text: `Booking confirmed! #${ref}\n\n${parentName} has booked you from ${startFmt} – ${endFmt}.\n\nDates: ${startFmt} – ${endFmt}${sitTypeText}\nBooking ID: #${ref}\n\nWe've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar.\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
       })
     }
 

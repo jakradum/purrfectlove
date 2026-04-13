@@ -919,6 +919,8 @@
   display: flex;
   flex-direction: column;
   gap: 0.75rem;
+  box-sizing: border-box;
+  width: 100%;
 }
 .skeletonDtHeaderShimmer {
   background: linear-gradient(90deg, rgba(255,255,255,0.12) 25%, rgba(255,255,255,0.22) 50%, rgba(255,255,255,0.12) 75%);
@@ -931,6 +933,8 @@
   display: flex;
   flex-direction: column;
   gap: 1rem;
+  box-sizing: border-box;
+  width: 100%;
 }
 .skeletonDtGrid {
   display: grid;
@@ -1037,14 +1041,14 @@
 /* Availability unconfirmed badge on sitter card */
 .availUnconfirmedBadge {
   display: inline-block;
-  font-size: 0.7rem;
+  font-size: 10px;
   font-weight: 600;
   color: #888;
-  background: #f3f4f6;
-  border: 1px solid #e5e7eb;
-  border-radius: 4px;
-  padding: 2px 7px;
+  background: #f0f0f0;
+  border-radius: 999px;
+  padding: 2px 9px;
   letter-spacing: 0.01em;
+  cursor: default;
 }
 
 .statusPrompt {
@@ -1280,19 +1284,16 @@
 }
 
 .cardBookPending {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 8px;
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
   background: #FAEEDA;
   color: #854F0B;
-  border: 0.5px solid #EF9F27;
-  font-size: 0.82rem;
+  font-size: 10px;
   font-weight: 600;
   cursor: default;
-  box-sizing: border-box;
 }
 
 .cardBookPendingDot {
@@ -1334,19 +1335,16 @@
 }
 
 .cardBookConfirmed {
-  display: flex;
+  display: inline-flex;
   align-items: center;
-  gap: 7px;
-  width: 100%;
-  padding: 10px 14px;
-  border-radius: 8px;
+  gap: 6px;
+  padding: 3px 10px;
+  border-radius: 999px;
   background: #EAF3DE;
   color: #2C5F4F;
-  border: 0.5px solid #a3c98a;
-  font-size: 0.82rem;
+  font-size: 10px;
   font-weight: 600;
   cursor: default;
-  box-sizing: border-box;
 }
 
 /* ====== Inline card expansion (booking form) ====== */
@@ -3502,10 +3500,11 @@
 }
 
 .sitterBadge {
-  font-size: 11px;
-  border-radius: 5px;
-  padding: 3px 8px;
-  font-weight: 500;
+  font-size: 10px;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-weight: 600;
+  cursor: default;
 }
 
 .sitterBadgeGreen {
@@ -3537,28 +3536,6 @@
 
 .sitterEditBtn:hover {
   background: #234d3f;
-}
-
-.copyLinkBtn {
-  display: block;
-  width: 100%;
-  margin-top: 8px;
-  background: none;
-  border: 1px solid #ddd;
-  border-radius: 10px;
-  padding: 9px 20px;
-  font-size: 13px;
-  font-weight: 500;
-  color: #888;
-  cursor: pointer;
-  text-align: center;
-  box-sizing: border-box;
-  transition: border-color 0.15s, color 0.15s;
-}
-
-.copyLinkBtn:hover {
-  border-color: #aaa;
-  color: #555;
 }
 
 .sitterProfileYouTag {
@@ -3968,68 +3945,61 @@
 .statusBadge {
   display: inline-block;
   font-size: 10px;
-  border-radius: 5px;
-  padding: 3px 8px;
-  font-weight: 500;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-weight: 600;
+  cursor: default;
 }
 
 .statusBadgeConfirmed {
   background: #EAF3DE;
   color: #2C5F4F;
-  border: 0.5px solid #2C5F4F;
 }
 
 .statusBadgePending {
   background: #FAEEDA;
   color: #854F0B;
-  border: 0.5px solid #EF9F27;
 }
 
 .statusBadgeDeclined {
   background: #FAECE7;
   color: #993C1D;
-  border: 0.5px solid #C85C3F;
 }
 
 .statusBadgeExpired {
   background: #f0f0f0;
   color: #888;
-  border: 0.5px solid #ddd;
 }
 
 .statusBadgeCancelled {
-  background: rgba(240, 87, 72, 0.1);
-  color: var(--alert-red-eyes);
-  border: 0.5px solid rgba(240, 87, 72, 0.3);
+  background: #FAECE7;
+  color: #993C1D;
 }
 
 .statusBadgeCompleted {
   background: #E6F1FB;
   color: #4A6FA5;
-  border: 0.5px solid #4A6FA5;
 }
 
 .statusBadgeUnavailable {
   background: #f0f0f0;
   color: #888;
-  border: 0.5px solid #ddd;
 }
 
 .statusBadgePast {
   background: #f0f0f0;
   color: #888;
-  border: 0.5px solid #ddd;
 }
 
 .sitTypeBadge {
   display: inline-block;
   font-size: 10px;
-  border-radius: 5px;
-  padding: 3px 8px;
-  font-weight: 500;
+  border-radius: 999px;
+  padding: 2px 9px;
+  font-weight: 600;
+  cursor: default;
   background: #EDF5F3;
   color: #2C5F4F;
-  border: 0.5px solid rgba(44, 95, 79, 0.3);
 }
 
 /* ── Mobile list (hidden on desktop) ── */
@@ -4260,9 +4230,10 @@
 
 .dtChip {
   font-size: 11px;
-  border-radius: 7px;
-  padding: 4px 10px;
-  font-weight: 500;
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-weight: 600;
+  cursor: default;
 }
 
 .dtChipDate {
@@ -4281,8 +4252,8 @@
 }
 
 .dtChipCompleted {
-  background: #EAF3DE;
-  color: #2C5F4F;
+  background: #E6F1FB;
+  color: #4A6FA5;
 }
 
 .dtChipMuted {
@@ -4293,7 +4264,6 @@
 .dtChipCancelled {
   background: rgba(240, 87, 72, 0.25);
   color: #fff;
-  border: 0.5px solid rgba(240, 87, 72, 0.5);
 }
 
 .dtChipType {
@@ -5458,3 +5428,140 @@
   align-self: center;
 }
 .waiverCancelLink:hover { color: #666; }
+
+/* ── Sitter profile modal / bottom sheet (UX-11) ── */
+.sitterModalOverlay {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.45);
+  z-index: 900;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 1rem;
+}
+
+.sitterModal {
+  background: #fff;
+  border-radius: 16px;
+  width: 100%;
+  max-width: 480px;
+  max-height: 85vh;
+  overflow-y: auto;
+  position: relative;
+  box-shadow: 0 8px 32px rgba(0,0,0,0.2);
+}
+
+.sitterModalCloseBtn {
+  position: absolute;
+  top: 10px;
+  right: 10px;
+  background: rgba(255,255,255,0.92);
+  border: none;
+  border-radius: 50%;
+  width: 30px;
+  height: 30px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 18px;
+  color: #555;
+  z-index: 10;
+  line-height: 1;
+  font-family: inherit;
+}
+
+.sitterModalCover {
+  height: 110px;
+  border-radius: 16px 16px 0 0;
+  background-size: cover;
+  background-position: center;
+  position: relative;
+  flex-shrink: 0;
+}
+
+.sitterModalBody {
+  padding: 2.25rem 1.25rem 1.5rem;
+}
+
+.sitterModalName {
+  font-size: 1.15rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0 0 0.15rem;
+  font-family: var(--font-outfit);
+}
+
+.sitterModalMeta {
+  font-size: 0.8rem;
+  color: #888;
+  margin: 0 0 0.75rem;
+}
+
+.sitterModalBio {
+  font-size: 0.875rem;
+  color: #555;
+  line-height: 1.65;
+  margin: 0 0 1rem;
+}
+
+.sitterModalSection {
+  margin-bottom: 1rem;
+}
+
+.sitterModalSectionTitle {
+  font-size: 0.7rem;
+  font-weight: 700;
+  color: #aaa;
+  text-transform: uppercase;
+  letter-spacing: 0.06em;
+  margin: 0 0 0.4rem;
+}
+
+.sitterModalBookBtn {
+  display: block;
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.75rem 1rem;
+  background: var(--hunter-green);
+  color: #fff;
+  border: none;
+  border-radius: 10px;
+  font-size: 0.9rem;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.15s;
+}
+
+.sitterModalBookBtn:hover { background: #234d3f; }
+
+.sitterModalBookBtn:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+@media (max-width: 600px) {
+  .sitterModalOverlay {
+    align-items: flex-end;
+    padding: 0;
+  }
+  .sitterModal {
+    border-radius: 16px 16px 0 0;
+    max-width: 100%;
+    max-height: 88vh;
+  }
+}
+
+/* ── Filter summary line (UX-13) ── */
+.filterSummary {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 0.35rem 1rem 0;
+  font-size: 0.78rem;
+  color: #888;
+  font-family: var(--font-outfit);
+}

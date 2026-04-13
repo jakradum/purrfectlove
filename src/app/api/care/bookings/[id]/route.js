@@ -69,11 +69,11 @@ export async function GET(request, { params }) {
 
     const [other, myProfile, sitterProfile, parentProfile] = await Promise.all([
       serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ name, email, phone, location }`,
+        `*[_type == "catSitter" && _id == $id][0]{ name, email, phone, location, locationName }`,
         { id: otherId }
       ),
       serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ location }`,
+        `*[_type == "catSitter" && _id == $id][0]{ location, locationName }`,
         { id: myId }
       ),
       serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.sitter_id }),
@@ -90,11 +90,31 @@ export async function GET(request, { params }) {
     const lat = showOtherLocation ? (other?.location?.lat || null) : null
     const lng = showOtherLocation ? (other?.location?.lng || null) : null
 
-    // Prefer the stored location name; fall back to reverse geocoding only if absent
-    const otherNeighbourhood = showOtherLocation
-      ? (other?.location?.name || await reverseGeocode(other?.location?.lat, other?.location?.lng))
-      : null
-    const myNeighbourhood    = myProfile?.location?.name || null
+    // Resolve other party's neighbourhood name: prefer cached locationName, then reverse geocode and cache
+    let otherNeighbourhood = null
+    if (showOtherLocation) {
+      if (other?.locationName) {
+        otherNeighbourhood = other.locationName
+      } else {
+        const resolved = await reverseGeocode(other?.location?.lat, other?.location?.lng)
+        otherNeighbourhood = resolved
+        if (resolved && otherId) {
+          serverClient.patch(otherId).set({ locationName: resolved }).commit().catch(() => {})
+        }
+      }
+    }
+
+    // Resolve my neighbourhood: prefer cached locationName, then reverse geocode and cache
+    let myNeighbourhood = null
+    if (myProfile?.locationName) {
+      myNeighbourhood = myProfile.locationName
+    } else {
+      const resolved = await reverseGeocode(myProfile?.location?.lat, myProfile?.location?.lng)
+      myNeighbourhood = resolved
+      if (resolved && myId) {
+        serverClient.patch(myId).set({ locationName: resolved }).commit().catch(() => {})
+      }
+    }
 
     const statusNote = booking.status === 'unavailable'
       ? 'The cat parent found a sitter for these dates — no action needed from you.'

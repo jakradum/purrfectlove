@@ -91,7 +91,7 @@ export default function LocationMapPicker({ value, onChange, locale }) {
         setGeolocating(false);
         if (err.code === 1) {
           // PERMISSION_DENIED
-          setGeoError('Location access was denied. You can enter your Plus Code manually below.');
+          setGeoError('Location access was denied. You can drop a pin or enter your location manually below.');
           setMode('manual');
         } else {
           setGeoError('Could not get your location. Please drop a pin manually.');
@@ -111,7 +111,7 @@ export default function LocationMapPicker({ value, onChange, locale }) {
     const token = parts[0];
 
     if (!token.includes('+') || !olc.isValid(token)) {
-      setLocationError('Enter a valid Plus Code from plus.codes/map (e.g. 7J4VVHQ2+FC or 7J4V+XH)');
+      setLocationError('Enter a valid location code (e.g. 7J4VVHQ2+FC or 7J4V+XH)');
       onChange(null);
       return;
     }
@@ -209,7 +209,7 @@ export default function LocationMapPicker({ value, onChange, locale }) {
           </div>
 
           <div className={styles.formGroup}>
-            <label className={styles.profileLabel}>Plus Code <span style={{ color: '#ef4444' }}>*</span></label>
+            <label className={styles.profileLabel}>Your neighbourhood <span style={{ color: '#ef4444' }}>*</span></label>
             <input
               type="text"
               className={styles.profileInput}
@@ -231,7 +231,7 @@ export default function LocationMapPicker({ value, onChange, locale }) {
           </div>
 
           <p className={styles.hint}>
-            Find your Plus Code at{' '}
+            Find your location code at{' '}
             <a href="https://plus.codes/map" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--hunter-green)' }}>plus.codes/map</a>
           </p>
 

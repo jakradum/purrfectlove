@@ -11,7 +11,7 @@ function formatDate(ymd) {
   return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
-export default function BookingRequestModal({ sitterId, sitterName, startDate: initialStart, endDate: initialEnd, onClose, onSuccess }) {
+export default function BookingRequestModal({ sitterId, sitterName, startDate: initialStart, endDate: initialEnd, canDoHomeVisit, canHostCats, onClose, onSuccess }) {
   const [startDate, setStartDate] = useState(initialStart || '')
   const [endDate, setEndDate] = useState(initialEnd || '')
   const [cats, setCats] = useState(null) // null = loading
@@ -20,6 +20,14 @@ export default function BookingRequestModal({ sitterId, sitterName, startDate: i
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [submitted, setSubmitted] = useState(null) // { bookingRef }
+
+  // Sit type: auto-select when sitter only offers one type
+  const sitterDoesBoth = canDoHomeVisit && canHostCats
+  const [sitType, setSitType] = useState(() => {
+    if (canDoHomeVisit && !canHostCats) return 'home_visit'
+    if (canHostCats && !canDoHomeVisit) return 'drop_off'
+    return null // sitter does both — user must pick
+  })
 
   const needsDates = !initialStart || !initialEnd
 
@@ -45,12 +53,16 @@ export default function BookingRequestModal({ sitterId, sitterName, startDate: i
       setError('Please select start and end dates.')
       return
     }
+    if (!sitType) {
+      setError('Please select a sit type.')
+      return
+    }
     setLoading(true)
     try {
       const res = await fetch('/api/care/bookings/request', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ sitterId, startDate, endDate, cats: selectedCats, message: message.trim() || null }),
+        body: JSON.stringify({ sitterId, startDate, endDate, cats: selectedCats, message: message.trim() || null, sitType }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -131,6 +143,45 @@ export default function BookingRequestModal({ sitterId, sitterName, startDate: i
                 </div>
               </div>
             )}
+
+            {/* Sit type */}
+            <div style={{ marginBottom: '1.25rem' }}>
+              <p style={{ fontSize: '0.8rem', fontWeight: 600, color: '#555', margin: '0 0 0.6rem', textTransform: 'uppercase', letterSpacing: '0.04em' }}>Sit type</p>
+              {sitterDoesBoth ? (
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  {[
+                    { value: 'home_visit', label: 'Home visit', desc: 'sitter comes to you' },
+                    { value: 'drop_off',   label: 'Drop-off',   desc: 'you bring your cat' },
+                  ].map(({ value, label, desc }) => (
+                    <button
+                      key={value}
+                      type="button"
+                      onClick={() => setSitType(value)}
+                      style={{
+                        flex: 1,
+                        padding: '0.5rem 0.75rem',
+                        borderRadius: 8,
+                        fontSize: '0.85rem',
+                        fontWeight: 600,
+                        cursor: 'pointer',
+                        border: sitType === value ? '1.5px solid #2C5F4F' : '1.5px solid #ddd',
+                        background: sitType === value ? '#EAF3DE' : '#fafafa',
+                        color: sitType === value ? '#2C5F4F' : '#555',
+                        textAlign: 'left',
+                        lineHeight: 1.4,
+                      }}
+                    >
+                      {label}
+                      <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 400, color: sitType === value ? '#2C5F4F' : '#999', marginTop: 2 }}>{desc}</span>
+                    </button>
+                  ))}
+                </div>
+              ) : (
+                <p style={{ fontSize: '0.875rem', color: '#2C5F4F', fontWeight: 600, margin: 0 }}>
+                  {sitType === 'home_visit' ? 'Home visit — sitter comes to you' : 'Drop-off — you bring your cat to the sitter'}
+                </p>
+              )}
+            </div>
 
             {/* Cat selector */}
             <div style={{ marginBottom: '1.25rem' }}>

@@ -198,6 +198,12 @@ export async function POST(request) {
           ? `\nLocation: ${parentNeighbourhood}${distanceStr ? ` (${distanceStr})` : ''}`
           : ''
 
+        const sitTypeLabel = sitType === 'home_visit' ? 'Home visit' : sitType === 'drop_off' ? 'Drop-off' : null
+        const sitTypeRow = sitTypeLabel
+          ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">Sit type</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabel}</td></tr>`
+          : ''
+        const sitTypeText = sitTypeLabel ? `\nSit type: ${sitTypeLabel}` : ''
+
         const { error: resendError } = await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
           to: [sitter.email],
@@ -210,6 +216,7 @@ export async function POST(request) {
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;"><strong>${parentName}</strong> has sent you a sit request. Here are the details:</p>
               <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
                 <tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">Dates</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmt} – ${endFmt}</td></tr>
+                ${sitTypeRow}
                 <tr><td style="padding:5px 0;font-size:14px;color:#666;">Cats</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${catList}</td></tr>
                 ${locationRow}
                 ${message ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;vertical-align:top;">Message</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-style:italic;">"${message}"</td></tr>` : ''}
@@ -219,7 +226,7 @@ export async function POST(request) {
               ${ctaButton({ label: 'View booking', url: deepLink })}
             `,
           }),
-          text: `Hi ${sitterFirstName},\n\n${parentName} has sent you a sit request.\n\nDates: ${startFmt} – ${endFmt}\nCats: ${catList}${locationText}${message ? `\nMessage: "${message}"` : ''}\nBooking ID: #${bookingRef}\n\nAccept or decline: ${deepLink}\n\n– The Purrfect Love Community`,
+          text: `Hi ${sitterFirstName},\n\n${parentName} has sent you a sit request.\n\nDates: ${startFmt} – ${endFmt}${sitTypeText}\nCats: ${catList}${locationText}${message ? `\nMessage: "${message}"` : ''}\nBooking ID: #${bookingRef}\n\nAccept or decline: ${deepLink}\n\n– The Purrfect Love Community`,
         })
         if (!resendError) {
           await db.from('bookings').update({ notified_at: new Date().toISOString() }).eq('id', bookingId)

@@ -464,6 +464,19 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         locale={locale}
       />
 
+      {/* UX-13: Filter summary line */}
+      {datesSelected && (() => {
+        const nights = dateRange(startDate, endDate).length - 1;
+        const sitTypeLabel = sitType === 'home_visit' ? 'Home visits' : sitType === 'drop_off' ? 'Drop off' : null;
+        const parts = [
+          formatDateRange(startDate, endDate),
+          `within ${radius} km`,
+          nights > 0 ? `${nights} night${nights !== 1 ? 's' : ''}` : null,
+          sitTypeLabel,
+        ].filter(Boolean);
+        return <p className={styles.filterSummary}>Showing results for {parts.join(' · ')}</p>;
+      })()}
+
       {/* Availability strip — only for sitters, wrapped to match filterBarWrap width exactly */}
       {myProfile?.canSit && (
         <div className={styles.filterBarWrap} style={{ position: 'static', padding: 0 }}>

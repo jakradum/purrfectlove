@@ -103,6 +103,7 @@ export default function SitterProfile({
     availabilityDefault, unavailableDatesV2,
     avatarColour, photoUrl, coverImageUrl,
     identityVerified, trustedSitter, maxCatsPerDay,
+    canDoHomeVisit, canHostCats,
   } = sitter;
 
   const displayName = name || 'Member';
@@ -226,9 +227,32 @@ export default function SitterProfile({
 
         {/* Header body */}
         <div className={styles.sitterProfileHeaderBody}>
-          <div className={styles.sitterProfileUsername}>
-            {displayName}
+          <div className={styles.sitterProfileUsername} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            <span>{displayName}</span>
             {isOwnProfile && <span className={styles.sitterProfileYouTag}> — you</span>}
+            {isOwnProfile && (
+              <span
+                role="button"
+                tabIndex={0}
+                title={linkCopied ? 'Link copied!' : 'Share profile'}
+                aria-label={linkCopied ? 'Link copied!' : 'Share profile'}
+                style={{ cursor: 'pointer', color: linkCopied ? 'var(--hunter-green)' : '#aaa', display: 'flex', alignItems: 'center', marginLeft: '2px' }}
+                onClick={() => {
+                  const url = `${window.location.origin}/care/${_id}`;
+                  navigator.clipboard.writeText(url).then(() => {
+                    setLinkCopied(true);
+                    setTimeout(() => setLinkCopied(false), 2000);
+                  });
+                }}
+                onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') e.currentTarget.click(); }}
+              >
+                {linkCopied ? (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><polyline points="20 6 9 17 4 12" /></svg>
+                ) : (
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><circle cx="18" cy="5" r="3"/><circle cx="6" cy="12" r="3"/><circle cx="18" cy="19" r="3"/><line x1="8.59" y1="13.51" x2="15.42" y2="17.49"/><line x1="15.41" y1="6.51" x2="8.59" y2="10.49"/></svg>
+                )}
+              </span>
+            )}
           </div>
 
           {metaParts.length > 0 && (
@@ -256,19 +280,6 @@ export default function SitterProfile({
                   Edit profile
                 </Link>
               )}
-              <button
-                type="button"
-                className={styles.copyLinkBtn}
-                onClick={() => {
-                  const url = `${window.location.origin}/care/${_id}`;
-                  navigator.clipboard.writeText(url).then(() => {
-                    setLinkCopied(true);
-                    setTimeout(() => setLinkCopied(false), 2000);
-                  });
-                }}
-              >
-                {linkCopied ? 'Link copied!' : 'Copy profile link'}
-              </button>
             </>
           ) : (
             <>
@@ -317,16 +328,22 @@ export default function SitterProfile({
       <div className={styles.sitterSection}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 10, borderBottom: '0.5px solid #eee' }}>
           <div className={styles.sitterSectionTitle} style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>Availability</div>
-          {isOwnProfile && onEditAvailability && (
+          {isOwnProfile && onEditAvailability && location?.lat && (
             <button type="button" onClick={onEditAvailability} className={styles.sitterSectionEditBtn}>
               Edit
             </button>
           )}
         </div>
-        <AvailabilityStrip
-          markedDates={unavailableDatesV2 || []}
-          availabilityDefault={availabilityDefault || 'available'}
-        />
+        {isOwnProfile && !location?.lat ? (
+          <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontStyle: 'italic', margin: 0 }}>
+            Complete your profile to manage availability.
+          </p>
+        ) : (
+          <AvailabilityStrip
+            markedDates={unavailableDatesV2 || []}
+            availabilityDefault={availabilityDefault || 'available'}
+          />
+        )}
       </div>
 
       {/* Capabilities */}
@@ -424,6 +441,8 @@ export default function SitterProfile({
           sitterName={displayName}
           startDate={null}
           endDate={null}
+          canDoHomeVisit={canDoHomeVisit}
+          canHostCats={canHostCats}
           onClose={() => setShowBooking(false)}
         />
       )}
