@@ -83,7 +83,8 @@ export async function POST(request) {
     await resend.emails.send({
       from: 'Purrfect Love <no-reply@purrfectlove.org>',
       to: ['support@purrfectlove.org'],
-      subject: `New join request: ${name.trim()}`,
+      bcc: ['pranavkarnad@gmail.com'],
+      subject: `Community portal: Member approval needed — ${name.trim()}`,
       html: buildAdminNotificationHtml({ name: name.trim(), email: email?.trim() || null, message: message?.trim() || null, submittedAt, approveUrl, rejectUrl }),
       text: buildAdminNotificationText({ name: name.trim(), email: email?.trim() || null, message: message?.trim() || null, submittedAt, approveUrl, rejectUrl }),
     })
