@@ -114,7 +114,9 @@ export async function POST(request) {
 
     if (parentAlreadyConfirmed?.length > 0) {
       // Mark this booking unavailable so sitter's UI stops showing it as pending
-      await db.from('bookings').update({ status: 'unavailable' }).eq('id', bookingId).eq('status', 'pending')
+      const { data: markResult, error: markError } = await db
+        .from('bookings').update({ status: 'unavailable' }).eq('id', bookingId).eq('status', 'pending').select('id, status')
+      console.log('[accept] pre-check mark unavailable — bookingId:', bookingId, 'result:', markResult, 'error:', markError)
       return Response.json(
         { error: 'This sit has already been confirmed with another sitter.' },
         { status: 409 }
