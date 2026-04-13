@@ -757,7 +757,10 @@ export default function ProfileEditor({ initialData }) {
 
       {/* Contact Privacy */}
       <div className={styles.section}>
-        <h2 className={styles.sectionTitle}>Contact Privacy</h2>
+        <div style={{ display: 'flex', alignItems: 'baseline', justifyContent: 'space-between', gap: '1rem', flexWrap: 'wrap', marginBottom: '0.25rem' }}>
+          <h2 className={styles.sectionTitle} style={{ margin: 0 }}>Contact Privacy</h2>
+          <a href="https://www.purrfectlove.org/profile/privacy" target="_blank" rel="noopener noreferrer" style={{ fontSize: '0.78rem', color: 'var(--hunter-green)', textDecoration: 'none', fontWeight: 600, whiteSpace: 'nowrap' }}>How we protect your data ↗</a>
+        </div>
         <p className={styles.hint} style={{ marginBottom: '1rem' }}>Shared only with confirmed booking partners 2 days before the sit.</p>
         <div className={styles.formGroup}>
           <label className={styles.profileLabel}>Email</label>
