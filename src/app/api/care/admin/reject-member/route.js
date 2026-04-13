@@ -1,5 +1,6 @@
 import { createClient } from '@sanity/client'
 import { createSupabaseDbClient } from '@/lib/supabaseServer'
+import { writeAuditLog } from '@/lib/auditLog'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -132,8 +133,9 @@ export async function POST(request) {
     }
 
     // Create a minimal Sanity record with admitted: false to block inbox approval permanently
+    let deniedId = null
     if (req.email) {
-      await serverClient.create({
+      const denied = await serverClient.create({
         _type: 'catSitter',
         name: req.name || null,
         email: req.email,
@@ -141,7 +143,16 @@ export async function POST(request) {
         memberVerified: false,
         welcomeSent: false,
       })
+      deniedId = denied._id
     }
+
+    writeAuditLog({
+      action: 'member_rejected',
+      actorEmail: 'email-link',
+      targetId: deniedId || null,
+      targetName: req.name || null,
+      details: { email: req.email || null, requestId: id },
+    }).catch(() => {})
 
     const displayName = req.name || 'Applicant'
     return html(`

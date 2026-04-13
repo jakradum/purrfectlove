@@ -100,7 +100,7 @@ export async function POST(request) {
     // Membership gate: must exist as a verified catSitter or a teamMember
     const [catSitter, teamMember] = await Promise.all([
       sanity.fetch(
-        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id }`,
+        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, siteAdmin, otpPermanentlyBlocked, otpCoolUntil }`,
         { email }
       ),
       sanity.fetch(
@@ -111,6 +111,26 @@ export async function POST(request) {
 
     if (!catSitter && !teamMember) {
       return Response.json({ error: 'ACCOUNT_NOT_FOUND' }, { status: 403 })
+    }
+
+    // OTP lockout checks (catSitters only — siteAdmin and teamMember are exempt)
+    if (catSitter && !catSitter.siteAdmin) {
+      if (catSitter.otpPermanentlyBlocked) {
+        return Response.json(
+          { error: 'This account has been locked due to too many failed login attempts. Please contact support@purrfectlove.org to regain access.' },
+          { status: 403 }
+        )
+      }
+      if (catSitter.otpCoolUntil && new Date(catSitter.otpCoolUntil) > new Date()) {
+        const minutesLeft = Math.ceil((new Date(catSitter.otpCoolUntil) - Date.now()) / 60_000)
+        const timeMsg = minutesLeft > 60
+          ? `${Math.ceil(minutesLeft / 60)} hour${Math.ceil(minutesLeft / 60) === 1 ? '' : 's'}`
+          : `${minutesLeft} minute${minutesLeft === 1 ? '' : 's'}`
+        return Response.json(
+          { error: `Too many failed attempts. Please try again in ${timeMsg}.` },
+          { status: 429 }
+        )
+      }
     }
 
     // Generate OTP token via Supabase admin — does not send any email itself.

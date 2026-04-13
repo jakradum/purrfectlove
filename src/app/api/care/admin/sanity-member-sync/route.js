@@ -1,6 +1,7 @@
 import { createHmac, timingSafeEqual } from 'crypto'
 import { createClient } from '@sanity/client'
 import { createSupabaseAdminClient } from '@/lib/supabaseServer'
+import { writeAuditLog } from '@/lib/auditLog'
 
 const sanity = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -74,6 +75,13 @@ export async function POST(request) {
       user_metadata: { ...existingUser.user_metadata, sitterId },
     })
     await sanity.patch(sitterId).set({ memberVerified: true }).commit().catch(() => {})
+    writeAuditLog({
+      action: 'member_synced',
+      actorEmail: 'sanity-webhook',
+      targetId: sitterId,
+      targetName: doc.name || null,
+      details: { email, supabaseUserId: existingUser.id, action: 'updated_sitter_id' },
+    }).catch(() => {})
     return Response.json({ status: 'updated', userId: existingUser.id })
   }
 
@@ -91,6 +99,14 @@ export async function POST(request) {
 
   // Mark as verified in Sanity so the OTP gate in send-otp passes
   await sanity.patch(sitterId).set({ memberVerified: true }).commit().catch(() => {})
+
+  writeAuditLog({
+    action: 'member_synced',
+    actorEmail: 'sanity-webhook',
+    targetId: sitterId,
+    targetName: doc.name || null,
+    details: { email, supabaseUserId: created.user.id, action: 'created' },
+  }).catch(() => {})
 
   return Response.json({ status: 'created', userId: created.user.id })
 }

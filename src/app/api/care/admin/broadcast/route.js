@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
 import { getSupabaseUser } from '@/lib/supabaseServer'
+import { writeAuditLog } from '@/lib/auditLog'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -87,6 +88,14 @@ export async function POST(request) {
 
     // Record sentCount on the document
     await serverClient.patch(broadcastId).set({ sentCount }).commit()
+
+    writeAuditLog({
+      action: 'broadcast_sent',
+      actorId: user.sitterId,
+      targetId: broadcastId,
+      targetName: broadcast.subject,
+      details: { sentCount, memberCount: members.length },
+    }).catch(() => {})
 
     return Response.json({ sentCount, memberCount: members.length })
   } catch (error) {

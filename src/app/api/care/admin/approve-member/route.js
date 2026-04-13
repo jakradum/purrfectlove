@@ -2,6 +2,7 @@ import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
 import { createSupabaseAdminClient, createSupabaseDbClient } from '@/lib/supabaseServer'
 import { computeCohort } from '@/lib/cohort'
+import { writeAuditLog } from '@/lib/auditLog'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -142,6 +143,14 @@ export async function GET(request) {
     }
 
     await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
+
+    writeAuditLog({
+      action: 'member_approved',
+      actorEmail: 'email-link',
+      targetId: sitter._id,
+      targetName: req.name || null,
+      details: { email: req.email || null, requestId: id },
+    }).catch(() => {})
 
     const displayName = req.name || 'Applicant'
     return html(`

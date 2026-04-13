@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
 import { getSupabaseUser } from '@/lib/supabaseServer'
+import { writeAuditLog } from '@/lib/auditLog'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -103,6 +104,14 @@ export async function POST(request) {
 
     // Step 3: Delete the catSitter document
     await serverClient.delete(documentId)
+
+    writeAuditLog({
+      action: 'account_deleted',
+      actorId: user.sitterId,
+      targetId: documentId,
+      targetName: doc.name || null,
+      details: { email: doc.email || null, reason: doc.deletionReason || null },
+    }).catch(() => {})
 
     return Response.json({ success: true })
   } catch (error) {

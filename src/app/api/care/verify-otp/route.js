@@ -142,6 +142,38 @@ export async function POST(request) {
 
     const email = rawIdentifier.trim().toLowerCase()
 
+    // Look up the catSitter / teamMember upfront — needed for lockout checks and session setup
+    const [catSitter, teamMember] = await Promise.all([
+      sanity.fetch(
+        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, siteAdmin, otpFailedAttempts, otpCoolUntil, otpPermanentlyBlocked }`,
+        { email }
+      ),
+      sanity.fetch(
+        `*[_type == "teamMember" && email == $email][0]{ _id, name }`,
+        { email }
+      ),
+    ])
+
+    // OTP lockout checks (catSitters only — teamMembers are exempt)
+    if (catSitter && !catSitter.siteAdmin) {
+      if (catSitter.otpPermanentlyBlocked) {
+        return Response.json(
+          { error: 'This account has been locked due to too many failed login attempts. Please contact support@purrfectlove.org to regain access.' },
+          { status: 403 }
+        )
+      }
+      if (catSitter.otpCoolUntil && new Date(catSitter.otpCoolUntil) > new Date()) {
+        const minutesLeft = Math.ceil((new Date(catSitter.otpCoolUntil) - Date.now()) / 60_000)
+        const timeMsg = minutesLeft > 60
+          ? `${Math.ceil(minutesLeft / 60)} hour${Math.ceil(minutesLeft / 60) === 1 ? '' : 's'}`
+          : `${minutesLeft} minute${minutesLeft === 1 ? '' : 's'}`
+        return Response.json(
+          { error: `Too many failed attempts. Please try again in ${timeMsg}.` },
+          { status: 429 }
+        )
+      }
+    }
+
     // Buffer cookies that Supabase wants to set on the response
     const cookiesToSet = []
     const supabase = createServerClient(
@@ -163,23 +195,22 @@ export async function POST(request) {
     })
 
     if (error || !data.user) {
+      // Record failed attempt against the catSitter (non-fatal, fire-and-forget)
+      if (catSitter && !catSitter.siteAdmin) {
+        const newCount = (catSitter.otpFailedAttempts || 0) + 1
+        const patch = { otpFailedAttempts: newCount }
+        if (newCount >= 10) {
+          patch.otpPermanentlyBlocked = true
+        } else if (newCount >= 5 && !catSitter.otpCoolUntil) {
+          patch.otpCoolUntil = new Date(Date.now() + 24 * 60 * 60 * 1000).toISOString()
+        }
+        sanity.patch(catSitter._id).set(patch).commit().catch(() => {})
+      }
       return Response.json(
         { error: error?.message === 'Token has expired or is invalid' ? 'Code expired. Request a new one.' : 'Invalid code' },
         { status: 400 }
       )
     }
-
-    // Look up the catSitter / teamMember in Sanity to get sitterId
-    const [catSitter, teamMember] = await Promise.all([
-      sanity.fetch(
-        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, name, email, locale, welcomeSent, siteAdmin }`,
-        { email }
-      ),
-      sanity.fetch(
-        `*[_type == "teamMember" && email == $email][0]{ _id, name }`,
-        { email }
-      ),
-    ])
 
     // If teamMember matched but no catSitter, find their linked catSitter by name
     let resolvedCatSitter = catSitter
@@ -197,6 +228,15 @@ export async function POST(request) {
 
     const sitterId = account._id
     const isTeamMember = (!resolvedCatSitter && !!teamMember) || !!resolvedCatSitter?.siteAdmin
+
+    // Reset OTP failure counter on successful login (non-fatal)
+    if (catSitter && !catSitter.siteAdmin && (catSitter.otpFailedAttempts || catSitter.otpCoolUntil)) {
+      sanity.patch(catSitter._id)
+        .set({ otpFailedAttempts: 0 })
+        .unset(['otpCoolUntil'])
+        .commit()
+        .catch(() => {})
+    }
 
     // Write sitterId + isTeamMember into Supabase user_metadata via service role
     const supabaseAdmin = createSupabaseAdminClient()

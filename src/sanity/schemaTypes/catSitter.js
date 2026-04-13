@@ -196,6 +196,11 @@ export default {
     { name: 'deletionReason', title: 'Deletion Reason', type: 'text', rows: 3 },
     { name: 'deletionRequestedAt', title: 'Deletion Requested At', type: 'datetime' },
     { name: 'confirmationSentAt', title: 'Deletion Confirmation Email Sent At', type: 'datetime', description: 'Timestamp when the deletion confirmation email was sent to the member.' },
+
+    // OTP lockout — managed automatically by verify-otp; do not edit manually
+    { name: 'otpFailedAttempts', title: 'OTP Failed Attempts', type: 'number', initialValue: 0, readOnly: true, description: 'Consecutive failed login attempts. Resets to 0 on successful login.' },
+    { name: 'otpCoolUntil', title: 'OTP Cool-off Until', type: 'datetime', readOnly: true, description: 'Account is locked out until this timestamp (set after 5 failed attempts). Cleared on successful login.' },
+    { name: 'otpPermanentlyBlocked', title: 'OTP Permanently Blocked', type: 'boolean', initialValue: false, readOnly: true, description: 'Set to true after 10 consecutive failed OTP attempts. Login is blocked indefinitely — contact support to reset.' },
   ],
   preview: {
     select: { title: 'name', username: 'username', subtitle: 'email', verified: 'memberVerified', admin: 'siteAdmin', deletionRequested: 'deletionRequested', media: 'photo' },

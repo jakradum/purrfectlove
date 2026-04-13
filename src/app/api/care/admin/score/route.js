@@ -1,6 +1,7 @@
 import { createClient } from '@sanity/client'
 import { getSupabaseUser } from '@/lib/supabaseServer'
 import { adjustScore } from '@/lib/memberScore'
+import { writeAuditLog } from '@/lib/auditLog'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -33,6 +34,13 @@ export async function PATCH(request) {
     }
 
     await adjustScore(memberId, change, `Admin adjustment: ${reason}`)
+
+    writeAuditLog({
+      action: 'score_adjusted',
+      actorId: user.sitterId,
+      targetId: memberId,
+      details: { change, reason },
+    }).catch(() => {})
 
     return Response.json({ success: true })
   } catch (error) {
