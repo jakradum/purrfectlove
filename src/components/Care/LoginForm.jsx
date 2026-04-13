@@ -6,10 +6,14 @@ import Image from 'next/image';
 import styles from './Care.module.css';
 
 export default function LoginForm({ locale = 'en', loginRedirect }) {
-  const redirect = loginRedirect || (locale === 'de' ? '/de/care' : '/');
   const router = useRouter();
   const searchParams = useSearchParams();
   const sessionReason = searchParams?.get('reason'); // 'expired' | 'session' | null
+  // After login, go to the deep-link destination if safe, otherwise fall back to prop/default.
+  const rawRedirect = searchParams?.get('redirect') || '';
+  const redirect = (rawRedirect.startsWith('/') ? rawRedirect : null)
+    ?? loginRedirect
+    ?? (locale === 'de' ? '/de/care' : '/');
 
   const [step, setStep] = useState('identifier');
   const [resendCountdown, setResendCountdown] = useState(0);

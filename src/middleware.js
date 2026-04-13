@@ -111,6 +111,11 @@ export async function middleware(request) {
   if (isProtectedCarePath) {
     if (!user) {
       loginUrl.searchParams.set('reason', 'session');
+      // Encode the original destination so the login form can redirect back after auth.
+      // On the care subdomain the pathname is the raw path before the /care rewrite,
+      // so it's already the correct post-login path on that domain.
+      const redirectPath = pathname + (request.nextUrl.search || '');
+      loginUrl.searchParams.set('redirect', redirectPath);
       return withSessionCookies(NextResponse.redirect(loginUrl));
     }
 
