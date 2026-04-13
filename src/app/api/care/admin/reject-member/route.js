@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { createSupabaseDbClient } from '@/lib/supabaseServer'
+import { createSupabaseDbClient, getSupabaseUser } from '@/lib/supabaseServer'
 import { writeAuditLog } from '@/lib/auditLog'
 
 const serverClient = createClient({
@@ -164,5 +164,80 @@ export async function POST(request) {
   } catch (err) {
     console.error('reject-member POST error:', err)
     return html('<p>Something went wrong. Please try again.</p>')
+  }
+}
+
+// ── Studio action (JSON POST) ──────────────────────────────────────────────
+export async function DELETE(request) {
+  try {
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const admin = await serverClient.fetch(
+      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
+      { id: user.sitterId }
+    )
+    if (!admin?.siteAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
+    const { requestId } = await request.json()
+    if (!requestId) return Response.json({ error: 'requestId is required' }, { status: 400 })
+
+    // Fetch the Sanity membershipRequest document
+    const membershipReq = await serverClient.fetch(
+      `*[_type == "membershipRequest" && _id == $id][0]{ _id, name, email, supabaseRequestId, status }`,
+      { id: requestId }
+    )
+    if (!membershipReq) return Response.json({ error: 'Request not found' }, { status: 404 })
+    if (membershipReq.status === 'entry_denied') return Response.json({ success: true, alreadyDenied: true })
+    if (membershipReq.status === 'approved') return Response.json({ error: 'This request has already been approved.' }, { status: 409 })
+
+    // Atomic lock in Supabase
+    const db = createSupabaseDbClient()
+    if (membershipReq.supabaseRequestId) {
+      await db
+        .from('membership_requests')
+        .update({ status: 'entry_denied' })
+        .eq('id', membershipReq.supabaseRequestId)
+        .eq('status', 'pending')
+    }
+
+    // Create minimal Sanity record with admitted: false to permanently block inbox approval
+    let deniedId = null
+    if (membershipReq.email) {
+      const existing = await serverClient.fetch(
+        `*[_type == "catSitter" && email == $email][0]{ _id, admitted }`,
+        { email: membershipReq.email }
+      )
+      if (existing) {
+        await serverClient.patch(existing._id).set({ admitted: false }).commit()
+        deniedId = existing._id
+      } else {
+        const denied = await serverClient.create({
+          _type: 'catSitter',
+          name: membershipReq.name || null,
+          email: membershipReq.email,
+          admitted: false,
+          memberVerified: false,
+          welcomeSent: false,
+        })
+        deniedId = denied._id
+      }
+    }
+
+    // Update Sanity membershipRequest status
+    serverClient.patch(requestId).set({ status: 'entry_denied' }).commit().catch(() => {})
+
+    writeAuditLog({
+      action: 'member_rejected',
+      actorId: user.sitterId,
+      targetId: deniedId || null,
+      targetName: membershipReq.name || null,
+      details: { email: membershipReq.email || null, supabaseRequestId: membershipReq.supabaseRequestId },
+    }).catch(() => {})
+
+    return Response.json({ success: true })
+  } catch (err) {
+    console.error('reject-member DELETE error:', err)
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }

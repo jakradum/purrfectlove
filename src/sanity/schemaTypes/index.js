@@ -19,6 +19,7 @@ import memberReport from './memberReport'
 import broadcastMessage from './broadcastMessage'
 import portalFeedback from './portalFeedback'
 import adminAuditLog from './adminAuditLog'
+import membershipRequest from './membershipRequest'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -47,5 +48,6 @@ export const schema = {
     broadcastMessage,
     portalFeedback,
     adminAuditLog,
+    membershipRequest,
   ]
 }

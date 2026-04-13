@@ -4,6 +4,7 @@ import {MemberMessageLog} from './components/MemberMessageLog'
 import {DeletionRequestedActions} from './components/DeletionRequestedActions'
 import {CommunityMetrics} from './components/CommunityMetrics'
 import {BroadcastSender} from './components/BroadcastSender'
+import {MembershipRequestActions} from './components/MembershipRequestActions'
 
 export const structure = (S) =>
   S.list()
@@ -186,6 +187,50 @@ export const structure = (S) =>
                   S.list()
                     .title('Members')
                     .items([
+                      S.listItem()
+                        .title('Requests')
+                        .icon(() => '📥')
+                        .child(
+                          S.list()
+                            .title('Requests')
+                            .items([
+                              S.listItem()
+                                .title('Pending')
+                                .icon(() => '⏳')
+                                .child(
+                                  S.documentTypeList('membershipRequest')
+                                    .title('Pending Requests')
+                                    .filter('_type == "membershipRequest" && status == "pending"')
+                                    .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
+                                    .child((documentId) =>
+                                      S.document()
+                                        .documentId(documentId)
+                                        .schemaType('membershipRequest')
+                                        .views([
+                                          S.view.component(MembershipRequestActions).title('Review & Action'),
+                                          S.view.form().title('Raw Data'),
+                                        ])
+                                    )
+                                ),
+                              S.listItem()
+                                .title('All Requests')
+                                .icon(() => '📋')
+                                .child(
+                                  S.documentTypeList('membershipRequest')
+                                    .title('All Requests')
+                                    .defaultOrdering([{ field: 'submittedAt', direction: 'desc' }])
+                                    .child((documentId) =>
+                                      S.document()
+                                        .documentId(documentId)
+                                        .schemaType('membershipRequest')
+                                        .views([
+                                          S.view.component(MembershipRequestActions).title('Review & Action'),
+                                          S.view.form().title('Raw Data'),
+                                        ])
+                                    )
+                                ),
+                            ])
+                        ),
                       S.listItem()
                         .title('All Members')
                         .icon(() => '👤')

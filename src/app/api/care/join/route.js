@@ -1,6 +1,15 @@
 import { Resend } from 'resend'
+import { createClient } from '@sanity/client'
 import { createSupabaseDbClient } from '@/lib/supabaseServer'
 import { rateLimit, shouldRateLimit } from '@/lib/rateLimit'
+
+const sanity = createClient({
+  projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
+  dataset: process.env.NEXT_PUBLIC_SANITY_DATASET || 'production',
+  token: process.env.SANITY_API_TOKEN,
+  apiVersion: '2024-01-01',
+  useCdn: false,
+})
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
@@ -88,6 +97,20 @@ export async function POST(request) {
       html: buildAdminNotificationHtml({ name: name.trim(), email: email?.trim() || null, message: message?.trim() || null, submittedAt, approveUrl, rejectUrl }),
       text: buildAdminNotificationText({ name: name.trim(), email: email?.trim() || null, message: message?.trim() || null, submittedAt, approveUrl, rejectUrl }),
     })
+
+    // Mirror the request into Sanity so it can be approved/rejected from Studio
+    sanity.create({
+      _type: 'membershipRequest',
+      name: name.trim(),
+      phone: phone?.trim() || null,
+      email: email?.trim().toLowerCase() || null,
+      message: message?.trim() || null,
+      submittedAt: new Date().toISOString(),
+      status: 'pending',
+      supabaseRequestId: row.id,
+      approvalToken: token,
+      tokenExpiresAt: expiresAt,
+    }).catch((err) => console.error('join: failed to mirror request to Sanity:', err))
 
     return Response.json({ success: true })
   } catch (error) {

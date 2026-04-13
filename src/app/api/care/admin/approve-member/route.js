@@ -1,6 +1,6 @@
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
-import { createSupabaseAdminClient, createSupabaseDbClient } from '@/lib/supabaseServer'
+import { createSupabaseAdminClient, createSupabaseDbClient, getSupabaseUser } from '@/lib/supabaseServer'
 import { computeCohort } from '@/lib/cohort'
 import { writeAuditLog } from '@/lib/auditLog'
 
@@ -43,6 +43,113 @@ const html = (body) => new Response(
   { headers: { 'Content-Type': 'text/html' } }
 )
 
+/**
+ * Core approval logic — shared by the email-link (GET) and Studio (POST) flows.
+ * @param {object} req  - { name, email, phone, id } from the membership_request row
+ * @param {string} [sanityRequestId] - Sanity membershipRequest doc ID to update on completion
+ * @param {string} [actorId] - sitterId of the admin (for audit log; null for email-link)
+ */
+async function runApproval(req, sanityRequestId, actorId) {
+  const supabaseAdmin = createSupabaseAdminClient()
+
+  // ── 1. Find or create the catSitter ──────────────────────────────────────
+  let sitter
+  if (req.email) {
+    const existing = await serverClient.fetch(
+      `*[_type == "catSitter" && email == $email][0]{ _id }`,
+      { email: req.email }
+    )
+    if (existing) {
+      // Member was already manually added — patch and reuse
+      await serverClient.patch(existing._id).set({ admitted: true, memberVerified: true }).commit()
+      sitter = existing
+    }
+  }
+  if (!sitter) {
+    sitter = await serverClient.create({
+      _type: 'catSitter',
+      name: req.name || null,
+      phone: req.phone || null,
+      email: req.email || null,
+      admitted: true,
+      memberVerified: true,
+      welcomeSent: false,
+    })
+  }
+
+  // ── 2. Create or update the Supabase auth user ───────────────────────────
+  if (req.email) {
+    try {
+      const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+      const existingUser = listData?.users?.find(u => u.email === req.email)
+
+      if (existingUser) {
+        // User already exists (e.g. added via webhook) — make sure sitterId is correct
+        if (existingUser.user_metadata?.sitterId !== sitter._id) {
+          await supabaseAdmin.auth.admin.updateUserById(existingUser.id, {
+            user_metadata: { ...existingUser.user_metadata, sitterId: sitter._id },
+          })
+        }
+      } else {
+        const { data: created, error: createErr } = await supabaseAdmin.auth.admin.createUser({
+          email: req.email,
+          email_confirm: true,
+          user_metadata: { sitterId: sitter._id, isTeamMember: false },
+        })
+        if (createErr) {
+          console.error('approve-member: createUser error:', createErr)
+        } else if (created?.user?.id) {
+          const cohort = computeCohort(created.user.id, false)
+          await supabaseAdmin.auth.admin.updateUserById(created.user.id, {
+            user_metadata: { sitterId: sitter._id, isTeamMember: false, cohort },
+          })
+        }
+      }
+    } catch (err) {
+      console.error('approve-member: Supabase user sync failed:', err)
+      // Non-fatal — member can still log in later
+    }
+  }
+
+  // ── 3. Send welcome email (non-fatal) ────────────────────────────────────
+  let emailSent = false
+  if (req.email) {
+    try {
+      const displayName = (req.name || 'there').split(' ')[0]
+      await resend.emails.send({
+        from: 'Purrfect Love <no-reply@purrfectlove.org>',
+        to: [req.email],
+        subject: 'Welcome to the Purrfect Love Community',
+        html: buildWelcomeHtml(displayName),
+        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nLog in at https://care.purrfectlove.org/login\n\n– The Purrfect Love Team`,
+      })
+      emailSent = true
+    } catch (err) {
+      console.error('approve-member: welcome email failed:', err)
+    }
+  }
+
+  await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
+
+  // ── 4. Update the Sanity membershipRequest document ──────────────────────
+  if (sanityRequestId) {
+    serverClient.patch(sanityRequestId).set({ status: 'approved' }).commit().catch(() => {})
+  }
+
+  // ── 5. Audit log ─────────────────────────────────────────────────────────
+  writeAuditLog({
+    action: 'member_approved',
+    actorId: actorId || null,
+    actorEmail: actorId ? null : 'email-link',
+    targetId: sitter._id,
+    targetName: req.name || null,
+    details: { email: req.email || null, supabaseRequestId: req.id || null },
+  }).catch(() => {})
+
+  return { sitter, emailSent }
+}
+
+// ── GET — email link click ─────────────────────────────────────────────────
 export async function GET(request) {
   const { searchParams } = new URL(request.url)
   const id    = searchParams.get('id')
@@ -86,7 +193,7 @@ export async function GET(request) {
       `)
     }
 
-    // Atomic update — only succeeds if still pending (prevents double-fire from email prefetch)
+    // Atomic lock — prevents double-fire from email-client prefetch
     const { data: locked } = await db
       .from('membership_requests')
       .update({ status: 'approved' })
@@ -101,67 +208,88 @@ export async function GET(request) {
       <p><a href="https://care.purrfectlove.org">Back to portal →</a></p>
     `)
 
-    // Create catSitter in Sanity
-    const sitter = await serverClient.create({
-      _type: 'catSitter',
-      name: req.name || null,
-      phone: req.phone || null,
-      email: req.email || null,
-      admitted: true,
-      memberVerified: true,
-      welcomeSent: false,
-    })
+    // Find the mirrored Sanity membershipRequest document (if it exists)
+    const sanityReq = await serverClient.fetch(
+      `*[_type == "membershipRequest" && supabaseRequestId == $id][0]{ _id }`,
+      { id }
+    ).catch(() => null)
 
-    // Create Supabase auth user
-    if (req.email) {
-      const supabaseAdmin = createSupabaseAdminClient()
-      const { data: userData } = await supabaseAdmin.auth.admin.createUser({
-        email: req.email,
-        email_confirm: true,
-        user_metadata: { sitterId: sitter._id, isTeamMember: false },
-      })
-      if (userData?.user?.id) {
-        const cohort = computeCohort(userData.user.id, false)
-        await supabaseAdmin.auth.admin.updateUserById(userData.user.id, {
-          user_metadata: { sitterId: sitter._id, isTeamMember: false, cohort },
-        })
-      }
-    }
-
-    // Send welcome email
-    let emailSent = false
-    if (req.email) {
-      const displayName = (req.name || 'there').split(' ')[0]
-      await resend.emails.send({
-        from: 'Purrfect Love <no-reply@purrfectlove.org>',
-        to: [req.email],
-        subject: 'Welcome to the Purrfect Love Community',
-        html: buildWelcomeHtml(displayName),
-        text: `Hi ${displayName},\n\nWelcome to the Purrfect Love Community! Your application has been approved.\n\nLog in at https://care.purrfectlove.org/login\n\n– The Purrfect Love Team`,
-      })
-      emailSent = true
-    }
-
-    await serverClient.patch(sitter._id).set({ welcomeSent: emailSent }).commit()
-
-    writeAuditLog({
-      action: 'member_approved',
-      actorEmail: 'email-link',
-      targetId: sitter._id,
-      targetName: req.name || null,
-      details: { email: req.email || null, requestId: id },
-    }).catch(() => {})
+    const { emailSent } = await runApproval(req, sanityReq?._id, null)
 
     const displayName = req.name || 'Applicant'
     return html(`
       <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#2C5F4F;margin:0 0 12px;">Ticket closed · Approved</p>
       <p style="font-size:20px;margin:0 0 12px;">✓ Done</p>
-      <p><strong>${displayName}</strong> has been approved and sent a welcome email.</p>
+      <p><strong>${displayName}</strong> has been approved${emailSent ? ' and sent a welcome email' : ' (no email on file)'}.</p>
       <p style="margin-top:24px;"><a href="https://care.purrfectlove.org">Back to portal →</a></p>
     `)
   } catch (err) {
     console.error('approve-member GET error:', err)
     return html('<p>Something went wrong. Please try again.</p>')
+  }
+}
+
+// ── POST — Studio action ───────────────────────────────────────────────────
+export async function POST(request) {
+  try {
+    const user = await getSupabaseUser(request)
+    if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
+
+    const admin = await serverClient.fetch(
+      `*[_type == "catSitter" && _id == $id][0]{ siteAdmin }`,
+      { id: user.sitterId }
+    )
+    if (!admin?.siteAdmin) return Response.json({ error: 'Forbidden' }, { status: 403 })
+
+    const { requestId } = await request.json()
+    if (!requestId) return Response.json({ error: 'requestId is required' }, { status: 400 })
+
+    // Fetch the Sanity membershipRequest document
+    const membershipReq = await serverClient.fetch(
+      `*[_type == "membershipRequest" && _id == $id][0]{ _id, name, email, phone, supabaseRequestId, status }`,
+      { id: requestId }
+    )
+    if (!membershipReq) return Response.json({ error: 'Request not found' }, { status: 404 })
+    if (membershipReq.status === 'approved') return Response.json({ success: true, alreadyApproved: true })
+    if (membershipReq.status === 'entry_denied') return Response.json({ error: 'This request has been denied and cannot be approved.' }, { status: 409 })
+
+    // Check for previously-denied applicant
+    if (membershipReq.email) {
+      const denied = await serverClient.fetch(
+        `*[_type == "catSitter" && email == $email && admitted == false][0]._id`,
+        { email: membershipReq.email }
+      )
+      if (denied) return Response.json({ error: 'This applicant was previously denied. Update their Sanity record to override.' }, { status: 403 })
+    }
+
+    // Atomic lock in Supabase (if we have the request ID)
+    const db = createSupabaseDbClient()
+    if (membershipReq.supabaseRequestId) {
+      const { data: locked } = await db
+        .from('membership_requests')
+        .update({ status: 'approved' })
+        .eq('id', membershipReq.supabaseRequestId)
+        .eq('status', 'pending')
+        .select('id')
+        .single()
+
+      if (!locked) {
+        // Already actioned in Supabase — sync Sanity and return
+        serverClient.patch(requestId).set({ status: 'approved' }).commit().catch(() => {})
+        return Response.json({ success: true, alreadyApproved: true })
+      }
+    }
+
+    const { emailSent } = await runApproval(
+      { ...membershipReq, id: membershipReq.supabaseRequestId },
+      requestId,
+      user.sitterId
+    )
+
+    return Response.json({ success: true, emailSent })
+  } catch (err) {
+    console.error('approve-member POST error:', err)
+    return Response.json({ error: 'Internal server error' }, { status: 500 })
   }
 }
 
