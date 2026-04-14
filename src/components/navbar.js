@@ -15,7 +15,20 @@ export default function Navbar({ locale = 'en', siteUrl = '' }) {
   const [isClosing, setIsClosing] = useState(false);
   const [openDropdown, setOpenDropdown] = useState(null);
   const [mobileExpandedMenu, setMobileExpandedMenu] = useState(null);
+  const [alternates, setAlternates] = useState({});
   const pathname = usePathname();
+
+  // Read hreflang alternate links injected by page-level generateMetadata
+  useEffect(() => {
+    const links = document.querySelectorAll('link[rel="alternate"][hreflang]');
+    const found = {};
+    links.forEach((el) => {
+      const lang = el.getAttribute('hreflang');
+      const href = el.getAttribute('href');
+      if (lang && href) found[lang] = href;
+    });
+    setAlternates(found);
+  }, [pathname]);
 
   const menuItems = locale === 'de' ? menuItemsDE : menuItemsEN;
   const { navLinks, cta } = menuItems;
@@ -30,6 +43,15 @@ export default function Navbar({ locale = 'en', siteUrl = '' }) {
     // On care subdomain (siteUrl set), language switch goes to main site
     if (siteUrl) {
       return targetLocale === 'de' ? `${siteUrl}/de` : siteUrl || '/';
+    }
+    // Use hreflang alternate if the page provided one (e.g. blog posts with different slugs per locale)
+    if (alternates[targetLocale]) {
+      try {
+        const url = new URL(alternates[targetLocale]);
+        return url.pathname;
+      } catch {
+        return alternates[targetLocale];
+      }
     }
     if (targetLocale === 'de') {
       if (pathname.startsWith('/de')) return pathname;
