@@ -130,11 +130,13 @@ export default function SitterCard({
   // ── Booking flow state ────────────────────────────────────────────────────
   const [waiverOpen, setWaiverOpen] = useState(false);
   const [bookingModalOpen, setBookingModalOpen] = useState(false);
+  const [bookingModalKey, setBookingModalKey] = useState(0);
 
   const openBookingFlow = () => {
     if (posthog.__loaded) posthog.capture('booking_initiated', { sitter_id: _id });
     const waiverAccepted = typeof window !== 'undefined' && localStorage.getItem('pl_waiver_accepted');
     if (waiverAccepted) {
+      setBookingModalKey(k => k + 1);
       setBookingModalOpen(true);
     } else {
       setWaiverOpen(true);
@@ -571,6 +573,7 @@ export default function SitterCard({
         onAgree={() => {
           localStorage.setItem('pl_waiver_accepted', '1');
           setWaiverOpen(false);
+          setBookingModalKey(k => k + 1);
           setBookingModalOpen(true);
         }}
         onCancel={() => setWaiverOpen(false)}
@@ -579,6 +582,7 @@ export default function SitterCard({
 
     {bookingModalOpen && (
       <BookingRequestModal
+        key={bookingModalKey}
         sitterId={_id}
         sitterName={displayName}
         startDate={startDate}

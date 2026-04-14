@@ -13,6 +13,20 @@ const serverClient = createClient({
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
+function expandDateRange(startYMD, endYMD) {
+  const dates = []
+  const cur = new Date(startYMD + 'T00:00:00Z')
+  const end = new Date(endYMD + 'T00:00:00Z')
+  while (cur <= end) {
+    const y = cur.getUTCFullYear()
+    const m = String(cur.getUTCMonth() + 1).padStart(2, '0')
+    const d = String(cur.getUTCDate()).padStart(2, '0')
+    dates.push(`${y}-${m}-${d}`)
+    cur.setUTCDate(cur.getUTCDate() + 1)
+  }
+  return dates
+}
+
 function formatDate(ymd) {
   if (!ymd) return ''
   const [y, m, d] = ymd.split('-').map(Number)
@@ -105,6 +119,24 @@ export async function POST(request) {
       cancelled_by: cancelledBy,
       cancelled_at: cancelledAt,
     }).eq('id', bookingId)
+
+    // Release blocked dates on sitter's Sanity doc.
+    // Only confirmed/accepted bookings have dates blocked — pending ones don't.
+    if (['confirmed', 'accepted'].includes(booking.status) && booking.sitter_id && booking.start_date && booking.end_date) {
+      try {
+        const datesToUnblock = expandDateRange(booking.start_date, booking.end_date)
+        const sitterDoc = await serverClient.fetch(
+          `*[_type == "catSitter" && _id == $id][0]{ blockedByBooking }`,
+          { id: booking.sitter_id }
+        )
+        const currentBlocked = sitterDoc?.blockedByBooking || []
+        const unblockSet = new Set(datesToUnblock)
+        const updatedBlocked = currentBlocked.filter(d => !unblockSet.has(d))
+        await serverClient.patch(booking.sitter_id).set({ blockedByBooking: updatedBlocked }).commit()
+      } catch (err) {
+        console.error('cancel: failed to unblock dates on Sanity:', err)
+      }
+    }
 
     // Fetch party names/emails from Sanity for the notification email
     const [sitterProfile, parentProfile] = await Promise.all([
