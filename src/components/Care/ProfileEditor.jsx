@@ -274,6 +274,16 @@ export default function ProfileEditor({ initialData }) {
   // A ref (not state) so it doesn't trigger re-renders and survives across onChange calls.
   const overriddenDatesRef = useRef(new Set());
 
+  // If URL contains ?edit=availability, jump straight into availability edit mode
+  useEffect(() => {
+    if (typeof window === 'undefined') return;
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('edit') === 'availability') {
+      setEditMode('availability');
+      router.replace('/care/profile', { scroll: false });
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
   useEffect(() => {
     if (editMode !== 'availability') return;
     // Reset overrides on each edit-mode entry — fresh session, fresh computation.
@@ -474,6 +484,7 @@ export default function ProfileEditor({ initialData }) {
       coverImageUrl: initialData.coverImageUrl,
       identityVerified: initialData.identityVerified,
       trustedSitter: initialData.trustedSitter,
+      canSit: initialData.canSit,
     };
     return (
       <div>

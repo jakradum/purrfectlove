@@ -119,6 +119,14 @@ export default function SitterProfile({
   const coverBg = COVER_FALLBACKS[idx];
   const isCoverPattern = !coverImageUrl;
 
+  const BANNER_KEY = 'discoverability_banner_dismissed';
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    try { return !!sessionStorage.getItem(BANNER_KEY); } catch { return false; }
+  });
+  const dismissBanner = () => {
+    setBannerDismissed(true);
+    try { sessionStorage.setItem(BANNER_KEY, '1'); } catch {}
+  };
   const [showReport, setShowReport] = useState(false);
   const [linkCopied, setLinkCopied] = useState(false);
   const [showBooking, setShowBooking] = useState(false);
@@ -153,9 +161,31 @@ export default function SitterProfile({
   const activeCoverSrc = localCoverUrl || coverSrc;
   const capabilities = [...new Set([...(behavioralTraits || []), ...(feedingTypes || [])])];
 
+  const showDiscoverabilityBanner = isOwnProfile && !bannerDismissed && !canSit;
+
   return (
     <div className={styles.sitterProfilePage}>
       {!isOwnProfile && <Link href="/care" className={styles.backLink}>← Back to network</Link>}
+
+      {/* Discoverability nudge — own profile, canSit is off */}
+      {showDiscoverabilityBanner && (
+        <div className={styles.noStatusBanner}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>You&apos;re not visible in the marketplace</div>
+            <div style={{ fontSize: '0.84rem', opacity: 0.85, marginBottom: '0.75rem' }}>
+              Other members can&apos;t find you as a sitter. Enable sitting in your profile settings to be discovered.
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {onEditAvailability ? (
+                <button type="button" className={styles.noStatusBtn} onClick={onEditAvailability}>Update availability</button>
+              ) : (
+                <a href="/care/profile?edit=availability" className={styles.noStatusBtn}>Update availability</a>
+              )}
+              <button type="button" className={`${styles.noStatusBtn} ${styles.noStatusBtnOutline}`} onClick={dismissBanner}>Dismiss</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Profile header card */}
       <div className={styles.sitterProfileHeader}>

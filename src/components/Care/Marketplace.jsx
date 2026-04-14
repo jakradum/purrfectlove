@@ -162,6 +162,14 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   const [searchError, setSearchError] = useState('');
   const [fetchedSitters, setFetchedSitters] = useState([]);
   const [shimmer, setShimmer] = useState(false);
+  const BANNER_KEY = 'discoverability_banner_dismissed';
+  const [bannerDismissed, setBannerDismissed] = useState(() => {
+    try { return !!sessionStorage.getItem(BANNER_KEY); } catch { return false; }
+  });
+  const dismissBanner = () => {
+    setBannerDismissed(true);
+    try { sessionStorage.setItem(BANNER_KEY, '1'); } catch {}
+  };
   // myBookings: { [sitterId__startDate__endDate]: { status, bookingRef } }
   // Keyed by sitter+dates so state resets naturally when dates change.
   const [myBookings, setMyBookings] = useState({});
@@ -477,6 +485,22 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         ].filter(Boolean);
         return <p className={styles.filterSummary}>Showing results for {parts.join(' · ')}</p>;
       })()}
+
+      {/* Discoverability nudge — shown when logged-in user has canSit off */}
+      {myProfile && !myProfile.canSit && !bannerDismissed && (
+        <div className={styles.noStatusBanner}>
+          <div style={{ flex: 1 }}>
+            <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>You&apos;re not visible in the marketplace</div>
+            <div style={{ fontSize: '0.84rem', opacity: 0.85, marginBottom: '0.75rem' }}>
+              Other members can&apos;t find you as a sitter. Enable sitting in your profile settings to be discovered.
+            </div>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <a href="/care/profile" className={styles.noStatusBtn}>Update availability</a>
+              <button type="button" className={`${styles.noStatusBtn} ${styles.noStatusBtnOutline}`} onClick={dismissBanner}>Dismiss</button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Availability strip — only for sitters, wrapped to match filterBarWrap width exactly */}
       {myProfile?.canSit && (

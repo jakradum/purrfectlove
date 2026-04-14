@@ -413,6 +413,14 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
             </div>
           </div>
 
+          {/* Booking message from cat parent */}
+          {detail.message && (
+            <div style={{ margin: '12px 0 4px' }}>
+              <div className={styles.dtSectionLabel}>Message from {role === 'sitter' ? firstName(detail.parentName) : 'you'}</div>
+              <p style={{ fontSize: '0.875rem', lineHeight: 1.6, color: '#3a3a3a', margin: 0, whiteSpace: 'pre-wrap' }}>{detail.message}</p>
+            </div>
+          )}
+
           {/* View other party's profile */}
           {detail.other.id && (
             <a
