@@ -97,10 +97,11 @@ export async function POST(request) {
       return Response.json({ error: 'Invalid email address.' }, { status: 400 })
     }
 
-    // Membership gate: must exist as a verified catSitter or a teamMember
+    // Membership gate: must exist as a catSitter (any — Studio-added members won't have memberVerified set)
+    // or a teamMember. catSitter docs are only created on approval or by Studio admins directly.
     const [catSitter, teamMember] = await Promise.all([
       sanity.fetch(
-        `*[_type == "catSitter" && email == $email && memberVerified == true][0]{ _id, siteAdmin, otpPermanentlyBlocked, otpCoolUntil }`,
+        `*[_type == "catSitter" && email == $email][0]{ _id, siteAdmin, memberVerified, otpPermanentlyBlocked, otpCoolUntil }`,
         { email }
       ),
       sanity.fetch(
@@ -151,7 +152,13 @@ export async function POST(request) {
         })
         if (createErr) {
           console.error('send-otp: auto-create Supabase user failed:', createErr)
+        } else {
+          // Backfill memberVerified so future queries (and Studio) reflect the synced state
+          sanity.patch(catSitter._id).set({ memberVerified: true }).commit().catch(() => {})
         }
+      } else if (!catSitter.memberVerified) {
+        // Supabase user exists but Sanity flag wasn't set — backfill it
+        sanity.patch(catSitter._id).set({ memberVerified: true }).commit().catch(() => {})
       }
     }
 
