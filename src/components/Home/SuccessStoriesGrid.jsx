@@ -12,11 +12,11 @@ function formatDate(dateStr, locale) {
 }
 
 const ANIM_MS = 320;
-const SCROLL_AMOUNT = 300;
 
 export default function SuccessStoriesGrid({ stories, locale }) {
   const [active, setActive] = useState(null);
   const [closing, setClosing] = useState(false);
+  const [currentIndex, setCurrentIndex] = useState(0);
   const trackRef = useRef(null);
 
   const openModal = useCallback((story) => {
@@ -32,8 +32,16 @@ export default function SuccessStoriesGrid({ stories, locale }) {
     }, ANIM_MS);
   }, []);
 
-  const scrollBy = (dir) => {
-    trackRef.current?.scrollBy({ left: dir * SCROLL_AMOUNT, behavior: 'smooth' });
+  const navigate = (dir) => {
+    const total = stories.length;
+    const next = (currentIndex + dir + total) % total;
+    setCurrentIndex(next);
+    const track = trackRef.current;
+    if (!track) return;
+    const card = track.children[next];
+    if (card) {
+      track.scrollTo({ left: card.offsetLeft - track.offsetLeft, behavior: 'smooth' });
+    }
   };
 
   const storyCard = (story) => (
@@ -66,8 +74,8 @@ export default function SuccessStoriesGrid({ stories, locale }) {
         <div className={styles.carouselWrap}>
           <button
             className={`${styles.carouselArrow} ${styles.carouselArrowLeft}`}
-            onClick={() => scrollBy(-1)}
-            aria-label="Scroll left"
+            onClick={() => navigate(-1)}
+            aria-label="Previous story"
           >
             ‹
           </button>
@@ -78,8 +86,8 @@ export default function SuccessStoriesGrid({ stories, locale }) {
 
           <button
             className={`${styles.carouselArrow} ${styles.carouselArrowRight}`}
-            onClick={() => scrollBy(1)}
-            aria-label="Scroll right"
+            onClick={() => navigate(1)}
+            aria-label="Next story"
           >
             ›
           </button>
