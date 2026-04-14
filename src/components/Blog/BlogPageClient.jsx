@@ -6,9 +6,7 @@ import FeaturedBlogCard from '@/components/Home/FeaturedBlogCard';
 import TagFilter from './TagFilter';
 import styles from './BlogPage.module.css';
 
-// Tag display labels - capitalize and format for display
 const TAG_LABELS = {
-  // English tags
   'adoption': 'Adoption',
   'cat-care': 'Cat Care',
   'cat-health': 'Cat Health',
@@ -16,7 +14,6 @@ const TAG_LABELS = {
   'rescue-stories': 'Rescue Stories',
   'foster-care': 'Foster Care',
   'community': 'Community',
-  // German tags (stored in tagsDe field)
   'katzenpflege': 'Katzenpflege',
   'katzengesundheit': 'Katzengesundheit',
   'katzenverhalten': 'Katzenverhalten',
@@ -25,73 +22,69 @@ const TAG_LABELS = {
   'gemeinschaft': 'Gemeinschaft'
 };
 
+const PAGE_SIZE = 10;
+
 export default function BlogPageClient({ posts, locale, blogContent }) {
   const searchParams = useSearchParams();
   const router = useRouter();
-  const tagsFromUrl = searchParams.get('tags');
-  const [selectedTags, setSelectedTags] = useState(() => {
-    if (tagsFromUrl) {
-      return tagsFromUrl.split(',').filter(Boolean);
-    }
-    return [];
-  });
 
-  // Sync with URL param on mount and changes
+  const tagsFromUrl = searchParams.get('tags');
+  const pageFromUrl = parseInt(searchParams.get('page') || '1', 10);
+
+  const [selectedTags, setSelectedTags] = useState(() =>
+    tagsFromUrl ? tagsFromUrl.split(',').filter(Boolean) : []
+  );
+  const [currentPage, setCurrentPage] = useState(() => (pageFromUrl >= 1 ? pageFromUrl : 1));
+
   useEffect(() => {
-    if (tagsFromUrl) {
-      setSelectedTags(tagsFromUrl.split(',').filter(Boolean));
-    } else {
-      setSelectedTags([]);
-    }
+    setSelectedTags(tagsFromUrl ? tagsFromUrl.split(',').filter(Boolean) : []);
   }, [tagsFromUrl]);
 
-  // Update URL when tags change
-  const updateUrl = (tags) => {
+  useEffect(() => {
+    setCurrentPage(pageFromUrl >= 1 ? pageFromUrl : 1);
+  }, [pageFromUrl]);
+
+  const buildUrl = (tags, page) => {
     const basePath = locale === 'de' ? '/de/guides/blog' : '/guides/blog';
-    if (tags.length > 0) {
-      router.push(`${basePath}?tags=${tags.join(',')}`, { scroll: false });
-    } else {
-      router.push(basePath, { scroll: false });
-    }
+    const params = new URLSearchParams();
+    if (tags.length > 0) params.set('tags', tags.join(','));
+    if (page > 1) params.set('page', String(page));
+    const qs = params.toString();
+    return qs ? `${basePath}?${qs}` : basePath;
   };
 
-  // Handle tag click - toggle selection
   const handleTagSelect = (tag) => {
-    let newTags;
-    if (selectedTags.includes(tag)) {
-      // Deselect the tag
-      newTags = selectedTags.filter(t => t !== tag);
-    } else {
-      // Add the tag
-      newTags = [...selectedTags, tag];
-    }
+    const newTags = selectedTags.includes(tag)
+      ? selectedTags.filter(t => t !== tag)
+      : [...selectedTags, tag];
     setSelectedTags(newTags);
-    updateUrl(newTags);
+    setCurrentPage(1);
+    router.push(buildUrl(newTags, 1), { scroll: false });
   };
 
-  // Clear all selected tags
   const handleClearAll = () => {
     setSelectedTags([]);
-    updateUrl([]);
+    setCurrentPage(1);
+    router.push(buildUrl([], 1), { scroll: false });
   };
 
-  // Extract all unique tags from posts (use locale-appropriate tags field)
+  const handlePageChange = (page) => {
+    setCurrentPage(page);
+    router.push(buildUrl(selectedTags, page), { scroll: false });
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  };
+
   const allTags = useMemo(() => {
     const tagSet = new Set();
     posts.forEach(post => {
-      // For German locale, prefer tagsDe if available, otherwise fall back to tags
       const postTags = locale === 'de'
         ? (post.tagsDe && post.tagsDe.length > 0 ? post.tagsDe : post.tags)
         : post.tags;
-
-      if (postTags && Array.isArray(postTags)) {
-        postTags.forEach(tag => tagSet.add(tag));
-      }
+      if (postTags && Array.isArray(postTags)) postTags.forEach(tag => tagSet.add(tag));
     });
     return Array.from(tagSet).sort();
   }, [posts, locale]);
 
-  // Filter posts by selected tags (match ANY of the selected tags)
   const filteredPosts = useMemo(() => {
     if (selectedTags.length === 0) return posts;
     return posts.filter(post => {
@@ -102,13 +95,15 @@ export default function BlogPageClient({ posts, locale, blogContent }) {
     });
   }, [posts, selectedTags, locale]);
 
-  // Get display label for a tag
+  const totalPosts = filteredPosts.length;
+  const totalPages = Math.ceil(totalPosts / PAGE_SIZE);
+  const safePage = Math.min(Math.max(currentPage, 1), totalPages || 1);
+  const startIdx = (safePage - 1) * PAGE_SIZE;
+  const pagePosts = filteredPosts.slice(startIdx, startIdx + PAGE_SIZE);
+
   const getTagLabel = (tag) => {
-    if (TAG_LABELS[tag]) {
-      return TAG_LABELS[tag];
-    }
-    // Fallback: capitalize first letter of each word
-    return tag.split('-').map(word => word.charAt(0).toUpperCase() + word.slice(1)).join(' ');
+    if (TAG_LABELS[tag]) return TAG_LABELS[tag];
+    return tag.split('-').map(w => w.charAt(0).toUpperCase() + w.slice(1)).join(' ');
   };
 
   return (
@@ -124,18 +119,60 @@ export default function BlogPageClient({ posts, locale, blogContent }) {
         />
       )}
 
-      {filteredPosts.length > 0 ? (
-        <div className={styles.posts}>
-          {filteredPosts.map((post) => (
-            <FeaturedBlogCard
-              key={post._id}
-              post={post}
-              locale={locale}
-              readMoreText={blogContent.readMore}
-              variant="blog"
-            />
-          ))}
-        </div>
+      {pagePosts.length > 0 ? (
+        <>
+          <p className={styles.paginationMeta}>
+            {locale === 'de'
+              ? `${startIdx + 1}–${Math.min(startIdx + PAGE_SIZE, totalPosts)} von ${totalPosts} Beiträgen`
+              : `Showing ${startIdx + 1}–${Math.min(startIdx + PAGE_SIZE, totalPosts)} of ${totalPosts} posts`}
+          </p>
+
+          <div className={styles.posts}>
+            {pagePosts.map((post) => (
+              <FeaturedBlogCard
+                key={post._id}
+                post={post}
+                locale={locale}
+                readMoreText={blogContent.readMore}
+                variant="blog"
+              />
+            ))}
+          </div>
+
+          {totalPages > 1 && (
+            <div className={styles.pagination}>
+              <button
+                className={styles.pageBtn}
+                onClick={() => handlePageChange(safePage - 1)}
+                disabled={safePage === 1}
+                aria-label="Previous page"
+              >
+                ‹
+              </button>
+
+              {Array.from({ length: totalPages }, (_, i) => i + 1).map(pg => (
+                <button
+                  key={pg}
+                  className={`${styles.pageBtn} ${pg === safePage ? styles.pageBtnActive : ''}`}
+                  onClick={() => handlePageChange(pg)}
+                  aria-label={`Page ${pg}`}
+                  aria-current={pg === safePage ? 'page' : undefined}
+                >
+                  {pg}
+                </button>
+              ))}
+
+              <button
+                className={styles.pageBtn}
+                onClick={() => handlePageChange(safePage + 1)}
+                disabled={safePage === totalPages}
+                aria-label="Next page"
+              >
+                ›
+              </button>
+            </div>
+          )}
+        </>
       ) : (
         <p className={styles.noPosts}>
           {selectedTags.length > 0

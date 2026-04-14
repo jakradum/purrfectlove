@@ -46,6 +46,58 @@
   padding: 4rem 0;
 }
 
+.paginationMeta {
+  font-family: var(--font-outfit);
+  font-size: 0.8rem;
+  color: #999;
+  margin-bottom: 1rem;
+}
+
+.pagination {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.35rem;
+  margin: 2rem 0 3rem;
+}
+
+.pageBtn {
+  min-width: 36px;
+  height: 36px;
+  padding: 0 0.5rem;
+  border-radius: 8px;
+  border: 1.5px solid #e5e7eb;
+  background: #fff;
+  color: #444;
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+  font-weight: 500;
+  cursor: pointer;
+  transition: background 0.12s, border-color 0.12s, color 0.12s;
+}
+
+.pageBtn:hover:not(:disabled) {
+  border-color: #2C5F4F;
+  color: #2C5F4F;
+}
+
+.pageBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.pageBtnActive {
+  background: #2C5F4F;
+  border-color: #2C5F4F;
+  color: #fff;
+  font-weight: 700;
+}
+
+.pageBtnActive:hover {
+  background: #2C5F4F;
+  color: #fff;
+}
+
 .bottomBreadcrumb {
   margin-top: 2rem;
 }
