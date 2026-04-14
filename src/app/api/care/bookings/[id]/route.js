@@ -9,6 +9,18 @@ const serverClient = createClient({
   useCdn: false,
 })
 
+function haversineKm(lat1, lon1, lat2, lon2) {
+  const R = 6371
+  const dLat = ((lat2 - lat1) * Math.PI) / 180
+  const dLon = ((lon2 - lon1) * Math.PI) / 180
+  const a =
+    Math.sin(dLat / 2) ** 2 +
+    Math.cos((lat1 * Math.PI) / 180) *
+      Math.cos((lat2 * Math.PI) / 180) *
+      Math.sin(dLon / 2) ** 2
+  return R * 2 * Math.atan2(Math.sqrt(a), Math.sqrt(1 - a))
+}
+
 async function reverseGeocode(lat, lng) {
   if (!lat || !lng) return null
   try {
@@ -127,6 +139,15 @@ export async function GET(request, { params }) {
     const contactReleased =
       booking.status === 'confirmed' && new Date() >= twoDaysBeforeStart
 
+    // Straight-line distance between the two members (road multiplier ~1.66 for India)
+    const myLat = myProfile?.location?.lat
+    const myLng = myProfile?.location?.lng
+    const otherLat = other?.location?.lat
+    const otherLng = other?.location?.lng
+    const distanceKm = (myLat && myLng && otherLat && otherLng)
+      ? Math.round(haversineKm(myLat, myLng, otherLat, otherLng) * 1.66 * 10) / 10
+      : null
+
     return Response.json({
       _id:                booking.id,
       bookingRef:         booking.booking_ref,
@@ -144,6 +165,7 @@ export async function GET(request, { params }) {
       sitterName:      sitterProfile?.name || 'Member',
       parentName:      parentProfile?.name || 'Member',
       myNeighbourhood: myNeighbourhood || null,
+      distanceKm,
       contactReleased,
       other: {
         name:          other?.name || 'Member',

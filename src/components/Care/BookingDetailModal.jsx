@@ -365,6 +365,9 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
                 link={contactLive && mapsUrl ? mapsUrl : undefined}
               />
             )}
+            {detail.distanceKm != null && (
+              <StatCell label="Distance" value={`~${detail.distanceKm} km`} />
+            )}
             {/* Area row — spans full width, shows both neighbourhoods */}
             <div className={`${styles.dtCell} ${styles.dtCellSpan2}`}>
               <div className={styles.dtCellLabel}>Area</div>
