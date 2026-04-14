@@ -137,6 +137,24 @@ export async function POST(request) {
     // We extract email_otp and send it via Resend using our own template.
     // The Sanity membership gate above is the primary access control.
     const supabaseAdmin = createSupabaseAdminClient()
+
+    // Ensure a Supabase auth user exists — may be missing if the member was added
+    // directly in Sanity Studio and the sync webhook didn't fire or failed.
+    if (catSitter) {
+      const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
+      const supabaseUser = listData?.users?.find(u => u.email === email)
+      if (!supabaseUser) {
+        const { error: createErr } = await supabaseAdmin.auth.admin.createUser({
+          email,
+          email_confirm: true,
+          user_metadata: { sitterId: catSitter._id, isTeamMember: false },
+        })
+        if (createErr) {
+          console.error('send-otp: auto-create Supabase user failed:', createErr)
+        }
+      }
+    }
+
     const { data, error: genError } = await supabaseAdmin.auth.admin.generateLink({
       type: 'magiclink',
       email,
