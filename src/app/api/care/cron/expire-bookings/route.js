@@ -1,8 +1,10 @@
 import { createSupabaseDbClient } from '@/lib/supabaseServer'
 import { captureServerEvent } from '@/lib/posthogServer'
 
-// Runs hourly. Finds pending bookings where notified_at is 48+ hrs ago
+// Safety-net fallback. Finds pending bookings where notified_at is 120+ hrs ago
 // and the sitter has not responded — sets them to 'expired'.
+// Under normal operation, pending-booking-nudges withdraws at 96 hrs (with emails).
+// This job catches any edge cases that slipped through.
 export async function GET(request) {
   const authHeader = request.headers.get('authorization')
   if (authHeader !== `Bearer ${process.env.CRON_SECRET}`) {
@@ -10,7 +12,7 @@ export async function GET(request) {
   }
 
   try {
-    const cutoff = new Date(Date.now() - 48 * 60 * 60 * 1000).toISOString()
+    const cutoff = new Date(Date.now() - 120 * 60 * 60 * 1000).toISOString()
     const db = createSupabaseDbClient()
 
     const { data: expired } = await db

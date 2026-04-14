@@ -1,0 +1,18 @@
+name: Pending Booking Nudges
+
+on:
+  schedule:
+    - cron: '0 * * * *'  # every hour
+  workflow_dispatch:      # allow manual trigger from GitHub UI
+
+jobs:
+  nudge:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call pending-booking-nudges endpoint
+        run: |
+          response=$(curl -s -o /dev/null -w "%{http_code}" \
+            -H "Authorization: Bearer ${{ secrets.CRON_SECRET }}" \
+            https://care.purrfectlove.org/api/care/cron/pending-booking-nudges)
+          echo "HTTP $response"
+          [ "$response" = "200" ] || exit 1
