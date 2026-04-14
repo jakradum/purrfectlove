@@ -389,6 +389,29 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
             </div>
           </div>
 
+          {/* View other party's profile */}
+          {detail.other.id && (
+            <a
+              href={`/care/${detail.other.id}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#2C5F4F',
+                textDecoration: 'none',
+                marginTop: 2,
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              View {firstName(detail.other.name)}&apos;s profile
+            </a>
+          )}
+
           {/* Status note — shown for unavailable bookings */}
           {detail.statusNote && (
             <p className={styles.dtContactNote} style={{ marginBottom: 4 }}>{detail.statusNote}</p>

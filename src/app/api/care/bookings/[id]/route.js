@@ -168,6 +168,7 @@ export async function GET(request, { params }) {
       distanceKm,
       contactReleased,
       other: {
+        id:            otherId,
         name:          other?.name || 'Member',
         email:         contactReleased ? (other?.email || null) : null,
         phone:         contactReleased ? (other?.phone || null) : null,
