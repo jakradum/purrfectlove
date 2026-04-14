@@ -22,7 +22,7 @@ export async function GET(request) {
     // Single-member lookup (for compose target resolution)
     if (id) {
       const member = await serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id && memberVerified == true][0]{ _id, name }`,
+        `*[_type == "catSitter" && _id == $id && memberVerified != false][0]{ _id, name }`,
         { id }
       )
       return Response.json(member || null)
@@ -33,7 +33,7 @@ export async function GET(request) {
     // only released in the booking detail endpoint once the sit is confirmed and
     // within 2 days of the start date.
     const sitters = await serverClient.fetch(
-      `*[_type == "catSitter" && _id != $selfId && canSit == true && memberVerified == true && deletionRequested != true && defined(name) && defined(location.lat)]{
+      `*[_type == "catSitter" && _id != $selfId && canSit == true && memberVerified != false && deletionRequested != true && defined(name) && defined(location.lat)]{
         _id, _createdAt, name, location, bio, contactPreference, siteAdmin, avatarColour,
         identityVerified, trustedSitter,
         "photoUrl": photo.asset->url,
