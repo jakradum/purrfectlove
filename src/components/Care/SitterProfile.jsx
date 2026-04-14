@@ -103,7 +103,7 @@ export default function SitterProfile({
     availabilityDefault, unavailableDatesV2,
     avatarColour, photoUrl, coverImageUrl,
     identityVerified, trustedSitter, maxCatsPerDay,
-    canDoHomeVisit, canHostCats,
+    canDoHomeVisit, canHostCats, canSit,
   } = sitter;
 
   const displayName = name || 'Member';
@@ -281,17 +281,18 @@ export default function SitterProfile({
                 </Link>
               )}
             </>
+          ) : canSit ? (
+            <button
+              type="button"
+              className={styles.sitterRequestBtn}
+              onClick={() => setShowWaiver(true)}
+            >
+              Request a sit
+            </button>
           ) : (
-            <>
-
-              <button
-                type="button"
-                className={styles.sitterRequestBtn}
-                onClick={() => setShowWaiver(true)}
-              >
-                Request a sit
-              </button>
-            </>
+            <p style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic', margin: 0, textAlign: 'center' }}>
+              Not currently offering sitting
+            </p>
           )}
         </div>
       </div>

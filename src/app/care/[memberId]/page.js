@@ -52,7 +52,7 @@ export default async function MemberProfilePage({ params }) {
           availabilityDefault, unavailableDatesV2,
           hideEmail, hideWhatsApp,
           avatarColour, identityVerified, trustedSitter, siteAdmin,
-          canDoHomeVisit, canHostCats, maxCatsPerDay,
+          canSit, canDoHomeVisit, canHostCats, maxCatsPerDay,
           "photoUrl": photo.asset->url,
           "coverImageUrl": coverImage.asset->url
         }`,
