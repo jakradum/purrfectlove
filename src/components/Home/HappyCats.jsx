@@ -8,7 +8,7 @@ const builder = imageUrlBuilder(client);
 
 export default async function HappyCats({ content, locale }) {
   const stories = await client.fetch(
-    `*[_type == "successStory" && defined(quote[$locale]) && quote[$locale] != ""] | order(adoptionDate desc)[0...8] {
+    `*[_type == "successStory"] | order(adoptionDate desc)[0...8] {
       _id,
       catName,
       adopterName,
@@ -21,7 +21,7 @@ export default async function HappyCats({ content, locale }) {
         }
       }
     }`,
-    { locale },
+    {},
     { next: { revalidate: 60 } }
   );
 
@@ -32,7 +32,7 @@ export default async function HappyCats({ content, locale }) {
     catName: s.catName,
     adopterName: s.adopterName,
     adoptionDate: s.adoptionDate,
-    quote: s.quote?.[locale] || null,
+    quote: s.quote?.[locale] || s.quote?.en || s.quote?.de || null,
     imageUrl: s.image?.asset ? builder.image(s.image).width(800).url() : null,
   }));
 
