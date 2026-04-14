@@ -16,18 +16,25 @@ function Sh({ h = 12, w = '100%', r = 6, mb = 0, style = {} }) {
 function SkeletonSitterCard() {
   return (
     <div className={styles.skeletonCard}>
-      <div className={styles.skeletonHeader}>
-        <div className={`${styles.skeletonAvatar} ${styles.shimmer}`} />
-        <div className={styles.skeletonHeaderText}>
-          <Sh h={14} w="60%" />
-          <Sh h={11} w="35%" />
-        </div>
-      </div>
-      <Sh h={11} w="90%" />
-      <Sh h={11} w="72%" />
-      <div className={styles.skeletonActions}>
-        <div className={`${styles.skeletonBtn} ${styles.shimmer}`} />
-        <div className={`${styles.skeletonBtn} ${styles.shimmer}`} />
+      {/* Cover band */}
+      <div className={`${styles.skeletonCoverBand} ${styles.shimmer}`} />
+
+      {/* Avatar overlapping cover */}
+      <div className={`${styles.skeletonCardAvatar} ${styles.shimmer}`} />
+
+      {/* Body */}
+      <div className={styles.skeletonCardBody}>
+        {/* Member since — right-aligned */}
+        <Sh h={10} w="32%" style={{ alignSelf: 'flex-end', marginTop: -4 }} />
+        {/* Name */}
+        <Sh h={14} w="52%" />
+        {/* Distance / locality */}
+        <Sh h={11} w="38%" />
+        {/* Cat names */}
+        <Sh h={11} w="68%" />
+        {/* Capability line */}
+        <Sh h={11} w="80%" />
+        <Sh h={11} w="58%" />
       </div>
     </div>
   );

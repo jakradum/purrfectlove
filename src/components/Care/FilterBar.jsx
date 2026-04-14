@@ -58,7 +58,6 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
   const [closingPopover, setClosingPopover] = useState(null);
   const [seen, setSeen] = useState(true); // start true to avoid flash; corrected in effect
   const innerRef = useRef(null);
-  const sliderRef = useRef(null);
   const openPopoverRef = useRef(null);
   openPopoverRef.current = openPopover;
 
@@ -97,19 +96,7 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
     return () => document.removeEventListener('mousedown', onDown);
   }, [closePopover]);
 
-  // Radius slider track fill
-  const paintTrack = useCallback((el, val) => {
-    if (!el) return;
-    const pct = ((val - 3) / (25 - 3)) * 100;
-    el.style.background = `linear-gradient(to right, var(--tabby-brown) ${pct}%, #e5e7eb ${pct}%)`;
-  }, []);
-  const sliderRefCb = useCallback((el) => {
-    sliderRef.current = el;
-    if (el) paintTrack(el, Number(el.value));
-  }, [paintTrack]);
-  useEffect(() => {
-    paintTrack(sliderRef.current, radius);
-  }, [radius, paintTrack]);
+  const RADIUS_OPTIONS = [5, 10, 25, 50];
 
   const datesValue = startDate && endDate
     ? `${formatMonthDay(startDate)} – ${formatMonthDay(endDate)}`
@@ -238,23 +225,28 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
         {(openPopover === 'radius' || closingPopover === 'radius') && (
           <div className={`${styles.filterPopover} ${styles.filterPopoverRight}${closingPopover === 'radius' ? ` ${styles.filterPopoverClosing}` : ''}`}>
             <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Suchradius' : 'Search radius'}</p>
-            <div className={styles.radiusDisplay}>
-              <span className={styles.radiusNumber}>{radius}</span>
-              <span className={styles.radiusUnit}>{locale === 'de' ? 'Kilometer von dir' : 'kilometres from you'}</span>
-            </div>
-            <input
-              ref={sliderRefCb}
-              type="range"
-              min={3}
-              max={25}
-              step={0.5}
-              value={radius}
-              onChange={(e) => onRadiusChange(Number(e.target.value))}
-              className={styles.radiusSliderInput}
-            />
-            <div className={styles.radiusSliderLabels}>
-              <span>3 km</span>
-              <span>25 km</span>
+            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+              {RADIUS_OPTIONS.map((km) => (
+                <button
+                  key={km}
+                  type="button"
+                  onClick={() => { onRadiusChange(km); closePopover('radius'); }}
+                  style={{
+                    padding: '0.45rem 1rem',
+                    borderRadius: 20,
+                    fontSize: '0.875rem',
+                    fontFamily: 'inherit',
+                    fontWeight: radius === km ? 700 : 500,
+                    cursor: 'pointer',
+                    border: radius === km ? '1.5px solid #2C5F4F' : '1.5px solid #e5e7eb',
+                    background: radius === km ? '#EAF3DE' : '#fafafa',
+                    color: radius === km ? '#2C5F4F' : '#555',
+                    transition: 'all 0.12s',
+                  }}
+                >
+                  {km} km
+                </button>
+              ))}
             </div>
           </div>
         )}
