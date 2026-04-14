@@ -16,6 +16,10 @@ const resend = new Resend(process.env.RESEND_API_KEY)
 
 async function verifyToken(id, expiresAtMs, token) {
   const secret = process.env.APPROVAL_SECRET
+  if (!secret) {
+    console.error('approve-member: APPROVAL_SECRET env var is not set — token verification will always fail')
+    return false
+  }
   const encoder = new TextEncoder()
   const key = await crypto.subtle.importKey(
     'raw', encoder.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
@@ -42,6 +46,22 @@ const html = (body) => new Response(
   <body><div class="card">${body}</div></body></html>`,
   { headers: { 'Content-Type': 'text/html' } }
 )
+
+/**
+ * Find a Supabase auth user by email, paginating through all users.
+ * Avoids the hard 1000-user cap of a single listUsers call.
+ */
+async function findSupabaseUserByEmail(supabaseAdmin, email) {
+  let page = 1
+  while (true) {
+    const { data } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000, page })
+    const users = data?.users ?? []
+    const found = users.find(u => u.email === email)
+    if (found) return found
+    if (users.length < 1000) return null // last page reached
+    page++
+  }
+}
 
 /**
  * Core approval logic — shared by the email-link (GET) and Studio (POST) flows.
@@ -80,8 +100,7 @@ async function runApproval(req, sanityRequestId, actorId) {
   // ── 2. Create or update the Supabase auth user ───────────────────────────
   if (req.email) {
     try {
-      const { data: listData } = await supabaseAdmin.auth.admin.listUsers({ perPage: 1000 })
-      const existingUser = listData?.users?.find(u => u.email === req.email)
+      const existingUser = await findSupabaseUserByEmail(supabaseAdmin, req.email)
 
       if (existingUser) {
         // User already exists (e.g. added via webhook) — make sure sitterId is correct
@@ -169,13 +188,21 @@ export async function GET(request) {
 
     const expiresAtMs = new Date(req.token_expires_at).getTime()
     const valid = await verifyToken(id, expiresAtMs, token)
-    if (!valid) return html('<p>Invalid or tampered link.</p>')
+    if (!valid) return html(`
+      <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#C85C3F;margin:0 0 12px;">Invalid link</p>
+      <p>This approval link is invalid or may have been tampered with.</p>
+      <p style="font-size:13px;color:#aaa;">Please approve this member manually in <a href="https://purrfectlove.sanity.studio">Sanity Studio</a>.</p>
+    `)
 
-    if (Date.now() > expiresAtMs) return html('<p>This link has expired. Please action this request manually.</p>')
+    if (Date.now() > expiresAtMs) return html(`
+      <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#C85C3F;margin:0 0 12px;">Link expired</p>
+      <p>This approval link has expired. Ask an admin to resend the approval.</p>
+      <p style="font-size:13px;color:#aaa;">Or approve manually in <a href="https://purrfectlove.sanity.studio">Sanity Studio</a>.</p>
+    `)
 
     if (req.status !== 'pending') return html(`
       <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#aaa;margin:0 0 12px;">Ticket closed</p>
-      <p>This application has already been <strong>${req.status === 'entry_denied' ? 'denied' : req.status}</strong>.</p>
+      <p>This member has already been <strong>${req.status === 'entry_denied' ? 'denied' : 'approved'}</strong>.</p>
       <p><a href="https://care.purrfectlove.org">Back to portal →</a></p>
     `)
 
@@ -224,8 +251,12 @@ export async function GET(request) {
       <p style="margin-top:24px;"><a href="https://care.purrfectlove.org">Back to portal →</a></p>
     `)
   } catch (err) {
-    console.error('approve-member GET error:', err)
-    return html('<p>Something went wrong. Please try again.</p>')
+    console.error('approve-member GET error:', err?.message ?? err, err?.stack ?? '')
+    return html(`
+      <p style="font-size:11px;font-weight:700;letter-spacing:0.06em;text-transform:uppercase;color:#C85C3F;margin:0 0 12px;">Error</p>
+      <p>Something went wrong — please approve this member manually in <a href="https://purrfectlove.sanity.studio">Sanity Studio</a>.</p>
+      <p style="font-size:12px;color:#aaa;margin-top:16px;font-family:monospace;">${err?.message ?? 'Unknown error'}</p>
+    `)
   }
 }
 
