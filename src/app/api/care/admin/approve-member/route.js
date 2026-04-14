@@ -1,3 +1,4 @@
+import { timingSafeEqual } from 'node:crypto'
 import { createClient } from '@sanity/client'
 import { Resend } from 'resend'
 import { createSupabaseAdminClient, createSupabaseDbClient, getSupabaseUser } from '@/lib/supabaseServer'
@@ -34,7 +35,7 @@ async function verifyToken(id, expiresAtMs, token) {
     return false
   }
   if (expected.length !== received.length) return false
-  return crypto.timingSafeEqual(expected, received)
+  return timingSafeEqual(expected, received)
 }
 
 const html = (body) => new Response(
