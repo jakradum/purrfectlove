@@ -53,7 +53,7 @@ function SitTypeIcon() {
 
 const CLOSE_DURATION = 180; // ms — must match filterPopoverOut animation
 
-export default function FilterBar({ startDate, endDate, radius, sitType, onDatesChange, onRadiusChange, onSitTypeChange, onRefresh, hasLocation, locale = 'en' }) {
+export default function FilterBar({ startDate, endDate, radius, sitType, onDatesChange, onRadiusChange, onSitTypeChange, onRefresh, hasLocation, locale = 'en', loading = false }) {
   const [openPopover, setOpenPopover] = useState(null); // 'dates' | 'radius' | null
   const [closingPopover, setClosingPopover] = useState(null);
   const [seen, setSeen] = useState(true); // start true to avoid flash; corrected in effect
@@ -164,6 +164,9 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
               <span className={styles.filterLabel}>{locale === 'de' ? 'Radius' : 'Radius'}</span>
             </div>
           </button>
+
+          {/* Loading shimmer overlay */}
+          {loading && <div className={styles.filterBarLoadingOverlay} />}
         </div>
 
         {/* Bouncing hint — hidden once seen */}

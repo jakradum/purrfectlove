@@ -462,6 +462,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         onRefresh={handleSearch}
         hasLocation={userLocation?.lat != null}
         locale={locale}
+        loading={searching}
       />
 
       {/* UX-13: Filter summary line */}
@@ -518,11 +519,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
 
           {/* Animated height wrapper */}
           <div ref={gridContainerRef} className={styles.resultsAnimated}>
-            {searching ? (
-              <div className={styles.searchingSpinner}>
-                <span className={styles.spinner} />
-              </div>
-            ) : searchError ? (
+            {searching ? null : searchError ? (
               <div className={styles.datesEmptyState}>
                 <div className={styles.datesEmptyIcon}>⚠️</div>
                 <h2 className={styles.datesEmptyHeading} style={{ color: '#b91c1c' }}>Something went wrong</h2>

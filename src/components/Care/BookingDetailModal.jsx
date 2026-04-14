@@ -347,6 +347,30 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
           </div>
         </div>
 
+        {/* ── Profile link — outside dtBody so pointer-events:none on cancelled state doesn't block it ── */}
+        {detail.other.id && (
+          <div style={{ padding: '8px 16px 0' }}>
+            <a
+              href={`/care/${detail.other.id}`}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.3rem',
+                fontSize: '0.8rem',
+                fontWeight: 600,
+                color: '#2C5F4F',
+                textDecoration: 'none',
+              }}
+            >
+              <svg width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+                <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/>
+                <circle cx="12" cy="7" r="4"/>
+              </svg>
+              View {firstName(detail.other.name)}&apos;s profile
+            </a>
+          </div>
+        )}
+
         {/* ── Body ── */}
         <div className={`${styles.dtBody}${isTerminal ? ` ${styles.dtBodyCancelled}` : ''}`}>
 
@@ -547,6 +571,7 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
               <p className={styles.dtCancelQuestion}>Are you sure you want to cancel?</p>
               <textarea
                 className={styles.dtCancelTextarea}
+                style={cancelReason.trim().length > 0 && cancelReason.trim().length < 20 ? { borderColor: '#dc2626', borderWidth: '1.5px' } : undefined}
                 placeholder="Why are you cancelling? This helps the other party plan ahead. (minimum 20 characters)"
                 value={cancelReason}
                 onChange={e => setCancelReason(e.target.value)}
