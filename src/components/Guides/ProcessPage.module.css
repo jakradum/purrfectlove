@@ -221,6 +221,14 @@
   margin: 2rem 0 0.5rem;
 }
 
+.proseSubSubheading {
+  font-family: var(--font-outfit);
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 1.5rem 0 0.4rem;
+}
+
 .proseLabel {
   font-family: var(--font-outfit);
   font-size: 1rem;
@@ -269,6 +277,99 @@
   margin-top: 2rem;
   padding-top: 1.25rem;
   border-top: 1px solid #e0ddd8;
+}
+
+/* Related articles */
+.relatedArticles {
+  margin-top: 3rem;
+}
+
+.relatedHeading {
+  font-family: var(--font-outfit);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--tabby-brown);
+  margin: 0 0 1.5rem;
+}
+
+.relatedGrid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 0;
+  border-top: 1px solid #e0ddd8;
+}
+
+.relatedCard {
+  display: flex;
+  flex-direction: column;
+  padding: 1.5rem 1.25rem;
+  text-decoration: none;
+  color: inherit;
+  border-right: 1px solid #e0ddd8;
+  border-bottom: 1px solid #e0ddd8;
+  transition: background 0.15s;
+}
+
+.relatedCard:hover {
+  background: #faf8f5;
+}
+
+.relatedCard:nth-child(4n) {
+  border-right: none;
+}
+
+.relatedDate {
+  font-family: var(--font-outfit);
+  font-size: 0.75rem;
+  color: var(--text-light);
+  margin-bottom: 0.5rem;
+}
+
+.relatedTitle {
+  font-family: var(--font-outfit);
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--hunter-green);
+  line-height: 1.35;
+  margin: 0 0 0.5rem;
+}
+
+.relatedCard:hover .relatedTitle {
+  color: var(--tabby-brown);
+}
+
+.relatedExcerpt {
+  font-family: var(--font-lora);
+  font-size: 0.875rem;
+  color: var(--text-dark);
+  line-height: 1.55;
+  margin: 0 0 0.75rem;
+  flex: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 4;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+}
+
+.relatedReadMore {
+  font-family: var(--font-outfit);
+  font-size: 0.8125rem;
+  color: var(--tabby-brown);
+  margin-top: auto;
+}
+
+@media (max-width: 900px) {
+  .relatedGrid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .relatedCard:nth-child(4n) {
+    border-right: 1px solid #e0ddd8;
+  }
+
+  .relatedCard:nth-child(2n) {
+    border-right: none;
+  }
 }
 
 /* Tablet - 2x2 grid layout */
