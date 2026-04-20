@@ -196,7 +196,12 @@ export async function GET(request) {
 
         // ── Stage 2: 48hr reminder ─────────────────────────────────────────────
         if (elapsed >= 48 && !booking.reminder_48h_sent_at) {
-          await db.from('bookings').update({ reminder_48h_sent_at: now }).eq('id', booking.id)
+          const { count: updated48 } = await db
+            .from('bookings')
+            .update({ reminder_48h_sent_at: now }, { count: 'exact' })
+            .eq('id', booking.id)
+            .eq('status', 'pending')
+          if (!updated48) continue // cancelled between bulk query and now
 
           if (sitter?.email) {
             await resend.emails.send({
@@ -228,7 +233,12 @@ export async function GET(request) {
 
         // ── Stage 1: 24hr reminder ─────────────────────────────────────────────
         if (elapsed >= 24 && !booking.reminder_24h_sent_at) {
-          await db.from('bookings').update({ reminder_24h_sent_at: now }).eq('id', booking.id)
+          const { count: updated24 } = await db
+            .from('bookings')
+            .update({ reminder_24h_sent_at: now }, { count: 'exact' })
+            .eq('id', booking.id)
+            .eq('status', 'pending')
+          if (!updated24) continue // cancelled between bulk query and now
 
           if (sitter?.email) {
             await resend.emails.send({

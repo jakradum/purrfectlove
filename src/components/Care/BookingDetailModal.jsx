@@ -125,12 +125,19 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
   const dragStartY = useRef(null);
   const [dragOffset, setDragOffset] = useState(0);
 
+  function bookingFetchError(status) {
+    if (status === 401) return 'Your session has expired. Please log in again.';
+    if (status === 403) return 'You don\'t have access to this booking.';
+    if (status === 404) return 'This booking could not be found.';
+    return 'Failed to load booking details.';
+  }
+
   const fetchDetail = useCallback(() => {
     if (!bookingId) return;
     fetch(`/api/care/bookings/${bookingId}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) setError(data.error);
+      .then(r => r.json().then(data => ({ status: r.status, data })))
+      .then(({ status, data }) => {
+        if (data.error) setError(bookingFetchError(status));
         else setDetail(data);
       })
       .catch(() => setError('Failed to load booking details.'));
@@ -141,9 +148,9 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
     setLoading(true);
     setError('');
     fetch(`/api/care/bookings/${bookingId}`)
-      .then(r => r.json())
-      .then(data => {
-        if (data.error) setError(data.error);
+      .then(r => r.json().then(data => ({ status: r.status, data })))
+      .then(({ status, data }) => {
+        if (data.error) setError(bookingFetchError(status));
         else setDetail(data);
       })
       .catch(() => setError('Failed to load booking details.'))
