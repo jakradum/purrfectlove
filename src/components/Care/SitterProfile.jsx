@@ -98,7 +98,7 @@ export default function SitterProfile({
   feedbacks = [],
 }) {
   const {
-    _id, _createdAt, name, location, bio,
+    _id, _createdAt, name, location, locationName, bio,
     cats, feedingTypes, behavioralTraits,
     availabilityDefault, unavailableDatesV2,
     avatarColour, photoUrl, coverImageUrl,
@@ -112,7 +112,11 @@ export default function SitterProfile({
     ? new Date(_createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
     : null;
 
-  const metaParts = [location?.name || location?.displayName, memberSince ? `Member since ${memberSince}` : null].filter(Boolean);
+  const resolvedLocationName = locationName || location?.displayName || null;
+  const locationDisplay = resolvedLocationName
+    ? resolvedLocationName.replace(', ', ' · ')
+    : null;
+  const metaParts = [locationDisplay, memberSince ? `Member since ${memberSince}` : null].filter(Boolean);
 
   const idx = coverIndex(_id || '');
   const coverSrc = coverImageUrl || COVERS[idx];
@@ -287,6 +291,11 @@ export default function SitterProfile({
 
           {metaParts.length > 0 && (
             <div className={styles.sitterProfileMeta}>{metaParts.join(' · ')}</div>
+          )}
+          {isOwnProfile && !location?.lat && (
+            <div className={styles.profileLocationNudge}>
+              <a href="/care/profile?edit=location">Location not set — add it to find sitters near you</a>
+            </div>
           )}
           {(identityVerified || trustedSitter) && (
             <div className={styles.sitterProfileBadges}>

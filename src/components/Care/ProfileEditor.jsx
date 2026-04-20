@@ -155,14 +155,15 @@ function ReadField({ label, value }) {
   );
 }
 
-function Toggle({ checked, onChange, label }) {
+function Toggle({ checked, onChange, label, labelOn, labelOff }) {
+  const text = labelOn && labelOff ? (checked ? labelOn : labelOff) : label;
   return (
     <div className={styles.switchRow}>
       <label className={styles.toggle}>
         <input type="checkbox" checked={checked} onChange={(e) => onChange(e.target.checked)} />
         <span className={styles.toggleSlider} />
       </label>
-      <span className={styles.switchLabel}>{label}</span>
+      <span className={styles.switchLabel}>{text}</span>
     </div>
   );
 }
@@ -274,12 +275,19 @@ export default function ProfileEditor({ initialData }) {
   // A ref (not state) so it doesn't trigger re-renders and survives across onChange calls.
   const overriddenDatesRef = useRef(new Set());
 
-  // If URL contains ?edit=availability, jump straight into availability edit mode
+  // locationPickerOpen: true = show picker, false = show confirmation (if location already set)
+  const [locationPickerOpen, setLocationPickerOpen] = useState(!initialData.location?.lat);
+
+  // If URL contains ?edit=availability or ?edit=location, jump into the right mode
   useEffect(() => {
     if (typeof window === 'undefined') return;
     const params = new URLSearchParams(window.location.search);
     if (params.get('edit') === 'availability') {
       setEditMode('availability');
+      router.replace('/care/profile', { scroll: false });
+    } else if (params.get('edit') === 'location') {
+      setEditMode('profile');
+      setLocationPickerOpen(true);
       router.replace('/care/profile', { scroll: false });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
@@ -469,6 +477,7 @@ export default function ProfileEditor({ initialData }) {
       _createdAt: initialData._createdAt,
       name: form.name,
       location: form.location || initialData.location,
+      locationName: form.location?.displayName || initialData.locationName || null,
       bio: form.bio,
       email: initialData.email,
       phone: form.phone || initialData.phone,
@@ -602,11 +611,40 @@ export default function ProfileEditor({ initialData }) {
         <h2 className={styles.sectionTitle} style={!form.location?.lat ? { color: '#ef4444' } : {}}>
           Location <span style={{ fontWeight: 400 }}>*</span>
         </h2>
-        <LocationMapPicker
-          value={form.location}
-          onChange={(loc) => update('location', loc)}
-          locale={initialData.locale}
-        />
+        {form.location?.lat && !locationPickerOpen ? (
+          <div>
+            <div className={styles.locationConfirmed}>
+              <span className={styles.locationConfirmedCheck}>✓</span>
+              <span>
+                Location captured
+                {form.location.displayName ? ` — ${form.location.displayName}` : ''}
+              </span>
+            </div>
+            <p className={styles.locationHelpText}>
+              Note: this may vary from your actual address, but it&apos;s just for us to record your location and show you sitters nearby.
+            </p>
+            <LocationMapPicker
+              value={form.location}
+              onChange={() => {}}
+              locale={initialData.locale}
+              readOnly
+            />
+            <button
+              type="button"
+              className={styles.locationUpdateLink}
+              onClick={() => setLocationPickerOpen(true)}
+              style={{ marginTop: '0.75rem' }}
+            >
+              Update location
+            </button>
+          </div>
+        ) : (
+          <LocationMapPicker
+            value={form.location}
+            onChange={(loc) => { update('location', loc); if (loc?.lat) setLocationPickerOpen(false); }}
+            locale={initialData.locale}
+          />
+        )}
       </div>
 
       {/* Account Info */}
@@ -621,14 +659,14 @@ export default function ProfileEditor({ initialData }) {
             <label className={styles.profileLabel}>Email</label>
             <input className={styles.profileInput} value={initialData.email || ''} disabled style={{ cursor: 'not-allowed', opacity: 0.6 }} />
             <div style={{ marginTop: '0.5rem' }}>
-              <Toggle checked={!form.hideEmail} onChange={(v) => update('hideEmail', !v)} label="Visible to booking partner" />
+              <Toggle checked={!form.hideEmail} onChange={(v) => update('hideEmail', !v)} labelOn="Visible to booking partner" labelOff="Not visible to booking partner" />
             </div>
           </div>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>Phone</label>
             <input className={styles.profileInput} value={form.phone} onChange={(e) => update('phone', e.target.value)} placeholder="+1 555 000 0000" />
             <div style={{ marginTop: '0.5rem' }}>
-              <Toggle checked={!form.hideWhatsApp} onChange={(v) => update('hideWhatsApp', !v)} label="Visible to booking partner" />
+              <Toggle checked={!form.hideWhatsApp} onChange={(v) => update('hideWhatsApp', !v)} labelOn="Visible to booking partner" labelOff="Not visible to booking partner" />
             </div>
           </div>
         </div>
@@ -676,10 +714,12 @@ export default function ProfileEditor({ initialData }) {
             </div>
             <div className={styles.formGroup}>
               <label className={styles.profileLabel}>{t.fields.catPersonality}</label>
+              <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Select all that apply.</p>
               <GroupedCheckboxGroup groups={PERSONALITY_GROUPS} value={cat.personality || []} onChange={(v) => updateCat(idx, 'personality', v)} labelMap={tagMap} />
             </div>
             <div className={styles.formGroup}>
               <label className={styles.profileLabel}>{t.fields.catDiet}</label>
+              <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Select all that apply.</p>
               <CheckboxGroup options={DIET_OPTIONS} value={cat.diet || []} onChange={(v) => updateCat(idx, 'diet', v)} labelMap={tagMap} />
             </div>
           </div>
@@ -752,10 +792,12 @@ export default function ProfileEditor({ initialData }) {
           </div>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.feedingTypes}</label>
+            <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Select all that apply.</p>
             <CheckboxGroup options={FEEDING_OPTIONS} value={form.feedingTypes} onChange={(v) => update('feedingTypes', v)} labelMap={tagMap} />
           </div>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.behavioralTraits}</label>
+            <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Select all that apply.</p>
             <GroupedCheckboxGroup groups={TRAIT_GROUPS} value={form.behavioralTraits} onChange={(v) => update('behavioralTraits', v)} labelMap={tagMap} />
           </div>
         </div>

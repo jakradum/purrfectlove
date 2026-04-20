@@ -36,7 +36,7 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
-export default function LocationMapPicker({ value, onChange, locale }) {
+export default function LocationMapPicker({ value, onChange, locale, readOnly = false }) {
   const defaultCity = CITY_OPTIONS.find(c => locale === 'de' ? c.value.includes('Stuttgart') : c.value.includes('Bangalore')) || CITY_OPTIONS[0];
 
   // Check geolocation support once, on client only
@@ -130,6 +130,19 @@ export default function LocationMapPicker({ value, onChange, locale }) {
     const nameToStore = `${token} ${selectedCity.value}`;
     onChange({ lat: null, lng: null, name: nameToStore, displayName: null });
   };
+
+  if (readOnly) {
+    return (
+      <div style={{ filter: 'grayscale(0.2) opacity(0.75)', borderRadius: '8px', overflow: 'hidden' }}>
+        <LeafletMapInner
+          center={mapCenter}
+          position={mapPosition}
+          onPositionChange={() => {}}
+          readOnly
+        />
+      </div>
+    );
+  }
 
   return (
     <div>

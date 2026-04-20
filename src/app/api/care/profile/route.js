@@ -131,6 +131,12 @@ export async function PATCH(request) {
       }
     }
 
+    // When location is saved with a displayName (from client-side reverse geocode),
+    // cache it as locationName so the profile header can show it without a live lookup.
+    if (patch.location?.lat && body.location?.displayName) {
+      patch.locationName = body.location.displayName
+    }
+
     const updated = await serverClient
       .patch(user.sitterId)
       .set(patch)

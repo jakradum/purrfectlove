@@ -41,7 +41,7 @@ function FlyTo({ position }) {
   return null;
 }
 
-function DraggableMarker({ position, onPositionChange }) {
+function DraggableMarker({ position, onPositionChange, readOnly }) {
   const markerRef = useRef(null);
   const eventHandlers = {
     dragend() {
@@ -57,8 +57,8 @@ function DraggableMarker({ position, onPositionChange }) {
 
   return (
     <Marker
-      draggable
-      eventHandlers={eventHandlers}
+      draggable={!readOnly}
+      eventHandlers={readOnly ? {} : eventHandlers}
       position={position}
       icon={PIN_ICON}
       ref={markerRef}
@@ -66,7 +66,7 @@ function DraggableMarker({ position, onPositionChange }) {
   );
 }
 
-export default function LeafletMapInner({ center, position, onPositionChange }) {
+export default function LeafletMapInner({ center, position, onPositionChange, readOnly = false }) {
   return (
     <MapContainer
       center={center || [12.9716, 77.5946]}
@@ -77,9 +77,9 @@ export default function LeafletMapInner({ center, position, onPositionChange }) 
         attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>'
         url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png"
       />
-      <MapClickHandler onPositionChange={onPositionChange} />
+      {!readOnly && <MapClickHandler onPositionChange={onPositionChange} />}
       <FlyTo position={position} />
-      <DraggableMarker position={position} onPositionChange={onPositionChange} />
+      <DraggableMarker position={position} onPositionChange={onPositionChange} readOnly={readOnly} />
     </MapContainer>
   );
 }

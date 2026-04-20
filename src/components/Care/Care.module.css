@@ -1726,6 +1726,64 @@
   font-family: var(--font-lora);
 }
 
+.locationConfirmed {
+  display: flex;
+  align-items: center;
+  gap: 0.5rem;
+  font-family: var(--font-outfit);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  color: #2a7a4b;
+  margin-bottom: 0.5rem;
+}
+
+.locationConfirmedCheck {
+  font-size: 1rem;
+  line-height: 1;
+}
+
+.locationHelpText {
+  font-size: 0.78rem;
+  color: var(--text-light);
+  font-family: var(--font-lora);
+  margin: 0 0 0.75rem;
+  line-height: 1.5;
+}
+
+.locationUpdateLink {
+  background: none;
+  border: none;
+  padding: 0;
+  cursor: pointer;
+  font-family: var(--font-outfit);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  color: var(--hunter-green);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.locationUpdateLink:hover {
+  color: var(--tabby-brown);
+}
+
+.profileLocationNudge {
+  font-family: var(--font-lora);
+  font-size: 0.8125rem;
+  color: var(--text-light);
+  margin-top: 0.25rem;
+}
+
+.profileLocationNudge a {
+  color: var(--text-light);
+  text-decoration: underline;
+  text-underline-offset: 2px;
+}
+
+.profileLocationNudge a:hover {
+  color: var(--tabby-brown);
+}
+
 .infoBlurb {
   background: #f0f7f4;
   border-left: 3px solid #2C5F4F;
@@ -1860,6 +1918,8 @@
 .checkboxLabel:has(input:checked) {
   background: rgba(44, 95, 79, 0.15);
   color: var(--hunter-green);
+  outline: 2px solid var(--hunter-green);
+  outline-offset: -1px;
 }
 
 .checkboxLabel input {
