@@ -674,7 +674,10 @@ export default function SitterCard({
                       cat.breed || null,
                       cat.age != null ? `${cat.age} yr${cat.age !== 1 ? 's' : ''}` : null,
                     ].filter(Boolean).join(' · ');
-                    const personalityTags = (cat.personality || []);
+                    const allCatTraits = [
+                      ...(cat.personality || []).map(tag => tagLabels[tag] || tag),
+                      ...(cat.customTraits || []),
+                    ];
                     return (
                       <div key={cat.name || i} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.6rem' }}>
                         {cat.photoUrl ? (
@@ -685,11 +688,11 @@ export default function SitterCard({
                         <div>
                           <p style={{ margin: 0, fontSize: '0.875rem', fontWeight: 600, color: '#2D2D2D' }}>{cat.name || 'Cat'}</p>
                           {meta && <p style={{ margin: '0.1rem 0 0', fontSize: '0.78rem', color: '#888' }}>{meta}</p>}
-                          {personalityTags.length > 0 && (
+                          {allCatTraits.length > 0 && (
                             <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.3rem' }}>
-                              {personalityTags.map(tag => (
-                                <span key={tag} style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: 999, background: '#F5F0E8', color: '#5A4033', fontWeight: 500 }}>
-                                  {tagLabels[tag] || tag}
+                              {allCatTraits.map((label, j) => (
+                                <span key={j} style={{ fontSize: '0.72rem', padding: '0.15rem 0.5rem', borderRadius: 999, background: '#F5F0E8', color: '#5A4033', fontWeight: 500 }}>
+                                  {label}
                                 </span>
                               ))}
                             </div>

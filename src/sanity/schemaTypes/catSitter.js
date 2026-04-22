@@ -29,8 +29,6 @@ export default {
         ],
       }],
     },
-    { name: 'locale', title: 'Locale', type: 'string', options: { list: [{ title: 'English (India)', value: 'en' }, { title: 'German (Germany)', value: 'de' }] }, initialValue: 'en' },
-
     // Member-set fields (read-only in Studio — members edit via portal)
     {
       name: 'location',
@@ -68,6 +66,7 @@ export default {
             { title: 'Senior (10+ yrs)', value: 'senior' }, { title: 'Special needs', value: 'special_needs' }, { title: 'On medication', value: 'on_medication' }, { title: 'Indoor only', value: 'indoor_only' },
           ] } },
           { name: 'diet', title: 'Diet', type: 'array', of: [{ type: 'string' }], options: { list: ['wet', 'dry', 'medication', 'special diet'] } },
+          { name: 'customTraits', title: 'Custom Traits', type: 'array', readOnly: true, of: [{ type: 'string' }], description: 'Free-text traits added by the member via the portal.' },
         ],
         preview: { select: { title: 'name', subtitle: 'age' }, prepare({ title, subtitle }) { return { title: title || 'Unnamed cat', subtitle: subtitle ? `${subtitle} years old` : '' } } }
       }]

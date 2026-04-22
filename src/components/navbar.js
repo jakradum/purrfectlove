@@ -8,7 +8,7 @@ import styles from './Navbar.module.css';
 import menuItemsEN from '@/data/menuItems.en.json';
 import menuItemsDE from '@/data/menuItems.de.json';
 
-export default function Navbar({ locale = 'en', siteUrl = '' }) {
+export default function Navbar({ locale = 'en', siteUrl = '', onLocaleChange = null }) {
   const [isOpen, setIsOpen] = useState(false);
   const [isVisible, setIsVisible] = useState(true);
   const [lastScrollY, setLastScrollY] = useState(0);
@@ -170,9 +170,19 @@ export default function Navbar({ locale = 'en', siteUrl = '' }) {
             <div className={styles.langSwitcher}>
               {languages.map((lang, index) => (
                 <Fragment key={lang.code}>
-                  <Link href={lang.href} className={`${styles.langLink} ${locale === lang.code ? styles.active : ''}`}>
-                    {lang.label}
-                  </Link>
+                  {onLocaleChange ? (
+                    <button
+                      onClick={() => onLocaleChange(lang.code)}
+                      className={`${styles.langLink} ${locale === lang.code ? styles.active : ''}`}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                      {lang.label}
+                    </button>
+                  ) : (
+                    <Link href={lang.href} className={`${styles.langLink} ${locale === lang.code ? styles.active : ''}`}>
+                      {lang.label}
+                    </Link>
+                  )}
                   {index < languages.length - 1 && <span className={styles.langDivider}>|</span>}
                 </Fragment>
               ))}
@@ -248,9 +258,19 @@ export default function Navbar({ locale = 'en', siteUrl = '' }) {
             <div className={styles.mobileLangSwitcher} style={{ animationDelay: `${navLinks.length * 0.05}s` }}>
               {languages.map((lang, index) => (
                 <Fragment key={lang.code}>
-                  <Link href={lang.href} onClick={handleClose} className={styles.mobileLangLink}>
-                    {lang.fullLabel}
-                  </Link>
+                  {onLocaleChange ? (
+                    <button
+                      onClick={() => { onLocaleChange(lang.code); handleClose(); }}
+                      className={styles.mobileLangLink}
+                      style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0 }}
+                    >
+                      {lang.fullLabel}
+                    </button>
+                  ) : (
+                    <Link href={lang.href} onClick={handleClose} className={styles.mobileLangLink}>
+                      {lang.fullLabel}
+                    </Link>
+                  )}
                   {index < languages.length - 1 && <span>|</span>}
                 </Fragment>
               ))}

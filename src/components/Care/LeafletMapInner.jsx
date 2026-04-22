@@ -66,11 +66,11 @@ function DraggableMarker({ position, onPositionChange, readOnly }) {
   );
 }
 
-export default function LeafletMapInner({ center, position, onPositionChange, readOnly = false }) {
+export default function LeafletMapInner({ center, zoom = 14, position, onPositionChange, readOnly = false }) {
   return (
     <MapContainer
       center={center || [12.9716, 77.5946]}
-      zoom={14}
+      zoom={zoom}
       style={{ height: '280px', width: '100%', borderRadius: '8px', zIndex: 0 }}
     >
       <TileLayer

@@ -72,6 +72,7 @@ export default async function MemberProfilePage({ params }) {
   if (!sitter) notFound();
 
   const isOwnProfile = sitterId === memberId;
+  const locale = cookieStore.get('pl_portal_locale')?.value === 'de' ? 'de' : 'en';
 
   return (
     <>
@@ -79,6 +80,7 @@ export default async function MemberProfilePage({ params }) {
         sitter={sitter}
         isOwnProfile={isOwnProfile}
         feedbacks={feedbacks}
+        locale={locale}
       />
     </>
   );

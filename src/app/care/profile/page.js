@@ -12,6 +12,8 @@ const serverClient = createClient({
   useCdn: false,
 });
 
+export const dynamic = 'force-dynamic';
+
 export const metadata = {
   title: 'My Profile | Purrfect Love Community',
 };
@@ -40,5 +42,7 @@ export default async function ProfilePage() {
 
   if (!profile) redirect('/login');
 
-  return <ProfileEditor initialData={profile} />;
+  const locale = cookieStore.get('pl_portal_locale')?.value === 'de' ? 'de' : 'en';
+
+  return <ProfileEditor initialData={profile} locale={locale} />;
 }

@@ -1742,6 +1742,26 @@
   line-height: 1;
 }
 
+.mapCrosshair :global(.leaflet-container) {
+  cursor: crosshair !important;
+}
+
+.mapPinHint {
+  position: absolute;
+  bottom: 10px;
+  left: 50%;
+  transform: translateX(-50%);
+  background: rgba(0, 0, 0, 0.58);
+  color: #fff;
+  font-size: 0.75rem;
+  font-family: var(--font-outfit);
+  padding: 0.3rem 0.75rem;
+  border-radius: 20px;
+  pointer-events: none;
+  white-space: nowrap;
+  z-index: 500;
+}
+
 .locationHelpText {
   font-size: 0.78rem;
   color: var(--text-light);

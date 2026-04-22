@@ -47,9 +47,11 @@ export default async function CarePage() {
     return <IncompleteProfileGate />;
   }
 
+  const locale = cookieStore.get('pl_portal_locale')?.value === 'de' ? 'de' : 'en';
+
   // Show guidelines gate on first entry (before accessing the community)
   if (!profile?.guidelinesAccepted) {
-    return <GuidelinesGate locale="en" />;
+    return <GuidelinesGate locale={locale} />;
   }
 
   const myProfile = profile ? {

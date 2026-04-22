@@ -1,11 +1,13 @@
 import { cookies } from 'next/headers';
 import { createServerClient } from '@supabase/ssr';
 import { createClient as createSanityClient } from '@sanity/client';
-import Navbar from '@/components/navbar';
+import CareLocaleNav from '@/components/Care/CareLocaleNav';
 import Sidebar from '@/components/Care/Sidebar';
 import Footer from '@/components/Footer';
 import PostHogProvider from '@/components/PostHogProvider';
 import PostHogPageView from '@/components/PostHogPageView';
+
+export const dynamic = 'force-dynamic';
 
 export const metadata = {
   title: 'Purrfect Love Community | Purrfect Love',
@@ -31,6 +33,8 @@ export default async function CareLayout({ children }) {
   const sitterId = user?.user_metadata?.sitterId || null;
   const isTeamMember = user?.user_metadata?.isTeamMember ?? false;
 
+  const memberLocale = cookieStore.get('pl_portal_locale')?.value === 'de' ? 'de' : 'en';
+
   let memberName = null;
   if (sitterId) {
     try {
@@ -43,12 +47,12 @@ export default async function CareLayout({ children }) {
   }
 
   return (
-    <PostHogProvider sitterId={sitterId} name={memberName} locale="en" isTeamMember={isTeamMember}>
+    <PostHogProvider sitterId={sitterId} name={memberName} locale={memberLocale} isTeamMember={isTeamMember}>
       <PostHogPageView />
-      <Navbar locale="en" siteUrl="https://purrfectlove.org" />
+      <CareLocaleNav locale={memberLocale} siteUrl="https://purrfectlove.org" />
       <div style={{ display: 'flex', flexDirection: 'column', minHeight: 'calc(100vh - 64px)', backgroundColor: '#B4D3D9' }}>
         <div style={{ display: 'flex', flex: 1, minHeight: 'calc(100vh - 64px)' }}>
-          <Sidebar locale="en" basePath="" sitterId={sitterId} />
+          <Sidebar locale={memberLocale} basePath="" sitterId={sitterId} />
           <main style={{ flex: 1, minWidth: 0, paddingBottom: '80px', fontFamily: 'var(--font-outfit)' }}>
             {children}
           </main>

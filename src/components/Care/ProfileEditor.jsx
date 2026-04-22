@@ -85,7 +85,7 @@ function computeCompletion(form) {
 
   if (form.canSit) {
     if (!form.canDoHomeVisit && !form.canHostCats) required.push('How I can sit (select at least one)');
-    if (form.canDoHomeVisit && !form.maxHomesPerDay) required.push('Homes you can visit per day');
+    // maxHomesPerDay hidden for now — not required
     if (form.canHostCats && !form.maxCatsPerDay) required.push('Max cats per day');
     if (!form.feedingTypes?.length) required.push('Feeding types you can handle');
     if (!form.behavioralTraits?.length) required.push('Cat behaviors you\'re comfortable with');
@@ -209,6 +209,66 @@ function GroupedCheckboxGroup({ groups, value = [], onChange, labelMap }) {
   );
 }
 
+function CustomTraitInput({ value = [], onChange }) {
+  const [input, setInput] = useState('');
+  const addTrait = () => {
+    const trimmed = input.trim();
+    if (!trimmed || value.includes(trimmed)) { setInput(''); return; }
+    onChange([...value, trimmed]);
+    setInput('');
+  };
+  const removeTrait = (t) => onChange(value.filter(v => v !== t));
+  return (
+    <div>
+      {value.length > 0 && (
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem', marginBottom: '0.5rem' }}>
+          {value.map(t => (
+            <span key={t} style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.3rem',
+              padding: '0.2rem 0.6rem', background: 'rgba(44,95,79,0.1)',
+              color: 'var(--hunter-green)', borderRadius: '20px', fontSize: '0.8rem',
+              border: '1px solid rgba(44,95,79,0.25)',
+            }}>
+              {t}
+              <button
+                type="button"
+                onClick={() => removeTrait(t)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', padding: 0, lineHeight: 1, color: 'var(--hunter-green)', fontSize: '0.9rem' }}
+                aria-label={`Remove ${t}`}
+              >×</button>
+            </span>
+          ))}
+        </div>
+      )}
+      <div style={{ display: 'flex', gap: '0.4rem' }}>
+        <input
+          type="text"
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTrait(); } }}
+          placeholder="e.g. Loves chin scratches"
+          style={{
+            flex: 1, padding: '0.4rem 0.6rem', fontSize: '0.83rem',
+            border: '1px solid rgba(44,95,79,0.25)', borderRadius: '6px',
+            fontFamily: 'var(--font-outfit)', outline: 'none',
+          }}
+        />
+        <button
+          type="button"
+          onClick={addTrait}
+          style={{
+            padding: '0.4rem 0.75rem', background: 'var(--hunter-green)', color: '#fff',
+            border: 'none', borderRadius: '6px', fontSize: '0.83rem', fontWeight: 600,
+            cursor: 'pointer', fontFamily: 'var(--font-outfit)', whiteSpace: 'nowrap',
+          }}
+        >
+          Add
+        </button>
+      </div>
+    </div>
+  );
+}
+
 function formFromData(data) {
   return {
     name: data.name || '',
@@ -217,7 +277,7 @@ function formFromData(data) {
     contactPreference: data.contactPreference || 'email',
     bedrooms: data.bedrooms ?? '',
     householdSize: data.householdSize ?? '',
-    cats: data.cats || [],
+    cats: (data.cats || []).map(c => ({ ...c, customTraits: c.customTraits || [] })),
     // New availability system
     availabilityDefault: data.availabilityDefault || 'available',
     unavailableDatesV2: data.unavailableDatesV2 || [],
@@ -239,15 +299,15 @@ function formFromData(data) {
   };
 }
 
-export default function ProfileEditor({ initialData }) {
-  const locale = 'en';
+export default function ProfileEditor({ initialData, locale = 'en' }) {
   const t = locale === 'de' ? contentDE.profile : contentEN.profile;
+  const lp = t.locationPicker;
   const tags = t.tags;
   const router = useRouter();
 
   const tagMap = {
-    ...TRAIT_LABELS,
-    wet: tags.wet, dry: tags.dry, medication: tags.medication, 'special diet': tags.specialDiet,
+    ...tags,                         // all trait codes → locale labels
+    'special diet': tags.specialDiet, // key has a space; JSON key is camelCase
   };
 
   const savedForm = useRef(formFromData(initialData));
@@ -359,6 +419,7 @@ export default function ProfileEditor({ initialData }) {
           cats: form.cats.map((cat) => ({
             _key: cat._key || Math.random().toString(36).slice(2, 14),
             ...cat,
+            customTraits: cat.customTraits || [],
             age: cat.age !== '' && cat.age !== undefined ? Number(cat.age) : undefined,
           })),
         }),
@@ -443,7 +504,7 @@ export default function ProfileEditor({ initialData }) {
   };
 
   // Cats helpers
-  const addCat = () => update('cats', [...form.cats, { _key: Math.random().toString(36).slice(2, 14), name: '', age: '', personality: [], diet: [] }]);
+  const addCat = () => update('cats', [...form.cats, { _key: Math.random().toString(36).slice(2, 14), name: '', age: '', personality: [], diet: [], customTraits: [] }]);
   const updateCat = (idx, field, value) => {
     const updated = form.cats.map((c, i) => {
       if (i !== idx) return c;
@@ -509,6 +570,7 @@ export default function ProfileEditor({ initialData }) {
         )}
         <SitterProfile
           sitter={sitterForView}
+          locale={locale}
           isOwnProfile={true}
           onEdit={!deletionPending ? () => setEditMode('profile') : undefined}
           onEditAvailability={!deletionPending ? () => setEditMode('availability') : undefined}
@@ -616,17 +678,14 @@ export default function ProfileEditor({ initialData }) {
             <div className={styles.locationConfirmed}>
               <span className={styles.locationConfirmedCheck}>✓</span>
               <span>
-                Location captured
+                {lp.confirmed}
                 {form.location.displayName ? ` — ${form.location.displayName}` : ''}
               </span>
             </div>
-            <p className={styles.locationHelpText}>
-              Note: this may vary from your actual address, but it&apos;s just for us to record your location and show you sitters nearby.
-            </p>
             <LocationMapPicker
               value={form.location}
               onChange={() => {}}
-              locale={initialData.locale}
+              locale={locale}
               readOnly
             />
             <button
@@ -635,14 +694,14 @@ export default function ProfileEditor({ initialData }) {
               onClick={() => setLocationPickerOpen(true)}
               style={{ marginTop: '0.75rem' }}
             >
-              Update location
+              {lp.changeLocation}
             </button>
           </div>
         ) : (
           <LocationMapPicker
             value={form.location}
             onChange={(loc) => { update('location', loc); if (loc?.lat) setLocationPickerOpen(false); }}
-            locale={initialData.locale}
+            locale={locale}
           />
         )}
       </div>
@@ -722,6 +781,11 @@ export default function ProfileEditor({ initialData }) {
               <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Select all that apply.</p>
               <CheckboxGroup options={DIET_OPTIONS} value={cat.diet || []} onChange={(v) => updateCat(idx, 'diet', v)} labelMap={tagMap} />
             </div>
+            <div className={styles.formGroup}>
+              <label className={styles.profileLabel}>Custom traits</label>
+              <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Anything else worth knowing about your cat.</p>
+              <CustomTraitInput value={cat.customTraits || []} onChange={(v) => updateCat(idx, 'customTraits', v)} />
+            </div>
           </div>
         ))}
         <button type="button" className={styles.addBtn} onClick={addCat}>{t.fields.addCat}</button>
@@ -747,20 +811,7 @@ export default function ProfileEditor({ initialData }) {
                 />
                 Home visits <span style={{ color: '#888', fontWeight: 400 }}>(I travel to the cat&apos;s home)</span>
               </label>
-              {form.canDoHomeVisit && (
-                <div style={{ marginTop: '0.5rem', marginLeft: '1.5rem' }}>
-                  <label className={styles.profileLabel} style={{ fontSize: '0.8rem' }}>{t.fields.maxHomesPerDay}</label>
-                  <input
-                    type="number" min={1} max={10}
-                    className={styles.profileInput}
-                    value={form.maxHomesPerDay}
-                    onChange={(e) => update('maxHomesPerDay', e.target.value)}
-                    placeholder="e.g. 2"
-                    style={{ maxWidth: '120px' }}
-                  />
-                  <p className={styles.hint}>Homes you can visit in a single day</p>
-                </div>
-              )}
+              {/* maxHomesPerDay input hidden — feature disabled, will re-enable in future version */}
             </div>
 
             {/* Host cats */}

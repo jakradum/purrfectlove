@@ -9,13 +9,10 @@ import ReportModal from './ReportModal';
 import FeedbackDisplay from './FeedbackDisplay';
 import BookingRequestModal from './BookingRequestModal';
 import WaiverModal from './WaiverModal';
+import contentEN from '@/data/careContent.en.json';
+import contentDE from '@/data/careContent.de.json';
 
-const TAG_LABELS = {
-  shy: 'Shy', confident: 'Confident', gentle: 'Gentle', playful: 'Playful', independent: 'Independent',
-  good_with_cats: 'Good with other cats', prefers_solo: 'Prefers to be only cat', good_with_kids: 'Good with kids',
-  senior: 'Senior', special_needs: 'Special needs', on_medication: 'On medication', indoor_only: 'Indoor only',
-  wet: 'Wet food', dry: 'Dry food', medication: 'Medication', 'special diet': 'Special diet',
-};
+// Tag labels resolved at render time from locale content — do not hardcode here
 
 const COVERS = [
   '/images/care/cover-pattern-1.png',
@@ -106,17 +103,21 @@ export default function SitterProfile({
     canDoHomeVisit, canHostCats, canSit,
   } = sitter;
 
+  const sp = (locale === 'de' ? contentDE : contentEN).profile.sitterProfile;
+  const rawTags = (locale === 'de' ? contentDE : contentEN).profile.tags;
+  const TAG_LABELS = { ...rawTags, 'special diet': rawTags.specialDiet };
+
   const displayName = name || 'Member';
 
   const memberSince = _createdAt
-    ? new Date(_createdAt).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })
+    ? new Date(_createdAt).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'short', year: 'numeric' })
     : null;
 
   const resolvedLocationName = locationName || location?.displayName || null;
   const locationDisplay = resolvedLocationName
     ? resolvedLocationName.replace(', ', ' · ')
     : null;
-  const metaParts = [locationDisplay, memberSince ? `Member since ${memberSince}` : null].filter(Boolean);
+  const metaParts = [locationDisplay, memberSince ? `${sp.memberSince} ${memberSince}` : null].filter(Boolean);
 
   const idx = coverIndex(_id || '');
   const coverSrc = coverImageUrl || COVERS[idx];
@@ -169,23 +170,21 @@ export default function SitterProfile({
 
   return (
     <div className={styles.sitterProfilePage}>
-      {!isOwnProfile && <Link href="/care" className={styles.backLink}>← Back to network</Link>}
+      {!isOwnProfile && <Link href="/care" className={styles.backLink}>{sp.backToNetwork}</Link>}
 
       {/* Discoverability nudge — own profile, canSit is off */}
       {showDiscoverabilityBanner && (
         <div className={styles.noStatusBanner}>
           <div style={{ flex: 1 }}>
-            <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>You&apos;re not visible in the marketplace</div>
-            <div style={{ fontSize: '0.84rem', opacity: 0.85, marginBottom: '0.75rem' }}>
-              Other members can&apos;t find you as a sitter. Enable sitting in your profile settings to be discovered.
-            </div>
+            <div style={{ fontWeight: 700, marginBottom: '0.25rem' }}>{sp.bannerTitle}</div>
+            <div style={{ fontSize: '0.84rem', opacity: 0.85, marginBottom: '0.75rem' }}>{sp.bannerBody}</div>
             <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
               {onEditAvailability ? (
-                <button type="button" className={styles.noStatusBtn} onClick={onEditAvailability}>Update availability</button>
+                <button type="button" className={styles.noStatusBtn} onClick={onEditAvailability}>{sp.updateAvailability}</button>
               ) : (
-                <a href="/care/profile?edit=availability" className={styles.noStatusBtn}>Update availability</a>
+                <a href="/care/profile?edit=availability" className={styles.noStatusBtn}>{sp.updateAvailability}</a>
               )}
-              <button type="button" className={`${styles.noStatusBtn} ${styles.noStatusBtnOutline}`} onClick={dismissBanner}>Dismiss</button>
+              <button type="button" className={`${styles.noStatusBtn} ${styles.noStatusBtnOutline}`} onClick={dismissBanner}>{sp.dismiss}</button>
             </div>
           </div>
         </div>
@@ -263,7 +262,7 @@ export default function SitterProfile({
         <div className={styles.sitterProfileHeaderBody}>
           <div className={styles.sitterProfileUsername} style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
             <span>{displayName}</span>
-            {isOwnProfile && <span className={styles.sitterProfileYouTag}> — you</span>}
+            {isOwnProfile && <span className={styles.sitterProfileYouTag}> — {sp.youTag}</span>}
             {isOwnProfile && (
               <span
                 role="button"
@@ -294,7 +293,11 @@ export default function SitterProfile({
           )}
           {isOwnProfile && !location?.lat && (
             <div className={styles.profileLocationNudge}>
-              <a href="/care/profile?edit=location">Location not set — add it to find sitters near you</a>
+              <a href="/care/profile?edit=location">
+                {locale === 'de'
+                  ? 'Standort nicht festgelegt — fügen Sie ihn hinzu, um Sitter in Ihrer Nähe zu finden'
+                  : 'Location not set — add it to find sitters near you'}
+              </a>
             </div>
           )}
           {(identityVerified || trustedSitter) && (
@@ -312,11 +315,11 @@ export default function SitterProfile({
             <>
               {onEdit ? (
                 <button type="button" onClick={onEdit} className={styles.sitterEditBtn}>
-                  Edit profile
+                  {sp.editProfile}
                 </button>
               ) : (
                 <Link href="/care/profile" className={styles.sitterEditBtn}>
-                  Edit profile
+                  {sp.editProfile}
                 </Link>
               )}
             </>
@@ -326,11 +329,11 @@ export default function SitterProfile({
               className={styles.sitterRequestBtn}
               onClick={() => setShowWaiver(true)}
             >
-              Request a sit
+              {sp.requestSit}
             </button>
           ) : (
             <p style={{ fontSize: '0.8rem', color: '#999', fontStyle: 'italic', margin: 0, textAlign: 'center' }}>
-              Not currently offering sitting
+              {sp.notOffering}
             </p>
           )}
         </div>
@@ -339,44 +342,44 @@ export default function SitterProfile({
       {/* Bio */}
       {bio && (
         <div className={styles.sitterSection}>
-          <div className={styles.sitterSectionTitle}>About</div>
+          <div className={styles.sitterSectionTitle}>{sp.about}</div>
           <p className={styles.sitterBio}>{bio}</p>
         </div>
       )}
 
       {/* Activity */}
       <div className={styles.sitterSection}>
-        <div className={styles.sitterSectionTitle}>Activity</div>
+        <div className={styles.sitterSectionTitle}>{sp.activity}</div>
         <div className={styles.trustRow}>
           <div className={styles.trustMetric}>
             <div className={styles.trustVal}>—</div>
-            <div className={styles.trustLabel}>Response rate</div>
+            <div className={styles.trustLabel}>{sp.responseRate}</div>
           </div>
           <div className={styles.trustMetric}>
             <div className={styles.trustVal}>—</div>
-            <div className={styles.trustLabel}>Last active</div>
+            <div className={styles.trustLabel}>{sp.lastActive}</div>
           </div>
           <div className={styles.trustMetric}>
             <div className={styles.trustVal}>—</div>
-            <div className={styles.trustLabel}>Sits completed</div>
+            <div className={styles.trustLabel}>{sp.sitsCompleted}</div>
           </div>
         </div>
-        <div className={styles.noActivityNote}>Activity data will appear after the first sit.</div>
+        <div className={styles.noActivityNote}>{sp.noActivityNote}</div>
       </div>
 
       {/* Availability */}
       <div className={styles.sitterSection}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 14, paddingBottom: 10, borderBottom: '0.5px solid #eee' }}>
-          <div className={styles.sitterSectionTitle} style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>Availability</div>
+          <div className={styles.sitterSectionTitle} style={{ marginBottom: 0, paddingBottom: 0, borderBottom: 'none' }}>{sp.availability}</div>
           {isOwnProfile && onEditAvailability && location?.lat && (
             <button type="button" onClick={onEditAvailability} className={styles.sitterSectionEditBtn}>
-              Edit
+              {sp.editAvailability || 'Edit'}
             </button>
           )}
         </div>
         {isOwnProfile && !location?.lat ? (
           <p style={{ fontSize: '0.85rem', color: 'var(--text-light)', fontStyle: 'italic', margin: 0 }}>
-            Complete your profile to manage availability.
+            {sp.completeProfileAvailability}
           </p>
         ) : (
           <AvailabilityStrip
@@ -389,15 +392,15 @@ export default function SitterProfile({
       {/* Capabilities */}
       {(capabilities.length > 0 || maxCatsPerDay > 0) && (
         <div className={styles.sitterSection}>
-          <div className={styles.sitterSectionTitle}>Sitting capabilities</div>
+          <div className={styles.sitterSectionTitle}>{sp.sittingCapabilities}</div>
           {maxCatsPerDay > 0 && (
             <p style={{ fontSize: '0.875rem', color: '#555', margin: '0 0 10px' }}>
-              Can sit up to <strong>{maxCatsPerDay}</strong> cat{maxCatsPerDay !== 1 ? 's' : ''} per day
+              {sp.upToCatsPerDay.replace('{n}', maxCatsPerDay).replace('{s}', maxCatsPerDay !== 1 ? 'n' : '')}
             </p>
           )}
           {(behavioralTraits || []).length > 0 && (
             <>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Cats I can handle</p>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>{sp.catsICanHandle}</p>
               <div className={styles.capabilityPills} style={{ marginBottom: (feedingTypes || []).length ? 14 : 0 }}>
                 {(behavioralTraits || []).map(tag => (
                   <span key={tag} className={styles.capabilityPill}>{TAG_LABELS[tag] || tag}</span>
@@ -407,7 +410,7 @@ export default function SitterProfile({
           )}
           {(feedingTypes || []).length > 0 && (
             <>
-              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>Can feed</p>
+              <p style={{ fontSize: '0.75rem', fontWeight: 700, color: '#888', textTransform: 'uppercase', letterSpacing: '0.05em', margin: '0 0 8px' }}>{sp.canFeed}</p>
               <div className={styles.capabilityPills}>
                 {(feedingTypes || []).map(tag => (
                   <span key={tag} className={styles.capabilityPill}>{TAG_LABELS[tag] || tag}</span>
@@ -421,23 +424,40 @@ export default function SitterProfile({
       {/* Cats */}
       {cats && cats.length > 0 && (
         <div className={styles.sitterSection}>
-          <div className={styles.sitterSectionTitle}>My cats</div>
+          <div className={styles.sitterSectionTitle}>{sp.myCats}</div>
           <div className={styles.catProfileGrid}>
-            {cats.map((cat, i) => (
-              <div key={i} className={styles.catProfileCard}>
-                <div className={styles.catProfileName}>{cat.name || 'Unnamed'}</div>
-                {(cat.gender || cat.age || cat.indoor !== undefined || cat.neutered !== undefined) && (
-                  <div className={styles.catProfileMeta}>
-                    {[
-                      cat.gender,
-                      cat.age ? `${cat.age} yr` : null,
-                      cat.indoor === true ? 'Indoor' : cat.indoor === false ? 'Indoor/Outdoor' : null,
-                      cat.neutered === true ? 'Neutered' : cat.neutered === false ? 'Not neutered' : null,
-                    ].filter(Boolean).join(' · ')}
-                  </div>
-                )}
-              </div>
-            ))}
+            {cats.map((cat, i) => {
+              const allTraits = [
+                ...(cat.personality || []).map(t => TAG_LABELS[t] || t),
+                ...(cat.customTraits || []),
+              ];
+              return (
+                <div key={i} className={styles.catProfileCard}>
+                  <div className={styles.catProfileName}>{cat.name || 'Unnamed'}</div>
+                  {(cat.gender || cat.age || cat.indoor !== undefined || cat.neutered !== undefined) && (
+                    <div className={styles.catProfileMeta}>
+                      {[
+                        cat.gender,
+                        cat.age ? `${cat.age} yr` : null,
+                        cat.indoor === true ? 'Indoor' : cat.indoor === false ? 'Indoor/Outdoor' : null,
+                        cat.neutered === true ? 'Neutered' : cat.neutered === false ? 'Not neutered' : null,
+                      ].filter(Boolean).join(' · ')}
+                    </div>
+                  )}
+                  {allTraits.length > 0 && (
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.3rem', marginTop: '0.4rem' }}>
+                      {allTraits.map((t, j) => (
+                        <span key={j} style={{
+                          padding: '0.15rem 0.5rem', background: 'rgba(44,95,79,0.08)',
+                          color: 'var(--hunter-green)', borderRadius: '12px', fontSize: '0.72rem',
+                          border: '1px solid rgba(44,95,79,0.18)',
+                        }}>{t}</span>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
       )}
@@ -445,7 +465,7 @@ export default function SitterProfile({
 
       {/* Feedbacks — public view only */}
       {!isOwnProfile && feedbacks.length > 0 && (
-        <FeedbackDisplay feedbacks={feedbacks} locale="en" />
+        <FeedbackDisplay feedbacks={feedbacks} locale={locale} />
       )}
 
       {/* Report — public view only */}
@@ -455,7 +475,7 @@ export default function SitterProfile({
           className={styles.reportLink}
           onClick={() => setShowReport(true)}
         >
-          Report this member
+          {sp.reportMember}
         </button>
       )}
 

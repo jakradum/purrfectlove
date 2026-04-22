@@ -1,8 +1,9 @@
 'use client';
 
 import dynamic from 'next/dynamic';
-import { useState, useCallback } from 'react';
-import { OpenLocationCode } from 'open-location-code';
+import { useState, useCallback, useEffect, useRef } from 'react';
+import contentEN from '@/data/careContent.en.json';
+import contentDE from '@/data/careContent.de.json';
 import styles from './Care.module.css';
 
 const LeafletMapInner = dynamic(() => import('./LeafletMapInner'), {
@@ -14,10 +15,10 @@ const LeafletMapInner = dynamic(() => import('./LeafletMapInner'), {
   ),
 });
 
-const CITY_OPTIONS = [
-  { value: 'Bangalore, India', placeholder: 'e.g. 7J4V+XH', center: [12.9716, 77.5946] },
-  { value: 'Stuttgart, Germany', placeholder: 'e.g. GV3C+9X', center: [48.7758, 9.1829] },
-];
+const LOCALE_CENTERS = {
+  de: [48.7758, 9.1829],
+  en: [12.9716, 77.5946],
+};
 
 async function reverseGeocode(lat, lng) {
   try {
@@ -36,107 +37,123 @@ async function reverseGeocode(lat, lng) {
   }
 }
 
-export default function LocationMapPicker({ value, onChange, locale, readOnly = false }) {
-  const defaultCity = CITY_OPTIONS.find(c => locale === 'de' ? c.value.includes('Stuttgart') : c.value.includes('Bangalore')) || CITY_OPTIONS[0];
+export default function LocationMapPicker({ value, onChange, locale = 'en', readOnly = false }) {
+  const lp = (locale === 'de' ? contentDE : contentEN).profile.locationPicker;
 
-  // Check geolocation support once, on client only
-  const [geoSupported] = useState(() =>
-    typeof window !== 'undefined' && typeof navigator !== 'undefined' && !!navigator.geolocation
-  );
+  const defaultCenter = LOCALE_CENTERS[locale] || LOCALE_CENTERS.en;
+  const savedCenter = value?.lat != null ? [value.lat, value.lng] : null;
 
-  const [mode, setMode] = useState('map');
-  const [city, setCity] = useState(defaultCity);
+  const [mapCenter, setMapCenter] = useState(savedCenter || defaultCenter);
+  // pendingPosition: user has tapped/searched but not confirmed
+  const [pendingPosition, setPendingPosition] = useState(null);
 
-  // Map mode state
-  const [mapCenter, setMapCenter] = useState(
-    value?.lat != null ? [value.lat, value.lng] : defaultCity.center
-  );
-  const [mapPosition, setMapPosition] = useState(
-    value?.lat != null ? [value.lat, value.lng] : null
-  );
-  const [displayName, setDisplayName] = useState(value?.displayName || '');
   const [geocoding, setGeocoding] = useState(false);
   const [geolocating, setGeolocating] = useState(false);
   const [geoError, setGeoError] = useState('');
 
-  // Manual mode state
-  const [locationInput, setLocationInput] = useState('');
-  const [locationError, setLocationError] = useState('');
-  const olc = new OpenLocationCode();
+  // Search state
+  const [searchQuery, setSearchQuery] = useState('');
+  const [searchResults, setSearchResults] = useState([]);
+  const [searchLoading, setSearchLoading] = useState(false);
+  const [searchError, setSearchError] = useState('');
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const searchDebounceRef = useRef(null);
+  const searchContainerRef = useRef(null);
 
-  const handleMapPin = useCallback(async (lat, lng) => {
+  const [geoSupported] = useState(() =>
+    typeof window !== 'undefined' && typeof navigator !== 'undefined' && !!navigator.geolocation
+  );
+
+  // Close dropdown on outside click
+  useEffect(() => {
+    function handleClick(e) {
+      if (searchContainerRef.current && !searchContainerRef.current.contains(e.target)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener('mousedown', handleClick);
+    return () => document.removeEventListener('mousedown', handleClick);
+  }, []);
+
+  const handleMapTap = useCallback((lat, lng) => {
+    setPendingPosition([lat, lng]);
+    setGeoError('');
+  }, []);
+
+  const handleConfirm = useCallback(async () => {
+    if (!pendingPosition) return;
+    const [lat, lng] = pendingPosition;
     const latF = parseFloat(lat.toFixed(6));
     const lngF = parseFloat(lng.toFixed(6));
-    setMapPosition([lat, lng]);
     setGeocoding(true);
     const name = await reverseGeocode(latF, lngF);
-    setDisplayName(name);
     setGeocoding(false);
     onChange({ lat: latF, lng: lngF, displayName: name, name: name || `${latF}, ${lngF}` });
-  }, [onChange]);
+    setPendingPosition(null);
+  }, [pendingPosition, onChange]);
 
   const handleUseMyLocation = () => {
-    // Must be called directly inside a user gesture (button click) for Safari iOS.
-    // Never call getCurrentPosition in useEffect or on page load.
     setGeolocating(true);
     setGeoError('');
     navigator.geolocation.getCurrentPosition(
-      async (pos) => {
+      (pos) => {
         const { latitude: lat, longitude: lng } = pos.coords;
-        setMapCenter([lat, lng]);
+        const pos2 = [lat, lng];
+        setMapCenter(pos2);
+        setPendingPosition(pos2);
         setGeolocating(false);
-        await handleMapPin(lat, lng);
       },
       (err) => {
         setGeolocating(false);
-        if (err.code === 1) {
-          // PERMISSION_DENIED
-          setGeoError('Location access was denied. You can drop a pin or enter your location manually below.');
-          setMode('manual');
-        } else {
-          setGeoError('Could not get your location. Please drop a pin manually.');
-        }
+        setGeoError(err.code === 1 ? lp.geoError : lp.geoErrorGeneric);
       },
       { enableHighAccuracy: false, timeout: 10000, maximumAge: 60000 }
     );
   };
 
-  const handleManualInput = (raw, selectedCity = city) => {
-    setLocationInput(raw);
-    setLocationError('');
-    const trimmed = raw.trim();
-    if (!trimmed) { onChange(null); return; }
-
-    const parts = trimmed.split(/\s+/);
-    const token = parts[0];
-
-    if (!token.includes('+') || !olc.isValid(token)) {
-      setLocationError('Enter a valid location code (e.g. 7J4VVHQ2+FC or 7J4V+XH)');
-      onChange(null);
+  const handleSearchChange = (e) => {
+    const q = e.target.value;
+    setSearchQuery(q);
+    setSearchError('');
+    clearTimeout(searchDebounceRef.current);
+    if (!q.trim()) {
+      setSearchResults([]);
+      setDropdownOpen(false);
       return;
     }
-
-    if (olc.isFull(token)) {
+    searchDebounceRef.current = setTimeout(async () => {
+      setSearchLoading(true);
       try {
-        const decoded = olc.decode(token);
-        const lat = parseFloat(decoded.latitudeCenter.toFixed(6));
-        const lng = parseFloat(decoded.longitudeCenter.toFixed(6));
-        onChange({ lat, lng, name: token.toUpperCase(), displayName: null });
-        return;
-      } catch { /* fall through */ }
-    }
+        const res = await fetch(`/api/care/geocode/search?q=${encodeURIComponent(q.trim())}`);
+        if (!res.ok) throw new Error();
+        const data = await res.json();
+        setSearchResults(data);
+        setDropdownOpen(data.length > 0);
+      } catch {
+        setSearchError(lp.searchError);
+        setDropdownOpen(false);
+      } finally {
+        setSearchLoading(false);
+      }
+    }, 400);
+  };
 
-    // Short code — append selected city
-    const nameToStore = `${token} ${selectedCity.value}`;
-    onChange({ lat: null, lng: null, name: nameToStore, displayName: null });
+  const handleSelectResult = (result) => {
+    const pos = [result.lat, result.lng];
+    setMapCenter(pos);
+    setPendingPosition(pos);
+    setSearchQuery(result.displayName);
+    setDropdownOpen(false);
+    setSearchResults([]);
   };
 
   if (readOnly) {
     return (
       <div style={{ filter: 'grayscale(0.2) opacity(0.75)', borderRadius: '8px', overflow: 'hidden' }}>
         <LeafletMapInner
-          center={mapCenter}
-          position={mapPosition}
+          center={savedCenter || defaultCenter}
+          zoom={savedCenter ? 14 : 11}
+          position={savedCenter}
           onPositionChange={() => {}}
           readOnly
         />
@@ -144,119 +161,116 @@ export default function LocationMapPicker({ value, onChange, locale, readOnly = 
     );
   }
 
+  // The confirmed pin on the map = value (already saved) OR pendingPosition
+  const displayPosition = pendingPosition || (value?.lat != null ? [value.lat, value.lng] : null);
+
   return (
     <div>
-      {mode === 'map' ? (
-        <div>
-          {geoSupported && (
-            <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+      {/* Instruction */}
+      <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', marginBottom: '0.5rem', lineHeight: 1.4 }}>
+        {lp.instruction}
+      </p>
+
+      {/* Search input */}
+      <div ref={searchContainerRef} style={{ position: 'relative', marginBottom: '0.5rem' }}>
+        <input
+          type="text"
+          value={searchQuery}
+          onChange={handleSearchChange}
+          placeholder={lp.searchPlaceholder}
+          style={{
+            width: '100%', boxSizing: 'border-box',
+            padding: '0.5rem 0.75rem', fontSize: '0.875rem',
+            border: '1px solid rgba(44,95,79,0.25)', borderRadius: '8px',
+            fontFamily: 'var(--font-outfit)', outline: 'none',
+            background: '#fff',
+          }}
+        />
+        {searchLoading && (
+          <span style={{ position: 'absolute', right: '0.75rem', top: '50%', transform: 'translateY(-50%)', fontSize: '0.75rem', color: '#aaa' }}>…</span>
+        )}
+        {dropdownOpen && searchResults.length > 0 && (
+          <div style={{
+            position: 'absolute', top: 'calc(100% + 4px)', left: 0, right: 0,
+            background: '#fff', border: '1px solid rgba(44,95,79,0.2)', borderRadius: '8px',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.1)', zIndex: 1000, overflow: 'hidden',
+          }}>
+            {searchResults.map((r, i) => (
               <button
+                key={i}
                 type="button"
-                onClick={handleUseMyLocation}
-                disabled={geolocating}
+                onMouseDown={() => handleSelectResult(r)}
                 style={{
-                  display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
-                  padding: '0.5rem 1rem', background: 'var(--hunter-green)', color: '#fff',
-                  border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600,
-                  cursor: geolocating ? 'not-allowed' : 'pointer', opacity: geolocating ? 0.7 : 1,
-                  fontFamily: 'var(--font-outfit)',
+                  display: 'block', width: '100%', textAlign: 'left',
+                  padding: '0.5rem 0.75rem', fontSize: '0.83rem', color: '#333',
+                  background: 'none', border: 'none', borderBottom: i < searchResults.length - 1 ? '1px solid #f0f0f0' : 'none',
+                  cursor: 'pointer', fontFamily: 'var(--font-outfit)',
                 }}
               >
-                {geolocating ? '📍 Getting location…' : '📍 Use my location'}
+                {r.displayName}
               </button>
-              {geoError && <span style={{ fontSize: '0.78rem', color: '#ef4444' }}>{geoError}</span>}
-            </div>
-          )}
-
-          <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', marginBottom: '0.5rem', lineHeight: 1.4 }}>
-            Or tap the map to drop a pin, then drag it to adjust.
-          </p>
-
-          <LeafletMapInner
-            center={mapCenter}
-            position={mapPosition}
-            onPositionChange={handleMapPin}
-          />
-
-          <div style={{ minHeight: '1.5rem', marginTop: '0.4rem' }}>
-            {geocoding && (
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-light)' }}>Looking up neighbourhood…</p>
-            )}
-            {displayName && !geocoding && (
-              <p style={{ fontSize: '0.875rem', color: 'var(--hunter-green)', fontWeight: 500 }}>
-                📍 {displayName}
-              </p>
-            )}
-            {mapPosition && !geocoding && !displayName && (
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', fontFamily: 'monospace' }}>
-                {mapPosition[0].toFixed(5)}, {mapPosition[1].toFixed(5)}
-              </p>
-            )}
+            ))}
           </div>
+        )}
+      </div>
 
+      {searchError && (
+        <p style={{ fontSize: '0.78rem', color: '#ef4444', marginBottom: '0.4rem' }}>{searchError}</p>
+      )}
+
+      {/* Secondary geo link */}
+      {geoSupported && (
+        <div style={{ marginBottom: '0.5rem' }}>
           <button
             type="button"
-            onClick={() => setMode('manual')}
-            style={{ marginTop: '0.5rem', fontSize: '0.78rem', color: 'var(--text-light)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', padding: 0, display: 'block' }}
+            onClick={handleUseMyLocation}
+            disabled={geolocating}
+            style={{
+              background: 'none', border: 'none', padding: 0,
+              fontSize: '0.78rem', color: 'var(--hunter-green)',
+              textDecoration: 'underline', cursor: geolocating ? 'not-allowed' : 'pointer',
+              opacity: geolocating ? 0.6 : 1, fontFamily: 'var(--font-outfit)',
+            }}
           >
-            Enter location manually instead →
+            {geolocating ? lp.geolocating : lp.useMyLocation}
           </button>
-        </div>
-      ) : (
-        <div>
-          <div className={styles.formGroup}>
-            <label className={styles.profileLabel}>City <span style={{ color: '#ef4444' }}>*</span></label>
-            <select
-              className={styles.profileInput}
-              value={city.value}
-              onChange={(e) => {
-                const selected = CITY_OPTIONS.find(c => c.value === e.target.value) || CITY_OPTIONS[0];
-                setCity(selected);
-                if (locationInput.trim()) handleManualInput(locationInput, selected);
-              }}
-            >
-              {CITY_OPTIONS.map(({ value: v }) => (
-                <option key={v} value={v}>{v}</option>
-              ))}
-            </select>
-          </div>
-
-          <div className={styles.formGroup}>
-            <label className={styles.profileLabel}>Your neighbourhood <span style={{ color: '#ef4444' }}>*</span></label>
-            <input
-              type="text"
-              className={styles.profileInput}
-              value={locationInput}
-              onChange={(e) => handleManualInput(e.target.value)}
-              placeholder={city.placeholder}
-            />
-            {locationError && (
-              <p className={styles.hint} style={{ color: '#ef4444' }}>{locationError}</p>
-            )}
-            {!locationError && value?.lat != null && value?.name && olc.isValid(value.name) && olc.isFull(value.name) && (
-              <p className={styles.hint} style={{ fontFamily: 'monospace', color: 'var(--text-light)' }}>
-                Resolved to: {value.name}
-              </p>
-            )}
-            {!locationError && value?.name && value.lat == null && (
-              <p className={styles.hint}>Will resolve to full code on save.</p>
-            )}
-          </div>
-
-          <p className={styles.hint}>
-            Find your location code at{' '}
-            <a href="https://plus.codes/map" target="_blank" rel="noopener noreferrer" style={{ color: 'var(--hunter-green)' }}>plus.codes/map</a>
-          </p>
-
-          <button
-            type="button"
-            onClick={() => setMode('map')}
-            style={{ marginTop: '0.75rem', fontSize: '0.78rem', color: 'var(--text-light)', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer', padding: 0, display: 'block' }}
-          >
-            ← Use map instead
-          </button>
+          {geoError && <span style={{ marginLeft: '0.5rem', fontSize: '0.78rem', color: '#ef4444' }}>{geoError}</span>}
         </div>
       )}
+
+      {/* Map */}
+      <div className={styles.mapCrosshair} style={{ position: 'relative' }}>
+        <LeafletMapInner
+          center={mapCenter}
+          zoom={savedCenter ? 14 : 11}
+          position={displayPosition}
+          onPositionChange={handleMapTap}
+        />
+        {!pendingPosition && !value?.lat && (
+          <div className={styles.mapPinHint}>Tap anywhere to drop a pin</div>
+        )}
+      </div>
+
+      {/* "Use this location" button — only shown when there's a new pending pin */}
+      <div style={{ minHeight: '2.5rem', marginTop: '0.5rem' }}>
+        {pendingPosition && !geocoding && (
+          <button
+            type="button"
+            onClick={handleConfirm}
+            style={{
+              display: 'inline-flex', alignItems: 'center', gap: '0.4rem',
+              padding: '0.5rem 1.25rem', background: 'var(--hunter-green)', color: '#fff',
+              border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600,
+              cursor: 'pointer', fontFamily: 'var(--font-outfit)',
+            }}
+          >
+            {lp.useThisLocation}
+          </button>
+        )}
+        {geocoding && (
+          <p style={{ fontSize: '0.78rem', color: 'var(--text-light)', margin: 0 }}>Looking up neighbourhood…</p>
+        )}
+      </div>
     </div>
   );
 }

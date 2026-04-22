@@ -117,8 +117,8 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
   };
 
   const t = locale === 'de'
-    ? { network: 'Sitter finden', profile: 'Profil', logout: 'Abmelden', bookings: 'Buchungsverlauf' }
-    : { network: 'Find a Sitter', profile: 'Profile', logout: 'Log out', bookings: 'Booking History' };
+    ? { network: 'Sitter finden', profile: 'Mein Profil', logout: 'Abmelden', bookings: 'Buchungen', bugReport: 'Fehler melden', bugsMobile: 'Fehler' }
+    : { network: 'Find a Sitter', profile: 'Profile', logout: 'Log out', bookings: 'Booking History', bugReport: 'Report a bug', bugsMobile: 'Bugs' };
 
   const links = [
     { path: '', icon: Search, label: t.network, lockable: true },
@@ -188,7 +188,7 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
             onClick={() => setBugPanelOpen(v => !v)}
           >
             <Bug size={14} strokeWidth={1.75} />
-            <span className={styles.label}>Report a bug</span>
+            <span className={styles.label}>{t.bugReport}</span>
           </button>
           <button onClick={handleLogout} className={styles.logoutBtn}>
             <LogOut size={14} strokeWidth={1.75} />
@@ -238,7 +238,7 @@ export default function Sidebar({ locale = 'en', basePath = '', sitterId }) {
           onClick={() => setBugPanelOpen(v => !v)}
         >
           <Bug size={22} strokeWidth={1.75} />
-          <span className={styles.bottomLabel}>Bugs</span>
+          <span className={styles.bottomLabel}>{t.bugsMobile}</span>
         </button>
         <button onClick={handleLogout} className={styles.bottomLink}>
           <LogOut size={22} strokeWidth={1.75} />
