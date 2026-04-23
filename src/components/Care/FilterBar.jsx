@@ -1,10 +1,8 @@
 'use client';
 
-import { useState, useRef, useEffect, useCallback } from 'react';
+import { useState, useRef, useEffect, useLayoutEffect, useCallback } from 'react';
 import styles from './Care.module.css';
 import DateRangePicker from './DateRangePicker';
-
-const SEEN_KEY = 'datePickerSeen';
 
 function formatMonthDay(ymd) {
   if (!ymd) return '';
@@ -51,50 +49,127 @@ function SitTypeIcon() {
   );
 }
 
-const CLOSE_DURATION = 180; // ms — must match filterPopoverOut animation
+const CLOSE_DURATION = 180;
 
 export default function FilterBar({ startDate, endDate, radius, sitType, onDatesChange, onRadiusChange, onSitTypeChange, onRefresh, hasLocation, locale = 'en', loading = false }) {
-  const [openPopover, setOpenPopover] = useState(null); // 'dates' | 'radius' | null
-  const [closingPopover, setClosingPopover] = useState(null);
-  const [seen, setSeen] = useState(true); // start true to avoid flash; corrected in effect
-  const innerRef = useRef(null);
-  const openPopoverRef = useRef(null);
-  openPopoverRef.current = openPopover;
+  const [panel, setPanel] = useState(null);       // 'dates' | 'sitType' | 'radius' | null
+  const [panelClosing, setPanelClosing] = useState(false);
+  const [popLeft, setPopLeft] = useState(0);
+  const [isSliding, setIsSliding] = useState(false);
 
-  // Read localStorage on mount (client only)
-  useEffect(() => {
-    try {
-      setSeen(!!localStorage.getItem(SEEN_KEY));
-    } catch { /* ignore */ }
+  const [stuck, setStuck] = useState(false);
+
+  const innerRef    = useRef(null);
+  const popoverRef  = useRef(null);
+  const datesRef    = useRef(null);
+  const sitTypeRef  = useRef(null);
+  const radiusRef   = useRef(null);
+  const closeTimer  = useRef(null);
+  const sentinelRef = useRef(null);
+
+  // Compute pixel left for the popover relative to innerRef
+  const getLeft = useCallback((name) => {
+    if (!innerRef.current || !popoverRef.current) return 0;
+    const cRect = innerRef.current.getBoundingClientRect();
+    const popW  = popoverRef.current.offsetWidth;
+
+    if (name === 'dates' && datesRef.current) {
+      return datesRef.current.getBoundingClientRect().left - cRect.left;
+    }
+    if (name === 'sitType' && sitTypeRef.current) {
+      const r = sitTypeRef.current.getBoundingClientRect();
+      const center = r.left + r.width / 2 - cRect.left;
+      return Math.max(0, center - popW / 2);
+    }
+    if (name === 'radius' && radiusRef.current) {
+      const r = radiusRef.current.getBoundingClientRect();
+      return Math.min(cRect.width - popW, r.right - cRect.left - popW);
+    }
+    return 0;
   }, []);
 
-  // Dismiss pulse + hint on first dates interaction
-  const markSeen = useCallback(() => {
-    if (seen) return;
-    setSeen(true);
-    try { localStorage.setItem(SEEN_KEY, '1'); } catch { /* ignore */ }
-  }, [seen]);
+  // On first open: position synchronously before browser paint (no visible jump)
+  useLayoutEffect(() => {
+    if (!panel || isSliding || !popoverRef.current) return;
+    setPopLeft(getLeft(panel));
+  }, [panel, isSliding, getLeft]);
 
-  // Animated close helper
-  const closePopover = useCallback((name) => {
-    setClosingPopover(name);
-    setTimeout(() => {
-      setOpenPopover(p => p === name ? null : p);
-      setClosingPopover(c => c === name ? null : c);
+  const closePanel = useCallback(() => {
+    clearTimeout(closeTimer.current);
+    setPanelClosing(true);
+    setIsSliding(false);
+    closeTimer.current = setTimeout(() => {
+      setPanel(null);
+      setPanelClosing(false);
     }, CLOSE_DURATION);
   }, []);
 
-  // Close popover on outside click
+  const switchPanel = useCallback((name) => {
+    clearTimeout(closeTimer.current);
+
+    // Same panel tapped → close
+    if (panel === name && !panelClosing) {
+      closePanel();
+      return;
+    }
+
+    // Slide: panel already open, switching to a different one
+    if (panel !== null && !panelClosing) {
+      const el = popoverRef.current;
+
+      // Switch content, then slide left position to new panel
+      setPanel(name);
+      setIsSliding(true);
+
+      requestAnimationFrame(() => {
+        const newLeft = getLeft(name);
+
+        el.style.transition = 'left 0.38s cubic-bezier(0.22, 1, 0.36, 1)';
+        el.style.left       = `${newLeft}px`;
+
+        setPopLeft(newLeft);
+        setTimeout(() => {
+          el.style.transition = '';
+          setIsSliding(false);
+        }, 420);
+      });
+      return;
+    }
+
+    // Fresh open (panel was null or was closing)
+    setPanelClosing(false);
+    setIsSliding(false);
+    setPanel(name);
+    // useLayoutEffect handles positioning before paint
+  }, [panel, panelClosing, closePanel, getLeft]);
+
+  useEffect(() => () => clearTimeout(closeTimer.current), []);
+
+  // Detect sticky "stuck" state via sentinel above the bar
   useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const obs = new IntersectionObserver(
+      ([entry]) => setStuck(!entry.isIntersecting),
+      { threshold: 0 }
+    );
+    obs.observe(el);
+    return () => obs.disconnect();
+  }, []);
+
+  // Close on outside click
+  useEffect(() => {
+    if (!panel && !panelClosing) return;
     const onDown = (e) => {
-      if (innerRef.current && !innerRef.current.contains(e.target)) {
-        const current = openPopoverRef.current;
-        if (current) closePopover(current);
-      }
+      if (innerRef.current && !innerRef.current.contains(e.target)) closePanel();
     };
     document.addEventListener('mousedown', onDown);
-    return () => document.removeEventListener('mousedown', onDown);
-  }, [closePopover]);
+    document.addEventListener('touchstart', onDown);
+    return () => {
+      document.removeEventListener('mousedown', onDown);
+      document.removeEventListener('touchstart', onDown);
+    };
+  }, [panel, panelClosing, closePanel]);
 
   const RADIUS_OPTIONS = [5, 10, 25, 50];
 
@@ -104,29 +179,20 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
     ? `${formatMonthDay(startDate)} – ?`
     : locale === 'de' ? 'Datum wählen' : 'Choose dates you need sitting';
 
-  const toggle = (name) => {
-    if (openPopover === name || closingPopover === name) {
-      closePopover(name);
-    } else {
-      if (openPopover) closePopover(openPopover);
-      setOpenPopover(name);
-    }
-  };
-
   return (
-    <div className={styles.filterBarWrap}>
+    <>
+    <div ref={sentinelRef} style={{ height: 0 }} />
+    <div className={`${styles.filterBarWrap}${stuck ? ` ${styles.filterBarWrapStuck}` : ''}`}>
       <div className={styles.filterBarInner} ref={innerRef}>
-        <div className={`${styles.filterBar} ${seen ? styles.filterBarSeen : styles.filterBarPulse}`}>
+        <div className={styles.filterBar}>
 
-          {/* Dates section — entire button is the tap target */}
           <button
+            ref={datesRef}
             type="button"
-            className={`${styles.filterSection} ${openPopover === 'dates' ? styles.filterSectionActive : ''}`}
-            onClick={() => { markSeen(); toggle('dates'); }}
+            className={`${styles.filterSection} ${panel === 'dates' ? styles.filterSectionActive : ''}`}
+            onClick={() => switchPanel('dates')}
           >
-            <div className={styles.filterIcon}>
-              <CalendarIcon />
-            </div>
+            <div className={styles.filterIcon}><CalendarIcon /></div>
             <div className={styles.filterTextGroup}>
               <span className={styles.filterLabel}>{locale === 'de' ? 'Datum' : 'Dates'}</span>
             </div>
@@ -134,15 +200,13 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
 
           <div className={styles.filterDivider} />
 
-          {/* Sit type section */}
           <button
+            ref={sitTypeRef}
             type="button"
-            className={`${styles.filterSection} ${openPopover === 'sitType' ? styles.filterSectionActive : ''} ${sitType ? styles.filterSectionActive : ''}`}
-            onClick={() => toggle('sitType')}
+            className={`${styles.filterSection} ${panel === 'sitType' || sitType ? styles.filterSectionActive : ''}`}
+            onClick={() => switchPanel('sitType')}
           >
-            <div className={styles.filterIcon}>
-              <SitTypeIcon />
-            </div>
+            <div className={styles.filterIcon}><SitTypeIcon /></div>
             <div className={styles.filterTextGroup}>
               <span className={styles.filterLabel}>{locale === 'de' ? 'Art' : 'Sit type'}</span>
             </div>
@@ -150,110 +214,102 @@ export default function FilterBar({ startDate, endDate, radius, sitType, onDates
 
           <div className={styles.filterDivider} />
 
-          {/* Radius section */}
           <button
+            ref={radiusRef}
             type="button"
-            className={`${styles.filterSection} ${openPopover === 'radius' ? styles.filterSectionActive : ''} ${!hasLocation ? styles.filterSectionDim : ''}`}
-            onClick={() => hasLocation && toggle('radius')}
+            className={`${styles.filterSection} ${panel === 'radius' ? styles.filterSectionActive : ''} ${!hasLocation ? styles.filterSectionDim : ''}`}
+            onClick={() => hasLocation && switchPanel('radius')}
             title={!hasLocation ? 'Add your location in your profile to enable radius filtering' : undefined}
           >
-            <div className={styles.filterIcon}>
-              <PinIcon />
-            </div>
+            <div className={styles.filterIcon}><PinIcon /></div>
             <div className={styles.filterTextGroup}>
               <span className={styles.filterLabel}>{locale === 'de' ? 'Radius' : 'Radius'}</span>
             </div>
           </button>
 
-          {/* Loading shimmer overlay */}
           {loading && <div className={styles.filterBarLoadingOverlay} />}
         </div>
 
-        {/* Bouncing hint — hidden once seen */}
-        {!seen && (
-          <div className={styles.filterHint}>
-            <span className={styles.filterHintArrow}>↑</span>
-            <span>{locale === 'de' ? '↑ Tippe hier, um Daten auszuwählen' : 'Tap here to pick your dates and find sitters'}</span>
-          </div>
-        )}
-
-        {/* Dates popover */}
-        {(openPopover === 'dates' || closingPopover === 'dates') && (
-          <div className={`${styles.filterPopover}${closingPopover === 'dates' ? ` ${styles.filterPopoverClosing}` : ''}`}>
-            <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Reisedaten' : 'You are editing dates you need cat sitting help'}</p>
-            <DateRangePicker
-              startDate={startDate}
-              endDate={endDate}
-              locale={locale}
-              onChange={({ startDate: s, endDate: e }) => {
-                onDatesChange(s, e);
-                if (s && e) closePopover('dates');
-              }}
-              onClear={() => onDatesChange('', '')}
-            />
-          </div>
-        )}
-
-        {/* Sit type popover */}
-        {(openPopover === 'sitType' || closingPopover === 'sitType') && (
-          <div className={`${styles.filterPopover}${closingPopover === 'sitType' ? ` ${styles.filterPopoverClosing}` : ''}`}>
-            <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Art des Sittings' : 'What kind of sitting do you need?'}</p>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-              {[
-                { value: null, label: 'Any' },
-                { value: 'home_visit', label: 'Home visits — sitter comes to you' },
-                { value: 'drop_off', label: 'Drop off — you bring your cat to the sitter' },
-              ].map(({ value, label }) => (
-                <button
-                  key={String(value)}
-                  type="button"
-                  onClick={() => { onSitTypeChange(value); closePopover('sitType'); }}
-                  style={{
-                    textAlign: 'left', padding: '0.6rem 0.75rem', borderRadius: 8, cursor: 'pointer',
-                    fontSize: '0.875rem', fontFamily: 'inherit',
-                    border: sitType === value ? '1.5px solid #2C5F4F' : '1.5px solid #e5e7eb',
-                    background: sitType === value ? '#EAF3DE' : '#fafafa',
-                    color: sitType === value ? '#2C5F4F' : '#555',
-                    fontWeight: sitType === value ? 600 : 400,
+        {/* Single sliding panel — mounts on first open (plays unfurl), slides on switch */}
+        {(panel !== null || panelClosing) && (
+          <div
+            ref={popoverRef}
+            className={`${styles.filterPopover}${panelClosing ? ` ${styles.filterPopoverClosing}` : ''}`}
+            style={{ left: popLeft }}
+          >
+            {panel === 'dates' && (
+              <>
+                <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Reisedaten' : 'You are editing dates you need cat sitting help'}</p>
+                <DateRangePicker
+                  startDate={startDate}
+                  endDate={endDate}
+                  locale={locale}
+                  onChange={({ startDate: s, endDate: e }) => {
+                    onDatesChange(s, e);
+                    if (s && e) closePanel();
                   }}
-                >
-                  {label}
-                </button>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {/* Radius popover — right-aligned under the radius section */}
-        {(openPopover === 'radius' || closingPopover === 'radius') && (
-          <div className={`${styles.filterPopover} ${styles.filterPopoverRight}${closingPopover === 'radius' ? ` ${styles.filterPopoverClosing}` : ''}`}>
-            <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Suchradius' : 'Search radius'}</p>
-            <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
-              {RADIUS_OPTIONS.map((km) => (
-                <button
-                  key={km}
-                  type="button"
-                  onClick={() => { onRadiusChange(km); closePopover('radius'); }}
-                  style={{
-                    padding: '0.45rem 1rem',
-                    borderRadius: 20,
-                    fontSize: '0.875rem',
-                    fontFamily: 'inherit',
-                    fontWeight: radius === km ? 700 : 500,
-                    cursor: 'pointer',
-                    border: radius === km ? '1.5px solid #2C5F4F' : '1.5px solid #e5e7eb',
-                    background: radius === km ? '#EAF3DE' : '#fafafa',
-                    color: radius === km ? '#2C5F4F' : '#555',
-                    transition: 'all 0.12s',
-                  }}
-                >
-                  {km} km
-                </button>
-              ))}
-            </div>
+                  onClear={() => onDatesChange('', '')}
+                />
+              </>
+            )}
+            {panel === 'sitType' && (
+              <>
+                <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Art des Sittings' : 'What kind of sitting do you need?'}</p>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                  {[
+                    { value: null,         label: locale === 'de' ? 'Alle'                                    : 'Any' },
+                    { value: 'home_visit', label: locale === 'de' ? 'Hausbesuch — Sitter kommt zu dir'        : 'Home visits — sitter comes to you' },
+                    { value: 'drop_off',   label: locale === 'de' ? 'Abgabe — du bringst deine Katze zum Sitter' : 'Drop off — you bring your cat to the sitter' },
+                  ].map(({ value, label }) => (
+                    <button
+                      key={String(value)}
+                      type="button"
+                      onClick={() => { onSitTypeChange(value); closePanel(); }}
+                      style={{
+                        textAlign: 'left', padding: '0.6rem 0.75rem', borderRadius: 8, cursor: 'pointer',
+                        fontSize: '0.875rem', fontFamily: 'inherit',
+                        border:      sitType === value ? '1.5px solid #2C5F4F' : '1.5px solid #e5e7eb',
+                        background:  sitType === value ? '#EAF3DE' : '#fafafa',
+                        color:       sitType === value ? '#2C5F4F' : '#555',
+                        fontWeight:  sitType === value ? 600 : 400,
+                      }}
+                    >
+                      {label}
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
+            {panel === 'radius' && (
+              <>
+                <p className={styles.filterPopoverTitle}>{locale === 'de' ? 'Suchradius' : 'Search radius'}</p>
+                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  {RADIUS_OPTIONS.map((km) => (
+                    <button
+                      key={km}
+                      type="button"
+                      onClick={() => { onRadiusChange(km); closePanel(); }}
+                      style={{
+                        padding: '0.45rem 1rem', borderRadius: 20,
+                        fontSize: '0.875rem', fontFamily: 'inherit',
+                        fontWeight: radius === km ? 700 : 500,
+                        cursor: 'pointer',
+                        border:     radius === km ? '1.5px solid #2C5F4F' : '1.5px solid #e5e7eb',
+                        background: radius === km ? '#EAF3DE' : '#fafafa',
+                        color:      radius === km ? '#2C5F4F' : '#555',
+                        transition: 'all 0.12s',
+                      }}
+                    >
+                      {km} km
+                    </button>
+                  ))}
+                </div>
+              </>
+            )}
           </div>
         )}
       </div>
     </div>
+    </>
   );
 }

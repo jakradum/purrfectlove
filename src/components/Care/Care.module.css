@@ -12,6 +12,67 @@
   padding: 3.5rem 1.5rem 4rem;
 }
 
+/* Expand width when map split is active */
+@media (min-width: 1024px) {
+  .pageWideMap {
+    max-width: 1400px;
+  }
+}
+
+/* ── Split shell: cards left, map right (desktop only) ── */
+.splitShell {
+  display: block;
+}
+
+.splitCards {
+  min-width: 0;
+}
+
+.splitMap {
+  display: none;
+}
+
+@media (min-width: 1024px) {
+  .splitShell {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 1.5rem;
+    align-items: start;
+  }
+
+  .splitMap {
+    display: block;
+    position: sticky;
+    top: 68px;
+    height: calc(100vh - 80px);
+    border-radius: 14px;
+    overflow: hidden;
+    box-shadow: 0 2px 16px rgba(0,0,0,0.12);
+  }
+}
+
+/* Availability strip row — spans both columns in the split grid */
+.splitStripRow {
+  /* Mobile: block as normal */
+}
+
+@media (min-width: 1024px) {
+  .splitStripRow {
+    grid-column: 1 / -1; /* span full width of both columns */
+  }
+}
+
+/* Card wrapper hover — lift with shadow */
+.cardWrap {
+  border-radius: 14px;
+  transition: transform 0.18s ease, box-shadow 0.18s ease;
+}
+
+.cardWrap:hover {
+  transform: translateY(-3px);
+  box-shadow: 0 8px 24px rgba(0, 0, 0, 0.11);
+}
+
 .pageNarrow {
   max-width: 480px;
   margin: 0 auto;
@@ -740,10 +801,16 @@
   border-top-color: var(--hunter-green);
 }
 
+@keyframes cardUnfurl {
+  from { opacity: 0; transform: translateY(28px) scale(0.97); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
+}
+
 .cardPopIn {
   will-change: opacity, transform;
   width: 100%;
   min-width: 0;
+  animation: cardUnfurl 0.45s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .sitterGrid {
@@ -3238,12 +3305,16 @@
   top: 0;
   z-index: 200;
   padding: 0.75rem 0;
-  /* Allow popovers to overflow the sticky bounds */
   overflow: visible;
 }
 
 .filterBarInner {
   position: relative;
+  transition: filter 0.2s ease;
+}
+
+.filterBarWrapStuck .filterBarInner {
+  filter: drop-shadow(0 4px 16px rgba(0, 0, 0, 0.14));
 }
 
 .filterBar {
@@ -3270,15 +3341,7 @@
   z-index: 2;
 }
 
-@keyframes filterPulseBorder {
-  0%, 100% { box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1.5px #C85C3F, 0 0 0 0 rgba(200,92,63,0.35); }
-  50% { box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1.5px #C85C3F, 0 0 0 7px rgba(200,92,63,0); }
-}
-
-.filterBarPulse {
-  animation: filterPulseBorder 2s ease-in-out infinite;
-}
-
+.filterBarPulse,
 .filterBarSeen {
   box-shadow: 0 2px 12px rgba(0,0,0,0.08), 0 0 0 1px rgba(0,0,0,0.05);
 }
@@ -3393,13 +3456,23 @@
 }
 
 @keyframes filterPopoverIn {
-  from { opacity: 0; transform: translateY(-10px) scale(0.97); }
-  to   { opacity: 1; transform: translateY(0)     scale(1);    }
+  from { opacity: 0; transform: translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateY(0)    scale(1);    }
 }
 
 @keyframes filterPopoverOut {
-  from { opacity: 1; transform: translateY(0)     scale(1);    }
-  to   { opacity: 0; transform: translateY(-8px)  scale(0.97); }
+  from { opacity: 1; transform: translateY(0)    scale(1);    }
+  to   { opacity: 0; transform: translateY(-6px) scale(0.96); }
+}
+
+@keyframes filterPopoverInCenter {
+  from { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.96); }
+  to   { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1);    }
+}
+
+@keyframes filterPopoverOutCenter {
+  from { opacity: 1; transform: translateX(-50%) translateY(0)    scale(1);    }
+  to   { opacity: 0; transform: translateX(-50%) translateY(-6px) scale(0.96); }
 }
 
 .filterPopover {
@@ -3412,16 +3485,26 @@
   padding: 1.25rem 1.5rem;
   z-index: 300;
   min-width: 320px;
-  animation: filterPopoverIn 0.2s cubic-bezier(0.22,1,0.36,1) both;
+  animation: filterPopoverIn 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
 }
 
 .filterPopoverClosing {
-  animation: filterPopoverOut 0.18s ease forwards;
+  animation: filterPopoverOut 0.22s ease forwards;
 }
 
 .filterPopoverRight {
   left: auto;
   right: 0;
+}
+
+.filterPopoverCenter {
+  left: 50%;
+  transform: translateX(-50%);
+  animation: filterPopoverInCenter 0.38s cubic-bezier(0.22, 1, 0.36, 1) both;
+}
+
+.filterPopoverCenter.filterPopoverClosing {
+  animation: filterPopoverOutCenter 0.18s ease forwards;
 }
 
 .filterPopoverTitle {

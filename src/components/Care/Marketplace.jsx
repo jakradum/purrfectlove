@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useMemo, useEffect, useRef, useCallback } from 'react';
+import dynamic from 'next/dynamic';
 import { createBrowserClient } from '@supabase/ssr';
 import posthog from 'posthog-js';
 import styles from './Care.module.css';
@@ -9,6 +10,8 @@ import FilterBar from './FilterBar';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 import AvailabilityStrip from './AvailabilityStrip';
+
+const MarketplaceMap = dynamic(() => import('./MarketplaceMap'), { ssr: false });
 
 const STORAGE_KEY = 'care_marketplace_state';
 const SHIMMER_MIN_MS = 400;
@@ -175,15 +178,17 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   const [myBookings, setMyBookings] = useState({});
   const [expandedCardId, setExpandedCardId] = useState(null);
   const [displayedCount, setDisplayedCount] = useState(null);
-  const [visibleCount, setVisibleCount] = useState(0);
+  const [resultAnimKey, setResultAnimKey] = useState(0);
   const [toast, setToast] = useState(null); // { message, id }
 
-  const animFrameRef = useRef(null);
+  const [hoveredSitterId, setHoveredSitterId] = useState(null);
+
   const gridContainerRef = useRef(null);
   const heightTweenRef = useRef(null);
   const sliderDebounceRef = useRef(null);
   const pendingRadiusRef = useRef(radius);
   const lastResultCountRef = useRef(1);
+  const cardRefsMap = useRef({});
 
   // Restore state from sessionStorage on mount
   useEffect(() => {
@@ -203,7 +208,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
           }
           setFetchedSitters(sitters);
           setSearched(true);
-          setVisibleCount(sitters.length);
+          setResultAnimKey(k => k + 1);
         }
       }
     } catch { /* sessionStorage unavailable */ }
@@ -294,19 +299,6 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     }, 310);
   }, []);
 
-  // Pop-in animation: reveal cards one by one
-  function animateCards(count) {
-    if (animFrameRef.current) cancelAnimationFrame(animFrameRef.current);
-    setVisibleCount(0);
-    let i = 0;
-    const step = () => {
-      i++;
-      setVisibleCount(i);
-      if (i < count) animFrameRef.current = requestAnimationFrame(step);
-    };
-    animFrameRef.current = requestAnimationFrame(step);
-  }
-
   // Radius change with shimmer (debounced)
   const handleRadiusChange = useCallback((newRadius) => {
     pendingRadiusRef.current = newRadius;
@@ -346,7 +338,6 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     setSearched(true);
     setSearchError('');
     setFetchedSitters([]);
-    setVisibleCount(0);
     setShimmer(false);
 
     try {
@@ -367,7 +358,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         .filter((s) => isAvailableForDates(s, startDate, endDate))
         .map((s) => ({ ...s, _availabilityUnconfirmed: !hasAvailabilityData(s) }));
       setFetchedSitters(filtered);
-      animateCards(filtered.length);
+      setResultAnimKey(k => k + 1);
 
       if (posthog.__loaded) {
         posthog.capture('marketplace_searched', {
@@ -434,10 +425,16 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     }
   }, [searching]); // eslint-disable-line react-hooks/exhaustive-deps
 
+  const handleMarkerClick = useCallback((id) => {
+    setHoveredSitterId(id);
+    const el = cardRefsMap.current[id];
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
+  }, []);
+
   const datesSelected = !!(startDate && endDate);
 
   return (
-    <div className={styles.pageWide}>
+    <div className={`${styles.pageWide} ${searched ? styles.pageWideMap : ''}`}>
       <div className={styles.marketplaceHeader}>
         {/* Mobile: show the catpaw logo mark instead of the text heading */}
         <div className={styles.heroLogoBlob}>
@@ -502,33 +499,24 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         </div>
       )}
 
-      {/* Availability strip — only for sitters, wrapped to match filterBarWrap width exactly */}
-      {myProfile?.canSit && (
-        <div className={styles.filterBarWrap} style={{ position: 'static', padding: 0 }}>
-          <AvailabilityStrip
-            myProfile={myProfile}
-            startDate={startDate}
-            endDate={endDate}
-            onSaved={handleAvailabilitySaved}
-            locale={locale}
-          />
-        </div>
-      )}
+      {/* Split shell: cards left, map right on desktop */}
+      <div className={styles.splitShell}>
+        {/* Availability strip spans both columns on desktop */}
+        {myProfile?.canSit && (
+          <div className={styles.splitStripRow}>
+            <AvailabilityStrip
+              myProfile={myProfile}
+              startDate={startDate}
+              endDate={endDate}
+              onSaved={handleAvailabilitySaved}
+              locale={locale}
+            />
+          </div>
+        )}
 
-      {/* Empty state — no dates selected */}
-      {!datesSelected && !searching && (
-        <div className={styles.datesEmptyState}>
-          <div className={styles.datesEmptyIcon}>🗓️</div>
-          <h2 className={styles.datesEmptyHeading}>{t.noSitters.heading}</h2>
-          <p className={styles.datesEmptyText}>{t.noSitters.body}</p>
-        </div>
-      )}
-
-      {/* Results area */}
-      {(datesSelected || searching) && (
-        <div className={styles.resultsWrapper}>
-          {/* Results header */}
-          {!searching && !shimmer && displayedCount !== null && displayedCount > 0 && (
+        {/* Results header spans both columns */}
+        {!searching && !shimmer && displayedCount !== null && displayedCount > 0 && (
+          <div className={styles.splitStripRow}>
             <div className={styles.resultsHeader}>
               <span className={styles.resultsHeaderText}>
                 {t.resultsHeader
@@ -537,75 +525,103 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
                   .replace('{dates}', formatDateRange(startDate, endDate))}
               </span>
             </div>
+          </div>
+        )}
+
+        <div className={styles.splitCards}>
+          {/* Empty state — no dates selected */}
+          {!datesSelected && !searching && (
+            <div className={styles.datesEmptyState}>
+              <div className={styles.datesEmptyIcon}>🗓️</div>
+              <h2 className={styles.datesEmptyHeading}>{t.noSitters.heading}</h2>
+              <p className={styles.datesEmptyText}>{t.noSitters.body}</p>
+            </div>
           )}
 
-          {/* Animated height wrapper */}
-          <div ref={gridContainerRef} className={styles.resultsAnimated}>
-            {searching ? null : searchError ? (
-              <div className={styles.datesEmptyState}>
-                <div className={styles.datesEmptyIcon}>⚠️</div>
-                <h2 className={styles.datesEmptyHeading} style={{ color: '#b91c1c' }}>{t.searchError.heading}</h2>
-                <p className={styles.datesEmptyText}>{t.searchError.body}</p>
-                <button
-                  type="button"
-                  onClick={handleSearch}
-                  style={{ marginTop: '1rem', padding: '0.5rem 1.25rem', background: 'var(--hunter-green)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-outfit)' }}
-                >
-                  {t.searchError.retry}
-                </button>
-              </div>
-            ) : shimmer ? (
-              <div className={styles.sitterGrid}>
-                {Array.from({ length: lastResultCountRef.current }).map((_, i) => (
-                  <SkeletonCard key={i} />
-                ))}
-              </div>
-            ) : results !== null && results.length === 0 ? (
-              <div className={styles.datesEmptyState}>
-                <div className={styles.datesEmptyIcon}>🔍</div>
-                <h2 className={styles.datesEmptyHeading}>{t.noSittersFound}</h2>
-                <p className={styles.datesEmptyText}>
-                  {t.noResults.replace('{radius}', radius)}
-                </p>
-              </div>
-            ) : results !== null ? (
-              <div className={styles.sitterGrid}>
-                {results.map((sitter, i) => (
-                  <div
-                    key={sitter._id}
-                    className={styles.cardPopIn}
-                    style={{
-                      opacity: i < visibleCount ? 1 : 0,
-                      transform: i < visibleCount ? 'translateY(0) scale(1)' : 'translateY(16px) scale(0.97)',
-                      transition: 'opacity 0.25s ease, transform 0.25s ease',
-                    }}
-                  >
-                    <SitterCard
-                      sitter={sitter}
-                      locale={locale}
-                      availabilityUnconfirmed={!!sitter._availabilityUnconfirmed}
-                      startDate={startDate}
-                      endDate={endDate}
-                      sitType={sitType}
-                      bookingState={myBookings[`${sitter._id}__${startDate}__${endDate}`] ?? null}
-                      onBooked={(bookingRef, bookingId) => {
-                        const key = `${sitter._id}__${startDate}__${endDate}`;
-                        setMyBookings(prev => ({ ...prev, [key]: { status: 'pending', bookingRef, _id: bookingId } }));
-                      }}
-                      onWithdrawn={() => {
-                        const key = `${sitter._id}__${startDate}__${endDate}`;
-                        setMyBookings(prev => ({ ...prev, [key]: null }));
-                      }}
-                      expanded={expandedCardId === sitter._id}
-                      onExpand={() => setExpandedCardId(prev => prev === sitter._id ? null : sitter._id)}
-                    />
+          {/* Results area */}
+          {(datesSelected || searching) && (
+            <div className={styles.resultsWrapper}>
+              {/* Animated height wrapper */}
+              <div ref={gridContainerRef} className={styles.resultsAnimated}>
+                {searching ? null : searchError ? (
+                  <div className={styles.datesEmptyState}>
+                    <div className={styles.datesEmptyIcon}>⚠️</div>
+                    <h2 className={styles.datesEmptyHeading} style={{ color: '#b91c1c' }}>{t.searchError.heading}</h2>
+                    <p className={styles.datesEmptyText}>{t.searchError.body}</p>
+                    <button
+                      type="button"
+                      onClick={handleSearch}
+                      style={{ marginTop: '1rem', padding: '0.5rem 1.25rem', background: 'var(--hunter-green)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-outfit)' }}
+                    >
+                      {t.searchError.retry}
+                    </button>
                   </div>
-                ))}
+                ) : shimmer ? (
+                  <div className={styles.sitterGrid}>
+                    {Array.from({ length: lastResultCountRef.current }).map((_, i) => (
+                      <SkeletonCard key={i} />
+                    ))}
+                  </div>
+                ) : results !== null && results.length === 0 ? (
+                  <div className={styles.datesEmptyState}>
+                    <div className={styles.datesEmptyIcon}>🔍</div>
+                    <h2 className={styles.datesEmptyHeading}>{t.noSittersFound}</h2>
+                    <p className={styles.datesEmptyText}>
+                      {t.noResults.replace('{radius}', radius)}
+                    </p>
+                  </div>
+                ) : results !== null ? (
+                  <div className={styles.sitterGrid}>
+                    {results.map((sitter, i) => (
+                      <div
+                        key={`${resultAnimKey}-${sitter._id}`}
+                        ref={el => { cardRefsMap.current[sitter._id] = el; }}
+                        className={`${styles.cardPopIn} ${styles.cardWrap}`}
+                        style={{ animationDelay: `${i * 70}ms` }}
+                        onMouseEnter={() => setHoveredSitterId(sitter._id)}
+                        onMouseLeave={() => setHoveredSitterId(null)}
+                      >
+                        <SitterCard
+                          sitter={sitter}
+                          locale={locale}
+                          availabilityUnconfirmed={!!sitter._availabilityUnconfirmed}
+                          startDate={startDate}
+                          endDate={endDate}
+                          sitType={sitType}
+                          bookingState={myBookings[`${sitter._id}__${startDate}__${endDate}`] ?? null}
+                          onBooked={(bookingRef, bookingId) => {
+                            const key = `${sitter._id}__${startDate}__${endDate}`;
+                            setMyBookings(prev => ({ ...prev, [key]: { status: 'pending', bookingRef, _id: bookingId } }));
+                          }}
+                          onWithdrawn={() => {
+                            const key = `${sitter._id}__${startDate}__${endDate}`;
+                            setMyBookings(prev => ({ ...prev, [key]: null }));
+                          }}
+                          expanded={expandedCardId === sitter._id}
+                          onExpand={() => setExpandedCardId(prev => prev === sitter._id ? null : sitter._id)}
+                        />
+                      </div>
+                    ))}
+                  </div>
+                ) : null}
               </div>
-            ) : null}
-          </div>
+            </div>
+          )}
         </div>
-      )}
+
+        {/* Map pane — desktop only, CSS hides on mobile */}
+        <div className={styles.splitMap}>
+          {searched && (
+            <MarketplaceMap
+              sitters={results ?? fetchedSitters}
+              hoveredId={hoveredSitterId}
+              userLocation={userLocation}
+              myProfile={myProfile}
+              onMarkerClick={handleMarkerClick}
+            />
+          )}
+        </div>
+      </div>
 
       {toast && (
         <div key={toast.id} className={styles.toast}>
