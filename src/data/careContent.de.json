@@ -56,7 +56,32 @@
       "viewProfile": "Profil ansehen"
     },
     "noResults": "Keine Sitter im Umkreis von {radius} km gefunden. Versuche den Suchradius zu erweitern.",
-    "noNeedResults": "Keine Mitglieder, die im Umkreis von {radius} km einen Sitter suchen."
+    "noNeedResults": "Keine Mitglieder, die im Umkreis von {radius} km einen Sitter suchen.",
+    "availabilityStrip": {
+      "label": "Meine Verfügbarkeit",
+      "helpText": "Tage, an denen du einen Sitter brauchst, werden automatisch als nicht verfügbar markiert.",
+      "editTitle": "Meine verfügbaren Tage zum Sitten",
+      "tapToClose": "Tippe irgendwo zum Schließen",
+      "tapToToggle": "Tippe auf ein Startdatum, um die Verfügbarkeit zu ändern",
+      "tapEndDate": "Tippe jetzt auf ein Enddatum",
+      "from": "Von",
+      "to": "Bis",
+      "available": "Verfügbar ✓",
+      "unavailable": "Nicht verfügbar",
+      "save": "Speichern",
+      "saving": "Wird gespeichert…"
+    },
+    "resultsHeader": "{count} Sitter verfügbar für {dates}",
+    "searchError": {
+      "heading": "Etwas ist schiefgelaufen",
+      "body": "Ergebnisse konnten nicht geladen werden. Bitte überprüfe deine Verbindung und versuche es erneut.",
+      "retry": "Erneut versuchen"
+    },
+    "noSitters": {
+      "heading": "Wann brauchst du eine Betreuung?",
+      "body": "Wähle deine Daten aus, um zu sehen, wer verfügbar ist."
+    },
+    "noSittersFound": "Keine Sitter in der Nähe gefunden"
   },
   "profile": {
     "title": "Mein Profil",

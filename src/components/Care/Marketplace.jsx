@@ -510,6 +510,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
             startDate={startDate}
             endDate={endDate}
             onSaved={handleAvailabilitySaved}
+            locale={locale}
           />
         </div>
       )}
@@ -518,14 +519,8 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
       {!datesSelected && !searching && (
         <div className={styles.datesEmptyState}>
           <div className={styles.datesEmptyIcon}>🗓️</div>
-          <h2 className={styles.datesEmptyHeading}>
-            {locale === 'de' ? 'Wann brauchst du eine Betreuung?' : 'When do you need a sitter?'}
-          </h2>
-          <p className={styles.datesEmptyText}>
-            {locale === 'de'
-              ? 'Wähle deine Daten aus, um zu sehen, wer verfügbar ist.'
-              : 'Pick your dates above to see who\'s available.'}
-          </p>
+          <h2 className={styles.datesEmptyHeading}>{t.noSitters.heading}</h2>
+          <p className={styles.datesEmptyText}>{t.noSitters.body}</p>
         </div>
       )}
 
@@ -536,7 +531,10 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
           {!searching && !shimmer && displayedCount !== null && displayedCount > 0 && (
             <div className={styles.resultsHeader}>
               <span className={styles.resultsHeaderText}>
-                {displayedCount} sitter{displayedCount !== 1 ? 's' : ''} available for {formatDateRange(startDate, endDate)}
+                {t.resultsHeader
+                  .replace('{count}', displayedCount)
+                  .replace('{s}', displayedCount !== 1 ? 's' : '')
+                  .replace('{dates}', formatDateRange(startDate, endDate))}
               </span>
             </div>
           )}
@@ -546,14 +544,14 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
             {searching ? null : searchError ? (
               <div className={styles.datesEmptyState}>
                 <div className={styles.datesEmptyIcon}>⚠️</div>
-                <h2 className={styles.datesEmptyHeading} style={{ color: '#b91c1c' }}>Something went wrong</h2>
-                <p className={styles.datesEmptyText}>We couldn&apos;t load results. Please check your connection and try again.</p>
+                <h2 className={styles.datesEmptyHeading} style={{ color: '#b91c1c' }}>{t.searchError.heading}</h2>
+                <p className={styles.datesEmptyText}>{t.searchError.body}</p>
                 <button
                   type="button"
                   onClick={handleSearch}
                   style={{ marginTop: '1rem', padding: '0.5rem 1.25rem', background: 'var(--hunter-green)', color: '#fff', border: 'none', borderRadius: '8px', fontSize: '0.875rem', fontWeight: 600, cursor: 'pointer', fontFamily: 'var(--font-outfit)' }}
                 >
-                  Try again
+                  {t.searchError.retry}
                 </button>
               </div>
             ) : shimmer ? (
@@ -565,11 +563,9 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
             ) : results !== null && results.length === 0 ? (
               <div className={styles.datesEmptyState}>
                 <div className={styles.datesEmptyIcon}>🔍</div>
-                <h2 className={styles.datesEmptyHeading}>No sitters found nearby</h2>
+                <h2 className={styles.datesEmptyHeading}>{t.noSittersFound}</h2>
                 <p className={styles.datesEmptyText}>
-                  {locale === 'de'
-                    ? `Keine Sitter innerhalb von ${radius} km gefunden. Versuche einen größeren Radius.`
-                    : `No sitters found within ${radius} km for these dates. Try increasing the radius.`}
+                  {t.noResults.replace('{radius}', radius)}
                 </p>
               </div>
             ) : results !== null ? (

@@ -66,6 +66,7 @@ export default async function CarePage() {
       userLocation={profile?.location ?? null}
       sitterId={sitterId}
       myProfile={myProfile}
+      locale={locale}
     />
   );
 }

@@ -56,7 +56,32 @@
       "viewProfile": "Profile"
     },
     "noResults": "No sitters found within {radius}km. Try expanding your search radius.",
-    "noNeedResults": "No members looking for sitting within {radius}km."
+    "noNeedResults": "No members looking for sitting within {radius}km.",
+    "availabilityStrip": {
+      "label": "Your availability",
+      "helpText": "Days when you need a sitter are automatically marked unavailable for you.",
+      "editTitle": "Your available dates for cat sitting",
+      "tapToClose": "Tap anywhere to close",
+      "tapToToggle": "Tap a start date to toggle availability",
+      "tapEndDate": "Now tap an end date",
+      "from": "From",
+      "to": "To",
+      "available": "Available ✓",
+      "unavailable": "Unavailable",
+      "save": "Save",
+      "saving": "Saving…"
+    },
+    "resultsHeader": "{count} sitter{s} available for {dates}",
+    "searchError": {
+      "heading": "Something went wrong",
+      "body": "We couldn't load results. Please check your connection and try again.",
+      "retry": "Try again"
+    },
+    "noSitters": {
+      "heading": "When do you need a sitter?",
+      "body": "Pick your dates above to see who's available."
+    },
+    "noSittersFound": "No sitters found nearby"
   },
   "profile": {
     "title": "My Profile",

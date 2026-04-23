@@ -2,6 +2,8 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react';
 import styles from './Care.module.css';
+import contentEN from '@/data/careContent.en.json';
+import contentDE from '@/data/careContent.de.json';
 
 function toYMD(date) {
   const y = date.getFullYear();
@@ -90,7 +92,7 @@ function MiniDayStrip({ days, unavailableDatesV2, availabilityDefault }) {
 
 // ─── Expanded month calendar with range picker ────────────────────────────────
 
-function ExpandedCalendar({ localDates, availabilityDefault, onApplyRange, viewMonth, onPrevMonth, onNextMonth }) {
+function ExpandedCalendar({ localDates, availabilityDefault, onApplyRange, viewMonth, onPrevMonth, onNextMonth, strings, locale = 'en' }) {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
   const todayYMD = toYMD(today);
@@ -101,7 +103,7 @@ function ExpandedCalendar({ localDates, availabilityDefault, onApplyRange, viewM
 
   const grid = buildMonthGrid(viewMonth.year, viewMonth.month);
   const monthLabel = new Date(viewMonth.year, viewMonth.month, 1)
-    .toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+    .toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'long', year: 'numeric' });
 
   const handleDayClick = (ymd) => {
     if (ymd < todayYMD) return;
@@ -142,7 +144,7 @@ function ExpandedCalendar({ localDates, availabilityDefault, onApplyRange, viewM
           className={`${styles.availSummaryBtn} ${picking === 'start' ? styles.availSummaryBtnActive : ''}`}
           onClick={handleClearRange}
         >
-          <span className={styles.availSummaryLabel}>From</span>
+          <span className={styles.availSummaryLabel}>{strings.from}</span>
           <span className={styles.availSummaryValue}>{formatSummaryDate(rangeStart)}</span>
         </button>
         <span className={styles.availSummaryArrow}>→</span>
@@ -152,17 +154,17 @@ function ExpandedCalendar({ localDates, availabilityDefault, onApplyRange, viewM
           onClick={() => { if (rangeStart) setPicking('end'); }}
           disabled={!rangeStart}
         >
-          <span className={styles.availSummaryLabel}>To</span>
+          <span className={styles.availSummaryLabel}>{strings.to}</span>
           <span className={styles.availSummaryValue}>{formatSummaryDate(rangeEnd)}</span>
         </button>
       </div>
 
       {/* Hint */}
       {picking === 'start' && !rangeStart && (
-        <p className={styles.availCalHint}>Tap a start date to toggle availability</p>
+        <p className={styles.availCalHint}>{strings.tapToToggle}</p>
       )}
       {picking === 'end' && rangeStart && (
-        <p className={styles.availCalHint}>Now tap an end date</p>
+        <p className={styles.availCalHint}>{strings.tapEndDate}</p>
       )}
 
       {/* Month nav */}
@@ -235,9 +237,9 @@ function ExpandedCalendar({ localDates, availabilityDefault, onApplyRange, viewM
       {/* Legend */}
       <div className={styles.availLegend}>
         <span className={styles.availLegendDot} style={{ background: 'rgba(255,255,255,0.18)', border: '1px solid rgba(255,255,255,0.3)' }} />
-        <span className={styles.availLegendLabel}>Available ✓</span>
+        <span className={styles.availLegendLabel}>{strings.available}</span>
         <span className={styles.availLegendDot} style={{ background: 'rgba(200,92,63,0.5)', border: 'none' }} />
-        <span className={styles.availLegendLabel}>Unavailable</span>
+        <span className={styles.availLegendLabel}>{strings.unavailable}</span>
       </div>
     </div>
   );
@@ -245,8 +247,9 @@ function ExpandedCalendar({ localDates, availabilityDefault, onApplyRange, viewM
 
 // ─── Main component ───────────────────────────────────────────────────────────
 
-export default function AvailabilityStrip({ myProfile, startDate, endDate, onSaved }) {
+export default function AvailabilityStrip({ myProfile, startDate, endDate, onSaved, locale = 'en' }) {
   const { _id, unavailableDatesV2 = [], availabilityDefault = 'available' } = myProfile || {};
+  const as = (locale === 'de' ? contentDE : contentEN).marketplace.availabilityStrip;
 
   const today = new Date();
   today.setHours(0, 0, 0, 0);
@@ -266,7 +269,7 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
     return Array.from({ length: 10 }, (_, i) => addDays(today, i));
   })();
 
-  const monthLabel = today.toLocaleDateString('en-US', { month: 'long' });
+  const monthLabel = today.toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'long' });
 
   const COLLAPSE_MS = 200; // must match availPanelOut duration
 
@@ -386,21 +389,21 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
         /* Collapsed strip */
         <div className={styles.availStripCollapsed}>
           <div className={styles.availStripTop}>
-            <span className={styles.availStripLabel}>Your availability · {monthLabel}</span>
+            <span className={styles.availStripLabel}>{as.label} · {monthLabel}</span>
           </div>
           <MiniDayStrip
             days={miniDays}
             unavailableDatesV2={unavailableDatesV2}
             availabilityDefault={availabilityDefault}
           />
-          <p className={styles.availHelpText}>Days when you need a sitter are automatically marked unavailable for you.</p>
+          <p className={styles.availHelpText}>{as.helpText}</p>
         </div>
       ) : (
         /* Expanded calendar */
         <div className={`${styles.availStripExpandedWrap}${isCollapsing ? ` ${styles.availStripExpandedWrap_closing}` : ''}`}>
           <div className={styles.availEditTitle}>
-            <span className={styles.availEditTitleMain}>Your available dates for cat sitting</span>
-            <span className={styles.availEditTitleClose}>Tap anywhere to close</span>
+            <span className={styles.availEditTitleMain}>{as.editTitle}</span>
+            <span className={styles.availEditTitleClose}>{as.tapToClose}</span>
           </div>
 
           <div className={styles.availCalWrap}>
@@ -411,6 +414,8 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
               viewMonth={viewMonth}
               onPrevMonth={handlePrevMonth}
               onNextMonth={handleNextMonth}
+              strings={as}
+              locale={locale}
             />
           </div>
 
@@ -422,7 +427,7 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
             onClick={handleSave}
             disabled={saving}
           >
-            {saving ? 'Saving…' : 'Save'}
+            {saving ? as.saving : as.save}
           </button>
         </div>
       )}
