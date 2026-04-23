@@ -317,23 +317,9 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     setRadius(newRadius);
   }, [searched]);
 
-  // Auto-search when both dates selected
-  const prevDatesRef = useRef({ startDate: '', endDate: '' });
-  useEffect(() => {
-    const prev = prevDatesRef.current;
-    prevDatesRef.current = { startDate, endDate };
-    if (startDate && endDate) {
-      if (prev.startDate !== startDate || prev.endDate !== endDate) {
-        handleSearch();
-      }
-    } else if (!startDate || !endDate) {
-      setSearched(false);
-      setFetchedSitters([]);
-      setDisplayedCount(null);
-    }
-  }, [startDate, endDate]); // eslint-disable-line react-hooks/exhaustive-deps
-
-  const handleSearch = async () => {
+  const handleSearch = async (sdArg, edArg) => {
+    const sd = sdArg !== undefined ? sdArg : startDate;
+    const ed = edArg !== undefined ? edArg : endDate;
     setSearching(true);
     setSearched(true);
     setSearchError('');
@@ -355,15 +341,15 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         });
       }
       const filtered = sitters
-        .filter((s) => isAvailableForDates(s, startDate, endDate))
+        .filter((s) => isAvailableForDates(s, sd, ed))
         .map((s) => ({ ...s, _availabilityUnconfirmed: !hasAvailabilityData(s) }));
       setFetchedSitters(filtered);
       setResultAnimKey(k => k + 1);
 
       if (posthog.__loaded) {
         posthog.capture('marketplace_searched', {
-          start_date: startDate || null,
-          end_date: endDate || null,
+          start_date: sd || null,
+          end_date: ed || null,
           radius_km: radius,
           sit_type: sitType || 'any',
           results_count: filtered.length,
@@ -432,9 +418,10 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   }, []);
 
   const datesSelected = !!(startDate && endDate);
+  const showMap = !!(results && results.length > 0);
 
   return (
-    <div className={`${styles.pageWide} ${searched ? styles.pageWideMap : ''}`}>
+    <div className={`${styles.pageWide} ${showMap ? styles.pageWideMap : ''}`}>
       <div className={styles.marketplaceHeader}>
         {/* Mobile: show the catpaw logo mark instead of the text heading */}
         <div className={styles.heroLogoBlob}>
@@ -461,7 +448,17 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         endDate={endDate}
         radius={radius}
         sitType={sitType}
-        onDatesChange={(s, e) => { setStartDate(s); setEndDate(e); }}
+        onDatesChange={(s, e) => {
+          setStartDate(s);
+          setEndDate(e);
+          if (s && e) {
+            handleSearch(s, e);
+          } else {
+            setSearched(false);
+            setFetchedSitters([]);
+            setDisplayedCount(null);
+          }
+        }}
         onRadiusChange={handleRadiusChange}
         onSitTypeChange={setSitType}
         onRefresh={handleSearch}
@@ -500,7 +497,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
       )}
 
       {/* Split shell: cards left, map right on desktop */}
-      <div className={styles.splitShell}>
+      <div className={`${styles.splitShell}${showMap ? ` ${styles.splitShellMap}` : ''}`}>
         {/* Availability strip spans both columns on desktop */}
         {myProfile?.canSit && (
           <div className={styles.splitStripRow}>
@@ -609,18 +606,20 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
           )}
         </div>
 
-        {/* Map pane — desktop only, CSS hides on mobile */}
-        <div className={styles.splitMap}>
-          {searched && (
-            <MarketplaceMap
-              sitters={results ?? fetchedSitters}
-              hoveredId={hoveredSitterId}
-              userLocation={userLocation}
-              myProfile={myProfile}
-              onMarkerClick={handleMarkerClick}
-            />
-          )}
-        </div>
+        {/* Map pane — only when there are results, desktop only */}
+        {showMap && (
+          <div className={`${styles.splitMap} ${styles.splitMapActive}`}>
+            <div className={styles.splitMapInner}>
+              <MarketplaceMap
+                sitters={results}
+                hoveredId={hoveredSitterId}
+                userLocation={userLocation}
+                myProfile={myProfile}
+                onMarkerClick={handleMarkerClick}
+              />
+            </div>
+          </div>
+        )}
       </div>
 
       {toast && (

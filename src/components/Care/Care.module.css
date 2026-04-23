@@ -33,20 +33,29 @@
 }
 
 @media (min-width: 1024px) {
-  .splitShell {
+  .splitShellMap {
     display: grid;
     grid-template-columns: 1fr 1fr;
     gap: 1.5rem;
-    align-items: start;
+    align-items: stretch;
   }
 
+  /* Outer column — stretches to match cards column height */
   .splitMap {
     display: block;
+    min-height: 300px;
+  }
+
+  /* Inner sticky pane — capped at viewport, fills the column */
+  .splitMapInner {
     position: sticky;
     top: 68px;
-    height: calc(100vh - 80px);
+    height: min(calc(100vh - 80px), 100%);
     border-radius: 14px;
     overflow: hidden;
+  }
+
+  .splitMapActive .splitMapInner {
     box-shadow: 0 2px 16px rgba(0,0,0,0.12);
   }
 }

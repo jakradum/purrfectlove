@@ -36,7 +36,7 @@ export default async function CarePage() {
   let profile = null;
   try {
     profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location { lat, lng, name }, guidelinesAccepted, canSit, canDoHomeVisit, canHostCats, maxHomesPerDay, maxCatsPerDay, feedingTypes, behavioralTraits, availabilityDefault, unavailableDatesV2 }`,
+      `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, avatarColour, "photoUrl": photo.asset->url, location { lat, lng, name }, guidelinesAccepted, canSit, canDoHomeVisit, canHostCats, maxHomesPerDay, maxCatsPerDay, feedingTypes, behavioralTraits, availabilityDefault, unavailableDatesV2 }`,
       { id: sitterId }
     );
   } catch (err) {
@@ -56,6 +56,9 @@ export default async function CarePage() {
 
   const myProfile = profile ? {
     _id: profile._id,
+    name: profile.name,
+    photoUrl: profile.photoUrl ?? null,
+    avatarColour: profile.avatarColour ?? null,
     canSit: profile.canSit ?? false,
     availabilityDefault: profile.availabilityDefault || 'available',
     unavailableDatesV2: profile.unavailableDatesV2 || [],
