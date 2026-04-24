@@ -834,6 +834,13 @@
   }
 }
 
+/* Desktop with map: let auto-fit collapse to 1 col when only 1 card */
+@media (min-width: 1024px) {
+  .sitterGrid {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+}
+
 /* ====== Results count line ====== */
 .resultsCount {
   height: 1.5rem; /* fixed height prevents jump when count updates */

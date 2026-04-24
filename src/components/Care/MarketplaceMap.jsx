@@ -12,11 +12,17 @@ const COLOUR_MAP = {
   'tabby-brown':   '#C85C3F',
 };
 
-function avatarIconHtml({ photoUrl, avatarColour, name = 'M', active = false, isUser = false }) {
+function formatDist(d) {
+  if (d == null) return null;
+  return `~${(Math.round(d * 10) / 10).toFixed(1)} km`;
+}
+
+function avatarIconHtml({ photoUrl, avatarColour, name = 'M', active = false, isUser = false, distance = null }) {
   const size = active ? 46 : 38;
   const borderColor = isUser ? '#3b82f6' : (active ? '#C85C3F' : '#2C5F4F');
   const bg = COLOUR_MAP[avatarColour] || '#2C5F4F';
   const initial = (name || 'M')[0].toUpperCase();
+  const distLabel = !isUser && distance != null ? formatDist(distance) : null;
 
   const inner = photoUrl
     ? `<img src="${photoUrl}" style="width:100%;height:100%;object-fit:cover;object-position:center;border-radius:50%;" />`
@@ -27,17 +33,28 @@ function avatarIconHtml({ photoUrl, avatarColour, name = 'M', active = false, is
                     font-size:${Math.round(size * 0.36)}px;font-weight:700;color:#fff;
                     font-family:system-ui,sans-serif;">${initial}</span>`;
 
-  return `<div style="
-    width:${size}px;height:${size}px;
-    border-radius:50%;
-    border:2.5px solid ${borderColor};
-    box-shadow:0 2px 8px rgba(0,0,0,0.28);
-    background:${bg};
-    overflow:hidden;
-    display:flex;align-items:center;justify-content:center;
-    position:relative;
-    transition:width .12s,height .12s,border-color .12s;
-  ">${inner}</div>`;
+  const label = distLabel
+    ? `<div style="position:absolute;bottom:${size + 6}px;left:50%;transform:translateX(-50%);
+                  background:rgba(255,255,255,0.96);border:1px solid rgba(0,0,0,0.10);
+                  border-radius:6px;padding:2px 7px;font-size:11px;font-weight:600;
+                  color:#444;white-space:nowrap;box-shadow:0 1px 5px rgba(0,0,0,0.14);
+                  font-family:system-ui,sans-serif;pointer-events:none;">${distLabel}</div>`
+    : '';
+
+  return `<div style="position:relative;width:${size}px;height:${size}px;">
+    ${label}
+    <div style="
+      width:${size}px;height:${size}px;
+      border-radius:50%;
+      border:2.5px solid ${borderColor};
+      box-shadow:0 2px 8px rgba(0,0,0,0.28);
+      background:${bg};
+      overflow:hidden;
+      display:flex;align-items:center;justify-content:center;
+      position:relative;
+      transition:width .12s,height .12s,border-color .12s;
+    ">${inner}</div>
+  </div>`;
 }
 
 function makeIcon(opts) {
@@ -93,6 +110,7 @@ export default function MarketplaceMap({ sitters = [], hoveredId, userLocation, 
               avatarColour: sitter.avatarColour,
               name: sitter.name,
               active,
+              distance: sitter._distance ?? null,
             })}
             eventHandlers={{ click: () => onMarkerClick?.(sitter._id) }}
           />
