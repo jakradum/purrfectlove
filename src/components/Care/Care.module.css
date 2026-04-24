@@ -1123,6 +1123,13 @@
 }
 
 /* Dates-required empty state */
+.lottieSpinner {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 3rem 0;
+}
+
 .datesEmptyState {
   text-align: center;
   padding: 4rem 1.5rem 3rem;

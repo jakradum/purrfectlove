@@ -10,8 +10,10 @@ import FilterBar from './FilterBar';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 import AvailabilityStrip from './AvailabilityStrip';
+import loaderAnimation from '../../../public/animations/loader.json';
 
 const MarketplaceMap = dynamic(() => import('./MarketplaceMap'), { ssr: false });
+const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
 
 const STORAGE_KEY = 'care_marketplace_state';
 const SHIMMER_MIN_MS = 400;
@@ -540,7 +542,11 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
             <div className={styles.resultsWrapper}>
               {/* Animated height wrapper */}
               <div ref={gridContainerRef} className={styles.resultsAnimated}>
-                {searching ? null : searchError ? (
+                {(searching || shimmer) ? (
+                  <div className={styles.lottieSpinner}>
+                    <Lottie animationData={loaderAnimation} loop autoplay style={{ width: 200, height: 200 }} />
+                  </div>
+                ) : searchError ? (
                   <div className={styles.datesEmptyState}>
                     <div className={styles.datesEmptyIcon}>⚠️</div>
                     <h2 className={styles.datesEmptyHeading} style={{ color: '#b91c1c' }}>{t.searchError.heading}</h2>
@@ -552,12 +558,6 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
                     >
                       {t.searchError.retry}
                     </button>
-                  </div>
-                ) : shimmer ? (
-                  <div className={styles.sitterGrid}>
-                    {Array.from({ length: lastResultCountRef.current }).map((_, i) => (
-                      <SkeletonCard key={i} />
-                    ))}
                   </div>
                 ) : results !== null && results.length === 0 ? (
                   <div className={styles.datesEmptyState}>
