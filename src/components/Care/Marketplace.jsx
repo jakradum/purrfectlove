@@ -10,7 +10,6 @@ import FilterBar from './FilterBar';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
 import AvailabilityStrip from './AvailabilityStrip';
-import loaderAnimation from '../../../public/animations/loader.json';
 
 const MarketplaceMap = dynamic(() => import('./MarketplaceMap'), { ssr: false });
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -184,6 +183,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   const [toast, setToast] = useState(null); // { message, id }
 
   const [hoveredSitterId, setHoveredSitterId] = useState(null);
+  const [loaderAnimation, setLoaderAnimation] = useState(null);
 
   const gridContainerRef = useRef(null);
   const heightTweenRef = useRef(null);
@@ -215,6 +215,13 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
       }
     } catch { /* sessionStorage unavailable */ }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    fetch('/animations/loader.json')
+      .then(r => r.json())
+      .then(setLoaderAnimation)
+      .catch(() => {});
+  }, []);
 
   // Fetch the current user's pending/accepted bookings once on mount.
   // Used to derive per-card booking button state.
@@ -544,7 +551,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
               <div ref={gridContainerRef} className={styles.resultsAnimated}>
                 {(searching || shimmer) ? (
                   <div className={styles.lottieSpinner}>
-                    <Lottie animationData={loaderAnimation} loop autoplay style={{ width: 200, height: 200 }} />
+                    {loaderAnimation && <Lottie animationData={loaderAnimation} loop autoplay style={{ width: 200, height: 200 }} />}
                   </div>
                 ) : searchError ? (
                   <div className={styles.datesEmptyState}>
