@@ -209,13 +209,20 @@ function GroupedCheckboxGroup({ groups, value = [], onChange, labelMap }) {
   );
 }
 
+const TRAIT_ALLOWED = /^[a-zA-Z0-9 '-]+$/;
+const blockNonInteger = (e) => { if (['.', '-', 'e', 'E', '+'].includes(e.key)) e.preventDefault(); };
+
 function CustomTraitInput({ value = [], onChange }) {
   const [input, setInput] = useState('');
+  const [traitError, setTraitError] = useState('');
   const addTrait = () => {
     const trimmed = input.trim();
-    if (!trimmed || value.includes(trimmed)) { setInput(''); return; }
+    if (!trimmed) { setInput(''); setTraitError(''); return; }
+    if (!TRAIT_ALLOWED.test(trimmed)) { setTraitError('Only letters, numbers, spaces, hyphens, and apostrophes allowed.'); return; }
+    if (value.includes(trimmed)) { setInput(''); setTraitError(''); return; }
     onChange([...value, trimmed]);
     setInput('');
+    setTraitError('');
   };
   const removeTrait = (t) => onChange(value.filter(v => v !== t));
   return (
@@ -244,7 +251,7 @@ function CustomTraitInput({ value = [], onChange }) {
         <input
           type="text"
           value={input}
-          onChange={e => setInput(e.target.value)}
+          onChange={e => { setInput(e.target.value); setTraitError(''); }}
           onKeyDown={e => { if (e.key === 'Enter') { e.preventDefault(); addTrait(); } }}
           placeholder="e.g. Loves chin scratches"
           style={{
@@ -265,6 +272,7 @@ function CustomTraitInput({ value = [], onChange }) {
           Add
         </button>
       </div>
+      {traitError && <p style={{ margin: '0.3rem 0 0', fontSize: '0.78rem', color: '#c0392b' }}>{traitError}</p>}
     </div>
   );
 }
@@ -738,11 +746,11 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
         <div className={styles.fieldRow}>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.bedrooms}</label>
-            <input type="number" min={0} max={20} className={styles.profileInput} value={form.bedrooms} onChange={(e) => update('bedrooms', e.target.value)} placeholder="e.g. 2" />
+            <input type="number" min={0} max={20} className={styles.profileInput} value={form.bedrooms} onChange={(e) => update('bedrooms', e.target.value)} onKeyDown={blockNonInteger} placeholder="e.g. 2" />
           </div>
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.householdSize}</label>
-            <input type="number" min={1} max={20} className={styles.profileInput} value={form.householdSize} onChange={(e) => update('householdSize', e.target.value)} placeholder="e.g. 2" />
+            <input type="number" min={1} max={20} className={styles.profileInput} value={form.householdSize} onChange={(e) => update('householdSize', e.target.value)} onKeyDown={blockNonInteger} placeholder="e.g. 2" />
             <p className={styles.hint}>(how many people at your home including you)</p>
           </div>
         </div>
@@ -765,7 +773,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
               </div>
               <div className={styles.formGroup}>
                 <label className={styles.profileLabel}>{t.fields.catAge}</label>
-                <input type="number" min={0} max={30} className={styles.profileInput} value={cat.age || ''} onChange={(e) => updateCat(idx, 'age', e.target.value)} placeholder="e.g. 3" />
+                <input type="number" min={0} max={30} className={styles.profileInput} value={cat.age || ''} onChange={(e) => updateCat(idx, 'age', e.target.value)} onKeyDown={blockNonInteger} placeholder="e.g. 3" />
                 {Number(cat.age) >= 10 && (
                   <p className={styles.hint}>🐱 Senior cat (10+ yrs) — tagged automatically</p>
                 )}
@@ -833,6 +841,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
                     className={styles.profileInput}
                     value={form.maxCatsPerDay}
                     onChange={(e) => update('maxCatsPerDay', e.target.value)}
+                    onKeyDown={blockNonInteger}
                     placeholder="e.g. 3"
                     style={{ maxWidth: '120px' }}
                   />
