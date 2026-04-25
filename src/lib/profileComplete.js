@@ -13,7 +13,6 @@ export function isProfileComplete(profile) {
 
   if (profile.canSit) {
     if (!profile.canDoHomeVisit && !profile.canHostCats) return false;
-    if (profile.canDoHomeVisit && !profile.maxHomesPerDay) return false;
     if (profile.canHostCats && !profile.maxCatsPerDay) return false;
     if (!profile.feedingTypes?.length) return false;
     if (!profile.behavioralTraits?.length) return false;
@@ -23,4 +22,4 @@ export function isProfileComplete(profile) {
 }
 
 /** Fields to fetch when checking profile completeness */
-export const COMPLETENESS_FIELDS = `name, "location": location { lat }, canSit, canDoHomeVisit, canHostCats, maxHomesPerDay, maxCatsPerDay, feedingTypes, behavioralTraits`
+export const COMPLETENESS_FIELDS = `name, "location": location { lat }, canSit, canDoHomeVisit, canHostCats, maxCatsPerDay, feedingTypes, behavioralTraits`
