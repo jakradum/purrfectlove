@@ -67,6 +67,20 @@ export default {
           ] } },
           { name: 'diet', title: 'Diet', type: 'array', of: [{ type: 'string' }], options: { list: ['wet', 'dry', 'medication', 'special diet'] } },
           { name: 'customTraits', title: 'Custom Traits', type: 'array', readOnly: true, of: [{ type: 'string' }], description: 'Free-text traits added by the member via the portal.' },
+          {
+            name: 'vaccinationRecord',
+            title: 'Vaccination Record',
+            type: 'object',
+            readOnly: true,
+            description: 'Set by the member via the portal. Required before sit requests can be made.',
+            fields: [
+              { name: 'file', title: 'Record File', type: 'file', options: { accept: '.jpg,.jpeg,.png,.pdf' } },
+              { name: 'date', title: 'Date of vaccination', type: 'date' },
+            ],
+            validation: Rule => Rule.custom(val =>
+              val?.file?.asset?._ref ? true : { message: 'No vaccination record — member cannot request sits without one', level: 'warning' }
+            ),
+          },
         ],
         preview: { select: { title: 'name', subtitle: 'age' }, prepare({ title, subtitle }) { return { title: title || 'Unnamed cat', subtitle: subtitle ? `${subtitle} years old` : '' } } }
       }]

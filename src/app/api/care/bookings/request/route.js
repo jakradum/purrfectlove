@@ -103,6 +103,22 @@ export async function POST(request) {
       return Response.json({ error: 'Cannot book yourself' }, { status: 400 })
     }
 
+    // Server-side vaccination gate — only enforced when cat keys are present
+    if (catKeys.length > 0) {
+      const parentDoc = await serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ cats[]{ _key, "hasVaxx": defined(vaccinationRecord.file.asset._ref) } }`,
+        { id: user.sitterId }
+      )
+      const parentCatMap = Object.fromEntries((parentDoc?.cats || []).map(c => [c._key, c.hasVaxx]))
+      const unvaccinated = catKeys.filter(k => !parentCatMap[k])
+      if (unvaccinated.length > 0) {
+        return Response.json(
+          { error: 'One or more selected cats are missing a vaccination record. Please upload records before requesting a sit.' },
+          { status: 422 }
+        )
+      }
+    }
+
     const db = createSupabaseDbClient()
 
     // Ensure unique bookingRef

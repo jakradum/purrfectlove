@@ -43,7 +43,7 @@ export async function GET(request) {
         availableDates, alwaysAvailable, unavailableDates, unavailableRanges,
         availabilityDefault, unavailableDatesV2, blockedByBooking,
         "rating": sitterScore.rating,
-        cats[]{ name, breed, age, personality, feedingNotes, "photoUrl": photo.asset->url }
+        cats[]{ _key, name, breed, age, personality, feedingNotes, "photoUrl": photo.asset->url, "vaccinationRecord": vaccinationRecord { "fileUrl": file.asset->url, date } }
       }`,
       { selfId: user.sitterId }
     )

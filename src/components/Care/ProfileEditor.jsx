@@ -277,6 +277,98 @@ function CustomTraitInput({ value = [], onChange }) {
   );
 }
 
+function VaxxDropZone({ busy, onFile, onClickUpload, vaxxDate, onDateChange }) {
+  const [dragging, setDragging] = useState(false);
+  const onFileRef = useRef(onFile);
+  useEffect(() => { onFileRef.current = onFile; });
+  useEffect(() => {
+    const handler = (e) => {
+      const f = e.clipboardData?.files?.[0];
+      if (f) { e.preventDefault(); onFileRef.current(f); }
+    };
+    document.addEventListener('paste', handler);
+    return () => document.removeEventListener('paste', handler);
+  }, []);
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+      <div
+        onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+        onDragLeave={() => setDragging(false)}
+        onDrop={(e) => {
+          e.preventDefault(); setDragging(false);
+          const f = e.dataTransfer.files?.[0]; if (f) onFile(f);
+        }}
+        style={{
+          border: `2px dashed ${dragging ? '#2C5F4F' : 'rgba(44,95,79,0.28)'}`,
+          borderRadius: 10, padding: '1.4rem 1rem', textAlign: 'center',
+          background: dragging ? 'rgba(44,95,79,0.06)' : '#fafaf8',
+          transition: 'border-color 0.15s, background 0.15s',
+        }}
+      >
+        <svg width="26" height="26" viewBox="0 0 24 24" fill="none"
+          stroke={dragging ? '#2C5F4F' : '#bbb'} strokeWidth="1.6"
+          strokeLinecap="round" strokeLinejoin="round"
+          style={{ display: 'block', margin: '0 auto 0.55rem' }}
+        >
+          <path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/>
+          <polyline points="17 8 12 3 7 8"/>
+          <line x1="12" y1="3" x2="12" y2="15"/>
+        </svg>
+        <p style={{ margin: '0 0 0.65rem', fontSize: '0.82rem', color: dragging ? '#2C5F4F' : '#777', fontWeight: dragging ? 600 : 400, lineHeight: 1.4 }}>
+          {dragging ? 'Drop to upload' : 'Drag & drop or paste your vaccination record here'}
+        </p>
+        <button
+          type="button" disabled={busy} onClick={onClickUpload}
+          style={{ fontSize: '0.82rem', fontWeight: 600, color: '#fff', background: 'var(--hunter-green)', border: 'none', borderRadius: '6px', padding: '0.4rem 1rem', cursor: busy ? 'not-allowed' : 'pointer', fontFamily: 'var(--font-outfit)', opacity: busy ? 0.6 : 1 }}
+        >
+          {busy ? 'Uploading…' : 'Upload from device'}
+        </button>
+      </div>
+      <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+        <input
+          type="date" value={vaxxDate || ''}
+          onChange={e => onDateChange(e.target.value)}
+          style={{ fontSize: '0.83rem', padding: '0.35rem 0.5rem', border: '1px solid rgba(44,95,79,0.25)', borderRadius: '6px', fontFamily: 'var(--font-outfit)', color: '#555' }}
+        />
+        <span style={{ fontSize: '0.75rem', color: '#aaa' }}>Vaccination date (optional)</span>
+      </div>
+      <p style={{ margin: 0, fontSize: '0.75rem', color: '#aaa' }}>JPEG, PNG or PDF · max 1 MB · or press ⌘V / Ctrl+V to paste from clipboard</p>
+    </div>
+  );
+}
+
+function VaxxReplaceZone({ busy, onFile, children }) {
+  const [dragging, setDragging] = useState(false);
+  return (
+    <div
+      tabIndex={0}
+      onDragOver={(e) => { e.preventDefault(); setDragging(true); }}
+      onDragLeave={() => setDragging(false)}
+      onDrop={(e) => {
+        e.preventDefault(); setDragging(false);
+        const f = e.dataTransfer.files?.[0]; if (f) onFile(f);
+      }}
+      onPaste={(e) => {
+        const f = e.clipboardData.files?.[0]; if (f) { e.preventDefault(); onFile(f); }
+      }}
+      style={{
+        borderRadius: 8, padding: '0.5rem 0.6rem',
+        border: `2px dashed ${dragging ? '#2C5F4F' : 'transparent'}`,
+        background: dragging ? 'rgba(44,95,79,0.05)' : 'transparent',
+        transition: 'border-color 0.15s, background 0.15s',
+        position: 'relative', outline: 'none',
+      }}
+    >
+      {dragging && (
+        <div style={{ position: 'absolute', inset: 0, display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'rgba(255,255,255,0.8)', borderRadius: 6, zIndex: 1, pointerEvents: 'none' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 600, color: '#2C5F4F' }}>Drop to replace</span>
+        </div>
+      )}
+      {children}
+    </div>
+  );
+}
+
 function formFromData(data) {
   return {
     name: data.name || '',
@@ -337,6 +429,19 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
   const [photoUrl, setPhotoUrl] = useState(initialData.photoUrl || null);
   const [photoUploading, setPhotoUploading] = useState(false);
   const photoInputRef = useRef(null);
+
+  // Vaccination records — keyed by cat._key, managed by upload-vaxx route (not general profile save)
+  const [vaxxRecords, setVaxxRecords] = useState(() => {
+    const map = {}
+    for (const cat of initialData.cats || []) {
+      if (cat._key) map[cat._key] = cat.vaccinationRecord?.fileUrl ? cat.vaccinationRecord : null
+    }
+    return map
+  })
+  const [vaxxUploading, setVaxxUploading] = useState({})
+  const [vaxxDates, setVaxxDates] = useState({})
+  const vaxxInputRefs = useRef({})
+  const [focusCatVaxx, setFocusCatVaxx] = useState(null) // catIndex to scroll to
   const [blockedDates, setBlockedDates] = useState([]);
   const [blockedDatesLoading, setBlockedDatesLoading] = useState(false);
   // Tracks dates the sitter overrode this edit session; used to compute blockedByBooking on save.
@@ -357,8 +462,20 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
       setEditMode('profile');
       setLocationPickerOpen(true);
       router.replace('/care/profile', { scroll: false });
+    } else if (params.get('edit') === 'cat' && params.get('section') === 'vaccination') {
+      const idx = parseInt(params.get('catIndex') || '0', 10);
+      setEditMode('profile');
+      setFocusCatVaxx(isNaN(idx) ? 0 : idx);
+      router.replace('/care/profile', { scroll: false });
     }
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  useEffect(() => {
+    if (editMode !== 'profile' || focusCatVaxx === null) return;
+    const el = document.getElementById(`cat-vaxx-${focusCatVaxx}`);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'center' });
+    setFocusCatVaxx(null);
+  }, [editMode, focusCatVaxx]);
 
   useEffect(() => {
     if (editMode !== 'availability') return;
@@ -408,6 +525,35 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
   };
 
 
+  const handleVaxxUpload = async (catKey, file) => {
+    setVaxxUploading(prev => ({ ...prev, [catKey]: true }));
+    try {
+      const fd = new FormData();
+      fd.append('file', file);
+      fd.append('catKey', catKey);
+      const date = vaxxDates[catKey] || '';
+      if (date) fd.append('date', date);
+      const res = await fetch('/api/care/upload-vaxx', { method: 'POST', body: fd });
+      if (res.ok) {
+        const data = await res.json();
+        setVaxxRecords(prev => ({ ...prev, [catKey]: { fileUrl: data.fileUrl, fileName: data.fileName, date: data.date || null } }));
+      }
+    } catch { /* silent */ }
+    setVaxxUploading(prev => ({ ...prev, [catKey]: false }));
+  };
+
+  const handleVaxxRemove = async (catKey) => {
+    setVaxxUploading(prev => ({ ...prev, [catKey]: true }));
+    try {
+      const res = await fetch(`/api/care/upload-vaxx?catKey=${encodeURIComponent(catKey)}`, { method: 'DELETE' });
+      if (res.ok) {
+        setVaxxRecords(prev => ({ ...prev, [catKey]: null }));
+        setVaxxDates(prev => ({ ...prev, [catKey]: '' }));
+      }
+    } catch { /* silent */ }
+    setVaxxUploading(prev => ({ ...prev, [catKey]: false }));
+  };
+
   const handleSave = async (e) => {
     e.preventDefault();
     if (!isDirty) return;
@@ -424,7 +570,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
           householdSize: form.householdSize !== '' ? Number(form.householdSize) : undefined,
           maxHomesPerDay: form.maxHomesPerDay !== '' ? Number(form.maxHomesPerDay) : undefined,
           maxCatsPerDay: form.maxCatsPerDay !== '' ? Number(form.maxCatsPerDay) : undefined,
-          cats: form.cats.map((cat) => ({
+          cats: form.cats.map(({ vaccinationRecord: _vaxx, ...cat }) => ({
             _key: cat._key || Math.random().toString(36).slice(2, 14),
             ...cat,
             customTraits: cat.customTraits || [],
@@ -793,6 +939,74 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
               <label className={styles.profileLabel}>Custom traits</label>
               <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Anything else worth knowing about your cat.</p>
               <CustomTraitInput value={cat.customTraits || []} onChange={(v) => updateCat(idx, 'customTraits', v)} />
+            </div>
+
+            {/* Vaccination record */}
+            <div id={`cat-vaxx-${idx}`} className={styles.formGroup} style={{ borderTop: '1px solid rgba(44,95,79,0.1)', paddingTop: '1rem', marginTop: '0.5rem' }}>
+              <label className={styles.profileLabel}>Vaccination Record</label>
+              {(() => {
+                const rec = vaxxRecords[cat._key];
+                const busy = !!vaxxUploading[cat._key];
+                if (rec?.fileUrl) {
+                  return (
+                    <VaxxReplaceZone busy={busy} onFile={f => handleVaxxUpload(cat._key, f)}>
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontSize: '0.83rem', color: '#2C5F4F', fontWeight: 600 }}>
+                            {rec.fileName || 'Vaccination record'}
+                          </span>
+                          {rec.date && (
+                            <span style={{ fontSize: '0.78rem', color: '#888' }}>
+                              · {new Date(rec.date + 'T00:00:00').toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })}
+                            </span>
+                          )}
+                        </div>
+                        <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
+                          <button
+                            type="button" disabled={busy}
+                            onClick={() => vaxxInputRefs.current[cat._key]?.click()}
+                            style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--hunter-green)', background: 'none', border: '1px solid rgba(44,95,79,0.35)', borderRadius: '6px', padding: '0.25rem 0.6rem', cursor: 'pointer', fontFamily: 'var(--font-outfit)' }}
+                          >
+                            {busy ? 'Uploading…' : 'Replace'}
+                          </button>
+                          <button
+                            type="button" disabled={busy}
+                            onClick={() => handleVaxxRemove(cat._key)}
+                            style={{ fontSize: '0.78rem', fontWeight: 600, color: '#c0392b', background: 'none', border: '1px solid rgba(192,57,43,0.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', cursor: 'pointer', fontFamily: 'var(--font-outfit)' }}
+                          >
+                            Remove
+                          </button>
+                          <span style={{ fontSize: '0.72rem', color: '#bbb' }}>or drag a new file to replace</span>
+                        </div>
+                        <input
+                          ref={el => { vaxxInputRefs.current[cat._key] = el }}
+                          type="file" accept=".jpg,.jpeg,.png,.pdf" style={{ display: 'none' }}
+                          onChange={e => { const f = e.target.files?.[0]; if (f) handleVaxxUpload(cat._key, f); e.target.value = ''; }}
+                        />
+                      </div>
+                    </VaxxReplaceZone>
+                  );
+                }
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#c0392b', fontStyle: 'italic' }}>
+                      No vaccination record — required to request a sit
+                    </p>
+                    <VaxxDropZone
+                      busy={busy}
+                      onFile={f => handleVaxxUpload(cat._key, f)}
+                      onClickUpload={() => vaxxInputRefs.current[cat._key]?.click()}
+                      vaxxDate={vaxxDates[cat._key]}
+                      onDateChange={v => setVaxxDates(prev => ({ ...prev, [cat._key]: v }))}
+                    />
+                    <input
+                      ref={el => { vaxxInputRefs.current[cat._key] = el }}
+                      type="file" accept=".jpg,.jpeg,.png,.pdf" style={{ display: 'none' }}
+                      onChange={e => { const f = e.target.files?.[0]; if (f) handleVaxxUpload(cat._key, f); e.target.value = ''; }}
+                    />
+                  </div>
+                );
+              })()}
             </div>
           </div>
         ))}

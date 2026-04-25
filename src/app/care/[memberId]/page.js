@@ -48,7 +48,7 @@ export default async function MemberProfilePage({ params }) {
       serverClient.fetch(
         `*[_type == "catSitter" && _id == $id && memberVerified == true][0]{
           _id, _createdAt, name, username, location, bio, email, phone,
-          cats, feedingTypes, behavioralTraits,
+          "cats": cats[] { ..., "vaccinationRecord": vaccinationRecord { "fileUrl": file.asset->url, "fileName": file.asset->originalFilename, date } }, feedingTypes, behavioralTraits,
           availabilityDefault, unavailableDatesV2,
           hideEmail, hideWhatsApp,
           avatarColour, identityVerified, trustedSitter, siteAdmin,

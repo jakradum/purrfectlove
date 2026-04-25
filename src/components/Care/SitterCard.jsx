@@ -145,6 +145,7 @@ export default function SitterCard({
   const [myCatData, setMyCatData] = useState(null); // null = not yet fetched, [] = fetched but empty
   const myCats = myCatData ? myCatData.filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name })) : null;
   const [selectedCats, setSelectedCats] = useState([]);
+  const missingVaxx = selectedCats.filter(c => !c.vaccinationRecord?.fileUrl);
   const [localSitType, setLocalSitType] = useState(sitType); // null until user picks when sitter does both
   const [note, setNote] = useState('');
   const [submitting, setSubmitting] = useState(false);
@@ -185,7 +186,7 @@ export default function SitterCard({
       .then(doc => {
         const cats = doc.cats || [];
         setMyCatData(cats);
-        const catObjs = cats.filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name }));
+        const catObjs = cats.filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name, vaccinationRecord: c.vaccinationRecord || null }));
         if (catObjs.length === 1) setSelectedCats(catObjs);
       })
       .catch(() => setMyCatData([]));
@@ -543,6 +544,25 @@ export default function SitterCard({
             onChange={e => setNote(e.target.value)}
           />
 
+          {missingVaxx.length > 0 && (
+            <div style={{ marginBottom: '0.75rem' }}>
+              {missingVaxx.map(c => {
+                const idx = (myCatData || []).findIndex(x => x._key === c._key);
+                return (
+                  <p key={c._key} style={{ color: '#c0392b', fontSize: '0.8rem', margin: '0 0 0.3rem', lineHeight: 1.5 }}>
+                    Please{' '}
+                    <a
+                      href={`/care/profile?edit=cat&catIndex=${idx}&section=vaccination`}
+                      style={{ color: '#c0392b', fontWeight: 600, textDecoration: 'underline' }}
+                    >
+                      upload a vaccination record for {c.name}
+                    </a>{' '}before requesting a sit.
+                  </p>
+                );
+              })}
+            </div>
+          )}
+
           {formError && <p className={styles.cardFormError}>{formError}</p>}
 
           <div className={styles.cardFormBtnRow}>
@@ -558,7 +578,7 @@ export default function SitterCard({
               type="button"
               className={styles.cardFormSendBtn}
               onClick={handleSubmit}
-              disabled={submitting || selectedCats.length === 0 || myCats === null}
+              disabled={submitting || selectedCats.length === 0 || myCats === null || missingVaxx.length > 0}
             >
               {submitting ? 'Sending…' : 'Send request'}
             </button>

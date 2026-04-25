@@ -68,7 +68,7 @@ export async function GET(request) {
     }
 
     const sitter = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]`,
+      `*[_type == "catSitter" && _id == $id][0]{ ..., "cats": cats[] { ..., "vaccinationRecord": vaccinationRecord { "fileUrl": file.asset->url, "fileName": file.asset->originalFilename, date } } }`,
       { id: user.sitterId }
     )
 

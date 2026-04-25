@@ -455,6 +455,28 @@ export default function SitterProfile({
                       ))}
                     </div>
                   )}
+                  {cat.vaccinationRecord?.fileUrl && (
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', marginTop: '0.5rem' }}>
+                      <span style={{
+                        display: 'inline-flex', alignItems: 'center', gap: '0.25rem',
+                        padding: '0.15rem 0.55rem', borderRadius: 999,
+                        background: '#E8F5E9', color: '#2E7D32',
+                        fontSize: '0.72rem', fontWeight: 600,
+                        border: '1px solid #A5D6A7',
+                      }}>
+                        <svg viewBox="0 0 10 10" fill="none" width="9" height="9">
+                          <circle cx="5" cy="5" r="5" fill="#2E7D32"/>
+                          <path d="M2.5 5l1.5 1.5 3.5-3" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/>
+                        </svg>
+                        Vaccinated
+                      </span>
+                      {cat.vaccinationRecord.date && (
+                        <span style={{ fontSize: '0.7rem', color: '#999' }}>
+                          {new Date(cat.vaccinationRecord.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                        </span>
+                      )}
+                    </div>
+                  )}
                 </div>
               );
             })}

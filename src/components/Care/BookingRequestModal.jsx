@@ -74,7 +74,7 @@ export default function BookingRequestModal({
     fetch('/api/care/profile')
       .then(r => r.json())
       .then(doc => {
-        const catObjs = (doc.cats || []).filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name }))
+        const catObjs = (doc.cats || []).filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name, vaccinationRecord: c.vaccinationRecord || null }))
         setCats(catObjs)
       })
       .catch(() => setCats([]))
@@ -86,10 +86,14 @@ export default function BookingRequestModal({
     )
   }
 
+  // Cats selected that are missing a vaccination record
+  const missingVaxx = selectedCats.filter(c => !c.vaccinationRecord?.fileUrl)
+
   const handleSubmit = async () => {
     setError('')
     if (!startDate || !endDate) { setError('Please select start and end dates.'); return }
     if (!sitType) { setError('Please select a sit type.'); return }
+    if (missingVaxx.length > 0) return // button is disabled; guard in case called programmatically
     setLoading(true)
     try {
       const res = await fetch('/api/care/bookings/request', {
@@ -364,6 +368,20 @@ export default function BookingRequestModal({
                 />
               </div>
 
+              {missingVaxx.length > 0 && (
+                <div style={{ marginBottom: '0.75rem' }}>
+                  {missingVaxx.map(c => (
+                    <p key={c._key} style={{ color: '#c0392b', fontSize: '0.8rem', margin: '0 0 0.3rem' }}>
+                      Please{' '}
+                      <a href={`/care/profile?edit=cat&catIndex=${(cats || []).findIndex(x => x._key === c._key)}&section=vaccination`} style={{ color: '#c0392b', fontWeight: 600 }}>
+                        upload a vaccination record for {c.name}
+                      </a>{' '}
+                      before requesting a sit.
+                    </p>
+                  ))}
+                </div>
+              )}
+
               {error && (
                 <p style={{ color: '#dc2626', fontSize: '0.8rem', margin: '0 0 0.75rem' }}>{error}</p>
               )}
@@ -377,7 +395,7 @@ export default function BookingRequestModal({
                   className={styles.btn}
                   style={{ width: 'auto', marginTop: 0, padding: '0.5rem 1.25rem' }}
                   onClick={handleSubmit}
-                  disabled={loading || cats === null}
+                  disabled={loading || cats === null || missingVaxx.length > 0}
                 >
                   {loading ? 'Sending…' : 'Send request'}
                 </button>
