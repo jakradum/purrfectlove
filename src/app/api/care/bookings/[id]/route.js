@@ -63,7 +63,7 @@ export async function GET(request, { params }) {
 
     const { data: booking, error: fetchError } = await db
       .from('bookings')
-      .select('id, booking_ref, start_date, end_date, status, cats, message, cancellation_reason, cancelled_by, cancelled_at, sitter_id, parent_id, sit_type')
+      .select('id, booking_ref, start_date, end_date, status, cats, cat_keys, message, cancellation_reason, cancelled_by, cancelled_at, sitter_id, parent_id, sit_type')
       .eq('id', bookingId)
       .is('deleted_at', null)
       .single()
@@ -80,7 +80,7 @@ export async function GET(request, { params }) {
     const otherId = isParent ? booking.sitter_id : booking.parent_id
     const myId   = isParent ? booking.parent_id  : booking.sitter_id
 
-    const [other, myProfile, sitterProfile, parentProfile] = await Promise.all([
+    const [other, myProfile, sitterProfile, parentProfile, parentCats] = await Promise.all([
       serverClient.fetch(
         `*[_type == "catSitter" && _id == $id][0]{ name, email, phone, location, locationName }`,
         { id: otherId }
@@ -91,6 +91,10 @@ export async function GET(request, { params }) {
       ),
       serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.sitter_id }),
       serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.parent_id }),
+      serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ cats[]{ _key, name, "vaccinationRecord": vaccinationRecord { "fileUrl": file.asset->url, "fileName": file.asset->originalFilename, date } } }`,
+        { id: booking.parent_id }
+      ),
     ])
 
     const sitType = booking.sit_type
@@ -149,6 +153,31 @@ export async function GET(request, { params }) {
       ? Math.round(haversineKm(myLat, myLng, otherLat, otherLng) * 1.66 * 10) / 10
       : null
 
+    // Build per-cat vaccination info for the sitter's view.
+    // Match by _key first (new bookings), fall back to name (legacy).
+    const allParentCats = parentCats?.cats || []
+    const catKeys = booking.cat_keys || []
+    const catNames = booking.cats || []
+    const catVaxxInfo = catKeys.length > 0
+      ? catKeys.map((key, i) => {
+          const cat = allParentCats.find(c => c._key === key)
+          return {
+            name: cat?.name || catNames[i] || `Cat ${i + 1}`,
+            fileUrl:  cat?.vaccinationRecord?.fileUrl  || null,
+            fileName: cat?.vaccinationRecord?.fileName || null,
+            date:     cat?.vaccinationRecord?.date     || null,
+          }
+        })
+      : catNames.map(name => {
+          const cat = allParentCats.find(c => c.name === name)
+          return {
+            name,
+            fileUrl:  cat?.vaccinationRecord?.fileUrl  || null,
+            fileName: cat?.vaccinationRecord?.fileName || null,
+            date:     cat?.vaccinationRecord?.date     || null,
+          }
+        })
+
     return Response.json({
       _id:                booking.id,
       bookingRef:         booking.booking_ref,
@@ -158,6 +187,7 @@ export async function GET(request, { params }) {
       statusNote,
       sitType:            sitType || null,
       cats:               booking.cats || [],
+      catVaxxInfo,
       message:            booking.message || null,
       cancellationReason: booking.cancellation_reason || null,
       cancelledBy:        booking.cancelled_by || null,

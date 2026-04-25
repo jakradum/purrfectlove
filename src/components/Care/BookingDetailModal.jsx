@@ -102,6 +102,76 @@ function ContactRow({ label, value, link, muted }) {
   );
 }
 
+function VaxxAccordion({ cats }) {
+  const [open, setOpen] = useState(false);
+  const allVaccinated = cats.every(c => c.fileUrl);
+  const summary = allVaccinated
+    ? `All ${cats.length} cat${cats.length !== 1 ? 's' : ''} vaccinated`
+    : `${cats.filter(c => c.fileUrl).length} of ${cats.length} vaccination records uploaded`;
+  return (
+    <div style={{ margin: '12px 0 4px', borderRadius: 8, border: '1px solid rgba(44,95,79,0.15)', overflow: 'hidden' }}>
+      <button
+        type="button"
+        onClick={() => setOpen(v => !v)}
+        style={{
+          width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          padding: '0.6rem 0.75rem', background: 'rgba(44,95,79,0.04)', border: 'none',
+          cursor: 'pointer', fontFamily: 'var(--font-outfit)', textAlign: 'left',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <span style={{ fontSize: '0.78rem', fontWeight: 700, color: '#2C5F4F', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            Cat vaccinations
+          </span>
+          <span style={{
+            fontSize: '0.72rem', fontWeight: 600, padding: '0.1rem 0.45rem', borderRadius: 999,
+            background: allVaccinated ? '#E8F5E9' : '#FFF3CD',
+            color: allVaccinated ? '#2E7D32' : '#856404',
+            border: `1px solid ${allVaccinated ? '#A5D6A7' : '#FFE083'}`,
+          }}>
+            {summary}
+          </span>
+        </div>
+        <svg width="12" height="12" viewBox="0 0 12 12" fill="none" style={{ transform: open ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s', flexShrink: 0 }}>
+          <path d="M2 4l4 4 4-4" stroke="#2C5F4F" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"/>
+        </svg>
+      </button>
+      {open && (
+        <div style={{ padding: '0.6rem 0.75rem', display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+          {cats.map((cat, i) => (
+            <div key={i} style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <span style={{ fontSize: '0.83rem', fontWeight: 600, color: '#2D2D2D', minWidth: 80 }}>{cat.name}</span>
+              {cat.fileUrl ? (
+                <>
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: '0.2rem', fontSize: '0.72rem', fontWeight: 600, padding: '0.1rem 0.45rem', borderRadius: 999, background: '#E8F5E9', color: '#2E7D32', border: '1px solid #A5D6A7' }}>
+                    <svg viewBox="0 0 10 10" fill="none" width="8" height="8"><circle cx="5" cy="5" r="5" fill="#2E7D32"/><path d="M2.5 5l1.5 1.5 3.5-3" stroke="#fff" strokeWidth="1.3" strokeLinecap="round" strokeLinejoin="round"/></svg>
+                    Vaccinated
+                  </span>
+                  <a
+                    href={cat.fileUrl}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    style={{ fontSize: '0.78rem', color: '#2C5F4F', textDecoration: 'underline', fontWeight: 500 }}
+                  >
+                    {cat.fileName || 'View record'}
+                  </a>
+                  {cat.date && (
+                    <span style={{ fontSize: '0.72rem', color: '#999' }}>
+                      · {new Date(cat.date).toLocaleDateString('en-US', { month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                </>
+              ) : (
+                <span style={{ fontSize: '0.78rem', color: '#aaa', fontStyle: 'italic' }}>No record uploaded</span>
+              )}
+            </div>
+          ))}
+        </div>
+      )}
+    </div>
+  );
+}
+
 // ── Main modal ─────────────────────────────────────────────────────────────────
 
 export default function BookingDetailModal({ bookingId, role, onClose, onCancelled }) {
@@ -497,6 +567,11 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
                 </>
               )}
             </>
+          )}
+
+          {/* Vaccination records — sitter only, non-terminal bookings */}
+          {role === 'sitter' && !isTerminal && detail.catVaxxInfo?.length > 0 && (
+            <VaxxAccordion cats={detail.catVaxxInfo} />
           )}
 
           {/* Accept / Decline — sitter only, pending bookings */}
