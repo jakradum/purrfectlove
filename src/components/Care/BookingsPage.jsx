@@ -139,7 +139,7 @@ function TableRow({ booking, colHeader, onClick, onWithdraw, isNew }) {
       </td>
       <td>
         <div className={styles.tdDates}>{formatDateRange(booking.startDate, booking.endDate)}</div>
-        <div className={styles.tdDuration}>{nights} night{nights !== 1 ? 's' : ''}</div>
+        <div className={styles.tdDuration}>{nights === 0 ? 'Same day' : `${nights} night${nights !== 1 ? 's' : ''}`}</div>
       </td>
       <td className={styles.tdCats}>{cats || '—'}</td>
       <td className={styles.tdStatus}>

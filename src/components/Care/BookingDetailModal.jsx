@@ -383,7 +383,7 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
 
           {/* stat grid: Duration | Cats / Sit type | Map / Area (full width) */}
           <div className={styles.dtGrid}>
-            <StatCell label="Duration" value={`${nights} night${nights !== 1 ? 's' : ''}`} />
+            <StatCell label="Duration" value={nights === 0 ? 'Same day' : `${nights} night${nights !== 1 ? 's' : ''}`} />
             <StatCell label="Cats" value={cats} />
             <StatCell
               label="Sit type"

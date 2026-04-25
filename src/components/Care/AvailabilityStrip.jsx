@@ -269,7 +269,7 @@ export default function AvailabilityStrip({ myProfile, startDate, endDate, onSav
     return Array.from({ length: 10 }, (_, i) => addDays(today, i));
   })();
 
-  const monthLabel = today.toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'long' });
+  const monthLabel = miniDays[0].toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { month: 'long' });
 
   const COLLAPSE_MS = 200; // must match availPanelOut duration
 
