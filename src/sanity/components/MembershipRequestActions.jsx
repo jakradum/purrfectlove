@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { approveRequest, rejectRequest } from '@/app/actions/memberAdmin'
 
 export function MembershipRequestActions({ documentId, document: doc }) {
   const [loading, setLoading] = useState(null) // 'approve' | 'reject' | null
@@ -41,14 +42,9 @@ export function MembershipRequestActions({ documentId, document: doc }) {
     setLoading('approve')
     setResult(null)
     try {
-      const res = await fetch('/api/care/admin/approve-member', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId: documentId }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setResult({ type: 'error', message: data.error || 'Something went wrong.' })
+      const data = await approveRequest(documentId)
+      if (data.error) {
+        setResult({ type: 'error', message: data.error })
       } else if (data.alreadyApproved) {
         setResult({ type: 'warn', message: 'Already approved — Sanity status updated.' })
       } else if (data.emailSent) {
@@ -57,7 +53,7 @@ export function MembershipRequestActions({ documentId, document: doc }) {
         setResult({ type: 'warn', message: '✅ Approved, but no email on file — welcome email not sent.' })
       }
     } catch (err) {
-      setResult({ type: 'error', message: 'Network error: ' + err.message })
+      setResult({ type: 'error', message: 'Error: ' + err.message })
     } finally {
       setLoading(null)
     }
@@ -69,19 +65,14 @@ export function MembershipRequestActions({ documentId, document: doc }) {
     setLoading('reject')
     setResult(null)
     try {
-      const res = await fetch('/api/care/admin/reject-member', {
-        method: 'DELETE',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ requestId: documentId }),
-      })
-      const data = await res.json()
-      if (!res.ok) {
-        setResult({ type: 'error', message: data.error || 'Something went wrong.' })
+      const data = await rejectRequest(documentId)
+      if (data.error) {
+        setResult({ type: 'error', message: data.error })
       } else {
         setResult({ type: 'denied', message: '❌ Entry denied. No email sent. Inbox approval permanently blocked.' })
       }
     } catch (err) {
-      setResult({ type: 'error', message: 'Network error: ' + err.message })
+      setResult({ type: 'error', message: 'Error: ' + err.message })
     } finally {
       setLoading(null)
     }
