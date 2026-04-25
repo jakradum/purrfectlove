@@ -74,15 +74,15 @@ export default function BookingRequestModal({
     fetch('/api/care/profile')
       .then(r => r.json())
       .then(doc => {
-        const catNames = (doc.cats || []).map(c => c.name).filter(Boolean)
-        setCats(catNames)
+        const catObjs = (doc.cats || []).filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name }))
+        setCats(catObjs)
       })
       .catch(() => setCats([]))
   }, [])
 
-  const toggleCat = (name) => {
+  const toggleCat = (cat) => {
     setSelectedCats(prev =>
-      prev.includes(name) ? prev.filter(c => c !== name) : [...prev, name]
+      prev.some(c => c._key === cat._key) ? prev.filter(c => c._key !== cat._key) : [...prev, cat]
     )
   }
 
@@ -312,13 +312,13 @@ export default function BookingRequestModal({
                   </p>
                 ) : (
                   <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {cats.map(name => {
-                      const selected = selectedCats.includes(name)
+                    {cats.map(cat => {
+                      const selected = selectedCats.some(c => c._key === cat._key)
                       return (
                         <button
-                          key={name}
+                          key={cat._key}
                           type="button"
-                          onClick={() => toggleCat(name)}
+                          onClick={() => toggleCat(cat)}
                           style={{
                             padding: '0.35rem 0.8rem',
                             borderRadius: 20,
@@ -331,7 +331,7 @@ export default function BookingRequestModal({
                             transition: 'all 0.15s',
                           }}
                         >
-                          {name}
+                          {cat.name}
                         </button>
                       )
                     })}

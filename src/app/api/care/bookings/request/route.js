@@ -90,7 +90,11 @@ export async function POST(request) {
     const user = await getSupabaseUser(request)
     if (!user) return Response.json({ error: 'Unauthorized' }, { status: 401 })
 
-    const { sitterId, startDate, endDate, cats, message, sitType } = await request.json()
+    const { sitterId, startDate, endDate, cats: catsPayload, message, sitType } = await request.json()
+
+    // cats may arrive as {_key, name}[] (new) or string[] (legacy fallback)
+    const catNames = (catsPayload || []).map(c => (typeof c === 'string' ? c : c.name)).filter(Boolean)
+    const catKeys  = (catsPayload || []).map(c => (typeof c === 'object' && c?._key ? c._key : null)).filter(Boolean)
 
     if (!sitterId || !startDate || !endDate) {
       return Response.json({ error: 'sitterId, startDate and endDate are required' }, { status: 400 })
@@ -124,7 +128,8 @@ export async function POST(request) {
         parent_id:   user.sitterId,
         start_date:  startDate,
         end_date:    endDate,
-        cats:        cats || [],
+        cats:        catNames,
+        cat_keys:    catKeys.length ? catKeys : null,
         message:     message || null,
         sit_type:    sitType || null,
         status:      'pending',
@@ -169,7 +174,7 @@ export async function POST(request) {
         const endFmt = formatDate(endDate)
         const sitterFirstName = (sitter.name || '').split(' ')[0] || 'there'
         const deepLink = `https://care.purrfectlove.org/bookings?booking=${bookingId}&role=sitter`
-        const catList = (cats || []).join(', ') || 'not specified'
+        const catList = catNames.join(', ') || 'not specified'
 
         // Fetch parent name + location for a personalised email
         let parentName = 'A member'

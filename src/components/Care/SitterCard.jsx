@@ -143,7 +143,7 @@ export default function SitterCard({
     }
   };
   const [myCatData, setMyCatData] = useState(null); // null = not yet fetched, [] = fetched but empty
-  const myCats = myCatData ? myCatData.map(c => c.name).filter(Boolean) : null;
+  const myCats = myCatData ? myCatData.filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name })) : null;
   const [selectedCats, setSelectedCats] = useState([]);
   const [localSitType, setLocalSitType] = useState(sitType); // null until user picks when sitter does both
   const [note, setNote] = useState('');
@@ -170,9 +170,10 @@ export default function SitterCard({
   }, [_id]);
 
   // Compatibility: traits of selected cats that match sitter's behavioralTraits
+  const selectedKeys = new Set(selectedCats.map(c => c._key));
   const catTraitSet = new Set(
     (myCatData || [])
-      .filter(c => selectedCats.includes(c.name))
+      .filter(c => selectedKeys.has(c._key))
       .flatMap(c => c.personality || [])
   );
 
@@ -184,8 +185,8 @@ export default function SitterCard({
       .then(doc => {
         const cats = doc.cats || [];
         setMyCatData(cats);
-        const names = cats.map(c => c.name).filter(Boolean);
-        if (names.length === 1) setSelectedCats(names);
+        const catObjs = cats.filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name }));
+        if (catObjs.length === 1) setSelectedCats(catObjs);
       })
       .catch(() => setMyCatData([]));
   }, [expanded, myCatData]);
@@ -201,9 +202,9 @@ export default function SitterCard({
     }
   }, [expanded, sitType]);
 
-  const toggleCat = (catName) => {
+  const toggleCat = (cat) => {
     setSelectedCats(prev =>
-      prev.includes(catName) ? prev.filter(c => c !== catName) : [...prev, catName]
+      prev.some(c => c._key === cat._key) ? prev.filter(c => c._key !== cat._key) : [...prev, cat]
     );
   };
 
@@ -450,14 +451,14 @@ export default function SitterCard({
             </p>
           ) : (
             <div className={styles.catChips}>
-              {myCats.map(catName => {
-                const selected = selectedCats.includes(catName);
+              {myCats.map(cat => {
+                const selected = selectedCats.some(c => c._key === cat._key);
                 return (
                   <button
-                    key={catName}
+                    key={cat._key}
                     type="button"
                     className={`${styles.catChip} ${selected ? styles.catChipSelected : styles.catChipUnselected}`}
-                    onClick={() => toggleCat(catName)}
+                    onClick={() => toggleCat(cat)}
                   >
                     {selected && (
                       <span className={styles.catChipCheck}>
@@ -466,7 +467,7 @@ export default function SitterCard({
                         </svg>
                       </span>
                     )}
-                    {catName}
+                    {cat.name}
                   </button>
                 );
               })}
