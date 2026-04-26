@@ -32,6 +32,25 @@ export async function GET(request) {
         .order('start_date', { ascending: true }),
     ])
 
+    // Collect all booking IDs for unread message check
+    const allBookingIds = [
+      ...new Set([
+        ...(asParentRows || []).map(b => b.id),
+        ...(asSitterRows || []).map(b => b.id),
+      ])
+    ]
+    let unreadBookingIds = new Set()
+    if (allBookingIds.length > 0) {
+      const { data: unreadRows } = await db
+        .from('booking_messages')
+        .select('booking_id')
+        .in('booking_id', allBookingIds)
+        .neq('sender_id', userId)
+        .is('read_at', null)
+        .is('deleted_at', null)
+      for (const row of unreadRows || []) unreadBookingIds.add(row.booking_id)
+    }
+
     // Collect all unique counterpart IDs for name lookup
     const sitterIds = [...new Set((asParentRows || []).map(b => b.sitter_id))]
     const parentIds = [...new Set((asSitterRows || []).map(b => b.parent_id))]
@@ -46,21 +65,22 @@ export async function GET(request) {
       for (const p of profiles) nameMap[p._id] = p.name || 'Member'
     }
 
-    const toBooking = (row, role) => ({
-      _id:        row.id,
-      bookingRef: row.booking_ref,
-      startDate:  row.start_date,
-      endDate:    row.end_date,
-      status:     row.status,
-      cats:       row.cats || [],
-      sitType:    row.sit_type || null,
-      sitterId:   row.sitter_id,
-      sitterName: nameMap[row.sitter_id] || 'Member',
-      parentName: nameMap[row.parent_id] || 'Member',
+    const toBooking = (row) => ({
+      _id:              row.id,
+      bookingRef:       row.booking_ref,
+      startDate:        row.start_date,
+      endDate:          row.end_date,
+      status:           row.status,
+      cats:             row.cats || [],
+      sitType:          row.sit_type || null,
+      sitterId:         row.sitter_id,
+      sitterName:       nameMap[row.sitter_id] || 'Member',
+      parentName:       nameMap[row.parent_id] || 'Member',
+      hasUnreadMessage: unreadBookingIds.has(row.id),
     })
 
-    const asParent = (asParentRows || []).map(r => toBooking(r, 'parent'))
-    const asSitter = (asSitterRows || []).map(r => toBooking(r, 'sitter'))
+    const asParent = (asParentRows || []).map(r => toBooking(r))
+    const asSitter = (asSitterRows || []).map(r => toBooking(r))
 
     return Response.json({
       // 'bookings' kept for backward-compat with marketplace polling (pending + active only)

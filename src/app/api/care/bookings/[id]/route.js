@@ -82,7 +82,7 @@ export async function GET(request, { params }) {
 
     const [other, myProfile, sitterProfile, parentProfile, parentCats] = await Promise.all([
       serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ name, email, phone, location, locationName }`,
+        `*[_type == "catSitter" && _id == $id][0]{ name, email, phone, hideEmail, hideWhatsApp, location, locationName }`,
         { id: otherId }
       ),
       serverClient.fetch(
@@ -201,8 +201,8 @@ export async function GET(request, { params }) {
       other: {
         id:            otherId,
         name:          other?.name || 'Member',
-        email:         contactReleased ? (other?.email || null) : null,
-        phone:         contactReleased ? (other?.phone || null) : null,
+        email:         contactReleased && !other?.hideEmail    ? (other?.email || null) : null,
+        phone:         contactReleased && !other?.hideWhatsApp ? (other?.phone || null) : null,
         lat:           lat || null,
         lng:           lng || null,
         neighbourhood: otherNeighbourhood || null,

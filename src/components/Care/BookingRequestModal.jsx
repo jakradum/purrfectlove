@@ -93,6 +93,7 @@ export default function BookingRequestModal({
     setError('')
     if (!startDate || !endDate) { setError('Please select start and end dates.'); return }
     if (!sitType) { setError('Please select a sit type.'); return }
+    if (selectedCats.length === 0) { setError('Please select at least one cat.'); return }
     if (missingVaxx.length > 0) return // button is disabled; guard in case called programmatically
     setLoading(true)
     try {
@@ -315,31 +316,38 @@ export default function BookingRequestModal({
                     </Link>
                   </p>
                 ) : (
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
-                    {cats.map(cat => {
-                      const selected = selectedCats.some(c => c._key === cat._key)
-                      return (
-                        <button
-                          key={cat._key}
-                          type="button"
-                          onClick={() => toggleCat(cat)}
-                          style={{
-                            padding: '0.35rem 0.8rem',
-                            borderRadius: 20,
-                            fontSize: '0.875rem',
-                            fontWeight: 500,
-                            cursor: 'pointer',
-                            border: selected ? '1.5px solid #2C5F4F' : '1.5px solid #ddd',
-                            background: selected ? '#EAF3DE' : '#fafafa',
-                            color: selected ? '#2C5F4F' : '#555',
-                            transition: 'all 0.15s',
-                          }}
-                        >
-                          {cat.name}
-                        </button>
-                      )
-                    })}
-                  </div>
+                  <>
+                    <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem' }}>
+                      {cats.map(cat => {
+                        const selected = selectedCats.some(c => c._key === cat._key)
+                        return (
+                          <button
+                            key={cat._key}
+                            type="button"
+                            onClick={() => toggleCat(cat)}
+                            style={{
+                              padding: '0.35rem 0.8rem',
+                              borderRadius: 20,
+                              fontSize: '0.875rem',
+                              fontWeight: 500,
+                              cursor: 'pointer',
+                              border: selected ? '1.5px solid #2C5F4F' : '1.5px solid #ddd',
+                              background: selected ? '#EAF3DE' : '#fafafa',
+                              color: selected ? '#2C5F4F' : '#555',
+                              transition: 'all 0.15s',
+                            }}
+                          >
+                            {cat.name}
+                          </button>
+                        )
+                      })}
+                    </div>
+                    {selectedCats.length === 0 && (
+                      <p style={{ fontSize: '0.78rem', color: '#999', margin: '0.5rem 0 0', fontStyle: 'italic' }}>
+                        Select at least one cat to continue.
+                      </p>
+                    )}
+                  </>
                 )}
               </div>
 
@@ -395,7 +403,7 @@ export default function BookingRequestModal({
                   className={styles.btn}
                   style={{ width: 'auto', marginTop: 0, padding: '0.5rem 1.25rem' }}
                   onClick={handleSubmit}
-                  disabled={loading || cats === null || missingVaxx.length > 0}
+                  disabled={loading || cats === null || selectedCats.length === 0 || missingVaxx.length > 0}
                 >
                   {loading ? 'Sending…' : 'Send request'}
                 </button>

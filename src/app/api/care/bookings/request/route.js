@@ -160,20 +160,26 @@ export async function POST(request) {
 
     // Auto-block the parent's own availability for the requested dates
     try {
-      const parentProfile = await serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ unavailableDatesV2, availabilityDefault }`,
-        { id: user.sitterId }
-      )
+      const { data: parentAvail } = await db
+        .from('sitter_availability')
+        .select('availability_default, unavailable_dates')
+        .eq('sitter_id', user.sitterId)
+        .maybeSingle()
       // Only auto-block when default is 'available' (the normal case — mark exceptions unavailable)
-      if (!parentProfile || parentProfile.availabilityDefault !== 'unavailable') {
-        const existing = new Set(parentProfile?.unavailableDatesV2 || [])
+      if (!parentAvail || parentAvail.availability_default !== 'unavailable') {
+        const existing = new Set(parentAvail?.unavailable_dates || [])
         const cur = new Date(startDate)
         const stop = new Date(endDate)
         while (cur <= stop) {
           existing.add(cur.toISOString().slice(0, 10))
           cur.setDate(cur.getDate() + 1)
         }
-        await serverClient.patch(user.sitterId).set({ unavailableDatesV2: Array.from(existing).sort() }).commit()
+        await db
+          .from('sitter_availability')
+          .upsert(
+            { sitter_id: user.sitterId, unavailable_dates: Array.from(existing).sort() },
+            { onConflict: 'sitter_id' }
+          )
       }
     } catch (blockErr) {
       console.error('auto-block availability error:', blockErr)

@@ -133,7 +133,10 @@ function TableRow({ booking, colHeader, onClick, onWithdraw, isNew }) {
   return (
     <tr className={`${styles.tableRow} ${styles.tableRowClickable} ${isNew ? styles.tableRowNew : ''}`} onClick={onClick}>
       <td>
-        <div className={styles.tdName}>{name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className={styles.tdName}>{name}</div>
+          {booking.hasUnreadMessage && <span className={styles.msgUnreadDot} />}
+        </div>
         {booking.sitType && <SitTypeBadge type={booking.sitType} />}
         {booking.bookingRef && <div className={styles.tdRef}>#{booking.bookingRef}</div>}
       </td>
@@ -206,7 +209,10 @@ function MobileItem({ booking, colHeader, onClick, onWithdraw, isNew }) {
   return (
     <div className={`${styles.bookingItem} ${styles.bookingItemClickable} ${isNew ? styles.bookingItemNew : ''}`} onClick={onClick}>
       <div className={styles.bookingBody}>
-        <div className={styles.bookingName}>{name}</div>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <div className={styles.bookingName}>{name}</div>
+          {booking.hasUnreadMessage && <span className={styles.msgUnreadDot} />}
+        </div>
         <div className={styles.bookingDetail}>
           {formatDateRange(booking.startDate, booking.endDate)}
           {cats ? ` · ${cats}` : ''}
@@ -299,6 +305,12 @@ export default function BookingsPage({ locale }) {
 
   const openModal = (booking) => {
     setSelectedBooking({ id: booking._id, role });
+    // Optimistically clear unread dot — server marks messages as read on first GET
+    if (booking.hasUnreadMessage) {
+      const clear = arr => arr.map(b => b._id === booking._id ? { ...b, hasUnreadMessage: false } : b);
+      setAsParent(prev => clear(prev));
+      setAsSitter(prev => clear(prev));
+    }
     // Mark as seen for notification tracking
     if (!seenIds.has(booking._id)) {
       const newSeen = new Set(seenIds);

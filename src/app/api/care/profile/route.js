@@ -1,5 +1,5 @@
 import { createClient } from '@sanity/client'
-import { getSupabaseUser } from '@/lib/supabaseServer'
+import { getSupabaseUser, createSupabaseDbClient } from '@/lib/supabaseServer'
 import { rateLimit } from '@/lib/rateLimit'
 import { captureServerEvent } from '@/lib/posthogServer'
 import { createRequire } from 'module'
@@ -67,16 +67,26 @@ export async function GET(request) {
       return Response.json({ error: 'Unauthorized' }, { status: 401 })
     }
 
-    const sitter = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ ..., "cats": cats[] { ..., "vaccinationRecord": vaccinationRecord { "fileUrl": file.asset->url, "fileName": file.asset->originalFilename, date } } }`,
-      { id: user.sitterId }
-    )
+    const db = createSupabaseDbClient()
+    const [sitter, availRow] = await Promise.all([
+      serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ ..., "cats": cats[] { ..., "vaccinationRecord": vaccinationRecord { "fileUrl": file.asset->url, "fileName": file.asset->originalFilename, date } } }`,
+        { id: user.sitterId }
+      ),
+      db.from('sitter_availability').select('*').eq('sitter_id', user.sitterId).maybeSingle(),
+    ])
 
     if (!sitter) {
       return Response.json({ error: 'Profile not found' }, { status: 404 })
     }
 
-    return Response.json(sitter)
+    const avail = availRow.data
+    return Response.json({
+      ...sitter,
+      availabilityDefault: avail?.availability_default ?? sitter.availabilityDefault ?? 'available',
+      unavailableDatesV2:  avail?.unavailable_dates    ?? sitter.unavailableDatesV2  ?? [],
+      blockedByBooking:    avail?.blocked_by_booking   ?? sitter.blockedByBooking    ?? [],
+    })
   } catch (error) {
     console.error('profile GET error:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
@@ -105,11 +115,15 @@ export async function PATCH(request) {
       'notifEmailMessage', 'notifEmailSitRequest',
     ]
 
+    // Availability fields live in Supabase — separate them from the Sanity patch
+    const AVAIL_FIELDS = new Set(['availabilityDefault', 'unavailableDatesV2', 'blockedByBooking'])
+
     const patch = {}
+    const availPatch = {}
     for (const field of allowedFields) {
-      if (field in body) {
-        patch[field] = body[field]
-      }
+      if (!(field in body)) continue
+      if (AVAIL_FIELDS.has(field)) availPatch[field] = body[field]
+      else patch[field] = body[field]
     }
 
     // Resolve location coords if name is set but coords are missing.
@@ -137,17 +151,36 @@ export async function PATCH(request) {
       patch.locationName = body.location.displayName
     }
 
-    const updated = await serverClient
-      .patch(user.sitterId)
-      .set(patch)
-      .commit()
+    const db = createSupabaseDbClient()
+
+    // Write non-availability fields to Sanity (may be empty if availability-only save)
+    let updated = null
+    if (Object.keys(patch).length > 0) {
+      updated = await serverClient.patch(user.sitterId).set(patch).commit()
+    } else {
+      updated = await serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]`, { id: user.sitterId })
+    }
+
+    // Write availability fields to Supabase
+    let savedAvail = null
+    if (Object.keys(availPatch).length > 0) {
+      const availUpsert = { sitter_id: user.sitterId }
+      if ('availabilityDefault' in availPatch) availUpsert.availability_default = availPatch.availabilityDefault
+      if ('unavailableDatesV2'  in availPatch) availUpsert.unavailable_dates    = availPatch.unavailableDatesV2 ?? []
+      if ('blockedByBooking'    in availPatch) availUpsert.blocked_by_booking   = availPatch.blockedByBooking   ?? []
+      const { data } = await db
+        .from('sitter_availability')
+        .upsert(availUpsert, { onConflict: 'sitter_id' })
+        .select()
+        .single()
+      savedAvail = data
+    } else {
+      const { data } = await db.from('sitter_availability').select('*').eq('sitter_id', user.sitterId).maybeSingle()
+      savedAvail = data
+    }
 
     // Analytics (non-blocking)
-    const AVAILABILITY_FIELDS = new Set([
-      'alwaysAvailable', 'unavailableDates', 'unavailableRanges', 'availableDates',
-      'availabilityDefault', 'unavailableDatesV2',
-    ])
-    const isAvailabilityUpdate = Object.keys(patch).some(k => AVAILABILITY_FIELDS.has(k))
+    const isAvailabilityUpdate = Object.keys(availPatch).length > 0
     const isCanSitToggle = 'canSit' in patch
 
     captureServerEvent(user.sitterId, 'profile_updated').catch(() => {})
@@ -158,7 +191,12 @@ export async function PATCH(request) {
       captureServerEvent(user.sitterId, 'can_sit_toggled', { new_value: !!patch.canSit }).catch(() => {})
     }
 
-    return Response.json(updated)
+    return Response.json({
+      ...updated,
+      availabilityDefault: savedAvail?.availability_default ?? 'available',
+      unavailableDatesV2:  savedAvail?.unavailable_dates    ?? [],
+      blockedByBooking:    savedAvail?.blocked_by_booking   ?? [],
+    })
   } catch (error) {
     console.error('profile PATCH error:', error)
     return Response.json({ error: 'Internal server error' }, { status: 500 })
