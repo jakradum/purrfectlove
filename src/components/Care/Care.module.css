@@ -5035,6 +5035,7 @@
   color: var(--hunter-green);
 }
 
+
 /* Expanded */
 .availStripExpandedWrap {
   display: flex;
@@ -5333,6 +5334,7 @@
   color: #8B2E14;
 }
 
+
 .availStripCard_expanded .availCalInner_today {
   background: var(--hunter-green);
   color: #fff;
@@ -5518,6 +5520,7 @@
   background: rgba(200,92,63,0.45);
   color: #ffd0c4;
 }
+
 
 .availCalInner_today {
   background: #fff;
@@ -5899,4 +5902,231 @@
 
 .bookReqForm {
   padding: 18px 18px 28px;
+}
+
+/* ── Booking Messages ─────────────────────────────────────────────────────── */
+
+.msgSection {
+  margin-top: 4px;
+}
+
+.msgThread {
+  max-height: 260px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 0 6px;
+  -webkit-overflow-scrolling: touch;
+}
+
+.msgEmpty {
+  font-size: 0.82rem;
+  color: #aaa;
+  text-align: center;
+  padding: 12px 0;
+  margin: 0;
+  font-style: italic;
+}
+
+.msgRow {
+  display: flex;
+}
+
+.msgRowMine {
+  justify-content: flex-end;
+}
+
+.msgRowTheirs {
+  justify-content: flex-start;
+}
+
+.msgBubble {
+  max-width: 78%;
+  padding: 7px 10px 5px;
+  border-radius: 12px;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.msgBubbleMine {
+  background: #2C5F4F;
+  color: #fff;
+  border-bottom-right-radius: 3px;
+}
+
+.msgBubbleTheirs {
+  background: #f0f0f0;
+  color: #2D2D2D;
+  border-bottom-left-radius: 3px;
+}
+
+.msgBody {
+  margin: 0;
+  font-size: 0.875rem;
+  line-height: 1.45;
+  white-space: pre-wrap;
+  word-break: break-word;
+}
+
+.msgTime {
+  font-size: 0.68rem;
+  opacity: 0.65;
+  align-self: flex-end;
+  white-space: nowrap;
+}
+
+.msgAttachImg {
+  max-width: 180px;
+  max-height: 160px;
+  border-radius: 6px;
+  display: block;
+  object-fit: cover;
+}
+
+.msgAttachFile {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-decoration: underline;
+  color: inherit;
+  opacity: 0.9;
+}
+
+.msgPendingAttach {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  background: rgba(44, 95, 79, 0.07);
+  border: 1px solid rgba(44, 95, 79, 0.2);
+  border-radius: 6px;
+  padding: 5px 8px;
+  margin-bottom: 6px;
+  font-size: 0.8rem;
+  color: #2C5F4F;
+}
+
+.msgPendingAttachName {
+  flex: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-weight: 500;
+}
+
+.msgPendingAttachRemove {
+  background: none;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  line-height: 1;
+  color: #888;
+  padding: 0 2px;
+  flex-shrink: 0;
+}
+
+.msgSendForm {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+  border-top: 1px solid rgba(44, 95, 79, 0.12);
+  padding-top: 8px;
+  margin-top: 2px;
+}
+
+.msgInput {
+  flex: 1;
+  border: 1px solid rgba(44, 95, 79, 0.2);
+  border-radius: 8px;
+  padding: 7px 10px;
+  font-size: 0.875rem;
+  font-family: var(--font-outfit);
+  resize: none;
+  outline: none;
+  line-height: 1.4;
+  color: #2D2D2D;
+  background: #fff;
+  max-height: 80px;
+  overflow-y: auto;
+}
+
+.msgInput:focus {
+  border-color: #2C5F4F;
+  box-shadow: 0 0 0 2px rgba(44, 95, 79, 0.1);
+}
+
+.msgAttachBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: 1px solid rgba(44, 95, 79, 0.2);
+  background: #fff;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #888;
+  flex-shrink: 0;
+  transition: color 0.15s, border-color 0.15s;
+}
+
+.msgAttachBtn:hover:not(:disabled) {
+  color: #2C5F4F;
+  border-color: #2C5F4F;
+}
+
+.msgAttachBtn:disabled {
+  opacity: 0.45;
+  cursor: default;
+}
+
+.msgSendBtn {
+  width: 34px;
+  height: 34px;
+  border-radius: 8px;
+  border: none;
+  background: #2C5F4F;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  flex-shrink: 0;
+  transition: opacity 0.15s;
+}
+
+.msgSendBtn:hover:not(:disabled) {
+  opacity: 0.85;
+}
+
+.msgSendBtn:disabled {
+  opacity: 0.35;
+  cursor: default;
+}
+
+.msgError {
+  font-size: 0.78rem;
+  color: #c0392b;
+  margin: 4px 0 0;
+}
+
+@keyframes msgSpin {
+  to { transform: rotate(360deg); }
+}
+
+.msgSpinning {
+  animation: msgSpin 1s linear infinite;
+}
+
+/* Unread message dot on booking list rows */
+.msgUnreadDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #C85C3F;
+  flex-shrink: 0;
+  display: inline-block;
 }

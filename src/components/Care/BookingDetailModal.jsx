@@ -4,6 +4,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import styles from './Care.module.css';
 import { BookingDetailSkeleton } from './Skeletons';
 import { createSupabaseBrowserClient } from '@/lib/supabaseClient';
+import BookingMessages from './BookingMessages';
 
 const STATUS_MAP = {
   pending:     'Awaiting',
@@ -568,6 +569,9 @@ export default function BookingDetailModal({ bookingId, role, onClose, onCancell
               )}
             </>
           )}
+
+          {/* Messages thread */}
+          <BookingMessages bookingId={bookingId} />
 
           {/* Vaccination records — sitter only, non-terminal bookings */}
           {role === 'sitter' && !isTerminal && detail.catVaxxInfo?.length > 0 && (

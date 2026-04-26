@@ -120,21 +120,17 @@ export async function POST(request) {
       cancelled_at: cancelledAt,
     }).eq('id', bookingId)
 
-    // Release blocked dates on sitter's Sanity doc.
+    // Release blocked dates in Supabase (atomic).
     // Only confirmed/accepted bookings have dates blocked — pending ones don't.
     if (['confirmed', 'accepted'].includes(booking.status) && booking.sitter_id && booking.start_date && booking.end_date) {
       try {
         const datesToUnblock = expandDateRange(booking.start_date, booking.end_date)
-        const sitterDoc = await serverClient.fetch(
-          `*[_type == "catSitter" && _id == $id][0]{ blockedByBooking }`,
-          { id: booking.sitter_id }
-        )
-        const currentBlocked = sitterDoc?.blockedByBooking || []
-        const unblockSet = new Set(datesToUnblock)
-        const updatedBlocked = currentBlocked.filter(d => !unblockSet.has(d))
-        await serverClient.patch(booking.sitter_id).set({ blockedByBooking: updatedBlocked }).commit()
+        await db.rpc('availability_unmerge_blocked', {
+          p_sitter_id: booking.sitter_id,
+          p_dates: datesToUnblock,
+        })
       } catch (err) {
-        console.error('cancel: failed to unblock dates on Sanity:', err)
+        console.error('cancel: failed to unblock dates in Supabase:', err)
       }
     }
 

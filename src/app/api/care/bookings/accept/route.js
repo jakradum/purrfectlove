@@ -126,7 +126,7 @@ export async function POST(request) {
     // Fetch sitter + parent profiles from Sanity
     const [sitterProfile, parentProfile] = await Promise.all([
       serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location, blockedByBooking }`,
+        `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location }`,
         { id: booking.sitter_id }
       ),
       serverClient.fetch(
@@ -263,11 +263,12 @@ export async function POST(request) {
       createdAt: new Date().toISOString(),
     })
 
-    // 4. Auto-block dates on sitter's catSitter doc
+    // 4. Auto-block dates in Supabase (atomic — no read-modify-write race)
     const newBlockedDates = expandDateRange(booking.start_date, booking.end_date)
-    const existingBlocked = sitterProfile?.blockedByBooking || []
-    const mergedBlocked = [...new Set([...existingBlocked, ...newBlockedDates])]
-    await serverClient.patch(booking.sitter_id).set({ blockedByBooking: mergedBlocked }).commit()
+    await db.rpc('availability_merge_blocked', {
+      p_sitter_id: booking.sitter_id,
+      p_dates: newBlockedDates,
+    })
 
     // 5. In-app notification to sitter
     const notifBody = `Your cats are being looked after ${startFmt}–${endFmt}. We've marked those dates as unavailable for sitting. You can override this in your profile.`
