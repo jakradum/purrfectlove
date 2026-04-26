@@ -415,6 +415,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
   const [notifEmailSitRequest, setNotifEmailSitRequest] = useState(initialData.notifEmailSitRequest !== false);
   const [photoUrl, setPhotoUrl] = useState(initialData.photoUrl || null);
   const [photoUploading, setPhotoUploading] = useState(false);
+  const [photoError, setPhotoError] = useState('');
   const photoInputRef = useRef(null);
 
   // Vaccination records — keyed by cat._key, managed by upload-vaxx route (not general profile save)
@@ -498,17 +499,23 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
     const file = e.target.files?.[0];
     if (!file) return;
     setPhotoUploading(true);
+    setPhotoError('');
     try {
       const formData = new FormData();
       formData.append('photo', file);
       const res = await fetch('/api/care/upload-photo', { method: 'POST', body: formData });
+      const data = await res.json();
       if (res.ok) {
-        const data = await res.json();
         setPhotoUrl(data.photoUrl);
+      } else {
+        setPhotoError(data.error || 'Upload failed. Please try again.');
       }
-    } catch { /* silent */ }
-    setPhotoUploading(false);
-    e.target.value = '';
+    } catch {
+      setPhotoError('Upload failed. Please check your connection and try again.');
+    } finally {
+      setPhotoUploading(false);
+      e.target.value = '';
+    }
   };
 
 
@@ -730,6 +737,9 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
           style={{ display: 'none' }}
           onChange={handlePhotoChange}
         />
+        {photoError && (
+          <p style={{ textAlign: 'center', fontSize: '0.8rem', color: '#c0392b', margin: '0.5rem 0 0', padding: '0 1rem' }}>{photoError}</p>
+        )}
       </div>
     );
   }
