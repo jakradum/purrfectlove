@@ -279,16 +279,6 @@ function CustomTraitInput({ value = [], onChange }) {
 
 function VaxxDropZone({ busy, onFile, onClickUpload, vaxxDate, onDateChange }) {
   const [dragging, setDragging] = useState(false);
-  const onFileRef = useRef(onFile);
-  useEffect(() => { onFileRef.current = onFile; });
-  useEffect(() => {
-    const handler = (e) => {
-      const f = e.clipboardData?.files?.[0];
-      if (f) { e.preventDefault(); onFileRef.current(f); }
-    };
-    document.addEventListener('paste', handler);
-    return () => document.removeEventListener('paste', handler);
-  }, []);
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
       <div
@@ -315,7 +305,7 @@ function VaxxDropZone({ busy, onFile, onClickUpload, vaxxDate, onDateChange }) {
           <line x1="12" y1="3" x2="12" y2="15"/>
         </svg>
         <p style={{ margin: '0 0 0.65rem', fontSize: '0.82rem', color: dragging ? '#2C5F4F' : '#777', fontWeight: dragging ? 600 : 400, lineHeight: 1.4 }}>
-          {dragging ? 'Drop to upload' : 'Drag & drop or paste your vaccination record here'}
+          {dragging ? 'Drop to upload' : 'Drag & drop your vaccination record here'}
         </p>
         <button
           type="button" disabled={busy} onClick={onClickUpload}
@@ -332,7 +322,7 @@ function VaxxDropZone({ busy, onFile, onClickUpload, vaxxDate, onDateChange }) {
         />
         <span style={{ fontSize: '0.75rem', color: '#aaa' }}>Vaccination date (optional)</span>
       </div>
-      <p style={{ margin: 0, fontSize: '0.75rem', color: '#aaa' }}>JPEG, PNG or PDF · max 1 MB · or press ⌘V / Ctrl+V to paste from clipboard</p>
+      <p style={{ margin: 0, fontSize: '0.75rem', color: '#aaa' }}>JPEG, PNG or PDF · max 1 MB</p>
     </div>
   );
 }
@@ -347,9 +337,6 @@ function VaxxReplaceZone({ busy, onFile, children }) {
       onDrop={(e) => {
         e.preventDefault(); setDragging(false);
         const f = e.dataTransfer.files?.[0]; if (f) onFile(f);
-      }}
-      onPaste={(e) => {
-        const f = e.clipboardData.files?.[0]; if (f) { e.preventDefault(); onFile(f); }
       }}
       style={{
         borderRadius: 8, padding: '0.5rem 0.6rem',
