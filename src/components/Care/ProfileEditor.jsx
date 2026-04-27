@@ -403,6 +403,8 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
   const [editMode, setEditMode] = useState(null);
   const [saving, setSaving] = useState(false);
   const [saveError, setSaveError] = useState('');
+  const [availSaved, setAvailSaved] = useState(false);
+  const [pendingDefaultChange, setPendingDefaultChange] = useState(null);
   const [privacySaving, setPrivacySaving] = useState(false);
   const [copiedField, setCopiedField] = useState(null);
   const [showDeletionModal, setShowDeletionModal] = useState(false);
@@ -626,8 +628,8 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
       const newForm = formFromData(updated);
       savedForm.current = newForm;
       setForm(newForm);
-      setEditMode(null);
-      router.refresh();
+      setAvailSaved(true);
+      setTimeout(() => { setAvailSaved(false); setEditMode(null); router.refresh(); }, 1500);
     } catch {
       setSaveError(t.errors.saveFailed);
     } finally {
@@ -761,6 +763,19 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
             <Toggle checked={form.canSit} onChange={(v) => update('canSit', v)} label="List me as available to sit" />
             <p className={styles.hint} style={{ marginTop: '0.4rem' }}>Turns your profile on or off in the sitter search.</p>
           </div>
+          {pendingDefaultChange && (
+            <div className={styles.availSwitchWarn}>
+              <p>Switching modes will clear your {form.unavailableDatesV2.length} selected date{form.unavailableDatesV2.length !== 1 ? 's' : ''}. Continue?</p>
+              <div className={styles.availSwitchWarnBtns}>
+                <button type="button" onClick={() => setPendingDefaultChange(null)}>Cancel</button>
+                <button type="button" onClick={() => {
+                  update('availabilityDefault', pendingDefaultChange);
+                  update('unavailableDatesV2', []);
+                  setPendingDefaultChange(null);
+                }}>Switch anyway</button>
+              </div>
+            </div>
+          )}
           {blockedDatesLoading ? (
             <div style={{ color: '#999', fontSize: '0.875rem', padding: '1rem 0' }}>Loading calendar…</div>
           ) : (
@@ -768,7 +783,13 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
               markedDates={form.unavailableDatesV2}
               availabilityDefault={form.availabilityDefault}
               onChange={(dates) => update('unavailableDatesV2', dates)}
-              onDefaultChange={(val) => { update('availabilityDefault', val); update('unavailableDatesV2', []); }}
+              onDefaultChange={(val) => {
+                if (form.unavailableDatesV2.length > 0) {
+                  setPendingDefaultChange(val);
+                } else {
+                  update('availabilityDefault', val);
+                }
+              }}
               onOverride={(ymd) => { overriddenDatesRef.current = new Set([...overriddenDatesRef.current, ymd]); }}
               blockedDates={blockedDates}
             />
@@ -776,8 +797,8 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
           <div className={styles.saveBar} style={{ marginTop: '1rem' }}>
             {saveError && <span className={styles.saveError}>{saveError}</span>}
             <button type="button" className={styles.cancelBtnText} onClick={handleCancel}>Cancel</button>
-            <button type="button" className={styles.saveBtn} onClick={handleSaveAvailability} disabled={saving}>
-              {saving ? t.saving : t.save}
+            <button type="button" className={styles.saveBtn} onClick={handleSaveAvailability} disabled={saving || availSaved}>
+              {saving ? t.saving : availSaved ? '✓ Saved' : t.save}
             </button>
           </div>
         </div>
