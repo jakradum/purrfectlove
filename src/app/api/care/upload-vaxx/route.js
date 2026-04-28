@@ -10,7 +10,7 @@ const serverClient = createClient({
 })
 
 const ALLOWED_TYPES = ['image/jpeg', 'image/png', 'application/pdf']
-const MAX_SIZE = 1 * 1024 * 1024 // 1 MB
+const MAX_SIZE = 15 * 1024 * 1024 // 15 MB
 
 export async function POST(request) {
   try {
@@ -29,7 +29,7 @@ export async function POST(request) {
       return Response.json({ error: 'Only JPEG, PNG, and PDF files are accepted' }, { status: 400 })
     }
     if (file.size > MAX_SIZE) {
-      return Response.json({ error: 'File must be under 1 MB' }, { status: 400 })
+      return Response.json({ error: 'File is too large to upload.' }, { status: 400 })
     }
 
     // Verify the cat _key belongs to this sitter

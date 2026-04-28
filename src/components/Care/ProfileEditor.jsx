@@ -322,7 +322,7 @@ function VaxxDropZone({ busy, onFile, onClickUpload, vaxxDate, onDateChange }) {
         />
         <span style={{ fontSize: '0.75rem', color: '#aaa' }}>Vaccination date (optional)</span>
       </div>
-      <p style={{ margin: 0, fontSize: '0.75rem', color: '#aaa' }}>JPEG, PNG or PDF · max 1 MB</p>
+      <p style={{ margin: 0, fontSize: '0.75rem', color: '#aaa' }}>Upload at least one vaccination record from the last 3 years</p>
     </div>
   );
 }
