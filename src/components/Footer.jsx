@@ -102,6 +102,7 @@ export default function Footer({ locale = 'en', siteUrl = '' }) {
               <li key={link.href}>
                 <Link href={resolveHref(link.href)} className={styles.link}>
                   {link.label}
+                  {link.beta && <span className={styles.betaBadge}>Beta</span>}
                 </Link>
               </li>
             ))}

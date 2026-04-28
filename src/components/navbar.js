@@ -162,6 +162,7 @@ export default function Navbar({ locale = 'en', siteUrl = '', onLocaleChange = n
                 ) : (
                   <Link key={link.href} href={resolveHref(link.href, link.external)} className={styles.navLink}>
                     {link.label}
+                    {link.beta && <span className={styles.betaBadge}>Beta</span>}
                   </Link>
                 )
               ))}
@@ -251,6 +252,7 @@ export default function Navbar({ locale = 'en', siteUrl = '', onLocaleChange = n
                   style={{ animationDelay: `${index * 0.05}s` }}
                 >
                   {link.label}
+                  {link.beta && <span className={styles.betaBadge}>Beta</span>}
                 </Link>
               )
             ))}

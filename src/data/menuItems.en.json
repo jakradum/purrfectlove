@@ -12,7 +12,7 @@
     },
     { "href": "/about", "label": "About" },
     { "href": "/contact", "label": "Contact" },
-    { "href": "https://care.purrfectlove.org", "label": "Community", "external": true }
+    { "href": "https://care.purrfectlove.org", "label": "Community", "external": true, "beta": true }
   ],
   "cta": {
     "href": "/adopt",

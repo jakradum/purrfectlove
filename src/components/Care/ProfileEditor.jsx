@@ -28,7 +28,6 @@ const FEEDING_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
 // Grouped trait definitions — shared for cat personality and sitter "comfortable with"
 const TRAIT_GROUPS = [
   { label: 'Temperament', options: ['shy', 'confident', 'gentle', 'playful', 'independent'] },
-  { label: 'Social', options: ['good_with_cats', 'prefers_solo', 'good_with_kids'] },
   { label: 'Care needs', options: ['senior', 'special_needs', 'on_medication', 'indoor_only'] },
 ];
 // All 12 traits flat
@@ -429,6 +428,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
     return map
   })
   const [vaxxUploading, setVaxxUploading] = useState({})
+  const [vaxxDirty, setVaxxDirty] = useState(false)
   const [vaxxDates, setVaxxDates] = useState({})
   const vaxxInputRefs = useRef({})
   const [focusCatVaxx, setFocusCatVaxx] = useState(null) // catIndex to scroll to
@@ -479,7 +479,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
       .finally(() => setBlockedDatesLoading(false));
   }, [editMode]);
 
-  const isDirty = JSON.stringify(form) !== JSON.stringify(savedForm.current);
+  const isDirty = vaxxDirty || JSON.stringify(form) !== JSON.stringify(savedForm.current);
 
   const update = (field, value) => {
     setForm((prev) => ({ ...prev, [field]: value }));
@@ -533,6 +533,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
       if (res.ok) {
         const data = await res.json();
         setVaxxRecords(prev => ({ ...prev, [catKey]: { fileUrl: data.fileUrl, fileName: data.fileName, date: data.date || null } }));
+        setVaxxDirty(true);
       }
     } catch { /* silent */ }
     setVaxxUploading(prev => ({ ...prev, [catKey]: false }));
@@ -545,6 +546,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
       if (res.ok) {
         setVaxxRecords(prev => ({ ...prev, [catKey]: null }));
         setVaxxDates(prev => ({ ...prev, [catKey]: '' }));
+        setVaxxDirty(true);
       }
     } catch { /* silent */ }
     setVaxxUploading(prev => ({ ...prev, [catKey]: false }));
@@ -585,6 +587,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
       const newForm = formFromData(updated);
       savedForm.current = newForm;
       setForm(newForm);
+      setVaxxDirty(false);
       setEditMode(null);
       router.refresh();
     } catch {
