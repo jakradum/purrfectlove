@@ -16,6 +16,12 @@ export default {
       readOnly: true
     },
     {
+      name: 'phone',
+      title: 'Phone',
+      type: 'string',
+      readOnly: true
+    },
+    {
       name: 'message',
       title: 'Message',
       type: 'text',

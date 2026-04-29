@@ -14,6 +14,7 @@ export default function ContactPage({ locale = 'en' }) {
   const [formData, setFormData] = useState({
     name: '',
     email: '',
+    phone: '',
     message: '',
     website: '' // Honeypot
   });
@@ -123,6 +124,19 @@ export default function ContactPage({ locale = 'en' }) {
                     className={styles.input}
                   />
                 </div>
+              </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>{contactContent.form.phone}</label>
+                <input
+                  type="tel"
+                  name="phone"
+                  value={formData.phone}
+                  onChange={handleChange}
+                  autoComplete="tel"
+                  className={styles.input}
+                />
+                <p className={styles.helpText}>{contactContent.form.phoneHelp}</p>
               </div>
 
               <div className={styles.formGroup}>

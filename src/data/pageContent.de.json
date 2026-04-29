@@ -192,6 +192,8 @@
     "form": {
       "name": "Name",
       "email": "E-Mail",
+      "phone": "Telefon",
+      "phoneHelp": "Wir geben Ihre Nummer nicht weiter, sie dient nur dazu, Sie schneller kontaktieren zu können.",
       "message": "Ihre Nachricht",
       "messagePlaceholder": "Teilen Sie uns mit, was Sie beschäftigt...",
       "submit": "Absenden",

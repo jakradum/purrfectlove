@@ -83,10 +83,12 @@ export async function POST(request) {
     }
 
     // 6. SAVE TO SANITY
+    const phone = typeof body.phone === 'string' ? body.phone.trim() : '';
     const result = await serverClient.create({
       _type: 'contactMessage',
       name: body.name,
       email: body.email,
+      ...(phone ? { phone } : {}),
       message: body.message,
       locale: body.locale || 'en',
       submittedAt: new Date().toISOString(),
@@ -119,6 +121,7 @@ export async function POST(request) {
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
               <tr><td style="padding:5px 0;font-size:14px;color:#666;width:80px;">From</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${body.name}</td></tr>
               <tr><td style="padding:5px 0;font-size:14px;color:#666;">Email</td><td style="padding:5px 0;font-size:14px;"><a href="mailto:${body.email}" style="color:#C85C3F;text-decoration:none;">${body.email}</a></td></tr>
+              ${phone ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;">Phone</td><td style="padding:5px 0;font-size:14px;"><a href="tel:${phone}" style="color:#C85C3F;text-decoration:none;">${phone}</a></td></tr>` : ''}
               <tr><td style="padding:5px 0;font-size:14px;color:#666;">Language</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${languageLabel} ${languageFlag}</td></tr>
             </table>
             <div style="background:#F5F0E8;border-radius:8px;padding:20px;margin:0 0 24px;font-size:15px;line-height:1.7;color:#2D2D2D;">
@@ -146,7 +149,7 @@ export async function POST(request) {
         to: ['support@purrfectlove.org'],
         subject: `New message on the website message board — ${body.name} ${languageFlag}`,
         html: emailHtml,
-        text: `New message on the Purrfect Love website message board\n\nFrom: ${body.name} (${body.email})\nLanguage: ${languageLabel}\n\n${body.message}\n\nReview: ${sanityStudioUrl}`,
+        text: `New message on the Purrfect Love website message board\n\nFrom: ${body.name} (${body.email})${phone ? `\nPhone: ${phone}` : ''}\nLanguage: ${languageLabel}\n\n${body.message}\n\nReview: ${sanityStudioUrl}`,
       });
       if (emailError) console.error('Contact notification email error:', emailError);
       else console.log('Contact notification email sent');

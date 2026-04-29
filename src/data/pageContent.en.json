@@ -191,6 +191,8 @@
     "form": {
       "name": "Name",
       "email": "Email",
+      "phone": "Phone",
+      "phoneHelp": "We don't share your number, this is only for us to contact you faster.",
       "message": "Your Message",
       "messagePlaceholder": "Tell us what's on your mind...",
       "submit": "Submit",
