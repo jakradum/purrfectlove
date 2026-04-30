@@ -2876,7 +2876,7 @@
   .fieldRow { grid-template-columns: 1fr; }
   .catCard { padding: 1rem; }
   .dateRangeRow { flex-direction: column; gap: 0.5rem; }
-  .saveBar { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; background: rgba(255,255,255,0.92); backdrop-filter: blur(6px); border-radius: 12px; padding: 0.5rem 0.75rem; }
+  .saveBar { flex-direction: row; flex-wrap: wrap; justify-content: flex-end; gap: 0.6rem; background: rgba(255,255,255,0.92); backdrop-filter: blur(6px); border-radius: 12px; padding: 0.5rem 0.75rem; bottom: calc(env(safe-area-inset-bottom, 0px) + 80px); }
   .saveBtn, .cancelBtn, .cancelBtnText, .editBtn, .editBtnSecondary, .addBtn { min-height: 44px; font-size: 0.9rem; }
   .profileInput, .profileTextarea { min-height: 44px; font-size: 16px; } /* 16px prevents iOS zoom */
   .checkboxLabel { min-height: 40px; display: flex; align-items: center; }

@@ -428,6 +428,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
     return map
   })
   const [vaxxUploading, setVaxxUploading] = useState({})
+  const [vaxxRemoving, setVaxxRemoving] = useState({})
   const [vaxxDirty, setVaxxDirty] = useState(false)
   const [vaxxDates, setVaxxDates] = useState({})
   const vaxxInputRefs = useRef({})
@@ -540,7 +541,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
   };
 
   const handleVaxxRemove = async (catKey) => {
-    setVaxxUploading(prev => ({ ...prev, [catKey]: true }));
+    setVaxxRemoving(prev => ({ ...prev, [catKey]: true }));
     try {
       const res = await fetch(`/api/care/upload-vaxx?catKey=${encodeURIComponent(catKey)}`, { method: 'DELETE' });
       if (res.ok) {
@@ -549,7 +550,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
         setVaxxDirty(true);
       }
     } catch { /* silent */ }
-    setVaxxUploading(prev => ({ ...prev, [catKey]: false }));
+    setVaxxRemoving(prev => ({ ...prev, [catKey]: false }));
   };
 
   const handleSave = async (e) => {
@@ -968,9 +969,10 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
               {(() => {
                 const rec = vaxxRecords[cat._key];
                 const busy = !!vaxxUploading[cat._key];
+                const removing = !!vaxxRemoving[cat._key];
                 if (rec?.fileUrl) {
                   return (
-                    <VaxxReplaceZone busy={busy} onFile={f => handleVaxxUpload(cat._key, f)}>
+                    <VaxxReplaceZone busy={busy || removing} onFile={f => handleVaxxUpload(cat._key, f)}>
                       <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
                         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
                           <span style={{ fontSize: '0.83rem', color: '#2C5F4F', fontWeight: 600 }}>
@@ -984,18 +986,18 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
                         </div>
                         <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center', flexWrap: 'wrap' }}>
                           <button
-                            type="button" disabled={busy}
+                            type="button" disabled={busy || removing}
                             onClick={() => vaxxInputRefs.current[cat._key]?.click()}
                             style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--hunter-green)', background: 'none', border: '1px solid rgba(44,95,79,0.35)', borderRadius: '6px', padding: '0.25rem 0.6rem', cursor: 'pointer', fontFamily: 'var(--font-outfit)' }}
                           >
                             {busy ? 'Uploading…' : 'Replace'}
                           </button>
                           <button
-                            type="button" disabled={busy}
+                            type="button" disabled={busy || removing}
                             onClick={() => handleVaxxRemove(cat._key)}
                             style={{ fontSize: '0.78rem', fontWeight: 600, color: '#c0392b', background: 'none', border: '1px solid rgba(192,57,43,0.3)', borderRadius: '6px', padding: '0.25rem 0.6rem', cursor: 'pointer', fontFamily: 'var(--font-outfit)' }}
                           >
-                            Remove
+                            {removing ? 'Removing…' : 'Remove'}
                           </button>
                           <span style={{ fontSize: '0.72rem', color: '#bbb' }}>or drag a new file to replace</span>
                         </div>
