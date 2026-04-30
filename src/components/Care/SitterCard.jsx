@@ -143,7 +143,7 @@ export default function SitterCard({
     }
   };
   const [myCatData, setMyCatData] = useState(null); // null = not yet fetched, [] = fetched but empty
-  const myCats = myCatData ? myCatData.filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name })) : null;
+  const myCats = myCatData ? myCatData.filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name, vaccinationRecord: c.vaccinationRecord || null })) : null;
   const [selectedCats, setSelectedCats] = useState([]);
   const missingVaxx = selectedCats.filter(c => !c.vaccinationRecord?.fileUrl);
   const [localSitType, setLocalSitType] = useState(sitType); // null until user picks when sitter does both
@@ -192,10 +192,11 @@ export default function SitterCard({
       .catch(() => setMyCatData([]));
   }, [expanded, myCatData]);
 
-  // Reset form when card collapses
+  // Reset form when card collapses (including cat data so vaxx status re-fetches on next expand)
   useEffect(() => {
     if (!expanded) {
       setSelectedCats([]);
+      setMyCatData(null);
       setLocalSitType(sitType);
       setNote('');
       setFormError('');

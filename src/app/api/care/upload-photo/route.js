@@ -27,9 +27,9 @@ export async function POST(request) {
       return Response.json({ error: 'Only JPG, PNG, and WebP images are accepted' }, { status: 400 })
     }
 
-    const MAX_SIZE = 2 * 1024 * 1024 // 2MB
+    const MAX_SIZE = 10 * 1024 * 1024 // 10MB
     if (file.size > MAX_SIZE) {
-      return Response.json({ error: 'Image must be under 2MB' }, { status: 400 })
+      return Response.json({ error: 'Image is too large to upload.' }, { status: 400 })
     }
 
     const buffer = Buffer.from(await file.arrayBuffer())

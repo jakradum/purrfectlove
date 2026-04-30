@@ -137,6 +137,7 @@ export default function SitterProfile({
   const [showBooking, setShowBooking] = useState(false);
   const [showWaiver, setShowWaiver] = useState(false);
   const [coverUploading, setCoverUploading] = useState(false);
+  const [coverError, setCoverError] = useState('');
   const [localCoverUrl, setLocalCoverUrl] = useState(null);
 
   // Analytics: fire sitter_profile_opened on mount (only for other members' profiles)
@@ -151,12 +152,19 @@ export default function SitterProfile({
     const file = e.target.files?.[0];
     if (!file) return;
     setCoverUploading(true);
+    setCoverError('');
     try {
       const fd = new FormData();
       fd.append('cover', file);
       const res = await fetch('/api/care/upload-cover', { method: 'POST', body: fd });
       const data = await res.json();
-      if (res.ok && data.coverImageUrl) setLocalCoverUrl(data.coverImageUrl);
+      if (res.ok && data.coverImageUrl) {
+        setLocalCoverUrl(data.coverImageUrl);
+      } else {
+        setCoverError(data.error || 'Upload failed. Please try again.');
+      }
+    } catch {
+      setCoverError('Upload failed. Please check your connection and try again.');
     } finally {
       setCoverUploading(false);
       e.target.value = '';
@@ -217,6 +225,9 @@ export default function SitterProfile({
                 style={{ display: 'none' }}
                 onChange={handleCoverUpload}
               />
+              {coverError && (
+                <p style={{ position: 'absolute', bottom: 8, left: 0, right: 0, textAlign: 'center', fontSize: '0.78rem', color: '#fff', background: 'rgba(185,28,28,0.85)', padding: '4px 8px', margin: 0 }}>{coverError}</p>
+              )}
             </>
           )}
 
