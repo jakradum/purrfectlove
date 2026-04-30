@@ -25,21 +25,29 @@ const LocationMapPicker = dynamic(() => import('./LocationMapPicker'), {
 const DIET_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
 const FEEDING_OPTIONS = ['wet', 'dry', 'medication', 'special diet'];
 
-// Grouped trait definitions — shared for cat personality and sitter "comfortable with"
+// Grouped trait definitions — EN
 const TRAIT_GROUPS = [
   { label: 'Temperament', options: ['shy', 'confident', 'gentle', 'playful', 'independent'] },
   { label: 'Care needs', options: ['senior', 'special_needs', 'on_medication', 'indoor_only'] },
 ];
-// All 12 traits flat
-const ALL_TRAITS = TRAIT_GROUPS.flatMap(g => g.options);
+// DE uses different temperament traits
+const TRAIT_GROUPS_DE = [
+  { label: 'Temperament', options: ['shy', 'gentle', 'playful', 'curious', 'calm', 'rather_independent'] },
+  { label: 'Pflege', options: ['senior', 'special_needs', 'on_medication', 'indoor_only'] },
+];
 // Cat personality: senior excluded (auto-calculated from age ≥ 10)
 const PERSONALITY_GROUPS = TRAIT_GROUPS.map(g => ({
+  ...g,
+  options: g.options.filter(o => o !== 'senior'),
+}));
+const PERSONALITY_GROUPS_DE = TRAIT_GROUPS_DE.map(g => ({
   ...g,
   options: g.options.filter(o => o !== 'senior'),
 }));
 
 const TRAIT_LABELS = {
   shy: 'Shy', confident: 'Confident', gentle: 'Gentle', playful: 'Playful', independent: 'Independent',
+  curious: 'Curious', calm: 'Calm', rather_independent: 'Rather independent',
   good_with_cats: 'Good with other cats', prefers_solo: 'Prefers to be only cat', good_with_kids: 'Good with kids',
   senior: 'Senior (10+ yrs)', special_needs: 'Special needs', on_medication: 'On medication', indoor_only: 'Indoor only',
 };
@@ -950,7 +958,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
             <div className={styles.formGroup}>
               <label className={styles.profileLabel}>{t.fields.catPersonality}</label>
               <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Select all that apply.</p>
-              <GroupedCheckboxGroup groups={PERSONALITY_GROUPS} value={cat.personality || []} onChange={(v) => updateCat(idx, 'personality', v)} labelMap={tagMap} />
+              <GroupedCheckboxGroup groups={locale === 'de' ? PERSONALITY_GROUPS_DE : PERSONALITY_GROUPS} value={cat.personality || []} onChange={(v) => updateCat(idx, 'personality', v)} labelMap={tagMap} />
             </div>
             <div className={styles.formGroup}>
               <label className={styles.profileLabel}>{t.fields.catDiet}</label>
@@ -1095,7 +1103,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
           <div className={styles.formGroup}>
             <label className={styles.profileLabel}>{t.fields.behavioralTraits}</label>
             <p className={styles.hint} style={{ marginBottom: '0.4rem' }}>Select all that apply.</p>
-            <GroupedCheckboxGroup groups={TRAIT_GROUPS} value={form.behavioralTraits} onChange={(v) => update('behavioralTraits', v)} labelMap={tagMap} />
+            <GroupedCheckboxGroup groups={locale === 'de' ? TRAIT_GROUPS_DE : TRAIT_GROUPS} value={form.behavioralTraits} onChange={(v) => update('behavioralTraits', v)} labelMap={tagMap} />
           </div>
         </div>
       )}
