@@ -6166,6 +6166,22 @@
   display: inline-block;
 }
 
+/* ====== Vaxx upload progress bar ====== */
+
+.vaxxProgressWrap {
+  height: 4px;
+  border-radius: 999px;
+  background: rgba(44, 95, 79, 0.12);
+  overflow: hidden;
+}
+
+.vaxxProgressBar {
+  height: 100%;
+  border-radius: 999px;
+  background: var(--hunter-green);
+  transition: width 0.1s linear;
+}
+
 /* ====== Availability nudge — small inline CTA on marketplace ====== */
 
 .availNudge {

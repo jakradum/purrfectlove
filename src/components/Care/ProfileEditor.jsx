@@ -437,6 +437,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
   })
   const [vaxxUploading, setVaxxUploading] = useState({})
   const [vaxxRemoving, setVaxxRemoving] = useState({})
+  const [vaxxProgress, setVaxxProgress] = useState({}) // 0-100 per catKey
   const [vaxxDirty, setVaxxDirty] = useState(false)
   const [vaxxDates, setVaxxDates] = useState({})
   const vaxxInputRefs = useRef({})
@@ -530,22 +531,39 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
   };
 
 
-  const handleVaxxUpload = async (catKey, file) => {
+  const handleVaxxUpload = (catKey, file) => {
     setVaxxUploading(prev => ({ ...prev, [catKey]: true }));
-    try {
-      const fd = new FormData();
-      fd.append('file', file);
-      fd.append('catKey', catKey);
-      const date = vaxxDates[catKey] || '';
-      if (date) fd.append('date', date);
-      const res = await fetch('/api/care/upload-vaxx', { method: 'POST', body: fd });
-      if (res.ok) {
-        const data = await res.json();
-        setVaxxRecords(prev => ({ ...prev, [catKey]: { fileUrl: data.fileUrl, fileName: data.fileName, date: data.date || null } }));
-        setVaxxDirty(true);
+    setVaxxProgress(prev => ({ ...prev, [catKey]: 0 }));
+
+    const fd = new FormData();
+    fd.append('file', file);
+    fd.append('catKey', catKey);
+    const date = vaxxDates[catKey] || '';
+    if (date) fd.append('date', date);
+
+    const xhr = new XMLHttpRequest();
+    xhr.upload.addEventListener('progress', (e) => {
+      if (e.lengthComputable) {
+        setVaxxProgress(prev => ({ ...prev, [catKey]: Math.round((e.loaded / e.total) * 100) }));
       }
-    } catch { /* silent */ }
-    setVaxxUploading(prev => ({ ...prev, [catKey]: false }));
+    });
+    xhr.addEventListener('load', () => {
+      if (xhr.status >= 200 && xhr.status < 300) {
+        try {
+          const data = JSON.parse(xhr.responseText);
+          setVaxxRecords(prev => ({ ...prev, [catKey]: { fileUrl: data.fileUrl, fileName: data.fileName, date: data.date || null } }));
+          setVaxxDirty(true);
+        } catch { /* silent */ }
+      }
+      setVaxxUploading(prev => ({ ...prev, [catKey]: false }));
+      setVaxxProgress(prev => ({ ...prev, [catKey]: null }));
+    });
+    xhr.addEventListener('error', () => {
+      setVaxxUploading(prev => ({ ...prev, [catKey]: false }));
+      setVaxxProgress(prev => ({ ...prev, [catKey]: null }));
+    });
+    xhr.open('POST', '/api/care/upload-vaxx');
+    xhr.send(fd);
   };
 
   const handleVaxxRemove = async (catKey) => {
@@ -978,6 +996,7 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
                 const rec = vaxxRecords[cat._key];
                 const busy = !!vaxxUploading[cat._key];
                 const removing = !!vaxxRemoving[cat._key];
+                const progress = vaxxProgress[cat._key] ?? null;
                 if (rec?.fileUrl) {
                   return (
                     <VaxxReplaceZone busy={busy || removing} onFile={f => handleVaxxUpload(cat._key, f)}>
@@ -1014,6 +1033,11 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
                           type="file" accept=".jpg,.jpeg,.png,.pdf" style={{ display: 'none' }}
                           onChange={e => { const f = e.target.files?.[0]; if (f) handleVaxxUpload(cat._key, f); e.target.value = ''; }}
                         />
+                        {progress !== null && (
+                          <div className={styles.vaxxProgressWrap}>
+                            <div className={styles.vaxxProgressBar} style={{ width: `${progress}%` }} />
+                          </div>
+                        )}
                       </div>
                     </VaxxReplaceZone>
                   );
@@ -1030,6 +1054,11 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
                       vaxxDate={vaxxDates[cat._key]}
                       onDateChange={v => setVaxxDates(prev => ({ ...prev, [cat._key]: v }))}
                     />
+                    {progress !== null && (
+                      <div className={styles.vaxxProgressWrap}>
+                        <div className={styles.vaxxProgressBar} style={{ width: `${progress}%` }} />
+                      </div>
+                    )}
                     <input
                       ref={el => { vaxxInputRefs.current[cat._key] = el }}
                       type="file" accept=".jpg,.jpeg,.png,.pdf" style={{ display: 'none' }}
