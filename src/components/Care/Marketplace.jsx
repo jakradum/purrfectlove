@@ -6,10 +6,9 @@ import { createBrowserClient } from '@supabase/ssr';
 import posthog from 'posthog-js';
 import styles from './Care.module.css';
 import SitterCard from './SitterCard';
-import FilterBar from './FilterBar';
+import ConfigCard from './ConfigCard';
 import contentEN from '@/data/careContent.en.json';
 import contentDE from '@/data/careContent.de.json';
-import AvailabilityStrip from './AvailabilityStrip';
 
 const MarketplaceMap = dynamic(() => import('./MarketplaceMap'), { ssr: false });
 const Lottie = dynamic(() => import('lottie-react'), { ssr: false });
@@ -156,13 +155,11 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   const [searching, setSearching] = useState(false);
   const [searched, setSearched] = useState(false);
 
-  // Local copy of myProfile so we can update unavailableDatesV2 after strip saves
+  // Config card: user's cats fetched once on mount for pre-selection
+  const [configCats, setConfigCats] = useState(null);
+  const [selectedConfigCats, setSelectedConfigCats] = useState([]);
+
   const [myProfile, setMyProfile] = useState(myProfileProp ?? null);
-  const handleAvailabilitySaved = useCallback((newDates) => {
-    setMyProfile(prev => prev ? { ...prev, unavailableDatesV2: newDates } : prev);
-    // Refetch sitters so own card updates if in results
-    if (searched) handleSearch();
-  }, [searched]); // eslint-disable-line react-hooks/exhaustive-deps
   const [searchError, setSearchError] = useState('');
   const [fetchedSitters, setFetchedSitters] = useState([]);
   const [shimmer, setShimmer] = useState(false);
@@ -192,8 +189,18 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
   const lastResultCountRef = useRef(1);
   const cardRefsMap = useRef({});
 
-  // Restore state from sessionStorage on mount
+  // Restore state from sessionStorage on mount; pre-fill today/tomorrow on first visit
   useEffect(() => {
+    const todayISO = () => {
+      const d = new Date();
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+    const tomorrowISO = () => {
+      const d = new Date();
+      d.setDate(d.getDate() + 1);
+      return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
+    };
+
     try {
       const saved = JSON.parse(sessionStorage.getItem(STORAGE_KEY) || 'null');
       if (saved) {
@@ -212,8 +219,29 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
           setSearched(true);
           setResultAnimKey(k => k + 1);
         }
+      } else {
+        // First visit: pre-fill today → tomorrow
+        setStartDate(todayISO());
+        setEndDate(tomorrowISO());
       }
-    } catch { /* sessionStorage unavailable */ }
+    } catch {
+      setStartDate(todayISO());
+      setEndDate(tomorrowISO());
+    }
+  }, []); // eslint-disable-line react-hooks/exhaustive-deps
+
+  // Fetch the logged-in user's cats on mount for ConfigCard
+  useEffect(() => {
+    fetch('/api/care/profile')
+      .then(r => r.json())
+      .then(doc => {
+        const cats = (doc.cats || [])
+          .filter(c => c._key && c.name)
+          .map(c => ({ _key: c._key, name: c.name, vaccinationRecord: c.vaccinationRecord || null }));
+        setConfigCats(cats);
+        if (cats.length === 1) setSelectedConfigCats(cats);
+      })
+      .catch(() => setConfigCats([]));
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 
   useEffect(() => {
@@ -326,9 +354,17 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     setRadius(newRadius);
   }, [searched]);
 
-  const handleSearch = async (sdArg, edArg) => {
-    const sd = sdArg !== undefined ? sdArg : startDate;
-    const ed = edArg !== undefined ? edArg : endDate;
+  const toggleConfigCat = useCallback((cat) => {
+    setSelectedConfigCats(prev =>
+      prev.some(c => c._key === cat._key)
+        ? prev.filter(c => c._key !== cat._key)
+        : [...prev, cat]
+    );
+  }, []);
+
+  const handleSearch = async () => {
+    const sd = startDate;
+    const ed = endDate;
     setSearching(true);
     setSearched(true);
     setSearchError('');
@@ -426,7 +462,6 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     if (el) el.scrollIntoView({ behavior: 'smooth', block: 'nearest' });
   }, []);
 
-  const datesSelected = !!(startDate && endDate);
   const showMap = !!(results && results.length > 0);
 
   return (
@@ -452,42 +487,21 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         <p className={styles.pageSubtitle}>{t.subtitle}</p>
       </div>
 
-      <FilterBar
+      <ConfigCard
         startDate={startDate}
         endDate={endDate}
         radius={radius}
         sitType={sitType}
-        onDatesChange={(s, e) => {
-          setStartDate(s);
-          setEndDate(e);
-          if (s && e) {
-            handleSearch(s, e);
-          } else {
-            setSearched(false);
-            setFetchedSitters([]);
-            setDisplayedCount(null);
-          }
-        }}
+        onDatesChange={(s, e) => { setStartDate(s); setEndDate(e); }}
         onRadiusChange={handleRadiusChange}
         onSitTypeChange={setSitType}
-        onRefresh={handleSearch}
-        hasLocation={userLocation?.lat != null}
+        onSearch={handleSearch}
+        myCats={configCats}
+        selectedCats={selectedConfigCats}
+        onCatToggle={toggleConfigCat}
         locale={locale}
         loading={searching}
       />
-
-      {/* UX-13: Filter summary line */}
-      {datesSelected && (() => {
-        const nights = dateRange(startDate, endDate).length - 1;
-        const sitTypeLabel = sitType === 'home_visit' ? 'Home visits' : sitType === 'drop_off' ? 'Drop off' : null;
-        const parts = [
-          formatDateRange(startDate, endDate),
-          `within ${radius} km`,
-          nights > 0 ? `${nights} night${nights !== 1 ? 's' : ''}` : null,
-          sitTypeLabel,
-        ].filter(Boolean);
-        return <p className={styles.filterSummary}>Showing results for {parts.join(' · ')}</p>;
-      })()}
 
       {/* Discoverability nudge — shown when logged-in user has canSit off */}
       {myProfile && !myProfile.canSit && !bannerDismissed && (
@@ -507,16 +521,17 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
 
       {/* Split shell: cards left, map right on desktop */}
       <div className={`${styles.splitShell}${showMap ? ` ${styles.splitShellMap}` : ''}`}>
-        {/* Availability strip spans both columns on desktop */}
+        {/* Availability nudge — small inline CTA for sitters */}
         {myProfile?.canSit && (
           <div className={styles.splitStripRow}>
-            <AvailabilityStrip
-              myProfile={myProfile}
-              startDate={startDate}
-              endDate={endDate}
-              onSaved={handleAvailabilitySaved}
-              locale={locale}
-            />
+            <div className={styles.availNudge}>
+              <span className={styles.availNudgeText}>
+                {locale === 'de' ? 'Verfügbar zum Sitten?' : 'Available to sit others’ cats?'}
+              </span>
+              <a href="/care/profile#availability" className={styles.availNudgeBtn}>
+                {locale === 'de' ? 'Verfügbarkeit aktualisieren →' : 'Update your availability →'}
+              </a>
+            </div>
           </div>
         )}
 
@@ -535,17 +550,8 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         )}
 
         <div className={styles.splitCards}>
-          {/* Empty state — no dates selected */}
-          {!datesSelected && !searching && (
-            <div className={styles.datesEmptyState}>
-              <div className={styles.datesEmptyIcon}>🗓️</div>
-              <h2 className={styles.datesEmptyHeading}>{t.noSitters.heading}</h2>
-              <p className={styles.datesEmptyText}>{t.noSitters.body}</p>
-            </div>
-          )}
-
-          {/* Results area */}
-          {(datesSelected || searching) && (
+          {/* Results area — only shown after user clicks Find */}
+          {(searched || searching) && (
             <div className={styles.resultsWrapper}>
               {/* Animated height wrapper */}
               <div ref={gridContainerRef} className={styles.resultsAnimated}>
@@ -592,6 +598,7 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
                           startDate={startDate}
                           endDate={endDate}
                           sitType={sitType}
+                          defaultCats={selectedConfigCats.length > 0 ? selectedConfigCats : null}
                           bookingState={myBookings[`${sitter._id}__${startDate}__${endDate}`] ?? null}
                           onBooked={(bookingRef, bookingId) => {
                             const key = `${sitter._id}__${startDate}__${endDate}`;

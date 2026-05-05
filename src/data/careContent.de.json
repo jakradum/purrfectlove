@@ -81,7 +81,28 @@
       "heading": "Wann brauchst du eine Betreuung?",
       "body": "Wähle deine Daten aus, um zu sehen, wer verfügbar ist."
     },
-    "noSittersFound": "Keine Sitter in der Nähe gefunden"
+    "noSittersFound": "Keine Sitter in der Nähe gefunden",
+    "config": {
+      "sitTypeHeading": "Welche Art von Sitting brauchst du?",
+      "sitTypeAny": "Beides",
+      "sitTypeAnyDesc": "Ich bin flexibel",
+      "sitTypeHomeVisit": "Hausbesuch",
+      "sitTypeHomeVisitDesc": "Sitter kommt zu dir",
+      "sitTypeDropOff": "Abgabe",
+      "sitTypeDropOffDesc": "Du bringst deine Katze",
+      "datesHeading": "Wann brauchst du Sitting?",
+      "dropOffLabel": "Abgabe",
+      "pickUpLabel": "Abholung",
+      "fromLabel": "Von",
+      "toLabel": "Bis",
+      "catsHeading": "Welche Katzen?",
+      "radiusHeading": "Suchradius",
+      "findButton": "Sitter finden",
+      "findingButton": "Suche läuft…",
+      "vaxxMissing": "Impfnachweis fehlt — bitte vor der Buchung hochladen",
+      "noCats": "Füge zuerst Katzen zu deinem Profil hinzu.",
+      "loadingCats": "Katzen werden geladen…"
+    }
   },
   "profile": {
     "title": "Mein Profil",

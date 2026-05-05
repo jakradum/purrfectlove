@@ -73,6 +73,7 @@ export default function SitterCard({
   startDate,
   endDate,
   sitType = null,
+  defaultCats = null,
   bookingState = null,
   onBooked,
   onWithdrawn,
@@ -187,10 +188,17 @@ export default function SitterCard({
         const cats = doc.cats || [];
         setMyCatData(cats);
         const catObjs = cats.filter(c => c._key && c.name).map(c => ({ _key: c._key, name: c.name, vaccinationRecord: c.vaccinationRecord || null }));
-        if (catObjs.length === 1) setSelectedCats(catObjs);
+        if (defaultCats?.length > 0) {
+          // Pre-select cats chosen in ConfigCard, with fresh vaxx data
+          const defaultKeys = new Set(defaultCats.map(c => c._key));
+          const preSelected = catObjs.filter(c => defaultKeys.has(c._key));
+          setSelectedCats(preSelected.length > 0 ? preSelected : (catObjs.length === 1 ? catObjs : []));
+        } else if (catObjs.length === 1) {
+          setSelectedCats(catObjs);
+        }
       })
       .catch(() => setMyCatData([]));
-  }, [expanded, myCatData]);
+  }, [expanded, myCatData]); // eslint-disable-line react-hooks/exhaustive-deps
 
   // Reset form when card collapses (including cat data so vaxx status re-fetches on next expand)
   useEffect(() => {

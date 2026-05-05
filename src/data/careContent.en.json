@@ -81,7 +81,28 @@
       "heading": "When do you need a sitter?",
       "body": "Pick your dates above to see who's available."
     },
-    "noSittersFound": "No sitters found nearby"
+    "noSittersFound": "No sitters found nearby",
+    "config": {
+      "sitTypeHeading": "What kind of sitting do you need?",
+      "sitTypeAny": "Either",
+      "sitTypeAnyDesc": "I'm flexible",
+      "sitTypeHomeVisit": "Home visit",
+      "sitTypeHomeVisitDesc": "Sitter comes to you",
+      "sitTypeDropOff": "Drop off",
+      "sitTypeDropOffDesc": "You bring your cat to the sitter",
+      "datesHeading": "When do you need sitting?",
+      "dropOffLabel": "Drop off",
+      "pickUpLabel": "Pick up",
+      "fromLabel": "From",
+      "toLabel": "To",
+      "catsHeading": "Which cats?",
+      "radiusHeading": "Search radius",
+      "findButton": "Find a sitter",
+      "findingButton": "Searching…",
+      "vaxxMissing": "Vaccination record missing — please upload before booking",
+      "noCats": "Add cats to your profile first.",
+      "loadingCats": "Loading your cats…"
+    }
   },
   "profile": {
     "title": "My Profile",

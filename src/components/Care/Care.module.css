@@ -6165,3 +6165,324 @@
   flex-shrink: 0;
   display: inline-block;
 }
+
+/* ====== Availability nudge — small inline CTA on marketplace ====== */
+
+.availNudge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.5rem 0.875rem;
+  background: rgba(44, 95, 79, 0.06);
+  border-radius: 999px;
+  margin-bottom: 1rem;
+  flex-wrap: wrap;
+}
+
+.availNudgeText {
+  font-size: 0.8rem;
+  color: #666;
+}
+
+.availNudgeBtn {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: #2C5F4F;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.availNudgeBtn:hover {
+  text-decoration: underline;
+}
+
+/* ====== ConfigCard — configuration-first search ====== */
+
+.configCard {
+  background: #ffffff;
+  border-radius: 20px;
+  box-shadow: 0 2px 20px rgba(44, 95, 79, 0.1);
+  padding: 1.75rem;
+  margin-bottom: 2rem;
+  max-width: 680px;
+}
+
+.configSection {
+  margin-bottom: 1.5rem;
+}
+
+.configSection:last-child {
+  margin-bottom: 0;
+}
+
+.configSectionLabel {
+  font-size: 0.7rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.07em;
+  color: #999;
+  margin: 0 0 0.6rem;
+}
+
+/* Sit type cards */
+.configSitTypeRow {
+  display: flex;
+  gap: 0.6rem;
+}
+
+.configSitTypeCard {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.2rem;
+  padding: 0.75rem 0.5rem;
+  border-radius: 12px;
+  border: 1.5px solid #e5e7eb;
+  background: #fafafa;
+  cursor: pointer;
+  transition: border-color 0.14s, background 0.14s;
+  font-family: inherit;
+}
+
+.configSitTypeCard:hover {
+  border-color: #bcd4c9;
+  background: #f5faf8;
+}
+
+.configSitTypeCardActive {
+  border-color: #2C5F4F;
+  background: #EAF3DE;
+}
+
+.configSitTypeIcon {
+  font-size: 1.3rem;
+  line-height: 1;
+}
+
+.configSitTypeLabel {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #2D2D2D;
+  text-align: center;
+}
+
+.configSitTypeCardActive .configSitTypeLabel {
+  color: #2C5F4F;
+}
+
+.configSitTypeDesc {
+  font-size: 0.68rem;
+  color: #aaa;
+  text-align: center;
+  line-height: 1.3;
+}
+
+/* Date row */
+.configDateRow {
+  display: flex;
+  align-items: flex-end;
+  gap: 0.5rem;
+}
+
+.configDateField {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 0.3rem;
+}
+
+.configDateLabel {
+  font-size: 0.72rem;
+  font-weight: 600;
+  color: #888;
+}
+
+.configDateInput {
+  width: 100%;
+  padding: 0.6rem 0.75rem;
+  border: 1.5px solid #e5e7eb;
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-family: inherit;
+  color: #2D2D2D;
+  background: #fafafa;
+  transition: border-color 0.14s;
+  box-sizing: border-box;
+  cursor: pointer;
+}
+
+.configDateInput:focus {
+  outline: none;
+  border-color: #2C5F4F;
+  background: #fff;
+}
+
+.configDateArrow {
+  padding-bottom: 0.6rem;
+  color: #ccc;
+  font-size: 1rem;
+  flex-shrink: 0;
+}
+
+/* Cat chips */
+.configCatList {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.5rem;
+}
+
+.configCatChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  padding: 0.4rem 0.85rem;
+  border-radius: 999px;
+  border: 1.5px solid #e5e7eb;
+  background: #fafafa;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.14s, background 0.14s;
+}
+
+.configCatChip:hover {
+  border-color: #bcd4c9;
+}
+
+.configCatChipSelected {
+  border-color: #2C5F4F;
+  background: #EAF3DE;
+  color: #2C5F4F;
+  font-weight: 600;
+}
+
+.configCatCheck {
+  font-size: 0.7rem;
+  color: #2C5F4F;
+  font-weight: 700;
+}
+
+.configCatVaxxWarn {
+  font-size: 0.75rem;
+  opacity: 0.85;
+}
+
+.configCatLoading {
+  font-size: 0.85rem;
+  color: #aaa;
+  margin: 0;
+}
+
+.configNoCats {
+  font-size: 0.85rem;
+  color: #888;
+  margin: 0;
+}
+
+/* Radius row */
+.configRadiusRow {
+  display: flex;
+  gap: 0.5rem;
+  flex-wrap: wrap;
+}
+
+.configRadiusChip {
+  padding: 0.4rem 0.9rem;
+  border-radius: 999px;
+  border: 1.5px solid #e5e7eb;
+  background: #fafafa;
+  font-size: 0.85rem;
+  font-weight: 500;
+  color: #555;
+  cursor: pointer;
+  font-family: inherit;
+  transition: border-color 0.14s, background 0.14s;
+}
+
+.configRadiusChip:hover {
+  border-color: #bcd4c9;
+}
+
+.configRadiusChipActive {
+  border-color: #2C5F4F;
+  background: #EAF3DE;
+  color: #2C5F4F;
+  font-weight: 700;
+}
+
+/* Find button */
+.configSearchBtn {
+  width: 100%;
+  margin-top: 1.25rem;
+  padding: 0.9rem 1.5rem;
+  background: var(--hunter-green);
+  color: #fff;
+  border: none;
+  border-radius: 12px;
+  font-size: 1rem;
+  font-weight: 700;
+  cursor: pointer;
+  font-family: inherit;
+  transition: background 0.15s, opacity 0.15s;
+  letter-spacing: 0.01em;
+}
+
+.configSearchBtn:hover:not(:disabled) {
+  background: #1e4237;
+}
+
+.configSearchBtn:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+/* Divider between config and results */
+.configResultsDivider {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  margin: 0 0 1.5rem;
+}
+
+.configResultsDividerLine {
+  flex: 1;
+  height: 1px;
+  background: rgba(44, 95, 79, 0.12);
+}
+
+.configResultsDividerText {
+  font-size: 0.75rem;
+  font-weight: 600;
+  color: #bbb;
+  white-space: nowrap;
+}
+
+@media (max-width: 600px) {
+  .configCard {
+    padding: 1.25rem;
+    border-radius: 14px;
+  }
+
+  .configSitTypeRow {
+    gap: 0.4rem;
+  }
+
+  .configSitTypeCard {
+    padding: 0.6rem 0.3rem;
+  }
+
+  .configSitTypeIcon {
+    font-size: 1.1rem;
+  }
+
+  .configSitTypeLabel {
+    font-size: 0.72rem;
+  }
+
+  .configSitTypeDesc {
+    display: none;
+  }
+}
