@@ -153,6 +153,25 @@ export async function PATCH(request) {
 
     const db = createSupabaseDbClient()
 
+    // When cats are being saved, re-merge existing vaccinationRecord fields.
+    // The client strips vaccinationRecord before sending (it's managed by the
+    // upload-vaxx route), but a plain .set({ cats }) replaces the whole array
+    // in Sanity and would delete the records. Fetch existing vaxx data first.
+    if (patch.cats) {
+      const existing = await serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ "cats": cats[]{ _key, vaccinationRecord } }`,
+        { id: user.sitterId }
+      )
+      const existingVaxx = {}
+      for (const c of existing?.cats || []) {
+        if (c._key && c.vaccinationRecord) existingVaxx[c._key] = c.vaccinationRecord
+      }
+      patch.cats = patch.cats.map(cat => ({
+        ...cat,
+        ...(existingVaxx[cat._key] ? { vaccinationRecord: existingVaxx[cat._key] } : {}),
+      }))
+    }
+
     // Write non-availability fields to Sanity (may be empty if availability-only save)
     let updated = null
     if (Object.keys(patch).length > 0) {
