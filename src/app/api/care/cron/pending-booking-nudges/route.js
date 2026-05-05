@@ -131,8 +131,10 @@ export async function GET(request) {
         const marketplaceLink = `https://care.purrfectlove.org/marketplace`
 
         // ── Stage 3: Auto-withdraw ─────────────────────────────────────────────
-        // Fire when: 96+ hrs elapsed OR sit starts within 12 hrs
-        if (elapsed >= 96 || hoursToStart <= 12) {
+        // Fire when: 96+ hrs elapsed OR (sit starts within 12 hrs AND request is at least 4 hrs old)
+        // The 4hr minimum prevents brand-new requests from being instantly withdrawn
+        // just because the sit happens to start soon.
+        if (elapsed >= 96 || (hoursToStart <= 12 && elapsed >= 4)) {
           await db.from('bookings').update({
             status: 'cancelled',
             cancelled_by: 'system',
