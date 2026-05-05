@@ -38,11 +38,11 @@ const TRAIT_GROUPS_DE = [
 // Cat personality: senior excluded (auto-calculated from age ≥ 10)
 const PERSONALITY_GROUPS = TRAIT_GROUPS.map(g => ({
   ...g,
-  options: g.options.filter(o => o !== 'senior'),
+  options: g.options.filter(o => o !== 'senior' && o !== 'indoor_only'),
 }));
 const PERSONALITY_GROUPS_DE = TRAIT_GROUPS_DE.map(g => ({
   ...g,
-  options: g.options.filter(o => o !== 'senior'),
+  options: g.options.filter(o => o !== 'senior' && o !== 'indoor_only'),
 }));
 
 const TRAIT_LABELS = {
@@ -972,6 +972,17 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
                   <p className={styles.hint}>🐱 Senior cat (10+ yrs) — tagged automatically</p>
                 )}
               </div>
+            </div>
+            <div className={styles.formGroup}>
+              <Toggle
+                checked={(cat.personality || []).includes('indoor_only')}
+                onChange={(v) => {
+                  const p = cat.personality || [];
+                  updateCat(idx, 'personality', v ? [...p, 'indoor_only'] : p.filter(t => t !== 'indoor_only'));
+                }}
+                labelOn="Indoor only"
+                labelOff="Indoor & outdoor"
+              />
             </div>
             <div className={styles.formGroup}>
               <label className={styles.profileLabel}>{t.fields.catPersonality}</label>
