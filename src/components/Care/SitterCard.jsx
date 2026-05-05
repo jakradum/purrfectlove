@@ -361,7 +361,7 @@ export default function SitterCard({
         {/* Capabilities checklist — UX-10: tap "+N more" to expand inline */}
         {allCaps.length > 0 && (
           <>
-            <div className={styles.cardChecklistLabel}>Cats I can handle</div>
+            <div className={styles.cardChecklistLabel}>I can handle</div>
             <div className={styles.cardChecklist}>
               {(traitsExpanded ? allCaps : shownCaps).map(cap => (
                 <div key={cap} className={styles.cardCheckItem}>
