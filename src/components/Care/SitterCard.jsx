@@ -735,7 +735,7 @@ export default function SitterCard({
               </div>
             )}
 
-            {hasDates && !bookingState?.status ? (
+            {hasDates && !bookingState?.status && (
               <button
                 type="button"
                 className={styles.sitterModalBookBtn}
@@ -743,11 +743,10 @@ export default function SitterCard({
               >
                 {locale === 'de' ? 'Für diese Daten anfragen' : 'Book for these dates'}
               </button>
-            ) : !hasDates ? (
-              <Link href={`/care/${_id}`} className={styles.sitterModalBookBtn}>
-                View full profile
-              </Link>
-            ) : null}
+            )}
+            <Link href={`/care/${_id}`} className={hasDates && !bookingState?.status ? styles.sitterModalViewLink : styles.sitterModalBookBtn}>
+              {locale === 'de' ? 'Vollständiges Profil ansehen' : 'View full profile'}
+            </Link>
           </div>
         </div>
       </div>,

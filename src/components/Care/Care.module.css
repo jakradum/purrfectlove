@@ -5806,6 +5806,28 @@
   cursor: default;
 }
 
+.sitterModalViewLink {
+  display: block;
+  width: 100%;
+  margin-top: 0.6rem;
+  padding: 0.6rem 1rem;
+  background: transparent;
+  color: var(--hunter-green);
+  border: 1.5px solid var(--hunter-green);
+  border-radius: 10px;
+  font-size: 0.875rem;
+  font-weight: 600;
+  font-family: var(--font-outfit);
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  transition: background 0.15s, color 0.15s;
+}
+
+.sitterModalViewLink:hover {
+  background: #F0F7F4;
+}
+
 @media (max-width: 600px) {
   .sitterModalOverlay {
     align-items: flex-end;
