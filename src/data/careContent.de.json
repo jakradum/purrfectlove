@@ -99,7 +99,7 @@
       "radiusHeading": "Suchradius",
       "findButton": "Sitter finden",
       "findingButton": "Suche läuft…",
-      "vaxxMissing": "Impfnachweis fehlt — bitte vor der Buchung hochladen",
+      "vaxxMissing": "Impfnachweis noch nicht hochgeladen",
       "noCats": "Füge zuerst Katzen zu deinem Profil hinzu.",
       "loadingCats": "Katzen werden geladen…"
     }

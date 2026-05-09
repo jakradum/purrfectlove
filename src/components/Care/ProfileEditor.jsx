@@ -1055,8 +1055,8 @@ export default function ProfileEditor({ initialData, locale = 'en' }) {
                 }
                 return (
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#c0392b', fontStyle: 'italic' }}>
-                      No vaccination record — required to request a sit
+                    <p style={{ margin: 0, fontSize: '0.8rem', color: '#888', fontStyle: 'italic' }}>
+                      No vaccination record uploaded yet
                     </p>
                     <VaxxDropZone
                       busy={busy}

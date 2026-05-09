@@ -140,18 +140,15 @@ export default function ConfigCard({
           <div className={styles.configCatList}>
             {myCats.map(cat => {
               const selected = selectedCats.some(c => c._key === cat._key);
-              const hasVaxx  = !!(cat.vaccinationRecord?.fileUrl);
               return (
                 <button
                   key={cat._key}
                   type="button"
                   className={`${styles.configCatChip} ${selected ? styles.configCatChipSelected : ''}`}
                   onClick={() => onCatToggle(cat)}
-                  title={!hasVaxx ? t.vaxxMissing : undefined}
                 >
                   {selected && <span className={styles.configCatCheck}>✓</span>}
                   <span>{cat.name}</span>
-                  {!hasVaxx && <span className={styles.configCatVaxxWarn}>⚠️</span>}
                 </button>
               );
             })}

@@ -99,7 +99,7 @@
       "radiusHeading": "Search radius",
       "findButton": "Find a sitter",
       "findingButton": "Searching…",
-      "vaxxMissing": "Vaccination record missing — please upload before booking",
+      "vaxxMissing": "Vaccination record not yet uploaded",
       "noCats": "Add cats to your profile first.",
       "loadingCats": "Loading your cats…"
     }
