@@ -50,6 +50,7 @@ function ShareButton({ doc, catName, reassignedCatName }) {
       `*Phone:* ${doc.phone || '—'}`,
       `*Email:* ${doc.email || '—'}`,
       `*Address:* ${doc.address || '—'}`,
+      `*Age:* ${doc.applicantAge ? `${doc.applicantAge} years` : '—'}`,
       '',
       `*Interested in:* ${getInterestedInText()}`,
       `*Housing:* ${housingLabels[doc.housingType] || doc.housingType || '—'}`,
@@ -153,6 +154,7 @@ function ExportButton({ doc, catName, reassignedCatName, assignedToName, intervi
       `Phone: ${doc.phone || '—'}`,
       `Email: ${doc.email || '—'}`,
       `Address: ${doc.address || '—'}`,
+      `Age: ${doc.applicantAge ? `${doc.applicantAge} years${doc.applicantAge < 18 ? (doc.parentApproved ? ' (parent approved)' : ' (no parental approval)') : ''}` : '—'}`,
       `Housing: ${housingLabels[doc.housingType] || doc.housingType || '—'}`,
       `Has Other Pets: ${doc.hasOtherPets ? 'Yes' : 'No'}`,
     ]
