@@ -33,19 +33,18 @@ function extractPlainText(blocks) {
     .slice(0, 3000); // Limit to ~3000 chars to stay within token limits
 }
 
-// Fixed MECE tag categories - exactly 7 options
 const ALLOWED_TAGS = [
-  'adoption',      // Adoption process, tips, what to expect
-  'cat-care',      // General care, grooming, daily routines
-  'cat-health',    // Health, medical, veterinary, nutrition
-  'cat-behavior',  // Behavior, training, understanding cats
-  'rescue-stories', // Success stories, rescue journeys
-  'foster-care',   // Fostering information and experiences
-  'community'      // Events, volunteers, organization news
+  'cats-101', 'cat-safety', 'multi-cat-homes', 'adoption',
+  'new-cat', 'health-and-vet', 'nutrition', 'grief-and-loss',
 ];
 
-// Generate MECE tags using OpenAI
-async function generateTags(title, content) {
+const ALLOWED_TAGS_DE = [
+  'katzen-101', 'katzensicherheit', 'mehrkatzenhaltung', 'adoption',
+  'neue-katze', 'gesundheit-und-tierarzt', 'ernaehrung', 'trauer-und-verlust',
+];
+
+// Generate both EN and DE tags using OpenAI
+async function generateTags(titleEn, contentEn, titleDe, contentDe) {
   const openaiApiKey = process.env.OPENAI_API_KEY;
 
   if (!openaiApiKey) {
@@ -53,25 +52,41 @@ async function generateTags(title, content) {
     return null;
   }
 
-  const prompt = `You are a content tagger for a cat rescue organization's blog. Categorize this blog post using ONLY tags from this fixed list:
+  const hasDE = !!(titleDe || contentDe);
 
-ALLOWED TAGS (pick 1-3 that best fit):
-- adoption: Adoption process, tips, preparing for adoption, what to expect
-- cat-care: General care, grooming, litter, daily routines, supplies
-- cat-health: Health issues, medical care, veterinary visits, nutrition, vaccinations
-- cat-behavior: Understanding cat behavior, training, socialization
-- rescue-stories: Success stories, rescue journeys, happy endings
-- foster-care: Fostering cats, temporary care, foster experiences
-- community: Events, volunteers, organization news, partnerships
+  const prompt = `You are tagging blog posts for a cat rescue and adoption organisation called Purrfect Love.
 
-IMPORTANT: Only use tags from this exact list. Do not create new tags.
+Assign a maximum of 2 tags per post from this fixed list only. Do not invent new tags.
 
-Title: ${title}
+Available tags (EN):
+- cats-101: cat psychology, instincts, behavior myths, personality, cat-human bond, domestication
+- cat-safety: indoor vs outdoor, balcony and window netting, air quality, home setup, enrichment
+- multi-cat-homes: introducing cats, territorial stress, resource distribution, basecamp method
+- adoption: adoption process, responsible rescue, neutering policy, fostering, what makes a good home
+- new-cat: first weeks with a new cat, settling in, adjustment period, onboarding
+- health-and-vet: FIC, litter box issues (medical), vaccinations, deworming, kitten care schedules
+- nutrition: cat food quality, ingredients, feeding schedules
+- grief-and-loss: losing a pet, bereavement, adopting after loss
 
-Content excerpt:
-${content}
+Available tags (DE):
+- katzen-101
+- katzensicherheit
+- mehrkatzenhaltung
+- adoption
+- neue-katze
+- gesundheit-und-tierarzt
+- ernaehrung
+- trauer-und-verlust
 
-Return ONLY a JSON array with 1-3 tags from the allowed list. Example: ["adoption", "cat-behavior"]`;
+Return JSON only in this format:
+{ "tags": ["tag-1", "tag-2"], "tagsDe": ["tag-de-1", "tag-de-2"] }
+
+If the post has no German content, return tagsDe as an empty array.
+If only one tag applies, return an array with one item.
+
+EN Title: ${titleEn || ''}
+EN Content: ${contentEn || ''}
+${hasDE ? `\nDE Title: ${titleDe}\nDE Content: ${contentDe}` : ''}`;
 
   try {
     const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -100,18 +115,17 @@ Return ONLY a JSON array with 1-3 tags from the allowed list. Example: ["adoptio
     const data = await response.json();
     let tagsText = data.choices[0]?.message?.content?.trim();
 
-    // Remove markdown code blocks if present
     if (tagsText.startsWith('```')) {
       tagsText = tagsText.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '');
     }
 
-    // Parse the JSON response
-    const tags = JSON.parse(tagsText);
+    const parsed = JSON.parse(tagsText);
 
-    if (Array.isArray(tags) && tags.every(t => typeof t === 'string')) {
-      // Filter to only allowed tags and limit to 3
-      const validTags = tags.filter(t => ALLOWED_TAGS.includes(t)).slice(0, 3);
-      return validTags.length > 0 ? validTags : null;
+    if (parsed && Array.isArray(parsed.tags)) {
+      return {
+        tags:   parsed.tags.filter(t => ALLOWED_TAGS.includes(t)).slice(0, 2),
+        tagsDe: (parsed.tagsDe || []).filter(t => ALLOWED_TAGS_DE.includes(t)).slice(0, 2),
+      };
     }
 
     return null;
@@ -145,12 +159,7 @@ export async function POST(request) {
 
     // Fetch the full document to get content
     const post = await sanityClient.fetch(
-      `*[_id == $id][0] {
-        _id,
-        title,
-        content,
-        tags
-      }`,
+      `*[_id == $id][0] { _id, title, content, tags, tagsDe }`,
       { id: _id }
     );
 
@@ -163,30 +172,30 @@ export async function POST(request) {
       return NextResponse.json({ message: 'Tags already exist, skipping' }, { status: 200 });
     }
 
-    // Get title and content (prefer English, fallback to German)
-    const title = post.title?.en || post.title?.de || '';
-    const contentText = extractPlainText(post.content?.en) || extractPlainText(post.content?.de);
+    const titleEn = post.title?.en || '';
+    const titleDe = post.title?.de || '';
+    const contentEn = extractPlainText(post.content?.en);
+    const contentDe = extractPlainText(post.content?.de);
 
-    if (!title || !contentText) {
+    if (!titleEn && !titleDe) {
       return NextResponse.json({ error: 'No content to analyze' }, { status: 400 });
     }
 
-    // Generate tags using OpenAI
-    const tags = await generateTags(title, contentText);
+    const result = await generateTags(titleEn, contentEn, titleDe, contentDe);
 
-    if (!tags) {
+    if (!result) {
       return NextResponse.json({ error: 'Failed to generate tags' }, { status: 500 });
     }
 
-    // Update the document with the generated tags
     await sanityClient.patch(_id)
-      .set({ tags })
+      .set({ tags: result.tags, tagsDe: result.tagsDe })
       .commit();
 
     return NextResponse.json({
       success: true,
       documentId: _id,
-      tags
+      tags: result.tags,
+      tagsDe: result.tagsDe,
     }, { status: 200 });
 
   } catch (error) {
