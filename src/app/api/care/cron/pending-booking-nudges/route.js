@@ -43,17 +43,7 @@ function shortDateDE(ymd) {
   return `${d}. ${MONTHS_DE[m - 1]}`
 }
 
-function preSitEmail(startDate) {
-  const dateEN = shortDateEN(startDate)
-  const dateDE = shortDateDE(startDate)
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Pre-Sit Reminder</title>
-  <style>
+const EMAIL_STYLES = `
     body { margin: 0; padding: 0; background: #F6F4F0; font-family: Arial, Helvetica, sans-serif; }
     .wrapper { max-width: 600px; margin: 40px auto; background: #ffffff; border-radius: 12px; overflow: hidden; }
     .header { background: #2C5F4F; padding: 32px 40px; }
@@ -68,19 +58,27 @@ function preSitEmail(startDate) {
     .tip-text strong { color: #2C5F4F; font-weight: 600; }
     .divider { border: none; border-top: 1px solid #F0EDE8; margin: 28px 0; }
     .footer { background: #F6F4F0; padding: 24px 40px; font-size: 13px; color: #888; line-height: 1.6; }
-    .footer a { color: #2C5F4F; text-decoration: none; }
-    .lang-badge { display: inline-block; font-size: 11px; font-weight: 700; letter-spacing: 0.06em; text-transform: uppercase; background: #F5D5C8; color: #C85C3F; border-radius: 4px; padding: 2px 8px; margin-bottom: 20px; }
-  </style>
+    .footer a { color: #2C5F4F; text-decoration: none; }`
+
+function preSitEmailEN(startDate) {
+  const date = shortDateEN(startDate)
+  return `<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Pre-Sit Reminder</title>
+  <style>${EMAIL_STYLES}</style>
 </head>
 <body>
   <div class="wrapper">
     <div class="header">
-      <h1>You have an upcoming sit on ${dateEN}</h1>
+      <h1>You have an upcoming sit on ${date}</h1>
       <p>A few things to keep in mind</p>
     </div>
     <div class="body">
       <p>Hi,</p>
-      <p>You have an upcoming sit on ${dateEN}. Here are a few things to help it go smoothly.</p>
+      <p>You have an upcoming sit on ${date}. Here are a few things to help it go smoothly.</p>
       <div class="section-title">Before you arrive</div>
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Ask about escape history.</strong> Find out if the cat has slipped out before and how it happened. Knowing past patterns helps you stay alert to the same ones.</div></div>
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Know the stress triggers.</strong> Stress can make cats bolt. Ask what unsettles this cat so you can avoid or manage those situations.</div></div>
@@ -96,13 +94,33 @@ function preSitEmail(startDate) {
       <p>Have a great sit.</p>
       <p style="color: #2C5F4F; font-weight: 600;">The Purrfect Love Team</p>
     </div>
-    <div class="header" style="background: #1e4437;">
-      <h1>Du hast einen bevorstehenden Sit am ${dateDE}</h1>
+    <div class="footer">
+      Purrfect Love Community &nbsp;|&nbsp; <a href="https://care.purrfectlove.org">care.purrfectlove.org</a>
+    </div>
+  </div>
+</body>
+</html>`
+}
+
+function preSitEmailDE(startDate) {
+  const date = shortDateDE(startDate)
+  return `<!DOCTYPE html>
+<html lang="de">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Erinnerung vor dem Sit</title>
+  <style>${EMAIL_STYLES}</style>
+</head>
+<body>
+  <div class="wrapper">
+    <div class="header">
+      <h1>Du hast einen bevorstehenden Sit am ${date}</h1>
       <p>Ein paar Dinge, die du im Blick haben solltest</p>
     </div>
     <div class="body">
       <p>Hallo,</p>
-      <p>Du hast einen bevorstehenden Sit am ${dateDE}. Hier sind ein paar Hinweise, damit alles gut läuft.</p>
+      <p>Du hast einen bevorstehenden Sit am ${date}. Hier sind ein paar Hinweise, damit alles gut läuft.</p>
       <div class="section-title">Vor deiner Ankunft</div>
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Frag nach der Ausreissgeschichte.</strong> Finde heraus, ob die Katze schon einmal entwischt ist und wie es passiert ist. Wer die Muster kennt, kann besser aufpassen.</div></div>
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Kenne die Stressauslöser.</strong> Gestresste Katzen können schnell flüchten. Frag, was diese Katze verunsichert, damit du solche Situationen vermeiden oder besser einschätzen kannst.</div></div>
@@ -391,7 +409,7 @@ export async function GET(request) {
     if (upcoming && upcoming.length > 0) {
       const upcomingSitterIds = [...new Set(upcoming.map(b => b.sitter_id))]
       const upcomingProfiles = await serverClient.fetch(
-        `*[_type == "catSitter" && _id in $ids]{ _id, name, email }`,
+        `*[_type == "catSitter" && _id in $ids]{ _id, name, email, locale }`,
         { ids: upcomingSitterIds }
       )
       const upcomingProfileMap = Object.fromEntries(upcomingProfiles.map(p => [p._id, p]))
@@ -401,12 +419,18 @@ export async function GET(request) {
           const sitter = upcomingProfileMap[booking.sitter_id]
           if (!sitter?.email) continue
 
+          const isDE = sitter.locale === 'de'
+          const subjectDate = isDE ? shortDateDE(booking.start_date) : shortDateEN(booking.start_date)
           await resend.emails.send({
             from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
             to: [sitter.email],
-            subject: `You have an upcoming sit on ${shortDateEN(booking.start_date)}`,
-            html: preSitEmail(booking.start_date),
-            text: `Hi,\n\nYou have an upcoming sit on ${shortDateEN(booking.start_date)}. Please review the tips in this email to help it go smoothly.\n\nView your booking: https://care.purrfectlove.org/bookings?booking=${booking.id}&role=sitter\n\n– The Purrfect Love Team`,
+            subject: isDE
+              ? `Du hast einen bevorstehenden Sit am ${subjectDate}`
+              : `You have an upcoming sit on ${subjectDate}`,
+            html: isDE ? preSitEmailDE(booking.start_date) : preSitEmailEN(booking.start_date),
+            text: isDE
+              ? `Hallo,\n\nDu hast einen bevorstehenden Sit am ${subjectDate}. Bitte lies die Tipps in dieser E-Mail, damit alles gut läuft.\n\nBuchung ansehen: https://care.purrfectlove.org/bookings?booking=${booking.id}&role=sitter\n\n– Das Purrfect Love Team`
+              : `Hi,\n\nYou have an upcoming sit on ${subjectDate}. Please review the tips in this email to help it go smoothly.\n\nView your booking: https://care.purrfectlove.org/bookings?booking=${booking.id}&role=sitter\n\n– The Purrfect Love Team`,
           })
 
           await db
