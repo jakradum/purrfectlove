@@ -86,7 +86,6 @@ function preSitEmail(startDate) {
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Ask about escape history.</strong> Find out if the cat has slipped out before and how it happened. Knowing past patterns helps you stay alert to the same ones.</div></div>
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Know the stress triggers.</strong> Stress can make cats bolt. Ask what unsettles this cat so you can avoid or manage those situations.</div></div>
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Ask what treats work best.</strong> High-value rewards can help coax a nervous or hiding cat back out. Good to know before you need them.</div></div>
-      <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Confirm the cat is microchipped and has an ID tag.</strong> If they do slip out, up-to-date identification helps get them home quickly.</div></div>
       <div class="section-title">During the sit</div>
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Keep doors and windows closed or secured.</strong> Cats are quick and curious. Doorways and open windows are the most common escape points.</div></div>
       <div class="tip"><div class="tip-dot"></div><div class="tip-text"><strong>Be careful when people come and go.</strong> Doorbells and movement at the entrance can startle cats and create a window to escape.</div></div>
