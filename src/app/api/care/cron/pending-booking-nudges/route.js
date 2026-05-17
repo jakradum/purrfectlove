@@ -79,7 +79,6 @@ function preSitEmail(startDate) {
       <p>A few things to keep in mind</p>
     </div>
     <div class="body">
-      <span class="lang-badge">English</span>
       <p>Hi,</p>
       <p>You have an upcoming sit on ${dateEN}. Here are a few things to help it go smoothly.</p>
       <div class="section-title">Before you arrive</div>
@@ -102,7 +101,6 @@ function preSitEmail(startDate) {
       <p>Ein paar Dinge, die du im Blick haben solltest</p>
     </div>
     <div class="body">
-      <span class="lang-badge">Deutsch</span>
       <p>Hallo,</p>
       <p>Du hast einen bevorstehenden Sit am ${dateDE}. Hier sind ein paar Hinweise, damit alles gut läuft.</p>
       <div class="section-title">Vor deiner Ankunft</div>
