@@ -5,6 +5,7 @@ import { useFormValue, useDocumentOperation } from 'sanity'
 // - auto-patches adoptionDate to now (if not already set)
 // - auto-patches adoptedAt to now (if not already set)
 // - auto-patches feedbackToken to a new UUID v4 (if not already set)
+// - auto-patches feedbackLocale to 'de' or 'en' based on contractLanguage (if not already set)
 export function StatusInput(props) {
   const { onChange, renderDefault } = props
 
@@ -13,6 +14,8 @@ export function StatusInput(props) {
   const adoptionDate = useFormValue(['adoptionDate'])
   const adoptedAt = useFormValue(['adoptedAt'])
   const feedbackToken = useFormValue(['feedbackToken'])
+  const feedbackLocale = useFormValue(['feedbackLocale'])
+  const contractLanguage = useFormValue(['contractLanguage'])
 
   const { patch } = useDocumentOperation(docId || '_placeholder', 'application')
 
@@ -24,9 +27,13 @@ export function StatusInput(props) {
       if (!adoptionDate) patches.push({ set: { adoptionDate: new Date().toISOString() } })
       if (!adoptedAt) patches.push({ set: { adoptedAt: new Date().toISOString() } })
       if (!feedbackToken) patches.push({ set: { feedbackToken: crypto.randomUUID() } })
+      if (!feedbackLocale) {
+        const locale = contractLanguage === 'de' ? 'de' : 'en'
+        patches.push({ set: { feedbackLocale: locale } })
+      }
       if (patches.length > 0) patch.execute(patches)
     }
-  }, [onChange, patch, adoptionDate, adoptedAt, feedbackToken, docId])
+  }, [onChange, patch, adoptionDate, adoptedAt, feedbackToken, feedbackLocale, contractLanguage, docId])
 
   return renderDefault({ ...props, onChange: handleChange })
 }
