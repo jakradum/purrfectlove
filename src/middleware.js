@@ -53,6 +53,8 @@ export async function middleware(request) {
     '/api/care/cron/reminder',               // verified by CRON_SECRET, not session cookie
     '/api/care/cron/expire-bookings',        // verified by CRON_SECRET, not session cookie
     '/api/care/cron/pending-booking-nudges', // verified by CRON_SECRET, not session cookie
+    '/api/feedback/',                        // public — token is the auth
+    '/api/cron/adoption-feedback',           // verified by CRON_SECRET, not session cookie
     // Subdomain equivalents (before the /care rewrite is applied)
     '/login', '/privacy', '/join',
     '/profile/privacy', '/care/profile/privacy',
