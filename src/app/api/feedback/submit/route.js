@@ -30,10 +30,46 @@ export async function POST(request) {
       return Response.json({ error: 'Feedback already submitted' }, { status: 409 })
     }
 
+    const timeframeLabels = {
+      lt1month: 'Less than 1 month ago',
+      '1to3': '1–3 months ago',
+      '3to6': '3–6 months ago',
+      gt6months: 'More than 6 months ago',
+    }
+    const recommendLabels = { yes: 'Yes', notsure: 'Not sure', no: 'No' }
+    const r = responses ?? {}
+    const lines = [
+      `Adoption timeframe: ${timeframeLabels[r.adoptionTimeframe] ?? r.adoptionTimeframe ?? '—'}`,
+      '',
+      'Overall experience',
+      `  Overall satisfaction: ${r.overallSatisfaction ?? '—'}/5`,
+      `  Process clarity: ${r.processClarity ?? '—'}/5`,
+      `  Team support: ${r.teamSupport ?? '—'}/5`,
+      '',
+      'Communication',
+      `  Before adoption: ${r.commBeforeAdoption ?? '—'}/5`,
+      `  After adoption: ${r.commAfterAdoption ?? '—'}/5`,
+      `  Response time: ${r.responseTime ?? '—'}/5`,
+      '',
+      'Matching & preparation',
+      `  Cat match: ${r.catMatch ?? '—'}/5`,
+      `  Cat info accuracy: ${r.catInfoAccuracy ?? '—'}/5`,
+      `  Prepared for arrival: ${r.preparedForArrival ?? '—'}/5`,
+      '',
+      'Post-adoption',
+      `  Settling in: ${r.settlingIn ?? '—'}/5`,
+      `  Post-adoption support: ${r.postAdoptionSupport ?? '—'}/5`,
+      '',
+      `What they appreciated: ${r.appreciated || '—'}`,
+      `What could be improved: ${r.improvements || '—'}`,
+      `Would recommend: ${recommendLabels[r.wouldRecommend] ?? r.wouldRecommend ?? '—'}`,
+      `Additional comments: ${r.additionalComments || '—'}`,
+    ]
+
     await serverClient
       .patch(application._id)
       .set({
-        feedbackResponses: responses ?? {},
+        feedbackResponses: lines.join('\n'),
         feedbackSubmittedAt: new Date().toISOString(),
       })
       .commit()

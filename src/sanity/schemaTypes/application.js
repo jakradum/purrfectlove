@@ -427,30 +427,7 @@ export default {
     { name: 'feedbackSentAt', title: 'Feedback Email Sent', type: 'datetime', readOnly: true },
     { name: 'feedbackSubmittedAt', title: 'Feedback Submitted', type: 'datetime', readOnly: true },
     { name: 'feedbackLocale', title: 'Feedback Locale', type: 'string', readOnly: true },
-    {
-      name: 'feedbackResponses',
-      title: 'Feedback Responses',
-      type: 'object',
-      readOnly: true,
-      fields: [
-        { name: 'adoptionTimeframe', type: 'string' },
-        { name: 'overallSatisfaction', type: 'number' },
-        { name: 'processClarity', type: 'number' },
-        { name: 'teamSupport', type: 'number' },
-        { name: 'commBeforeAdoption', type: 'number' },
-        { name: 'commAfterAdoption', type: 'number' },
-        { name: 'responseTime', type: 'number' },
-        { name: 'catMatch', type: 'number' },
-        { name: 'catInfoAccuracy', type: 'number' },
-        { name: 'preparedForArrival', type: 'number' },
-        { name: 'settlingIn', type: 'number' },
-        { name: 'postAdoptionSupport', type: 'number' },
-        { name: 'appreciated', type: 'text' },
-        { name: 'improvements', type: 'text' },
-        { name: 'wouldRecommend', type: 'string' },
-        { name: 'additionalComments', type: 'text' },
-      ]
-    }
+    { name: 'feedbackResponses', title: 'Feedback Responses', type: 'text', readOnly: true }
   ],
 
   fieldsets: [
