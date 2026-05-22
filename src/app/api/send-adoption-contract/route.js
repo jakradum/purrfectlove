@@ -44,7 +44,7 @@ const AGE_LABELS = {
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { documentId, language = 'en' } = body
+    const { documentId, catId, language = 'en' } = body
 
     if (!documentId) {
       return Response.json({ error: 'Document ID required' }, { status: 400 })
@@ -296,9 +296,11 @@ export async function POST(request) {
       return Response.json({ error: error.message }, { status: 500 })
     }
 
-    // Record contractSentAt and contractLanguage on the published document
+    // Record contractSentAt and contractLanguage on the cat document (if catId provided),
+    // falling back to the application document for backwards compatibility
+    const patchId = catId ? catId.replace(/^drafts\./, '') : cleanId
     await serverClient
-      .patch(cleanId)
+      .patch(patchId)
       .set({ contractSentAt: new Date().toISOString(), contractLanguage: language })
       .commit()
       .catch(err => console.error('Failed to update contract fields:', err))

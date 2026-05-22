@@ -1,7 +1,7 @@
 import {DuplicateNotice} from '../components/DuplicateNotice'
 import {CatAdoptedNotice} from '../components/CatAdoptedNotice'
 import {OpenToAnyCatNotice} from '../components/OpenToAnyCatNotice'
-import {SendContractButton} from '../components/SendContractButton'
+import {AdoptionContractNote} from '../components/AdoptionContractNote'
 import {StatusInput} from '../components/StatusInput'
 
 // Helper to check if application is marked as duplicate
@@ -367,33 +367,14 @@ export default {
       readOnly: isMarkedAsDuplicate
     },
 
-    // ADOPTION CONTRACT
+    // ADOPTION CONTRACT NOTE (read-only — button moved to cat record)
     {
-      name: 'sendContractButton',
-      title: 'Send Adoption Contract',
-      type: 'string',
-      fieldset: 'officialUse',
-      readOnly: false,
-      components: {
-        field: SendContractButton
-      }
-    },
-    {
-      name: 'contractSentAt',
-      title: 'Contract Last Sent',
-      type: 'datetime',
-      fieldset: 'officialUse',
-      readOnly: true,
-      hidden: ({parent}) => !parent?.contractSentAt
-    },
-    {
-      name: 'contractLanguage',
-      title: 'Contract Language',
+      name: 'adoptionContractNote',
+      title: 'Adoption Contract',
       type: 'string',
       fieldset: 'officialUse',
       readOnly: true,
-      options: { list: [{ title: 'English', value: 'en' }, { title: 'German (Deutsch)', value: 'de' }] },
-      hidden: ({parent}) => !parent?.contractLanguage
+      components: { field: AdoptionContractNote }
     },
 
     // FOLLOW UP

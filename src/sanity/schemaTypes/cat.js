@@ -1,6 +1,7 @@
 // sanity/schemas/cat.js
 import {client} from '../lib/client'
 import {CatApplicationsDisplay} from '../components/CatApplicationsDisplay'
+import {SendContractButton} from '../components/SendContractButton'
 import {useEffect} from 'react'
 import {useFormValue, set, unset} from 'sanity'
 
@@ -260,6 +261,37 @@ export default {
       description: 'Use if adopted outside the application system',
       initialValue: false
     },
+    // ADOPTER LINK + CONTRACT SENDING
+    {
+      name: 'adopterApplication',
+      title: 'Adopter Application',
+      type: 'reference',
+      to: [{ type: 'application' }],
+      description: 'Link to the adopter\'s application. Required to send the adoption contract.',
+    },
+    {
+      name: 'sendContractButton',
+      title: 'Send Adoption Contract',
+      type: 'string',
+      readOnly: false,
+      components: { field: SendContractButton }
+    },
+    {
+      name: 'contractSentAt',
+      title: 'Contract Last Sent',
+      type: 'datetime',
+      readOnly: true,
+      hidden: ({ document }) => !document?.contractSentAt
+    },
+    {
+      name: 'contractLanguage',
+      title: 'Contract Language',
+      type: 'string',
+      readOnly: true,
+      options: { list: [{ title: 'English', value: 'en' }, { title: 'German (Deutsch)', value: 'de' }] },
+      hidden: ({ document }) => !document?.contractLanguage
+    },
+
     {
       name: 'signedAdoptionContract',
       title: 'Signed Adoption Contract (PDF)',
