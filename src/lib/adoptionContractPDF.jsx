@@ -176,6 +176,23 @@ export function AdoptionContractPDF({
           </View>
         </View>
 
+        {/* ── CAT PHOTO ──────────────────────────────────────────────── */}
+        {catPhotoUrl && (
+          <View style={{ alignItems: 'center', marginBottom: 20 }}>
+            <Image
+              src={catPhotoUrl}
+              style={{
+                width: 160,
+                height: 160,
+                borderTopLeftRadius: 100,
+                borderTopRightRadius: 59,
+                borderBottomRightRadius: 86,
+                borderBottomLeftRadius: 73,
+              }}
+            />
+          </View>
+        )}
+
         {/* ── TITLE ──────────────────────────────────────────────────── */}
         <Text style={s.docTitle}>ADOPTION AGREEMENT</Text>
 
