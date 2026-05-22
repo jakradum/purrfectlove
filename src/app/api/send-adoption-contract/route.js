@@ -44,7 +44,7 @@ const AGE_LABELS = {
 export async function POST(request) {
   try {
     const body = await request.json()
-    const { documentId, catId, language = 'en' } = body
+    const { documentId, catId, catOverrideId, language = 'en' } = body
 
     if (!documentId) {
       return Response.json({ error: 'Document ID required' }, { status: 400 })
@@ -53,49 +53,58 @@ export async function POST(request) {
     const isGerman = language === 'de'
 
     const cleanId = documentId.replace(/^drafts\./, '')
+    const cleanCatOverrideId = catOverrideId ? catOverrideId.replace(/^drafts\./, '') : null
 
-    const application = await serverClient.fetch(
-      `*[_type == "application" && (_id == $id || _id == $draftId)][0]{
-        applicationId,
-        applicantName,
-        email,
-        phone,
-        address,
-        submittedAt,
-        isOpenToAnyCat,
-        "cat": select(
-          isOpenToAnyCat != true => cat->{
-            name,
-            age,
-            ageMonths,
-            gender,
-            "photoAsset": photos[0].asset
-          },
-          defined(reassignToCat) => reassignToCat->{
-            name,
-            age,
-            ageMonths,
-            gender,
-            "photoAsset": photos[0].asset
-          },
-          null
-        )
-      }`,
-      { id: cleanId, draftId: `drafts.${cleanId}` }
-    )
+    const [application, catOverride] = await Promise.all([
+      serverClient.fetch(
+        `*[_type == "application" && (_id == $id || _id == $draftId)][0]{
+          applicationId,
+          applicantName,
+          email,
+          phone,
+          address,
+          submittedAt,
+          isOpenToAnyCat,
+          "cat": select(
+            isOpenToAnyCat != true => cat->{
+              name,
+              age,
+              ageMonths,
+              gender,
+              "photoAsset": photos[0].asset
+            },
+            defined(reassignToCat) => reassignToCat->{
+              name,
+              age,
+              ageMonths,
+              gender,
+              "photoAsset": photos[0].asset
+            },
+            null
+          )
+        }`,
+        { id: cleanId, draftId: `drafts.${cleanId}` }
+      ),
+      cleanCatOverrideId
+        ? serverClient.fetch(
+            `*[_type == "cat" && (_id == $id || _id == $draftId)][0]{ name, age, ageMonths, gender, "photoAsset": photos[0].asset }`,
+            { id: cleanCatOverrideId, draftId: `drafts.${cleanCatOverrideId}` }
+          )
+        : Promise.resolve(null),
+    ])
 
     if (!application) {
       return Response.json({ error: 'Application not found' }, { status: 404 })
     }
 
-    if (!application.cat?.name) {
+    const cat = catOverride || application.cat
+
+    if (!cat?.name) {
       return Response.json(
         { error: 'Cat not assigned to this application. For "open to any cat" applications, use "Redirect to New Cat" to assign one first.' },
         { status: 400 }
       )
     }
-
-    const cat = application.cat
     const catName = cat.name
 
     // Build cat photo URL (400×400 crop from Sanity CDN)

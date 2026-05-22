@@ -52,7 +52,7 @@ export function SendContractButton() {
       const res = await fetch('/api/send-adoption-contract', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ documentId: cleanAppId, catId: cleanCatId, language }),
+        body: JSON.stringify({ documentId: cleanAppId, catId: cleanCatId, catOverrideId: cleanCatId, language }),
       })
       const data = await res.json()
       if (!res.ok) { setStatus('error'); setError(data.error || 'Something went wrong') }
