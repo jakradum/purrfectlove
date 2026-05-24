@@ -107,6 +107,112 @@
   color: var(--text-dark);
 }
 
+.whatsappShare {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  padding: 0.6rem 1.1rem;
+  border-radius: 8px;
+  background-color: #25D366;
+  color: #fff;
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+  font-weight: 600;
+  text-decoration: none;
+  width: fit-content;
+  transition: background-color 0.15s ease;
+}
+
+.whatsappShare:hover {
+  background-color: #1ebe5d;
+}
+
+.whatsappIcon {
+  width: 1rem;
+  height: 1rem;
+  flex-shrink: 0;
+}
+
+/* Adopted cat card — shown when someone visits a now-adopted cat's URL */
+.adoptedCard {
+  max-width: 420px;
+  margin: 6rem auto 4rem;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+}
+
+.adoptedPhoto {
+  width: 180px;
+  height: 180px;
+  object-fit: cover;
+  border-radius: 63% 37% 54% 46% / 55% 48% 52% 45%;
+}
+
+.adoptedBadge {
+  display: inline-block;
+  background-color: var(--hunter-green);
+  color: #fff;
+  font-family: var(--font-outfit);
+  font-size: 0.75rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  padding: 0.25rem 0.75rem;
+  border-radius: 999px;
+}
+
+.adoptedTitle {
+  font-family: var(--font-outfit);
+  font-size: 1.5rem;
+  font-weight: 700;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.adoptedMessage {
+  font-family: var(--font-lora);
+  font-size: 1rem;
+  color: var(--text-light);
+  line-height: 1.7;
+  margin: 0;
+}
+
+.adoptedActions {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.75rem;
+  margin-top: 0.5rem;
+}
+
+.adoptedCtaBtn {
+  display: inline-block;
+  padding: 0.7rem 1.5rem;
+  background-color: var(--tabby-brown);
+  color: #fff;
+  font-family: var(--font-outfit);
+  font-size: 0.9375rem;
+  font-weight: 600;
+  border-radius: 8px;
+  text-decoration: none;
+  transition: opacity 0.15s ease;
+}
+
+.adoptedCtaBtn:hover {
+  opacity: 0.88;
+}
+
+.adoptedArchiveLink {
+  font-family: var(--font-outfit);
+  font-size: 0.875rem;
+  color: var(--hunter-green);
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
 @media (max-width: 768px) {
   .main {
     padding-top: 5rem;

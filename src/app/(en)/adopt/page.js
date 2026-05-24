@@ -1,7 +1,7 @@
 import AdoptPage from '@/components/Adopt/AdoptPage';
 import BreadcrumbSchema from '@/components/SEO/BreadcrumbSchema';
 
-export const dynamic = 'force-dynamic';
+export const revalidate = 60;
 
 export const metadata = {
   title: 'Adopt a Cat - Purrfect Love',

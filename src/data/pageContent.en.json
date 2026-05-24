@@ -125,6 +125,20 @@
         "message": "Thank you for your interest in adopting {catName}. We'll review your application and get back to you within 24-48 hours.",
         "button": "Close"
       }
+    },
+    "adopted": {
+      "badge": "Adopted",
+      "heading": "Happy Families",
+      "subheading": "These cats have found their forever homes. Every adoption changes a life.",
+      "empty": "No cats adopted yet — check back soon!",
+      "breadcrumb": "Adopted Cats",
+      "alreadyAdoptedTitle": "Already in their forever home",
+      "alreadyAdoptedMessage": "{catName} has found their family. 🐾",
+      "alreadyAdoptedCta": "Meet other cats",
+      "alreadyAdoptedArchiveLink": "See all adopted cats",
+      "shareWhatsApp": "Share on WhatsApp",
+      "archiveMetaTitle": "Adopted Cats — Purrfect Love",
+      "archiveMetaDescription": "Cats who have found their forever homes through Purrfect Love."
     }
   },
   "process": {

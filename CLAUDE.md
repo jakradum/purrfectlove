@@ -44,7 +44,7 @@ src/
         cron/         ← server-side scheduled jobs
           reminder/             ← 2-day-before-sit emails
           expire-bookings/      ← safety-net fallback at 120h
-          pending-booking-nudges/ ← 24h/48h reminders + auto-withdraw at 96h
+          pending-booking-nudges/ ← 24h/48h reminders + auto-withdraw at 96h + pre-sit reminder 16h before sit
         sitters/      ← marketplace sitter list + single-member lookup
         send-otp/     ← OTP login
         verify-otp/
@@ -53,7 +53,7 @@ src/
         notifications/
         admin/        ← member approval/rejection, deletion emails
         ...
-      cron/           ← non-care cron jobs (scores, sit-prompts, message-reminders)
+      cron/           ← non-care cron jobs (scores, sit-prompts, message-reminders, adoption-feedback)
     care/             ← care portal pages (Next.js App Router)
       [memberId]/     ← public member profile page
       bookings/
@@ -117,10 +117,11 @@ GitHub Actions was set up first but was failing. The `.github/workflows/cron-*.y
 |---|---|---|
 | `/api/care/cron/reminder` | Daily 02:30 UTC | 2-day-before-sit contact release emails to both parties |
 | `/api/care/cron/expire-bookings` | Hourly | Safety-net: sets very old pending bookings (120h+) to `expired` |
-| `/api/care/cron/pending-booking-nudges` | Hourly | 24h/48h reminders to sitter; auto-withdraws at 96h or 12h before sit |
+| `/api/care/cron/pending-booking-nudges` | Hourly | 24h/48h reminders to sitter; auto-withdraws at 96h or 12h before sit; pre-sit reminder to sitter 16h before confirmed sit |
 | `/api/cron/calculate-scores` | — | Recalculates member scores |
 | `/api/cron/sit-prompts` | — | Post-sit confirmation prompts |
 | `/api/cron/message-reminders` | — | Unread message reminders (48-49h old) |
+| `/api/cron/adoption-feedback` | Daily | Sends 30-day post-adoption feedback email to adopters (locale-aware EN/DE) |
 
 ### Vercel
 
@@ -150,6 +151,7 @@ Sanity `catSitter` documents have a `memberVerified` boolean. Studio-added membe
 **Sanity** owns member profiles:
 - Document type: `catSitter`
 - Key fields: `name`, `email`, `phone`, `location` (lat/lng), `locationName` (cached neighbourhood), `bio`, `photo`, `coverImage`, `avatarColour`, `canSit`, `canDoHomeVisit`, `canHostCats`, `maxCatsPerDay`, `feedingTypes`, `behavioralTraits`, `cats[]`, `memberVerified`, `identityVerified`, `trustedSitter`, `siteAdmin`, `hideEmail`, `hideWhatsApp`, `deletionRequested`, `otpPermanentlyBlocked`
+- `locale`: not in the schema definition but stored on some member documents — `'de'` for German-speaking members (Stuttgart), otherwise absent. The pre-sit reminder cron reads this to choose EN vs DE email. Set manually per member in Sanity Studio if needed.
 - Note: `availabilityDefault`, `unavailableDatesV2`, `blockedByBooking` were migrated to Supabase. The fields may still exist in Sanity documents as stale data — ignore them; the authoritative source is now Supabase.
 
 **Supabase** owns transactional data and availability:
@@ -183,6 +185,7 @@ cancelled_at            timestamptz
 deleted_at              timestamptz       soft delete
 reminder_24h_sent_at    timestamptz       set by pending-booking-nudges cron
 reminder_48h_sent_at    timestamptz       set by pending-booking-nudges cron
+pre_sit_reminder_sent_at timestamptz      set when 16h-before-sit email is sent to sitter
 ```
 
 ### Booking Status Lifecycle
@@ -226,6 +229,45 @@ API routes use camelCase internally (`unavailableDatesV2`, `blockedByBooking`) w
 
 ---
 
+## Adoption Flow (Main Site)
+
+The adoption flow is for the **main purrfectlove.org site**, not the care portal. It is managed entirely in Sanity Studio.
+
+### Sanity document structure
+
+**`cat` document** holds the contract:
+- `adopterApplication` — reference to the linked `application` document
+- `sendContractButton` — custom Studio component (`SendContractButton.jsx`) that sends the contract email
+- `contractSentAt` / `contractLanguage` — patched by the API when contract is sent; display-only in Studio
+
+**`application` document** holds adopter info and feedback:
+- `adoptedAt`, `feedbackToken`, `feedbackSentAt`, `feedbackSubmittedAt`, `feedbackLocale`, `feedbackResponses` (plain text, human-readable format)
+- The contract fields were moved to the cat record. The application side shows a read-only note (`AdoptionContractNote.jsx`) pointing to the cat record.
+- `feedbackLocale` is auto-set from `contractLanguage` when status is changed to `'adopted'` in `StatusInput.jsx`
+
+### Contract sending
+
+- **Always send from the cat record** in Studio — use the `sendContractButton` field
+- API route: `POST /api/send-adoption-contract` — accepts `documentId` (application ID), `catId`, `catOverrideId`, `language`
+- `catOverrideId`: pass the cat's `_id` to use that cat's data regardless of what `application.cat._ref` points to. This is needed for multi-cat adopters where one application may reference a different cat.
+- The API patches `contractSentAt` + `contractLanguage` on the cat document (using `catId`)
+- PDF components: `src/lib/adoptionContractPDF.jsx` (EN) and `src/lib/adoptionContractPDF_DE.jsx` (DE)
+- Preview route (dev only): `GET /api/preview-contract` — returns a sample PDF inline
+
+### Post-adoption feedback
+
+- Feedback email sent 30 days after `adoptedAt` by `/api/cron/adoption-feedback`
+- Locale-aware: reads `feedbackLocale` on the application (`'de'` → German, else English)
+- Public feedback form: `src/app/(en)/adopt/feedback/page.js` — authenticated by `feedbackToken` query param
+- Submit endpoint: `POST /api/feedback/submit` — token-based, no session required (in `PUBLIC_PREFIXES`)
+- Responses saved as a single plain-text field (`feedbackResponses`) on the application document
+
+### One-off contract scripts
+
+For ad-hoc contract sends that bypass Studio (e.g. when a cat override is needed), use a tsx script in `scripts/`. Running JSX from a standalone script requires `--tsconfig tsconfig.json` flag with tsx and a `tsconfig.json` at project root with `"jsx": "react-jsx"`. Also requires explicit `import React from 'react'` in any `.jsx` PDF component files (Next.js doesn't need this but standalone tsx does).
+
+---
+
 ## Contact Release Rules
 
 Contact details (email, phone) between sitter and parent are **only released when**:
@@ -245,7 +287,7 @@ This is enforced in `src/app/api/care/bookings/[id]/route.js`. The 2-day-before-
 
 All transactional emails use Resend. The branded email template (`brandedEmail` + `ctaButton` helpers) is copy-pasted into each route file that needs it — it is not a shared import. When adding emails to a new route, copy the helpers from `src/app/api/care/cron/reminder/route.js`.
 
-From address: `Purrfect Love Community <no-reply@purrfectlove.org>`
+From address: `Purrfect Love Community <no-reply@purrfectlove.org>` for care portal emails. Adoption contract emails use `Purrfect Love <support@purrfectlove.org>` (reply-to is also `support@purrfectlove.org`).
 
 ---
 
@@ -267,7 +309,7 @@ Haversine formula with a **1.66x road multiplier** (India-specific) used through
 - **Soft deletes**: bookings use `deleted_at` for soft deletes. Always filter `.is('deleted_at', null)` in queries
 - **Care subdomain rewrite**: `care.purrfectlove.org/x` → internally `/care/x`. Middleware handles this after auth check. API routes are excluded from the rewrite
 - **`locationName`**: a cached reverse-geocoded neighbourhood name stored on `catSitter` in Sanity. Routes that need it check for a cached value first, then call Nominatim and write back asynchronously — never block on it
-- **Vaccination gate**: booking requests are blocked (client-side and server-side 422) if any selected cat is missing a vaccination record in Sanity (`vaccinationRecord.file.asset._ref`). `cat_keys` on the bookings row is the link back to specific Sanity cat `_key` values for this check.
+- **Vaccination gate was removed**: the mandatory vaxx record gate on booking requests was removed. `cat_keys` on the bookings row still exists as a reference to specific Sanity cat `_key` values but is no longer used for blocking.
 - **Availability is now in Supabase**: do not read or write `availabilityDefault`, `unavailableDatesV2`, or `blockedByBooking` from/to Sanity. All availability reads/writes go through the `sitter_availability` table. The Sanity fields are stale and will be cleaned up later.
 - **Booking messages polling**: the care portal has no client-side Supabase client, so `BookingMessages` uses 5s polling (not Supabase Realtime). Mark-as-read fires server-side on every GET fetch. Realtime infrastructure is in place for a future upgrade.
 - **`hasUnreadMessage` on bookings list**: `/api/care/bookings/my` queries `booking_messages` for unread counts and includes `hasUnreadMessage: bool` on each booking. `BookingsPage` shows a red dot and clears it optimistically on modal open.
@@ -304,6 +346,11 @@ Run migrations manually in the Supabase SQL editor. There is no automated migrat
 
 ### One-time data migration scripts
 
-`scripts/` contains one-time scripts run locally with `node`:
+`scripts/` contains one-time scripts run locally:
 - `scripts/migrateSitterAvailability.mjs` — migrated availability data from Sanity to `sitter_availability` (30 members, April 2026; already run, do not re-run)
 - `scripts/notifyVaccinationRecords.mjs` — emailed all verified members about vaccination record requirement (April 2026; already run)
+- `scripts/sendGabbyContractDE.tsx` — one-off script to send Gabby Love's German contract to Björn Veit; reference pattern for future ad-hoc contract sends
+
+Scripts that import JSX (PDF components) must use: `npx tsx --tsconfig scripts/tsconfig.json --env-file=.env.local scripts/yourScript.tsx`
+
+**Do NOT create a `tsconfig.json` at the repo root** — Next.js detects it and tries to install TypeScript as a dev dep, which fails due to a pre-existing peer dep conflict (`next@16` vs `next-sanity` requiring `next@^15`).

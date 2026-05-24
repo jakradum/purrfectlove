@@ -1,3 +1,4 @@
+import React from 'react'
 import { Document, Page, Text, View, Image, StyleSheet } from '@react-pdf/renderer'
 
 const G = '#2C5F4F'

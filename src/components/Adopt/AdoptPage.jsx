@@ -30,7 +30,7 @@ export default async function AdoptPage({ locale = 'en' }) {
         "location": locationEn
       }`;
 
-  const cats = await client.fetch(query, {}, { cache: 'no-store' });
+  const cats = await client.fetch(query, {}, {});
 
   return (
     <main className={styles.main}>
