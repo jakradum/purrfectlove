@@ -2,6 +2,7 @@ import { cookies } from 'next/headers';
 import { redirect } from 'next/navigation';
 import { createClient } from '@sanity/client';
 import { createServerClient } from '@supabase/ssr';
+import { createSupabaseDbClient } from '@/lib/supabaseServer';
 import ProfileEditor from '@/components/Care/ProfileEditor';
 
 const serverClient = createClient({
@@ -31,18 +32,31 @@ export default async function ProfilePage() {
   const sitterId = user.user_metadata?.sitterId;
 
   let profile = null;
+  let availRow = null;
   try {
-    profile = await serverClient.fetch(
-      `*[_type == "catSitter" && _id == $id][0]{ ..., "photoUrl": photo.asset->url, "coverImageUrl": coverImage.asset->url, "cats": cats[] { ..., "vaccinationRecord": vaccinationRecord { "fileUrl": file.asset->url, "fileName": file.asset->originalFilename, date } } }`,
-      { id: sitterId }
-    );
+    [{ data: profile = null }, { data: availRow }] = await Promise.all([
+      serverClient.fetch(
+        `*[_type == "catSitter" && _id == $id][0]{ ..., "photoUrl": photo.asset->url, "coverImageUrl": coverImage.asset->url, "cats": cats[] { ..., "vaccinationRecord": vaccinationRecord { "fileUrl": file.asset->url, "fileName": file.asset->originalFilename, date } } }`,
+        { id: sitterId }
+      ).then(data => ({ data })),
+      createSupabaseDbClient().from('sitter_availability').select('*').eq('sitter_id', sitterId).maybeSingle(),
+    ]);
   } catch (err) {
     console.error('Failed to fetch profile:', err);
   }
 
   if (!profile) redirect('/login');
 
+  // Merge Supabase availability into profile — these fields live in sitter_availability,
+  // not in Sanity, since the April 2026 migration.
+  const mergedProfile = {
+    ...profile,
+    availabilityDefault: availRow?.availability_default ?? profile.availabilityDefault ?? 'available',
+    unavailableDatesV2:  availRow?.unavailable_dates    ?? profile.unavailableDatesV2  ?? [],
+    blockedByBooking:    availRow?.blocked_by_booking   ?? profile.blockedByBooking    ?? [],
+  };
+
   const locale = cookieStore.get('pl_portal_locale')?.value === 'de' ? 'de' : 'en';
 
-  return <ProfileEditor initialData={profile} locale={locale} />;
+  return <ProfileEditor initialData={mergedProfile} locale={locale} />;
 }

@@ -207,18 +207,9 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
         if (saved.startDate) setStartDate(saved.startDate);
         if (saved.endDate) setEndDate(saved.endDate);
         if (saved.radius) setRadius(saved.radius);
-        if (saved.fetchedSitters?.length) {
-          let sitters = saved.fetchedSitters;
-          if (userLocation?.lat != null && userLocation?.lng != null) {
-            sitters = sitters.map((s) => {
-              if (s.location?.lat == null || s.location?.lng == null) return s;
-              return { ...s, _distance: haversine(userLocation.lat, userLocation.lng, s.location.lat, s.location.lng) * roadMultiplier(userLocation.lat) };
-            });
-          }
-          setFetchedSitters(sitters);
-          setSearched(true);
-          setResultAnimKey(k => k + 1);
-        }
+        // fetchedSitters intentionally not restored — availability data goes stale
+        // and sitters who marked themselves unavailable would still appear in results.
+        // Users must click Find to get a fresh list each session.
       } else {
         // First visit: pre-fill today → tomorrow
         setStartDate(todayISO());
@@ -312,13 +303,12 @@ export default function Marketplace({ userLocation, sitterId, locale: localeProp
     return () => supabase.removeChannel(channel);
   }, [sitterId]);
 
-  // Persist to sessionStorage
+  // Persist filter state to sessionStorage (not results — availability data goes stale)
   useEffect(() => {
-    if (!searched) return;
     try {
-      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ startDate, endDate, radius, fetchedSitters }));
+      sessionStorage.setItem(STORAGE_KEY, JSON.stringify({ startDate, endDate, radius }));
     } catch { /* ignore */ }
-  }, [startDate, endDate, radius, fetchedSitters, searched]);
+  }, [startDate, endDate, radius]);
 
   // Tween container height
   const animateHeight = useCallback(() => {
