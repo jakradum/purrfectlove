@@ -16,7 +16,7 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
     otherPetsDetails: '',
     whyAdopt: '',
     experience: '',
-    website: '' // Honeypot field
+    _pels: '' // Honeypot field
   });
 
   const [turnstileToken, setTurnstileToken] = useState('');
@@ -318,12 +318,12 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
           {/* Honeypot field - hidden from users */}
           <input
             type="text"
-            name="website"
-            value={formData.website}
+            name="_pels"
+            value={formData._pels}
             onChange={handleChange}
-            style={{ position: 'absolute', left: '-9999px' }}
+            style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0 }}
             tabIndex="-1"
-            autoComplete="off"
+            autoComplete="nope"
             aria-hidden="true"
           />
 

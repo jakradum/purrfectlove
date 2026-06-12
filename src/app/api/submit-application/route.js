@@ -51,7 +51,7 @@ export async function POST(request) {
     console.log('Is open to any cat:', body.isOpenToAnyCat || false)
 
     // 1. HONEYPOT CHECK
-    if (body.website) {
+    if (body._pels) {
       console.log('Honeypot triggered - spam detected')
       return Response.json({ error: 'Invalid submission' }, { status: 400 })
     }
