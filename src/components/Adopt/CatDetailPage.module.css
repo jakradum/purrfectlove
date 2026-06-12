@@ -113,18 +113,20 @@
   gap: 0.5rem;
   padding: 0.6rem 1.1rem;
   border-radius: 8px;
-  background-color: #25D366;
-  color: #fff;
+  background-color: transparent;
+  color: var(--hunter-green);
+  border: 2px solid var(--hunter-green);
   font-family: var(--font-outfit);
   font-size: 0.875rem;
   font-weight: 600;
   text-decoration: none;
   width: fit-content;
-  transition: background-color 0.15s ease;
+  transition: background-color 0.15s ease, color 0.15s ease;
 }
 
 .whatsappShare:hover {
-  background-color: #1ebe5d;
+  background-color: var(--hunter-green);
+  color: var(--whisker-cream);
 }
 
 .whatsappIcon {
