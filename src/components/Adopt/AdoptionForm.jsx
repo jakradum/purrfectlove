@@ -67,8 +67,12 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
     }
 
     try {
+      const toTitleCase = (str) =>
+        str.replace(/\w+/g, w => w.charAt(0).toUpperCase() + w.slice(1).toLowerCase());
+
       const requestBody = {
         ...formData,
+        address: formData.address ? toTitleCase(formData.address) : formData.address,
         turnstileToken,
         locale
       };
