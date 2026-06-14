@@ -4,22 +4,39 @@ import { useFormValue, useClient } from 'sanity'
 export function AdoptionContractNote() {
   const adoptionDate = useFormValue(['adoptionDate'])
   const catRef = useFormValue(['cat', '_ref'])
+  const appId = useFormValue(['_id'])
 
   const client = useClient({ apiVersion: '2024-01-01' })
   const [contractSentAt, setContractSentAt] = useState(null)
   const [contractLanguage, setContractLanguage] = useState(null)
 
   useEffect(() => {
-    if (!catRef) return
-    const cleanRef = catRef.replace(/^drafts\./, '')
-    client.fetch(
-      `*[_type == "cat" && (_id == $id || _id == $draftId)][0]{ contractSentAt, contractLanguage }`,
-      { id: cleanRef, draftId: `drafts.${cleanRef}` }
-    ).then(cat => {
-      setContractSentAt(cat?.contractSentAt ?? null)
-      setContractLanguage(cat?.contractLanguage ?? null)
+    if (!appId) return
+    const cleanAppId = appId.replace(/^drafts\./, '')
+    const cleanCatRef = catRef ? catRef.replace(/^drafts\./, '') : null
+
+    // 1. Check the cat formally linked to this application via adopterApplication._ref
+    // 2. Fallback: check the cat the application directly references
+    // Using two separate queries merged by whichever has contractSentAt
+    const queries = [
+      client.fetch(
+        `*[_type == "cat" && (adopterApplication._ref == $appId || adopterApplication._ref == $draftAppId)][0]{ contractSentAt, contractLanguage }`,
+        { appId: cleanAppId, draftAppId: `drafts.${cleanAppId}` }
+      ),
+      cleanCatRef
+        ? client.fetch(
+            `*[_type == "cat" && (_id == $id || _id == $draftId)][0]{ contractSentAt, contractLanguage }`,
+            { id: cleanCatRef, draftId: `drafts.${cleanCatRef}` }
+          )
+        : Promise.resolve(null),
+    ]
+
+    Promise.all(queries).then(([linkedCat, directCat]) => {
+      const result = [linkedCat, directCat].find(c => c?.contractSentAt) ?? null
+      setContractSentAt(result?.contractSentAt ?? null)
+      setContractLanguage(result?.contractLanguage ?? null)
     }).catch(() => {})
-  }, [catRef])
+  }, [appId, catRef])
 
   const formatDate = (iso) =>
     new Date(iso).toLocaleString('en-IN', {
