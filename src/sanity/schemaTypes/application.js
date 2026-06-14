@@ -3,6 +3,7 @@ import {CatAdoptedNotice} from '../components/CatAdoptedNotice'
 import {OpenToAnyCatNotice} from '../components/OpenToAnyCatNotice'
 import {AdoptionContractNote} from '../components/AdoptionContractNote'
 import {StatusInput} from '../components/StatusInput'
+import {FeedbackDisplay} from '../components/FeedbackDisplay'
 
 // Helper to check if application is marked as duplicate
 const isMarkedAsDuplicate = ({parent}) => !!parent?.isDuplicateOf
@@ -403,12 +404,24 @@ export default {
     },
 
     // === FEEDBACK ===
-    { name: 'adoptedAt', title: 'Adopted At', type: 'datetime', readOnly: true },
-    { name: 'feedbackToken', title: 'Feedback Token', type: 'string', readOnly: true },
-    { name: 'feedbackSentAt', title: 'Feedback Email Sent', type: 'datetime', readOnly: true },
-    { name: 'feedbackSubmittedAt', title: 'Feedback Submitted', type: 'datetime', readOnly: true },
-    { name: 'feedbackLocale', title: 'Feedback Locale', type: 'string', readOnly: true },
-    { name: 'feedbackResponses', title: 'Feedback Responses', type: 'text', readOnly: true }
+    // Raw fields kept for data storage — UI is via FeedbackDisplay component below
+    { name: 'adoptedAt', title: 'Adopted At', type: 'datetime', readOnly: true, hidden: true },
+    { name: 'feedbackToken', title: 'Feedback Token', type: 'string', readOnly: true, hidden: true },
+    { name: 'feedbackSentAt', title: 'Feedback Email Sent', type: 'datetime', readOnly: true, hidden: true },
+    { name: 'feedbackSubmittedAt', title: 'Feedback Submitted', type: 'datetime', readOnly: true, hidden: true },
+    { name: 'feedbackLocale', title: 'Feedback Locale', type: 'string', readOnly: true, hidden: true },
+    { name: 'feedbackResponses', title: 'Feedback Responses', type: 'text', readOnly: true, hidden: true },
+
+    // Display component — only visible when status is 'adopted'
+    {
+      name: 'feedbackDisplay',
+      title: 'Adoption Feedback',
+      type: 'string',
+      fieldset: 'feedback',
+      readOnly: true,
+      hidden: ({parent}) => parent?.status !== 'adopted',
+      components: { field: FeedbackDisplay }
+    }
   ],
 
   fieldsets: [
@@ -416,6 +429,14 @@ export default {
     name: 'officialUse',
     title: 'For Official Use',
     description: 'Please leave your feedback and update status below here.',
+    options: {
+      collapsible: true,
+      collapsed: false
+    }
+  },
+  {
+    name: 'feedback',
+    title: 'Adoption Feedback',
     options: {
       collapsible: true,
       collapsed: false
