@@ -254,6 +254,14 @@ The adoption flow is for the **main purrfectlove.org site**, not the care portal
 - PDF components: `src/lib/adoptionContractPDF.jsx` (EN) and `src/lib/adoptionContractPDF_DE.jsx` (DE)
 - Preview route (dev only): `GET /api/preview-contract` — returns a sample PDF inline
 
+### AdoptionContractNote lookup logic (important)
+
+`AdoptionContractNote.jsx` (shown inside the application record) reads `contractSentAt` from the cat document. It runs **two parallel queries** and picks whichever has `contractSentAt`:
+1. Query by `adopterApplication._ref == applicationId` — finds the cat that has this application formally linked (reliable even when `catOverrideId` was used)
+2. Query by `cat._ref` on the application — direct reference fallback
+
+This dual-query approach is needed because `catOverrideId` means the contract may be on a cat that is NOT the one `application.cat._ref` points to.
+
 ### Post-adoption feedback
 
 - Feedback email sent 30 days after `adoptedAt` by `/api/cron/adoption-feedback`
@@ -261,6 +269,26 @@ The adoption flow is for the **main purrfectlove.org site**, not the care portal
 - Public feedback form: `src/app/(en)/adopt/feedback/page.js` — authenticated by `feedbackToken` query param
 - Submit endpoint: `POST /api/feedback/submit` — token-based, no session required (in `PUBLIC_PREFIXES`)
 - Responses saved as a single plain-text field (`feedbackResponses`) on the application document
+- In Studio: feedback fields (`adoptedAt`, `feedbackSentAt`, `feedbackSubmittedAt`, `feedbackLocale`, `feedbackResponses`) are hidden as raw schema fields and rendered via `FeedbackDisplay.jsx` in a collapsible "Adoption Feedback" fieldset. This section is only visible when `status === 'adopted'`. `feedbackToken` stays hidden entirely (internal use only).
+
+### Blog Overview (AI-generated)
+
+Blog posts have two auto-generated fields: `overviewEn` and `overviewDe` — a 2–3 sentence reader hook shown below the author byline on every post.
+
+**How it works:**
+- Sanity fires a webhook on every blogPost create/update → `POST /api/webhooks/sanity-blog-overview`
+- The route extracts plain text from Portable Text, calls `gpt-4o-mini` for EN and DE in parallel, patches `overviewEn`/`overviewDe` back onto the document
+- `/api/webhooks/` is in `PUBLIC_PREFIXES` — verified by `SANITY_WEBHOOK_SECRET`, not session cookie
+- Frontend: `BlogOverview.jsx` (client component) animates each word in at 110ms/word with a blur-to-clear fade, giving an AI-generation feel
+- Fields are editable in Studio (`✨ Overview` fields on the blogPost document) if a generated result needs fixing
+
+**Prompt rules:** warm/conversational tone, positive framing even for difficult topics, no invented information, no "This post…" openers, 2–3 sentences only.
+
+**Backfill:** all 26 existing posts were generated via `scripts/generateBlogOverviews.mjs` (already run). Re-run it if new posts are bulk-imported without triggering the webhook.
+
+**Webhook to register in Sanity** (not yet added — do this after deploying):
+- URL: `https://www.purrfectlove.org/api/webhooks/sanity-blog-overview`
+- Trigger: Create + Update, filter `_type == "blogPost"`, secret = `SANITY_WEBHOOK_SECRET`
 
 ### One-off contract scripts
 
@@ -314,6 +342,9 @@ Haversine formula with a **1.66x road multiplier** (India-specific) used through
 - **Booking messages polling**: the care portal has no client-side Supabase client, so `BookingMessages` uses 5s polling (not Supabase Realtime). Mark-as-read fires server-side on every GET fetch. Realtime infrastructure is in place for a future upgrade.
 - **`hasUnreadMessage` on bookings list**: `/api/care/bookings/my` queries `booking_messages` for unread counts and includes `hasUnreadMessage: bool` on each booking. `BookingsPage` shows a red dot and clears it optimistically on modal open.
 - **Parked branch `feat/blocked-dates-display`**: WIP work to show `blocked_by_booking` dates as amber in `AvailabilityStrip` (both mini strip and expanded calendar). Not working correctly — parked for later.
+- **Adoption form honeypot**: the hidden anti-bot field is named `_pels` (not `website`). `name="website"` was the original name but mobile browsers (Chrome on Android, Instagram in-app browser) autofill it silently despite `autoComplete="off"`, blocking real users. The API checks `body._pels`. Do not rename it back to `website` or any other browser-recognised autocomplete token.
+- **Address title-casing**: the adoption form applies `toTitleCase()` to `formData.address` client-side before submission (in `handleSubmit`). This is intentional — purely cosmetic normalisation, not validation.
+- **WhatsApp share button**: on cat detail pages (`CatDetailPage.jsx`), styled as a hunter-green outlined button (not WhatsApp green) to match the PL palette. Style lives in `CatDetailPage.module.css` as `.whatsappShare`.
 
 ---
 
