@@ -8,6 +8,7 @@ import Breadcrumb from '@/components/Breadcrumb';
 import Link from 'next/link';
 import contentEN from '@/data/pageContent.en.json';
 import contentDE from '@/data/pageContent.de.json';
+import BlogOverview from './BlogOverview';
 
 const builder = imageUrlBuilder(client);
 
@@ -71,6 +72,8 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
       },
       tags,
       tagsDe,
+      overviewEn,
+      overviewDe,
       author-> {
         name,
         "slug": slug.current,
@@ -128,6 +131,7 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
   }
 
   const title = post.title?.[locale] || post.title?.en || '';
+  const overview = locale === 'de' ? (post.overviewDe || post.overviewEn || '') : (post.overviewEn || '');
   const postContent = post.content?.[locale] || post.content?.en || [];
   const author = locale === 'de' ? (post.authorDe || post.author) : post.author;
   const authorHref = author?.slug
@@ -259,6 +263,8 @@ export default async function BlogPostPage({ slug, locale = 'en' }) {
               )}
             </div>
           </header>
+
+          {overview && <BlogOverview text={overview} />}
 
           <div className={styles.content}>
             {post.featuredImage?.asset && (

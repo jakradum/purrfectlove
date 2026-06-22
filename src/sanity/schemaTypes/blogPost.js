@@ -226,6 +226,24 @@ export default defineType({
       })
     }),
     defineField({
+      name: 'overviewEn',
+      title: '✨ Overview - English (Auto-generated)',
+      type: 'text',
+      rows: 3,
+      description: 'AI-generated 2–3 sentence overview shown at the top of the post. Auto-updated on every publish. You can manually edit if needed.',
+      hidden: ({document}) => document?.language === 'de',
+      readOnly: false,
+    }),
+    defineField({
+      name: 'overviewDe',
+      title: '✨ Overview - German (Auto-generated)',
+      type: 'text',
+      rows: 3,
+      description: 'KI-generierte 2–3 Satz Übersicht. Wird bei jeder Veröffentlichung automatisch aktualisiert.',
+      hidden: ({document}) => document?.language === 'en',
+      readOnly: false,
+    }),
+    defineField({
       name: 'tags',
       title: '🏷️ Tags - English (Auto-generated)',
       type: 'array',
