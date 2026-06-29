@@ -131,11 +131,11 @@ export default {
 
       const countryFlag = locale === 'de' ? '🇩🇪' : '🇮🇳'
       const statusIcon = status === 'open' ? '🔵' : '✅'
-      const aiIcon = aiResponded ? '🤖 ' : ''
+      const aiPrefix = aiResponded ? '🤖 AI Responded • ' : ''
 
       return {
         title: `${countryFlag} ${name}`,
-        subtitle: `${aiIcon}${statusIcon} ${statusLabels[status] || 'Open'} • ${assignedToName || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
+        subtitle: `${aiPrefix}${statusIcon} ${statusLabels[status] || 'Open'} • ${assignedToName || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
       }
     }
   }
