@@ -1,18 +1,22 @@
 'use client';
-import { useEffect, useState } from 'react';
+import { useEffect, useRef } from 'react';
 import styles from './BlogPostPage.module.css';
 
 export default function BlogOverview({ text }) {
-  const [visible, setVisible] = useState(false);
+  const ref = useRef(null);
 
   useEffect(() => {
-    // Small delay so animation fires after paint
-    const t = setTimeout(() => setVisible(true), 80);
+    const t = setTimeout(() => {
+      if (!ref.current) return;
+      Array.from(ref.current.querySelectorAll('span')).forEach((span, i) => {
+        span.style.animationDelay = `${i * 110}ms`;
+        span.classList.add(styles.overviewWordVisible);
+      });
+    }, 80);
     return () => clearTimeout(t);
   }, []);
 
   const words = text.split(' ');
-  const msPerWord = 110;
 
   return (
     <div className={styles.overviewBox}>
@@ -22,13 +26,9 @@ export default function BlogOverview({ text }) {
         </svg>
         Overview
       </div>
-      <p className={styles.overviewText}>
+      <p className={styles.overviewText} ref={ref}>
         {words.map((word, i) => (
-          <span
-            key={i}
-            className={styles.overviewWord}
-            style={visible ? { animationDelay: `${i * msPerWord}ms` } : { animation: 'none', opacity: 0 }}
-          >
+          <span key={i} className={styles.overviewWord}>
             {word}{i < words.length - 1 ? ' ' : ''}
           </span>
         ))}
