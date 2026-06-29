@@ -132,17 +132,26 @@ export async function GET(request) {
 
     console.log(`contact-message-responses: ${messages.length} unresponded open messages`)
 
+    // Cap per run to avoid timeout — runs every 72h so backlog catches up quickly
+    const batch = messages.slice(0, 10)
+
+    // Classify all messages in parallel
+    const classifications = await Promise.all(
+      batch.map(msg => isAdoptionRequest(msg.name, msg.message).catch(() => false))
+    )
+
     const results = []
 
-    for (const msg of messages) {
+    for (let i = 0; i < batch.length; i++) {
+      const msg = batch[i]
+      const qualifies = classifications[i]
+
+      if (!qualifies) {
+        results.push({ _id: msg._id, name: msg.name, status: 'skipped' })
+        continue
+      }
+
       try {
-        const qualifies = await isAdoptionRequest(msg.name, msg.message)
-
-        if (!qualifies) {
-          results.push({ _id: msg._id, name: msg.name, status: 'skipped' })
-          continue
-        }
-
         const { html, plainText } = buildEmail(msg.name)
 
         const { error } = await resend.emails.send({
@@ -167,9 +176,6 @@ export async function GET(request) {
 
         console.log(`Responded to ${msg.name} <${msg.email}>`)
         results.push({ _id: msg._id, name: msg.name, status: 'responded' })
-
-        // Small delay between sends
-        await new Promise(r => setTimeout(r, 500))
 
       } catch (err) {
         console.error(`Error processing message ${msg._id}:`, err)
