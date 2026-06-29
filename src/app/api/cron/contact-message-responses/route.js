@@ -71,12 +71,14 @@ const LINKS_TEXT = `- What Makes a Furrever Home: https://www.purrfectlove.org/g
 - How to Find the Right Adopter: https://www.purrfectlove.org/guides/blog/message-for-foster-moms-what-to-focus-on-when-recruiting-an-adopter
 - Why Responsible Rescuers Neuter Before Adoption: https://www.purrfectlove.org/guides/blog/why-responsible-rescuers-neuter-before-adoption-a-long-term-commitment-to-welfare`
 
-function buildEmail(name, type) {
+function buildEmail(name, type, originalMessage) {
   const isSurrender = type === 'surrender'
 
   const opening = isSurrender
     ? `Thank you for reaching out to Purrfect Love. We really appreciate you caring enough to find your cat a good home rather than just letting things be.`
     : `Thank you for reaching out to Purrfect Love. It means a lot that you stopped to help rather than walk away.`
+
+  const quotedMessage = originalMessage.split('\n').map(l => `> ${l}`).join('\n')
 
   const plainText = `Hi ${name},
 
@@ -89,7 +91,15 @@ In the meantime, here are some resources that might help you find a path forward
 ${LINKS_TEXT}
 
 With love,
-The Purrfect Love Team`
+The Purrfect Love Team
+
+---
+Please do not reply to this email. This mailbox is not monitored.
+
+Your original message:
+${quotedMessage}`
+
+  const safeMessage = originalMessage.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
 
   const html = `<!DOCTYPE html>
 <html>
@@ -115,10 +125,17 @@ The Purrfect Love Team`
         </tr>
         <tr>
           <td style="background:#F5F0E8;padding:20px 32px;text-align:center;border-top:1px solid #E8E4DC;">
-            <p style="margin:0;font-size:13px;color:#6B6B6B;font-weight:600;">Purrfect Love · Cat Adoption &amp; Rescue</p>
+            <p style="margin:0;font-size:12px;color:#aaa;">Please do not reply to this email. This mailbox is not monitored.</p>
+            <p style="margin:8px 0 0;font-size:13px;color:#6B6B6B;font-weight:600;">Purrfect Love · Cat Adoption &amp; Rescue</p>
             <p style="margin:4px 0 0;font-size:12px;color:#999;">
               <a href="https://purrfectlove.org" style="color:#C85C3F;text-decoration:none;">purrfectlove.org</a>
             </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px;border-top:1px solid #E8E4DC;background:#FAFAFA;">
+            <p style="margin:0 0 8px;font-size:11px;font-family:'Trebuchet MS',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#aaa;">Your original message</p>
+            <p style="margin:0;font-size:13px;line-height:1.7;color:#888;white-space:pre-wrap;">${safeMessage}</p>
           </td>
         </tr>
       </table>
@@ -166,10 +183,10 @@ export async function GET(request) {
       }
 
       try {
-        const { html, plainText } = buildEmail(msg.name, type)
+        const { html, plainText } = buildEmail(msg.name, type, msg.message)
 
         const { error } = await resend.emails.send({
-          from: 'Purrfect Love <support@purrfectlove.org>',
+          from: 'Purrfect Love <no-reply@purrfectlove.org>',
           to: [msg.email],
           subject: 'Re: Your message to Purrfect Love',
           html,
