@@ -70,7 +70,29 @@ export default {
       title: 'Internal Notes',
       type: 'text',
       rows: 3
-    }
+    },
+    {
+      name: 'aiResponded',
+      title: 'AI Response Sent',
+      type: 'boolean',
+      readOnly: true,
+      initialValue: false,
+    },
+    {
+      name: 'aiRespondedAt',
+      title: 'AI Response Sent At',
+      type: 'datetime',
+      readOnly: true,
+      hidden: ({parent}) => !parent?.aiResponded,
+    },
+    {
+      name: 'aiResponseText',
+      title: 'AI Response (sent to applicant)',
+      type: 'text',
+      readOnly: true,
+      rows: 10,
+      hidden: ({parent}) => !parent?.aiResponded,
+    },
   ],
 
   orderings: [
