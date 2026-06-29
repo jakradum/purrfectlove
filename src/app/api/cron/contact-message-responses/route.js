@@ -12,8 +12,9 @@ const serverClient = createClient({
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 // ─── Classification ───────────────────────────────────────────────────────────
+// Returns: 'surrender' | 'stray' | null
 
-async function isAdoptionRequest(name, message) {
+async function classify(name, message) {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
     method: 'POST',
     headers: {
@@ -25,11 +26,14 @@ async function isAdoptionRequest(name, message) {
       messages: [
         {
           role: 'system',
-          content: 'You classify contact form messages for a cat rescue organisation. Respond with JSON only: { "isAdoptionRequest": true/false }'
+          content: 'You classify contact form messages for a cat rescue organisation. Respond with JSON only: { "type": "surrender" | "stray" | "other" }'
         },
         {
           role: 'user',
-          content: `Classify this message. Return true if the person is asking the organisation to take in, foster, or help rehome a cat or kitten (including strays, surrenders, emergencies, or found animals). Return false for everything else (catio/product inquiries, general questions, partnership requests, etc.).
+          content: `Classify this message into one of three categories:
+- "surrender": the person owns a cat and wants to give it up, rehome it, or find it an adoptive/foster home
+- "stray": the person has found a stray, abandoned, or feral cat/kitten, or is dealing with an unexpected litter or emergency foster situation
+- "other": anything else (catio/product inquiries, general questions, partnership requests, etc.)
 
 Name: ${name}
 Message: ${message}`
@@ -40,33 +44,49 @@ Message: ${message}`
     }),
   })
 
-  if (!response.ok) return false
+  if (!response.ok) return null
 
   try {
     const data = await response.json()
     let text = data.choices[0]?.message?.content?.trim()
     if (text.startsWith('```')) text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
     const parsed = JSON.parse(text)
-    return parsed.isAdoptionRequest === true
+    if (parsed.type === 'surrender' || parsed.type === 'stray') return parsed.type
+    return null
   } catch {
-    return false
+    return null
   }
 }
 
-// ─── Email template ───────────────────────────────────────────────────────────
+// ─── Email templates ──────────────────────────────────────────────────────────
 
-function buildEmail(name) {
+const LINKS_HTML = `
+  <ul style="font-size:15px;line-height:1.9;color:#4A4A4A;padding-left:20px;margin:0 0 24px;">
+    <li><a href="https://www.purrfectlove.org/guides/blog/what-makes-a-furrever-home" style="color:#C85C3F;text-decoration:none;">What Makes a Furrever Home</a></li>
+    <li><a href="https://www.purrfectlove.org/guides/blog/message-for-foster-moms-what-to-focus-on-when-recruiting-an-adopter" style="color:#C85C3F;text-decoration:none;">How to Find the Right Adopter</a></li>
+    <li><a href="https://www.purrfectlove.org/guides/blog/why-responsible-rescuers-neuter-before-adoption-a-long-term-commitment-to-welfare" style="color:#C85C3F;text-decoration:none;">Why Responsible Rescuers Neuter Before Adoption</a></li>
+  </ul>`
+
+const LINKS_TEXT = `- What Makes a Furrever Home: https://www.purrfectlove.org/guides/blog/what-makes-a-furrever-home
+- How to Find the Right Adopter: https://www.purrfectlove.org/guides/blog/message-for-foster-moms-what-to-focus-on-when-recruiting-an-adopter
+- Why Responsible Rescuers Neuter Before Adoption: https://www.purrfectlove.org/guides/blog/why-responsible-rescuers-neuter-before-adoption-a-long-term-commitment-to-welfare`
+
+function buildEmail(name, type) {
+  const isSurrender = type === 'surrender'
+
+  const opening = isSurrender
+    ? `Thank you for reaching out to Purrfect Love. We really appreciate you caring enough to find your cat a good home rather than just letting things be.`
+    : `Thank you for reaching out to Purrfect Love. It means a lot that you stopped to help rather than walk away.`
+
   const plainText = `Hi ${name},
 
-Thank you for reaching out to Purrfect Love. We really appreciate you caring enough to contact us.
+${opening}
 
 We want to be upfront with you: our team is deeply committed to the cats already in our care, and we're quite stretched at the moment. We aren't typically able to take in cats being surrendered or rehomed directly, and we wouldn't want to give you false hope. We've noted your message and will reach out if something changes on our end, though we can't make any guarantees.
 
 In the meantime, here are some resources that might help you find a path forward on your own:
 
-- What Makes a Furrever Home: https://www.purrfectlove.org/guides/blog/what-makes-a-furrever-home
-- How to Find the Right Adopter: https://www.purrfectlove.org/guides/blog/message-for-foster-moms-what-to-focus-on-when-recruiting-an-adopter
-- Why Responsible Rescuers Neuter Before Adoption: https://www.purrfectlove.org/guides/blog/why-responsible-rescuers-neuter-before-adoption-a-long-term-commitment-to-welfare
+${LINKS_TEXT}
 
 With love,
 The Purrfect Love Team`
@@ -86,14 +106,10 @@ The Purrfect Love Team`
         <tr>
           <td style="padding:40px 32px;">
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">Hi ${name},</p>
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">Thank you for reaching out to Purrfect Love. We really appreciate you caring enough to contact us.</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">${opening}</p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">We want to be upfront with you: our team is deeply committed to the cats already in our care, and we're quite stretched at the moment. We aren't typically able to take in cats being surrendered or rehomed directly, and we wouldn't want to give you false hope. We've noted your message and will reach out if something changes on our end, though we can't make any guarantees.</p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">In the meantime, here are some resources that might help you find a path forward on your own:</p>
-            <ul style="font-size:15px;line-height:1.9;color:#4A4A4A;padding-left:20px;margin:0 0 24px;">
-              <li><a href="https://www.purrfectlove.org/guides/blog/what-makes-a-furrever-home" style="color:#C85C3F;text-decoration:none;">What Makes a Furrever Home</a></li>
-              <li><a href="https://www.purrfectlove.org/guides/blog/message-for-foster-moms-what-to-focus-on-when-recruiting-an-adopter" style="color:#C85C3F;text-decoration:none;">How to Find the Right Adopter</a></li>
-              <li><a href="https://www.purrfectlove.org/guides/blog/why-responsible-rescuers-neuter-before-adoption-a-long-term-commitment-to-welfare" style="color:#C85C3F;text-decoration:none;">Why Responsible Rescuers Neuter Before Adoption</a></li>
-            </ul>
+            ${LINKS_HTML}
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0;">With love,<br>The Purrfect Love Team</p>
           </td>
         </tr>
@@ -123,7 +139,6 @@ export async function GET(request) {
   }
 
   try {
-    // Fetch open messages that haven't been AI-responded to yet
     const messages = await serverClient.fetch(
       `*[_type == "contactMessage" && status == "open" && aiResponded != true] | order(submittedAt desc) {
         _id, name, email, message, submittedAt
@@ -132,27 +147,26 @@ export async function GET(request) {
 
     console.log(`contact-message-responses: ${messages.length} unresponded open messages`)
 
-    // Cap per run to avoid timeout — runs every 72h so backlog catches up quickly
     const batch = messages.slice(0, 10)
 
-    // Classify all messages in parallel
+    // Classify all in parallel
     const classifications = await Promise.all(
-      batch.map(msg => isAdoptionRequest(msg.name, msg.message).catch(() => false))
+      batch.map(msg => classify(msg.name, msg.message).catch(() => null))
     )
 
     const results = []
 
     for (let i = 0; i < batch.length; i++) {
       const msg = batch[i]
-      const qualifies = classifications[i]
+      const type = classifications[i]
 
-      if (!qualifies) {
+      if (!type) {
         results.push({ _id: msg._id, name: msg.name, status: 'skipped' })
         continue
       }
 
       try {
-        const { html, plainText } = buildEmail(msg.name)
+        const { html, plainText } = buildEmail(msg.name, type)
 
         const { error } = await resend.emails.send({
           from: 'Purrfect Love <support@purrfectlove.org>',
@@ -174,11 +188,11 @@ export async function GET(request) {
           aiResponseText: plainText,
         }).commit()
 
-        console.log(`Responded to ${msg.name} <${msg.email}>`)
-        results.push({ _id: msg._id, name: msg.name, status: 'responded' })
+        console.log(`Responded to ${msg.name} <${msg.email}> [${type}]`)
+        results.push({ _id: msg._id, name: msg.name, type, status: 'responded' })
 
       } catch (err) {
-        console.error(`Error processing message ${msg._id}:`, err)
+        console.error(`Error processing ${msg._id}:`, err)
         results.push({ _id: msg._id, name: msg.name, status: 'error', error: err.message })
       }
     }
