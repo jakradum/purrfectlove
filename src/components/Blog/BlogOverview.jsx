@@ -12,7 +12,6 @@ export default function BlogOverview({ text }) {
   }, []);
 
   const words = text.split(' ');
-  // 3200ms total: last word starts at (n-1)*delay, finishes at (n-1)*delay + 300ms (fade duration)
   const msPerWord = 110;
 
   return (
@@ -28,10 +27,7 @@ export default function BlogOverview({ text }) {
           <span
             key={i}
             className={styles.overviewWord}
-            style={{
-              animationDelay: visible ? `${i * msPerWord}ms` : '0ms',
-              animationPlayState: visible ? 'running' : 'paused',
-            }}
+            style={visible ? { animationDelay: `${i * msPerWord}ms` } : { animation: 'none', opacity: 0 }}
           >
             {word}{i < words.length - 1 ? ' ' : ''}
           </span>
