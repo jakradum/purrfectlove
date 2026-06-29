@@ -120,9 +120,10 @@ export default {
       locale: 'locale',
       status: 'status',
       assignedToName: 'assignedTo.name',
-      date: 'submittedAt'
+      date: 'submittedAt',
+      aiResponded: 'aiResponded',
     },
-    prepare({ name, email, locale, status, assignedToName, date }) {
+    prepare({ name, email, locale, status, assignedToName, date, aiResponded }) {
       const statusLabels = {
         open: 'Open',
         closed: 'Closed'
@@ -130,10 +131,11 @@ export default {
 
       const countryFlag = locale === 'de' ? '🇩🇪' : '🇮🇳'
       const statusIcon = status === 'open' ? '🔵' : '✅'
+      const aiTag = aiResponded ? ' • 🤖 AI responded' : ''
 
       return {
         title: `${countryFlag} ${name}`,
-        subtitle: `${statusIcon} ${statusLabels[status] || 'Open'} • ${assignedToName || 'Unassigned'} • ${new Date(date).toLocaleDateString()}`
+        subtitle: `${statusIcon} ${statusLabels[status] || 'Open'} • ${assignedToName || 'Unassigned'} • ${new Date(date).toLocaleDateString()}${aiTag}`
       }
     }
   }
