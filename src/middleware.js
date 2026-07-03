@@ -56,6 +56,8 @@ export async function middleware(request) {
     '/api/feedback/',                        // public — token is the auth
     '/api/cron/adoption-feedback',           // verified by CRON_SECRET, not session cookie
     '/api/cron/contact-message-responses',  // verified by CRON_SECRET, not session cookie
+    '/api/cron/weekly-digest',              // verified by CRON_SECRET, not session cookie
+    '/api/preview-digest',                  // dev-only email preview, no auth needed
     '/api/webhooks/',                        // verified by Sanity webhook signature, not session cookie
     // Subdomain equivalents (before the /care rewrite is applied)
     '/login', '/privacy', '/join',
