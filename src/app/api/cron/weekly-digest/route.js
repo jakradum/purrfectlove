@@ -12,34 +12,49 @@ const serverClient = createClient({
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-function brandedEmail({ heading, body }) {
+const STUDIO_URL = 'https://www.purrfectlove.org/studio'
+
+function brandedEmail({ heading, subheading, body }) {
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
-<body style="margin:0;padding:0;font-family:Georgia,'Times New Roman',serif;background-color:#FFF8F0;color:#2D2D2D;">
-  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF8F0;padding:40px 20px;">
+<body style="margin:0;padding:0;font-family:Arial,Helvetica,sans-serif;background-color:#F4F4F4;color:#1A1A1A;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#F4F4F4;padding:32px 16px;">
     <tr><td align="center">
-      <table width="600" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+      <table width="620" cellpadding="0" cellspacing="0" style="background:#ffffff;border:1px solid #DCDCDC;">
+
+        <!-- Header -->
         <tr>
-          <td style="background:#2C5F4F;padding:28px 32px;text-align:center;">
-            <h1 style="margin:0;font-family:'Trebuchet MS',sans-serif;font-size:24px;color:#F6F4F0;font-weight:700;">Purrfect Love</h1>
+          <td style="padding:24px 32px;border-bottom:3px solid #1A1A1A;">
+            <table width="100%" cellpadding="0" cellspacing="0">
+              <tr>
+                <td>
+                  <p style="margin:0;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.1em;color:#888;">Purrfect Love</p>
+                  <h1 style="margin:4px 0 0;font-size:20px;font-weight:700;color:#1A1A1A;font-family:Arial,Helvetica,sans-serif;">${heading}</h1>
+                  ${subheading ? `<p style="margin:4px 0 0;font-size:13px;color:#666;">${subheading}</p>` : ''}
+                </td>
+                <td align="right" style="vertical-align:top;">
+                  <a href="${STUDIO_URL}" style="display:inline-block;padding:8px 16px;background:#1A1A1A;color:#fff;font-size:12px;font-weight:700;text-decoration:none;font-family:Arial,Helvetica,sans-serif;letter-spacing:0.04em;">Open Studio →</a>
+                </td>
+              </tr>
+            </table>
           </td>
         </tr>
+
+        <!-- Body -->
         <tr>
-          <td style="padding:40px 32px;">
-            <h2 style="margin:0 0 24px;font-size:18px;color:#2C5F4F;font-family:'Trebuchet MS',sans-serif;">${heading}</h2>
+          <td style="padding:28px 32px;">
             ${body}
-            <p style="font-size:14px;line-height:1.7;color:#999;margin:32px 0 0;">– Purrfect Love automated digest</p>
           </td>
         </tr>
+
+        <!-- Footer -->
         <tr>
-          <td style="background:#F5F0E8;padding:20px 32px;text-align:center;border-top:1px solid #E8E4DC;">
-            <p style="margin:0;font-size:13px;color:#6B6B6B;font-weight:600;">Purrfect Love · Cat Adoption &amp; Rescue</p>
-            <p style="margin:4px 0 0;font-size:12px;color:#999;">
-              <a href="https://purrfectlove.org" style="color:#C85C3F;text-decoration:none;">purrfectlove.org</a>
-            </p>
+          <td style="padding:16px 32px;border-top:1px solid #DCDCDC;background:#F9F9F9;">
+            <p style="margin:0;font-size:11px;color:#999;">Automated weekly digest · <a href="https://purrfectlove.org" style="color:#999;">purrfectlove.org</a></p>
           </td>
         </tr>
+
       </table>
     </td></tr>
   </table>
@@ -53,13 +68,12 @@ function fmtDate(iso) {
 }
 
 function sectionHeader(title, count) {
-  const colour = count > 0 ? '#2C5F4F' : '#999'
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin:28px 0 12px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin:32px 0 10px;">
       <tr>
-        <td style="border-left:4px solid ${colour};padding:4px 0 4px 12px;">
-          <span style="font-family:'Trebuchet MS',sans-serif;font-size:15px;font-weight:700;color:${colour};">${title}</span>
-          <span style="font-size:13px;color:#999;margin-left:8px;">${count} this week</span>
+        <td style="border-bottom:2px solid #1A1A1A;padding-bottom:6px;">
+          <span style="font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.08em;color:#1A1A1A;">${title}</span>
+          <span style="font-size:12px;color:#999;margin-left:10px;font-weight:400;text-transform:none;letter-spacing:0;">${count} this week</span>
         </td>
       </tr>
     </table>`
@@ -67,16 +81,17 @@ function sectionHeader(title, count) {
 
 function table(headers, rows) {
   if (rows.length === 0) {
-    return `<p style="font-size:14px;color:#aaa;margin:0 0 8px;padding-left:4px;">Nothing to show.</p>`
+    return `<p style="font-size:13px;color:#aaa;margin:0 0 8px;">Nothing this week.</p>`
   }
-  const thStyle = 'font-family:"Trebuchet MS",sans-serif;font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#888;padding:8px 10px;border-bottom:2px solid #E8E4DC;text-align:left;white-space:nowrap;'
-  const tdStyle = 'font-size:13px;color:#2D2D2D;padding:8px 10px;border-bottom:1px solid #F0EDE8;vertical-align:top;'
+  const thStyle = 'font-size:11px;font-weight:700;text-transform:uppercase;letter-spacing:0.07em;color:#666;padding:7px 10px 7px 0;border-bottom:1px solid #DCDCDC;text-align:left;white-space:nowrap;'
+  const tdStyle = 'font-size:13px;color:#1A1A1A;padding:8px 10px 8px 0;border-bottom:1px solid #EFEFEF;vertical-align:top;line-height:1.5;'
   const ths = headers.map(h => `<th style="${thStyle}">${h}</th>`).join('')
-  const trs = rows.map(cells =>
-    `<tr>${cells.map(c => `<td style="${tdStyle}">${c ?? '—'}</td>`).join('')}</tr>`
-  ).join('')
+  const trs = rows.map((cells, ri) => {
+    const bg = ri % 2 === 1 ? ' background:#FAFAFA;' : ''
+    return `<tr>${cells.map(c => `<td style="${tdStyle}${bg}">${c ?? '—'}</td>`).join('')}</tr>`
+  }).join('')
   return `
-    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:8px;">
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;margin-bottom:4px;">
       <thead><tr>${ths}</tr></thead>
       <tbody>${trs}</tbody>
     </table>`
@@ -215,7 +230,7 @@ export async function GET(request) {
       to: ['support@purrfectlove.org'],
       bcc: ['pranavkarnad@gmail.com'],
       subject: `Weekly Digest — ${dateRange}`,
-      html: brandedEmail({ heading: 'Weekly Activity Digest', body }),
+      html: brandedEmail({ heading: 'Weekly Activity Digest', subheading: dateRange, body }),
     })
   } catch (e) {
     console.error('[weekly-digest] send error:', e)
