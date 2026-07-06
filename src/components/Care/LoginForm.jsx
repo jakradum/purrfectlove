@@ -95,8 +95,7 @@ export default function LoginForm({ locale = 'en', loginRedirect }) {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error || 'Invalid code.'); return; }
-      router.push(redirect);
-      router.refresh();
+      window.location.replace(redirect);
     } catch {
       setError('Network error. Please try again.');
     } finally {

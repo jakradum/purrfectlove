@@ -11,7 +11,7 @@ const serverClient = createClient({
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-const PROFILE_URL = 'https://care.purrfectlove.org/profile'
+const PROFILE_URL = 'https://care.purrfectlove.org/profile?edit=availability'
 
 function buildEmail(name, locale) {
   const isDE = locale === 'de'
@@ -23,7 +23,7 @@ function buildEmail(name, locale) {
   const plainText = isDE
     ? `Hallo ${name},
 
-nur eine kurze Erinnerung, deine Verfügbarkeit in der Purrfect Love Community auf dem neuesten Stand zu halten.
+Dies ist deine monatliche Erinnerung, deine Verfügbarkeit in der Purrfect Love Community zu aktualisieren.
 
 Aktuelle Angaben helfen Katzeneltern, den richtigen Sitter zu finden und vermeiden unnötige Anfragen, wenn du nicht verfügbar bist.
 
@@ -33,7 +33,7 @@ Mit lieben Grüßen,
 Das Purrfect Love Team`
     : `Hi ${name},
 
-just a quick nudge to keep your availability up to date on the Purrfect Love Community.
+This is your monthly reminder to update your availability on the Purrfect Love Community.
 
 Accurate dates help cat parents find the right sitter and save you from requests landing when you're not free.
 
@@ -44,8 +44,8 @@ The Purrfect Love Team`
 
   const ctaLabel = isDE ? 'Verfügbarkeit aktualisieren →' : 'Update availability →'
   const bodyText = isDE
-    ? `Nur eine kurze Erinnerung, deine Verfügbarkeit in der Purrfect Love Community auf dem neuesten Stand zu halten. Aktuelle Angaben helfen Katzeneltern, den richtigen Sitter zu finden, und vermeiden unnötige Anfragen, wenn du nicht verfügbar bist.`
-    : `Just a quick nudge to keep your availability up to date on the Purrfect Love Community. Accurate dates help cat parents find the right sitter and save you from requests landing when you're not free.`
+    ? `Dies ist deine monatliche Erinnerung, deine Verfügbarkeit in der Purrfect Love Community zu aktualisieren. Aktuelle Angaben helfen Katzeneltern, den richtigen Sitter zu finden, und vermeiden unnötige Anfragen, wenn du nicht verfügbar bist.`
+    : `This is your monthly reminder to update your availability on the Purrfect Love Community. Accurate dates help cat parents find the right sitter and save you from requests landing when you're not free.`
 
   const html = `<!DOCTYPE html>
 <html>
