@@ -12,7 +12,7 @@ const serverClient = createClient({
 const resend = new Resend(process.env.RESEND_API_KEY)
 
 // ─── Classification ───────────────────────────────────────────────────────────
-// Returns: 'surrender' | 'stray' | null
+// Returns: 'surrender' | 'stray' | 'adoption' | null
 
 async function classify(name, message) {
   const response = await fetch('https://api.openai.com/v1/chat/completions', {
@@ -26,14 +26,15 @@ async function classify(name, message) {
       messages: [
         {
           role: 'system',
-          content: 'You classify contact form messages for a cat rescue organisation. Respond with JSON only: { "type": "surrender" | "stray" | "other" }'
+          content: 'You classify contact form messages for a cat rescue organisation. Respond with JSON only: { "type": "surrender" | "stray" | "adoption" | "other" }'
         },
         {
           role: 'user',
-          content: `Classify this message into one of three categories:
+          content: `Classify this message into one of four categories:
 - "surrender": the person owns a cat and wants to give it up, rehome it, or find it an adoptive/foster home
 - "stray": the person has found a stray, abandoned, or feral cat/kitten, or is dealing with an unexpected litter or emergency foster situation
-- "other": anything else (catio/product inquiries, general questions, partnership requests, etc.)
+- "adoption": the person wants to adopt a cat FROM Purrfect Love — they express interest in adopting (even vaguely, e.g. "I'd like to adopt a cat"), ask about a specific listed cat, ask about the adoption process or requirements, or ask what cats are available. Important: "I want to find my cat a home" or "I need someone to adopt my cat" = surrender, not adoption. Only use "adoption" when the person clearly wants to take a cat home FROM us.
+- "other": anything else (catio/product inquiries, general questions, partnership requests, media, feedback, etc.)
 
 Name: ${name}
 Message: ${message}`
@@ -51,7 +52,7 @@ Message: ${message}`
     let text = data.choices[0]?.message?.content?.trim()
     if (text.startsWith('```')) text = text.replace(/^```(?:json)?\n?/, '').replace(/\n?```$/, '')
     const parsed = JSON.parse(text)
-    if (parsed.type === 'surrender' || parsed.type === 'stray') return parsed.type
+    if (parsed.type === 'surrender' || parsed.type === 'stray' || parsed.type === 'adoption') return parsed.type
     return null
   } catch {
     return null
@@ -70,6 +71,81 @@ const LINKS_HTML = `
 const LINKS_TEXT = `- What Makes a Furrever Home: https://www.purrfectlove.org/guides/blog/what-makes-a-furrever-home
 - How to Find the Right Adopter: https://www.purrfectlove.org/guides/blog/message-for-foster-moms-what-to-focus-on-when-recruiting-an-adopter
 - Why Responsible Rescuers Neuter Before Adoption: https://www.purrfectlove.org/guides/blog/why-responsible-rescuers-neuter-before-adoption-a-long-term-commitment-to-welfare`
+
+function buildAdoptionEmail(name, originalMessage) {
+  const quotedMessage = originalMessage.split('\n').map(l => `> ${l}`).join('\n')
+  const safeMessage = originalMessage.replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;')
+
+  const plainText = `Hi ${name},
+
+Thank you for reaching out — it's wonderful to hear you're thinking about adopting.
+
+All our cats available for adoption are listed on our website. You can browse them and submit an application directly from each cat's profile page.
+
+Browse cats available for adoption: https://www.purrfectlove.org/adopt
+
+We review every application carefully. If your application looks like a good fit, a member of our team will reach out to take things further.
+
+With love,
+The Purrfect Love Team
+
+---
+Please do not reply to this email. This mailbox is not monitored.
+
+Your original message:
+${quotedMessage}`
+
+  const html = `<!DOCTYPE html>
+<html>
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
+<body style="margin:0;padding:0;font-family:Georgia,'Times New Roman',serif;background-color:#FFF8F0;color:#2D2D2D;">
+  <table width="100%" cellpadding="0" cellspacing="0" style="background-color:#FFF8F0;padding:40px 20px;">
+    <tr><td align="center">
+      <table width="560" cellpadding="0" cellspacing="0" style="background:#fff;border-radius:16px;overflow:hidden;box-shadow:0 4px 12px rgba(0,0,0,0.08);">
+        <tr>
+          <td style="background:#2C5F4F;padding:28px 32px;text-align:center;">
+            <h1 style="margin:0;font-family:'Trebuchet MS',sans-serif;font-size:24px;color:#F6F4F0;font-weight:700;">Purrfect Love</h1>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:40px 32px;">
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">Hi ${name},</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">Thank you for reaching out — it's wonderful to hear you're thinking about adopting.</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 24px;">All our cats available for adoption are listed on our website. You can browse them and submit an application directly from each cat's profile page.</p>
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 32px;">
+              <tr>
+                <td style="background:#2C5F4F;border-radius:8px;padding:13px 28px;">
+                  <a href="https://www.purrfectlove.org/adopt" style="color:#F6F4F0;text-decoration:none;font-family:'Trebuchet MS',sans-serif;font-size:15px;font-weight:700;">Browse cats available for adoption →</a>
+                </td>
+              </tr>
+            </table>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">We review every application carefully. If your application looks like a good fit, a member of our team will reach out to take things further.</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0;">With love,<br>The Purrfect Love Team</p>
+          </td>
+        </tr>
+        <tr>
+          <td style="background:#F5F0E8;padding:20px 32px;text-align:center;border-top:1px solid #E8E4DC;">
+            <p style="margin:0;font-size:12px;color:#aaa;">Please do not reply to this email. This mailbox is not monitored.</p>
+            <p style="margin:8px 0 0;font-size:13px;color:#6B6B6B;font-weight:600;">Purrfect Love · Cat Adoption &amp; Rescue</p>
+            <p style="margin:4px 0 0;font-size:12px;color:#999;">
+              <a href="https://purrfectlove.org" style="color:#C85C3F;text-decoration:none;">purrfectlove.org</a>
+            </p>
+          </td>
+        </tr>
+        <tr>
+          <td style="padding:20px 32px;border-top:1px solid #E8E4DC;background:#FAFAFA;">
+            <p style="margin:0 0 8px;font-size:11px;font-family:'Trebuchet MS',sans-serif;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;color:#aaa;">Your original message</p>
+            <p style="margin:0;font-size:13px;line-height:1.7;color:#888;white-space:pre-wrap;">${safeMessage}</p>
+          </td>
+        </tr>
+      </table>
+    </td></tr>
+  </table>
+</body>
+</html>`
+
+  return { html, plainText }
+}
 
 function buildEmail(name, type, originalMessage) {
   const isSurrender = type === 'surrender'
@@ -183,7 +259,9 @@ export async function GET(request) {
       }
 
       try {
-        const { html, plainText } = buildEmail(msg.name, type, msg.message)
+        const { html, plainText } = type === 'adoption'
+          ? buildAdoptionEmail(msg.name, msg.message)
+          : buildEmail(msg.name, type, msg.message)
 
         const { error } = await resend.emails.send({
           from: 'Purrfect Love <no-reply@purrfectlove.org>',
