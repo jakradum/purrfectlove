@@ -197,9 +197,10 @@ export async function POST(request) {
     }
 
     // Check for any prior applications from this email (all cats) for the support notification
+    // and duplicate detection. Order asc so [0] is the true original.
     const priorApplications = await serverClient.fetch(
-      `*[_type == "application" && email == $email && !defined(isDuplicateOf)] | order(submittedAt desc) {
-        applicationId, submittedAt, status, "catName": cat.name, isOpenToAnyCat
+      `*[_type == "application" && email == $email && !defined(isDuplicateOf)] | order(submittedAt asc) {
+        _id, applicationId, submittedAt, status, "catName": cat.name, isOpenToAnyCat
       }`,
       { email: body.email.toLowerCase() }
     )
@@ -246,6 +247,14 @@ export async function POST(request) {
     }
 
     const result = await serverClient.create(applicationData)
+
+    // Auto-mark as duplicate if this email already has a prior application.
+    // priorApplications[0] is the oldest (true original) because of asc ordering above.
+    if (isReturningApplicant) {
+      await serverClient.patch(result._id).set({
+        isDuplicateOf: { _type: 'reference', _ref: priorApplications[0]._id }
+      }).commit()
+    }
 
     // Update rate limit tracker
     submissions.set(ip, now)
