@@ -199,6 +199,21 @@ export default {
       components: { input: StatusInput },
     },
 
+    {
+      name: 'rejectionReason',
+      title: 'Reason for Rejection',
+      type: 'text',
+      fieldset: 'officialUse',
+      rows: 3,
+      description: 'Reason for rejection — mandatory',
+      readOnly: ({parent}) => !!parent?.isDuplicateOf || parent?.status !== 'rejected',
+      validation: Rule => Rule.custom((value, context) => {
+        if (context.parent?.status !== 'rejected') return true
+        if (!value || value.trim().length < 20) return 'Reason for rejection is mandatory (at least 20 characters)'
+        return true
+      }),
+    },
+
     // Cat adopted notice - shows when the original cat is already adopted
     {
       name: 'catAdoptedNotice',
@@ -241,7 +256,7 @@ export default {
           // 2. Not the original cat this application was for
           const originalCatId = document?.cat?._ref || ''
           return {
-            filter: '_type == "cat" && _id != $originalCatId && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0',
+            filter: '_type == "cat" && _id != $originalCatId && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0',
             params: {
               originalCatId
             }
