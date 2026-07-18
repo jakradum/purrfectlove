@@ -1,5 +1,5 @@
 import { useCallback } from 'react'
-import { useFormValue, useDocumentOperation, useClient } from 'sanity'
+import { useFormValue, useDocumentOperation, useClient, useCurrentUser } from 'sanity'
 
 // Wraps the standard status select. When the value changes to 'adopted':
 // - auto-patches adoptionDate to now (if not already set)
@@ -22,6 +22,7 @@ export function StatusInput(props) {
 
   const { patch } = useDocumentOperation(docId || '_placeholder', 'application')
   const client = useClient({ apiVersion: '2024-01-01' })
+  const currentUser = useCurrentUser()
 
   const handleChange = useCallback((patchEvent) => {
     onChange(patchEvent)
@@ -40,14 +41,22 @@ export function StatusInput(props) {
     }
 
     if (newStatus === 'rejected' && docId) {
+      const rejectedAt = new Date().toISOString()
+      const rejectedBy = currentUser?.name || currentUser?.email || 'Unknown'
+      patch.execute([
+        { set: { rejectedAt } },
+        { set: { rejectedBy } },
+      ])
       client.fetch(
         `*[_type == "application" && isDuplicateOf._ref == $id && status in ["new", "evaluation"]]{ _id }`,
         { id: docId }
       ).then(duplicates => {
-        duplicates.forEach(dup => client.patch(dup._id).set({ status: 'rejected' }).commit())
+        duplicates.forEach(dup =>
+          client.patch(dup._id).set({ status: 'rejected', rejectedAt, rejectedBy }).commit()
+        )
       }).catch(err => console.error('[StatusInput] failed to reject duplicates:', err))
     }
-  }, [onChange, patch, client, adoptionDate, adoptedAt, feedbackToken, feedbackLocale, contractLanguage, docId])
+  }, [onChange, patch, client, currentUser, adoptionDate, adoptedAt, feedbackToken, feedbackLocale, contractLanguage, docId])
 
   return renderDefault({ ...props, onChange: handleChange })
 }

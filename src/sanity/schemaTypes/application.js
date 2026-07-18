@@ -420,6 +420,8 @@ export default {
 
     // === FEEDBACK ===
     // Raw fields kept for data storage — UI is via FeedbackDisplay component below
+    { name: 'rejectedBy', title: 'Rejected By', type: 'string', readOnly: true, hidden: true },
+    { name: 'rejectedAt', title: 'Rejected At', type: 'datetime', readOnly: true, hidden: true },
     { name: 'adoptedAt', title: 'Adopted At', type: 'datetime', readOnly: true, hidden: true },
     { name: 'feedbackToken', title: 'Feedback Token', type: 'string', readOnly: true, hidden: true },
     { name: 'feedbackSentAt', title: 'Feedback Email Sent', type: 'datetime', readOnly: true, hidden: true },

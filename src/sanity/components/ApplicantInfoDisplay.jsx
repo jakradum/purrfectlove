@@ -421,9 +421,29 @@ export function ApplicantInfoDisplay(props) {
   }
 
   const isDuplicate = !!doc.isDuplicateOf
+  const isRejected = doc.status === 'rejected'
 
   return (
-    <div style={styles.container}>
+    <div style={{ ...styles.container, position: 'relative', overflow: 'hidden' }}>
+      {isRejected && (
+        <div style={{
+          position: 'absolute',
+          top: '50%',
+          left: '50%',
+          transform: 'translate(-50%, -50%) rotate(-30deg)',
+          fontSize: '5rem',
+          fontWeight: 900,
+          color: '#ef4444',
+          opacity: 0.1,
+          pointerEvents: 'none',
+          userSelect: 'none',
+          whiteSpace: 'nowrap',
+          letterSpacing: '0.15em',
+          zIndex: 0,
+        }}>
+          REJECTED
+        </div>
+      )}
       <div style={{ ...styles.title, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <span>Applicant Information</span>
         <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
@@ -592,6 +612,32 @@ export function ApplicantInfoDisplay(props) {
         <div style={styles.textBlock}>
           <div style={styles.textLabel}>Experience with cats:</div>
           {doc.experience}
+        </div>
+      )}
+
+      {isRejected && (
+        <div style={{
+          marginTop: '1rem',
+          padding: '1rem',
+          backgroundColor: '#fef2f2',
+          border: '1px solid #fecaca',
+          borderRadius: '6px',
+          fontSize: '0.9rem',
+          lineHeight: 1.6,
+          color: '#7f1d1d',
+          position: 'relative',
+          zIndex: 1,
+        }}>
+          <div style={{ fontWeight: 700, marginBottom: '0.25rem', color: '#ef4444' }}>❌ Rejected</div>
+          <div>
+            <strong>Rejected by</strong> {doc.rejectedBy || '—'}{' '}
+            <strong>on</strong> {doc.rejectedAt ? formatDate(doc.rejectedAt) : '—'}
+          </div>
+          {doc.rejectionReason && (
+            <div style={{ marginTop: '0.5rem' }}>
+              <strong>Reason for rejection:</strong> {doc.rejectionReason}
+            </div>
+          )}
         </div>
       )}
     </div>
