@@ -21,10 +21,10 @@ function targetDate() {
   return `${y}-${m}-${day}`
 }
 
-function formatDate(ymd) {
+function formatDate(ymd, locale = 'en') {
   if (!ymd) return ''
   const [y, m, d] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(y, m - 1, d).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function waLink(phone) {
@@ -32,7 +32,8 @@ function waLink(phone) {
   return `https://wa.me/${phone.replace(/\D/g, '')}`
 }
 
-function brandedEmail({ heading, body }) {
+function brandedEmail({ heading, body, isDE = false }) {
+  const signoff = isDE ? '– Die Purrfect Love Community' : '– The Purrfect Love Community'
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -49,7 +50,7 @@ function brandedEmail({ heading, body }) {
           <td style="padding:40px 32px;">
             <h2 style="margin:0 0 20px;font-size:18px;color:#2C5F4F;font-family:'Trebuchet MS',sans-serif;">${heading}</h2>
             ${body}
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">– The Purrfect Love Community</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">${signoff}</p>
           </td>
         </tr>
         <tr>
@@ -140,86 +141,133 @@ export async function GET(request) {
     // Batch-fetch all profiles from Sanity
     const allIds = [...new Set(bookings.flatMap(b => [b.sitter_id, b.parent_id]))]
     const profiles = await serverClient.fetch(
-      `*[_type == "catSitter" && _id in $ids]{ _id, name, email, phone, location }`,
+      `*[_type == "catSitter" && _id in $ids]{ _id, name, email, phone, location, locale }`,
       { ids: allIds }
     )
     const profileMap = Object.fromEntries(profiles.map(p => [p._id, p]))
 
     let sent = 0
-    const subject = `Your sit starts in 2 days — here are the contact details`
 
     for (const booking of bookings) {
       const sitter = profileMap[booking.sitter_id]
       const parent = profileMap[booking.parent_id]
-      const startFmt = formatDate(booking.start_date)
-      const endFmt = formatDate(booking.end_date)
       const bookingRef = booking.booking_ref
 
       const parentDeepLink = `https://care.purrfectlove.org/bookings?booking=${booking.id}&role=parent`
       const sitterDeepLink = `https://care.purrfectlove.org/bookings?booking=${booking.id}&role=sitter`
 
+      const isParentDE = parent?.locale === 'de'
+      const isSitterDE = sitter?.locale === 'de'
+
+      const startFmtParent = formatDate(booking.start_date, parent?.locale)
+      const endFmtParent = formatDate(booking.end_date, parent?.locale)
+      const startFmtSitter = formatDate(booking.start_date, sitter?.locale)
+      const endFmtSitter = formatDate(booking.end_date, sitter?.locale)
+
       const dist = distanceStr(parent?.location, sitter?.location)
       const parentNeighbourhood = parent?.location?.name
       const sitterNeighbourhood = sitter?.location?.name
-      const sitTypeLabel = booking.sit_type === 'home_visit' ? 'Home visit' : booking.sit_type === 'drop_off' ? 'Drop-off' : null
-      const sitTypeRow = sitTypeLabel
-        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">Sit type</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabel}</td></tr>`
+
+      const sitTypeLabelParent = booking.sit_type === 'home_visit' ? (isParentDE ? 'Hausbesuch' : 'Home visit') : booking.sit_type === 'drop_off' ? (isParentDE ? 'Abgabe' : 'Drop-off') : null
+      const sitTypeRowParent = sitTypeLabelParent
+        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">${isParentDE ? 'Art der Betreuung' : 'Sit type'}</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabelParent}</td></tr>`
         : ''
-      const sitTypeText = sitTypeLabel ? `\nSit type: ${sitTypeLabel}` : ''
+      const sitTypeTextParent = sitTypeLabelParent ? `\n${isParentDE ? 'Art der Betreuung' : 'Sit type'}: ${sitTypeLabelParent}` : ''
+
+      const sitTypeLabelSitter = booking.sit_type === 'home_visit' ? (isSitterDE ? 'Hausbesuch' : 'Home visit') : booking.sit_type === 'drop_off' ? (isSitterDE ? 'Abgabe' : 'Drop-off') : null
+      const sitTypeRowSitter = sitTypeLabelSitter
+        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">${isSitterDE ? 'Art der Betreuung' : 'Sit type'}</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabelSitter}</td></tr>`
+        : ''
+      const sitTypeTextSitter = sitTypeLabelSitter ? `\n${isSitterDE ? 'Art der Betreuung' : 'Sit type'}: ${sitTypeLabelSitter}` : ''
+
+      const locationLabelParent = isParentDE ? 'Standort' : 'Location'
+      const locationLabelSitter = isSitterDE ? 'Standort' : 'Location'
 
       const parentLocationHtml = parentNeighbourhood
-        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">Location</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${parentNeighbourhood}${dist ? ` <span style="color:#888;">(${dist})</span>` : ''}</td></tr>`
+        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">${locationLabelSitter}</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${parentNeighbourhood}${dist ? ` <span style="color:#888;">(${dist})</span>` : ''}</td></tr>`
         : ''
       const sitterLocationHtml = sitterNeighbourhood
-        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">Location</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${sitterNeighbourhood}${dist ? ` <span style="color:#888;">(${dist})</span>` : ''}</td></tr>`
+        ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:90px;">${locationLabelParent}</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${sitterNeighbourhood}${dist ? ` <span style="color:#888;">(${dist})</span>` : ''}</td></tr>`
         : ''
-      const parentLocationText = parentNeighbourhood ? `\nLocation: ${parentNeighbourhood}${dist ? ` (${dist})` : ''}` : ''
-      const sitterLocationText = sitterNeighbourhood ? `\nLocation: ${sitterNeighbourhood}${dist ? ` (${dist})` : ''}` : ''
+      const parentLocationText = parentNeighbourhood ? `\n${locationLabelSitter}: ${parentNeighbourhood}${dist ? ` (${dist})` : ''}` : ''
+      const sitterLocationText = sitterNeighbourhood ? `\n${locationLabelParent}: ${sitterNeighbourhood}${dist ? ` (${dist})` : ''}` : ''
 
       if (parent?.email) {
+        const subjectParent = isParentDE
+          ? `Dein Sit beginnt in 2 Tagen — hier sind die Kontaktdaten`
+          : `Your sit starts in 2 days — here are the contact details`
         await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
           to: [parent.email],
-          subject,
+          subject: subjectParent,
           html: brandedEmail({
-            heading: 'Your sit starts in 2 days',
-            body: `
+            isDE: isParentDE,
+            heading: isParentDE ? 'Dein Sit beginnt in 2 Tagen' : 'Your sit starts in 2 days',
+            body: isParentDE ? `
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
-                Your booking with <strong>${sitter?.name || 'your sitter'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
+                Deine Buchung mit <strong>${sitter?.name || 'deinem Sitter'}</strong> beginnt am <strong>${startFmtParent}</strong>${booking.end_date !== booking.start_date ? ` und läuft bis ${endFmtParent}` : ''}.
+                Hier sind die Kontaktdaten, damit ihr euch koordinieren könnt:
+              </p>
+              ${sitTypeLabelParent ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 12px;width:100%;">${sitTypeRowParent}</table>` : ''}
+              ${sitterLocationHtml ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">${sitterLocationHtml}</table>` : ''}
+              ${contactBlock({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}
+              <p style="font-size:13px;color:#999;margin:0 0 4px;">Buchungs-ID: #${bookingRef}</p>
+              ${ctaButton({ label: 'Buchung ansehen', url: parentDeepLink })}
+            ` : `
+              <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                Your booking with <strong>${sitter?.name || 'your sitter'}</strong> starts on <strong>${startFmtParent}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmtParent}` : ''}.
                 Here are their contact details so you can coordinate:
               </p>
-              ${sitTypeLabel ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 12px;width:100%;">${sitTypeRow}</table>` : ''}
+              ${sitTypeLabelParent ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 12px;width:100%;">${sitTypeRowParent}</table>` : ''}
               ${sitterLocationHtml ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">${sitterLocationHtml}</table>` : ''}
               ${contactBlock({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}
               <p style="font-size:13px;color:#999;margin:0 0 4px;">Booking ID: #${bookingRef}</p>
               ${ctaButton({ label: 'View booking', url: parentDeepLink })}
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.${sitTypeText}\n\nSitter contact details:${sitterLocationText}\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
+          text: isParentDE
+            ? `Dein Sit beginnt in 2 Tagen!\n\nDeine Buchung mit ${sitter?.name || 'deinem Sitter'} beginnt am ${startFmtParent}${booking.end_date !== booking.start_date ? ` und läuft bis ${endFmtParent}` : ''}.${sitTypeTextParent}\n\nKontaktdaten des Sitters:${sitterLocationText}\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBuchungs-ID: #${bookingRef}\n\nBuchung ansehen: ${parentDeepLink}\n\n– Die Purrfect Love Community`
+            : `Your sit starts in 2 days!\n\nYour booking with ${sitter?.name || 'your sitter'} starts on ${startFmtParent}${booking.end_date !== booking.start_date ? ` and runs until ${endFmtParent}` : ''}.${sitTypeTextParent}\n\nSitter contact details:${sitterLocationText}\n${contactBlockText({ name: sitter?.name, email: sitter?.email, phone: sitter?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
         })
         sent++
       }
 
       if (sitter?.email) {
+        const subjectSitter = isSitterDE
+          ? `Dein Sit beginnt in 2 Tagen — hier sind die Kontaktdaten`
+          : `Your sit starts in 2 days — here are the contact details`
         await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
           to: [sitter.email],
-          subject,
+          subject: subjectSitter,
           html: brandedEmail({
-            heading: 'Your sit starts in 2 days',
-            body: `
+            isDE: isSitterDE,
+            heading: isSitterDE ? 'Dein Sit beginnt in 2 Tagen' : 'Your sit starts in 2 days',
+            body: isSitterDE ? `
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
-                Your sitting commitment for <strong>${parent?.name || 'your cat parent'}</strong> starts on <strong>${startFmt}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.
+                Deine Betreuungsverpflichtung für <strong>${parent?.name || 'dein Katzenelternteil'}</strong> beginnt am <strong>${startFmtSitter}</strong>${booking.end_date !== booking.start_date ? ` und läuft bis ${endFmtSitter}` : ''}.
+                Hier sind ihre Kontaktdaten:
+              </p>
+              ${sitTypeLabelSitter ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 12px;width:100%;">${sitTypeRowSitter}</table>` : ''}
+              ${parentLocationHtml ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">${parentLocationHtml}</table>` : ''}
+              ${contactBlock({ name: parent?.name, email: parent?.email, phone: parent?.phone })}
+              <p style="font-size:13px;color:#999;margin:0 0 4px;">Buchungs-ID: #${bookingRef}</p>
+              ${ctaButton({ label: 'Buchung ansehen', url: sitterDeepLink })}
+            ` : `
+              <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                Your sitting commitment for <strong>${parent?.name || 'your cat parent'}</strong> starts on <strong>${startFmtSitter}</strong>${booking.end_date !== booking.start_date ? ` and runs until ${endFmtSitter}` : ''}.
                 Here are their contact details:
               </p>
-              ${sitTypeLabel ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 12px;width:100%;">${sitTypeRow}</table>` : ''}
+              ${sitTypeLabelSitter ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 12px;width:100%;">${sitTypeRowSitter}</table>` : ''}
               ${parentLocationHtml ? `<table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">${parentLocationHtml}</table>` : ''}
               ${contactBlock({ name: parent?.name, email: parent?.email, phone: parent?.phone })}
               <p style="font-size:13px;color:#999;margin:0 0 4px;">Booking ID: #${bookingRef}</p>
               ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
             `,
           }),
-          text: `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmt}${booking.end_date !== booking.start_date ? ` and runs until ${endFmt}` : ''}.${sitTypeText}\n\nCat parent contact details:${parentLocationText}\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
+          text: isSitterDE
+            ? `Dein Sit beginnt in 2 Tagen!\n\nDeine Betreuungsverpflichtung für ${parent?.name || 'dein Katzenelternteil'} beginnt am ${startFmtSitter}${booking.end_date !== booking.start_date ? ` und läuft bis ${endFmtSitter}` : ''}.${sitTypeTextSitter}\n\nKontaktdaten des Katzenelternteils:${parentLocationText}\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBuchungs-ID: #${bookingRef}\n\nBuchung ansehen: ${sitterDeepLink}\n\n– Die Purrfect Love Community`
+            : `Your sit starts in 2 days!\n\nYour sitting commitment for ${parent?.name || 'your cat parent'} starts on ${startFmtSitter}${booking.end_date !== booking.start_date ? ` and runs until ${endFmtSitter}` : ''}.${sitTypeTextSitter}\n\nCat parent contact details:${parentLocationText}\n${contactBlockText({ name: parent?.name, email: parent?.email, phone: parent?.phone })}\n\nBooking ID: #${bookingRef}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
         })
         sent++
       }

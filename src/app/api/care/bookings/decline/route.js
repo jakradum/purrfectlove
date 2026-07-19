@@ -13,10 +13,10 @@ const serverClient = createClient({
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-function formatDate(ymd) {
+function formatDate(ymd, locale = 'en') {
   if (!ymd) return ''
   const [y, m, d] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(y, m - 1, d).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function ctaButton({ label, url }) {
@@ -25,7 +25,8 @@ function ctaButton({ label, url }) {
   </p>`
 }
 
-function brandedEmail({ heading, body }) {
+function brandedEmail({ heading, body, isDE = false }) {
+  const signoff = isDE ? '– Die Purrfect Love Community' : '– The Purrfect Love Community'
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -42,7 +43,7 @@ function brandedEmail({ heading, body }) {
           <td style="padding:40px 32px;">
             <h2 style="margin:0 0 20px;font-size:18px;color:#2C5F4F;font-family:'Trebuchet MS',sans-serif;">${heading}</h2>
             ${body}
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">– The Purrfect Love Community</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">${signoff}</p>
           </td>
         </tr>
         <tr>
@@ -98,12 +99,13 @@ export async function POST(request) {
     // Email the parent
     const [sitterProfile, parentProfile] = await Promise.all([
       serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name }`, { id: booking.sitter_id }),
-      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name, email }`, { id: booking.parent_id }),
+      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name, email, locale }`, { id: booking.parent_id }),
     ])
 
     const ref = booking.booking_ref
-    const startFmt = formatDate(booking.start_date)
-    const endFmt = formatDate(booking.end_date)
+    const isDE = parentProfile?.locale === 'de'
+    const startFmt = formatDate(booking.start_date, parentProfile?.locale)
+    const endFmt = formatDate(booking.end_date, parentProfile?.locale)
     const sitterName = sitterProfile?.name || 'The sitter'
     const parentName = parentProfile?.name || 'there'
 
@@ -111,10 +113,17 @@ export async function POST(request) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
         to: [parentProfile.email],
-        subject: `Booking request #${ref} was not available`,
+        subject: isDE ? `Betreuungsanfrage #${ref} nicht verfügbar` : `Booking request #${ref} was not available`,
         html: brandedEmail({
-          heading: 'Booking request update',
-          body: `
+          isDE,
+          heading: isDE ? 'Aktualisierung zu deiner Betreuungsanfrage' : 'Booking request update',
+          body: isDE ? `
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Hallo ${parentName},</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Leider ist <strong>${sitterName}</strong> für deinen gewünschten Zeitraum (${startFmt} – ${endFmt}) nicht verfügbar.</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Kein Problem — es gibt andere Sitter in der Community, die gut passen könnten. Schau dir verfügbare Sitter an und schicke eine neue Anfrage.</p>
+            <p style="font-size:14px;color:#555;margin:0;">Fragen? Schreib uns an <a href="mailto:support@purrfectlove.org" style="color:#C85C3F;">support@purrfectlove.org</a>.</p>
+            ${ctaButton({ label: 'Sitter finden', url: 'https://care.purrfectlove.org' })}
+          ` : `
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Hi ${parentName},</p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Unfortunately, <strong>${sitterName}</strong> is not available for your requested dates (${startFmt} – ${endFmt}).</p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Don't worry — there are other sitters in the community who may be a great fit. Browse available sitters and send another request.</p>
@@ -122,7 +131,9 @@ export async function POST(request) {
             ${ctaButton({ label: 'Find a sitter', url: 'https://care.purrfectlove.org' })}
           `,
         }),
-        text: `Hi ${parentName},\n\nUnfortunately, ${sitterName} is not available for your requested dates (${startFmt} – ${endFmt}).\n\nBrowse other available sitters: https://care.purrfectlove.org\n\n– The Purrfect Love Community`,
+        text: isDE
+          ? `Hallo ${parentName},\n\nLeider ist ${sitterName} für deinen gewünschten Zeitraum (${startFmt} – ${endFmt}) nicht verfügbar.\n\nSchau dir andere Sitter an: https://care.purrfectlove.org\n\n– Die Purrfect Love Community`
+          : `Hi ${parentName},\n\nUnfortunately, ${sitterName} is not available for your requested dates (${startFmt} – ${endFmt}).\n\nBrowse other available sitters: https://care.purrfectlove.org\n\n– The Purrfect Love Community`,
       })
     }
 

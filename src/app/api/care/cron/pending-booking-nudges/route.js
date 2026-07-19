@@ -24,10 +24,10 @@ const serverClient = createClient({
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-function formatDate(ymd) {
+function formatDate(ymd, locale = 'en') {
   if (!ymd) return ''
   const [y, m, d] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(y, m - 1, d).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 const MONTHS_EN = ['January','February','March','April','May','June','July','August','September','October','November','December']
@@ -145,7 +145,8 @@ function preSitEmailDE(startDate) {
 </html>`
 }
 
-function brandedEmail({ heading, body }) {
+function brandedEmail({ heading, body, isDE = false }) {
+  const signoff = isDE ? '– Die Purrfect Love Community' : '– The Purrfect Love Community'
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -162,7 +163,7 @@ function brandedEmail({ heading, body }) {
           <td style="padding:40px 32px;">
             <h2 style="margin:0 0 20px;font-size:18px;color:#2C5F4F;font-family:'Trebuchet MS',sans-serif;">${heading}</h2>
             ${body}
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">– The Purrfect Love Community</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">${signoff}</p>
           </td>
         </tr>
         <tr>
@@ -225,7 +226,7 @@ export async function GET(request) {
     // Batch-fetch Sanity profiles for all parties involved
     const allIds = [...new Set(pending.flatMap(b => [b.sitter_id, b.parent_id]))]
     const profiles = await serverClient.fetch(
-      `*[_type == "catSitter" && _id in $ids]{ _id, name, email }`,
+      `*[_type == "catSitter" && _id in $ids]{ _id, name, email, locale }`,
       { ids: allIds }
     )
     const profileMap = Object.fromEntries(profiles.map(p => [p._id, p]))
@@ -239,11 +240,18 @@ export async function GET(request) {
         const sitter = profileMap[booking.sitter_id]
         const parent = profileMap[booking.parent_id]
 
-        const startFmt = formatDate(booking.start_date)
-        const endFmt = formatDate(booking.end_date)
-        const dateRange = booking.end_date !== booking.start_date
-          ? `${startFmt} – ${endFmt}`
-          : startFmt
+        const isSitterDE = sitter?.locale === 'de'
+        const isParentDE = parent?.locale === 'de'
+        const startFmtSitter = formatDate(booking.start_date, sitter?.locale)
+        const endFmtSitter = formatDate(booking.end_date, sitter?.locale)
+        const startFmtParent = formatDate(booking.start_date, parent?.locale)
+        const endFmtParent = formatDate(booking.end_date, parent?.locale)
+        const dateRangeSitter = booking.end_date !== booking.start_date
+          ? `${startFmtSitter} – ${endFmtSitter}`
+          : startFmtSitter
+        const dateRangeParent = booking.end_date !== booking.start_date
+          ? `${startFmtParent} – ${endFmtParent}`
+          : startFmtParent
         const sitterDeepLink = `https://care.purrfectlove.org/bookings?booking=${booking.id}&role=sitter`
         const parentDeepLink = `https://care.purrfectlove.org/bookings?booking=${booking.id}&role=parent`
         const marketplaceLink = `https://care.purrfectlove.org/marketplace`
@@ -265,12 +273,26 @@ export async function GET(request) {
             await resend.emails.send({
               from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
               to: [sitter.email],
-              subject: `Sitting request withdrawn — no response received (#${booking.booking_ref})`,
+              subject: isSitterDE
+                ? `Betreuungsanfrage zurückgezogen — keine Antwort erhalten (#${booking.booking_ref})`
+                : `Sitting request withdrawn — no response received (#${booking.booking_ref})`,
               html: brandedEmail({
-                heading: "Sitting request withdrawn",
-                body: `
+                isDE: isSitterDE,
+                heading: isSitterDE ? 'Betreuungsanfrage zurückgezogen' : 'Sitting request withdrawn',
+                body: isSitterDE ? `
                   <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
-                    The sitting request from <strong>${parent?.name || 'a cat parent'}</strong> for <strong>${dateRange}</strong>
+                    Die Betreuungsanfrage von <strong>${parent?.name || 'einem Katzenelternteil'}</strong> für <strong>${dateRangeSitter}</strong>
+                    wurde automatisch zurückgezogen, da sie nicht rechtzeitig beantwortet wurde.
+                  </p>
+                  <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                    Wenn du regelmäßig nicht auf Anfragen antworten kannst, aktualisiere bitte deine Verfügbarkeit
+                    oder melde dich bei uns, damit wir helfen können.
+                  </p>
+                  <p style="font-size:13px;color:#999;margin:0 0 4px;">Buchungs-ID: #${booking.booking_ref}</p>
+                  ${ctaButton({ label: 'Buchung ansehen', url: sitterDeepLink })}
+                ` : `
+                  <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                    The sitting request from <strong>${parent?.name || 'a cat parent'}</strong> for <strong>${dateRangeSitter}</strong>
                     has been automatically withdrawn because it didn't receive a response in time.
                   </p>
                   <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
@@ -281,7 +303,9 @@ export async function GET(request) {
                   ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
                 `,
               }),
-              text: `Sitting request withdrawn\n\nThe sitting request from ${parent?.name || 'a cat parent'} for ${dateRange} has been automatically withdrawn because it didn't receive a response in time.\n\nIf you're regularly unable to respond, please update your availability.\n\nBooking ID: #${booking.booking_ref}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
+              text: isSitterDE
+                ? `Betreuungsanfrage zurückgezogen\n\nDie Betreuungsanfrage von ${parent?.name || 'einem Katzenelternteil'} für ${dateRangeSitter} wurde automatisch zurückgezogen, da sie nicht rechtzeitig beantwortet wurde.\n\nWenn du regelmäßig nicht antworten kannst, aktualisiere bitte deine Verfügbarkeit.\n\nBuchungs-ID: #${booking.booking_ref}\n\nBuchung ansehen: ${sitterDeepLink}\n\n– Die Purrfect Love Community`
+                : `Sitting request withdrawn\n\nThe sitting request from ${parent?.name || 'a cat parent'} for ${dateRangeSitter} has been automatically withdrawn because it didn't receive a response in time.\n\nIf you're regularly unable to respond, please update your availability.\n\nBooking ID: #${booking.booking_ref}\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
             })
           }
 
@@ -290,13 +314,26 @@ export async function GET(request) {
             await resend.emails.send({
               from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
               to: [parent.email],
-              subject: `Your sitting request was withdrawn — sitter didn't respond (#${booking.booking_ref})`,
+              subject: isParentDE
+                ? `Deine Betreuungsanfrage wurde zurückgezogen — Sitter hat nicht geantwortet (#${booking.booking_ref})`
+                : `Your sitting request was withdrawn — sitter didn't respond (#${booking.booking_ref})`,
               html: brandedEmail({
-                heading: "Your sitting request was withdrawn",
-                body: `
+                isDE: isParentDE,
+                heading: isParentDE ? 'Deine Betreuungsanfrage wurde zurückgezogen' : 'Your sitting request was withdrawn',
+                body: isParentDE ? `
+                  <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                    <strong>${sitter?.name || 'Der Sitter'}</strong> hat auf deine Betreuungsanfrage
+                    für <strong>${dateRangeParent}</strong> nicht rechtzeitig geantwortet, sie wurde daher automatisch zurückgezogen.
+                  </p>
+                  <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                    Es tut uns leid. Bitte durchsuche den Marktplatz nach einem anderen Sitter für deinen Zeitraum.
+                  </p>
+                  <p style="font-size:13px;color:#999;margin:0 0 4px;">Buchungs-ID: #${booking.booking_ref}</p>
+                  ${ctaButton({ label: 'Sitter finden', url: marketplaceLink })}
+                ` : `
                   <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
                     Unfortunately, <strong>${sitter?.name || 'the sitter'}</strong> did not respond to your sitting request
-                    for <strong>${dateRange}</strong> in time, so it has been automatically withdrawn.
+                    for <strong>${dateRangeParent}</strong> in time, so it has been automatically withdrawn.
                   </p>
                   <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
                     We're sorry for the inconvenience. Please browse the marketplace to find another sitter for your dates.
@@ -305,7 +342,9 @@ export async function GET(request) {
                   ${ctaButton({ label: 'Find a sitter', url: marketplaceLink })}
                 `,
               }),
-              text: `Your sitting request was withdrawn\n\n${sitter?.name || 'The sitter'} did not respond to your sitting request for ${dateRange} in time, so it has been automatically withdrawn.\n\nPlease browse the marketplace to find another sitter: ${marketplaceLink}\n\nBooking ID: #${booking.booking_ref}\n\n– The Purrfect Love Community`,
+              text: isParentDE
+                ? `Deine Betreuungsanfrage wurde zurückgezogen\n\n${sitter?.name || 'Der Sitter'} hat auf deine Betreuungsanfrage für ${dateRangeParent} nicht rechtzeitig geantwortet, sie wurde daher automatisch zurückgezogen.\n\nBitte durchsuche den Marktplatz nach einem anderen Sitter: ${marketplaceLink}\n\nBuchungs-ID: #${booking.booking_ref}\n\n– Die Purrfect Love Community`
+                : `Your sitting request was withdrawn\n\n${sitter?.name || 'The sitter'} did not respond to your sitting request for ${dateRangeParent} in time, so it has been automatically withdrawn.\n\nPlease browse the marketplace to find another sitter: ${marketplaceLink}\n\nBooking ID: #${booking.booking_ref}\n\n– The Purrfect Love Community`,
             })
           }
 
@@ -327,12 +366,25 @@ export async function GET(request) {
             await resend.emails.send({
               from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
               to: [sitter.email],
-              subject: `Final reminder: sitting request needs your response (#${booking.booking_ref})`,
+              subject: isSitterDE
+                ? `Letzte Erinnerung: Betreuungsanfrage wartet auf deine Antwort (#${booking.booking_ref})`
+                : `Final reminder: sitting request needs your response (#${booking.booking_ref})`,
               html: brandedEmail({
-                heading: "This request still needs your response",
-                body: `
+                isDE: isSitterDE,
+                heading: isSitterDE ? 'Diese Anfrage wartet noch auf deine Antwort' : 'This request still needs your response',
+                body: isSitterDE ? `
                   <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
-                    <strong>${parent?.name || 'A cat parent'}</strong> is still waiting for your response to their sitting request for <strong>${dateRange}</strong>.
+                    <strong>${parent?.name || 'Ein Katzenelternteil'}</strong> wartet noch auf deine Antwort zu ihrer Betreuungsanfrage für <strong>${dateRangeSitter}</strong>.
+                  </p>
+                  <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                    Dies ist deine zweite Erinnerung. Wenn du nicht antwortest, wird die Anfrage automatisch zurückgezogen und
+                    <strong>${parent?.name || 'das Katzenelternteil'}</strong> wird benachrichtigt, einen anderen Sitter zu finden.
+                  </p>
+                  <p style="font-size:13px;color:#999;margin:0 0 4px;">Buchungs-ID: #${booking.booking_ref}</p>
+                  ${ctaButton({ label: 'Annehmen oder ablehnen', url: sitterDeepLink })}
+                ` : `
+                  <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                    <strong>${parent?.name || 'A cat parent'}</strong> is still waiting for your response to their sitting request for <strong>${dateRangeSitter}</strong>.
                   </p>
                   <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
                     This is your second reminder. If you don't respond, the request will be automatically withdrawn and
@@ -342,7 +394,9 @@ export async function GET(request) {
                   ${ctaButton({ label: 'Accept or decline', url: sitterDeepLink })}
                 `,
               }),
-              text: `Final reminder: sitting request needs your response\n\n${parent?.name || 'A cat parent'} is still waiting for your response for ${dateRange}.\n\nThis is your second reminder. If you don't respond, the request will be automatically withdrawn.\n\nBooking ID: #${booking.booking_ref}\n\nAccept or decline: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
+              text: isSitterDE
+                ? `Letzte Erinnerung: Betreuungsanfrage wartet auf deine Antwort\n\n${parent?.name || 'Ein Katzenelternteil'} wartet noch auf deine Antwort für ${dateRangeSitter}.\n\nDies ist deine zweite Erinnerung. Wenn du nicht antwortest, wird die Anfrage automatisch zurückgezogen.\n\nBuchungs-ID: #${booking.booking_ref}\n\nAnnehmen oder ablehnen: ${sitterDeepLink}\n\n– Die Purrfect Love Community`
+                : `Final reminder: sitting request needs your response\n\n${parent?.name || 'A cat parent'} is still waiting for your response for ${dateRangeSitter}.\n\nThis is your second reminder. If you don't respond, the request will be automatically withdrawn.\n\nBooking ID: #${booking.booking_ref}\n\nAccept or decline: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
             })
           }
 
@@ -364,12 +418,25 @@ export async function GET(request) {
             await resend.emails.send({
               from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
               to: [sitter.email],
-              subject: `Reminder: you have a pending sitting request (#${booking.booking_ref})`,
+              subject: isSitterDE
+                ? `Erinnerung: Du hast eine offene Betreuungsanfrage (#${booking.booking_ref})`
+                : `Reminder: you have a pending sitting request (#${booking.booking_ref})`,
               html: brandedEmail({
-                heading: "You have a pending sitting request",
-                body: `
+                isDE: isSitterDE,
+                heading: isSitterDE ? 'Du hast eine offene Betreuungsanfrage' : 'You have a pending sitting request',
+                body: isSitterDE ? `
                   <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
-                    <strong>${parent?.name || 'A cat parent'}</strong> sent you a sitting request for <strong>${dateRange}</strong>
+                    <strong>${parent?.name || 'Ein Katzenelternteil'}</strong> hat dir eine Betreuungsanfrage für <strong>${dateRangeSitter}</strong>
+                    geschickt, die noch auf deine Antwort wartet.
+                  </p>
+                  <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                    Bitte melde dich an und lass sie wissen, ob du helfen kannst — schnelle Antworten machen einen großen Unterschied!
+                  </p>
+                  <p style="font-size:13px;color:#999;margin:0 0 4px;">Buchungs-ID: #${booking.booking_ref}</p>
+                  ${ctaButton({ label: 'Annehmen oder ablehnen', url: sitterDeepLink })}
+                ` : `
+                  <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
+                    <strong>${parent?.name || 'A cat parent'}</strong> sent you a sitting request for <strong>${dateRangeSitter}</strong>
                     that's still waiting for your response.
                   </p>
                   <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">
@@ -379,7 +446,9 @@ export async function GET(request) {
                   ${ctaButton({ label: 'Accept or decline', url: sitterDeepLink })}
                 `,
               }),
-              text: `Reminder: pending sitting request\n\n${parent?.name || 'A cat parent'} sent you a sitting request for ${dateRange} that's still waiting for your response.\n\nPlease log in and let them know whether you can help.\n\nBooking ID: #${booking.booking_ref}\n\nAccept or decline: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
+              text: isSitterDE
+                ? `Erinnerung: offene Betreuungsanfrage\n\n${parent?.name || 'Ein Katzenelternteil'} hat dir eine Betreuungsanfrage für ${dateRangeSitter} geschickt, die noch auf deine Antwort wartet.\n\nBitte melde dich an und lass sie wissen, ob du helfen kannst.\n\nBuchungs-ID: #${booking.booking_ref}\n\nAnnehmen oder ablehnen: ${sitterDeepLink}\n\n– Die Purrfect Love Community`
+                : `Reminder: pending sitting request\n\n${parent?.name || 'A cat parent'} sent you a sitting request for ${dateRangeSitter} that's still waiting for your response.\n\nPlease log in and let them know whether you can help.\n\nBooking ID: #${booking.booking_ref}\n\nAccept or decline: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
             })
           }
 

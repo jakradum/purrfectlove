@@ -27,10 +27,10 @@ function expandDateRange(startYMD, endYMD) {
   return dates
 }
 
-function formatDate(ymd) {
+function formatDate(ymd, locale = 'en') {
   if (!ymd) return ''
   const [y, m, d] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(y, m - 1, d).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function ctaButton({ label, url }) {
@@ -39,7 +39,8 @@ function ctaButton({ label, url }) {
   </p>`
 }
 
-function brandedEmail({ heading, body }) {
+function brandedEmail({ heading, body, isDE = false }) {
+  const signoff = isDE ? '– Die Purrfect Love Community' : '– The Purrfect Love Community'
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -56,7 +57,7 @@ function brandedEmail({ heading, body }) {
           <td style="padding:40px 32px;">
             <h2 style="margin:0 0 20px;font-size:18px;color:#2C5F4F;font-family:'Trebuchet MS',sans-serif;">${heading}</h2>
             ${body}
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">– The Purrfect Love Community</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">${signoff}</p>
           </td>
         </tr>
         <tr>
@@ -136,16 +137,18 @@ export async function POST(request) {
 
     // Fetch party names/emails from Sanity for the notification email
     const [sitterProfile, parentProfile] = await Promise.all([
-      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name, email }`, { id: booking.sitter_id }),
-      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name, email }`, { id: booking.parent_id }),
+      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name, email, locale }`, { id: booking.sitter_id }),
+      serverClient.fetch(`*[_type == "catSitter" && _id == $id][0]{ name, email, locale }`, { id: booking.parent_id }),
     ])
 
     const ref = booking.booking_ref
-    const startFmt = formatDate(booking.start_date)
-    const endFmt = formatDate(booking.end_date)
     const cancellerName = isParent ? (parentProfile?.name || 'The cat parent') : (sitterProfile?.name || 'The sitter')
     const otherEmail = isParent ? sitterProfile?.email : parentProfile?.email
     const otherName = isParent ? (sitterProfile?.name || 'there') : (parentProfile?.name || 'there')
+    const otherLocale = isParent ? sitterProfile?.locale : parentProfile?.locale
+    const isDE = otherLocale === 'de'
+    const startFmt = formatDate(booking.start_date, otherLocale)
+    const endFmt = formatDate(booking.end_date, otherLocale)
 
     if (otherEmail) {
       const otherRole = isParent ? 'sitter' : 'parent'
@@ -154,10 +157,30 @@ export async function POST(request) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
         to: [otherEmail],
-        subject: `Booking #${ref} has been cancelled`,
+        subject: isDE ? `Buchung #${ref} wurde storniert` : `Booking #${ref} has been cancelled`,
         html: brandedEmail({
-          heading: 'Booking cancelled',
-          body: `
+          isDE,
+          heading: isDE ? 'Buchung storniert' : 'Booking cancelled',
+          body: isDE ? `
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Hallo ${otherName},</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${cancellerName}</strong> hat die Buchung <strong>#${ref}</strong> (${startFmt} – ${endFmt}) storniert.</p>
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;border-top:1px solid #eee;border-left:1px solid #eee;">
+              <tr>
+                <td style="padding:10px 12px;font-size:13px;color:#666;border-right:1px solid #eee;border-bottom:1px solid #eee;width:120px;">Buchungs-ID</td>
+                <td style="padding:10px 12px;font-size:13px;color:#2D2D2D;font-weight:600;border-bottom:1px solid #eee;">#${ref}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 12px;font-size:13px;color:#666;border-right:1px solid #eee;border-bottom:1px solid #eee;">Zeitraum</td>
+                <td style="padding:10px 12px;font-size:13px;color:#2D2D2D;border-bottom:1px solid #eee;">${startFmt} – ${endFmt}</td>
+              </tr>
+              <tr>
+                <td style="padding:10px 12px;font-size:13px;color:#666;border-right:1px solid #eee;border-bottom:1px solid #eee;">Grund</td>
+                <td style="padding:10px 12px;font-size:13px;color:#2D2D2D;border-bottom:1px solid #eee;">${reason.trim()}</td>
+              </tr>
+            </table>
+            <p style="font-size:14px;color:#555;margin:0;">Fragen? Schreib uns an <a href="mailto:support@purrfectlove.org" style="color:#C85C3F;">support@purrfectlove.org</a>.</p>
+            ${ctaButton({ label: 'Buchung ansehen', url: deepLink })}
+          ` : `
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Hi ${otherName},</p>
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${cancellerName}</strong> has cancelled booking <strong>#${ref}</strong> (${startFmt} – ${endFmt}).</p>
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;border-top:1px solid #eee;border-left:1px solid #eee;">
@@ -178,7 +201,9 @@ export async function POST(request) {
             ${ctaButton({ label: 'View booking', url: deepLink })}
           `,
         }),
-        text: `Booking #${ref} has been cancelled\n\nHi ${otherName},\n\n${cancellerName} has cancelled booking #${ref} (${startFmt} – ${endFmt}).\n\nReason: ${reason.trim()}\n\nView booking: ${deepLink}\n\n– The Purrfect Love Community`,
+        text: isDE
+          ? `Buchung #${ref} wurde storniert\n\nHallo ${otherName},\n\n${cancellerName} hat die Buchung #${ref} (${startFmt} – ${endFmt}) storniert.\n\nGrund: ${reason.trim()}\n\nBuchung ansehen: ${deepLink}\n\n– Die Purrfect Love Community`
+          : `Booking #${ref} has been cancelled\n\nHi ${otherName},\n\n${cancellerName} has cancelled booking #${ref} (${startFmt} – ${endFmt}).\n\nReason: ${reason.trim()}\n\nView booking: ${deepLink}\n\n– The Purrfect Love Community`,
       })
     }
 

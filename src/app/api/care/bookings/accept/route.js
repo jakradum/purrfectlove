@@ -27,10 +27,10 @@ function expandDateRange(startYMD, endYMD) {
   return dates
 }
 
-function formatDate(ymd) {
+function formatDate(ymd, locale = 'en') {
   if (!ymd) return ''
   const [y, m, d] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(y, m - 1, d).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function ctaButton({ label, url }) {
@@ -39,7 +39,8 @@ function ctaButton({ label, url }) {
   </p>`
 }
 
-function brandedEmail({ heading, body }) {
+function brandedEmail({ heading, body, isDE = false }) {
+  const signoff = isDE ? '– Die Purrfect Love Community' : '– The Purrfect Love Community'
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -56,7 +57,7 @@ function brandedEmail({ heading, body }) {
           <td style="padding:40px 32px;">
             <h2 style="margin:0 0 20px;font-size:18px;color:#2C5F4F;font-family:'Trebuchet MS',sans-serif;">${heading}</h2>
             ${body}
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">– The Purrfect Love Community</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">${signoff}</p>
           </td>
         </tr>
         <tr>
@@ -126,28 +127,41 @@ export async function POST(request) {
     // Fetch sitter + parent profiles from Sanity
     const [sitterProfile, parentProfile] = await Promise.all([
       serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location }`,
+        `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, location, locale }`,
         { id: booking.sitter_id }
       ),
       serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ _id, name, email }`,
+        `*[_type == "catSitter" && _id == $id][0]{ _id, name, email, locale }`,
         { id: booking.parent_id }
       ),
     ])
 
     const ref = booking.booking_ref
-    const startFmt = formatDate(booking.start_date)
-    const endFmt = formatDate(booking.end_date)
     const sitterName = sitterProfile?.name || 'Your sitter'
     const parentName = parentProfile?.name || 'Your cat parent'
     const lat = sitterProfile?.location?.lat
     const lng = sitterProfile?.location?.lng
     const mapsUrl = lat && lng ? `https://maps.google.com/?q=${lat},${lng}` : null
-    const sitTypeLabel = booking.sit_type === 'home_visit' ? 'Home visit' : booking.sit_type === 'drop_off' ? 'Drop-off' : null
-    const sitTypeRow = sitTypeLabel
-      ? `<tr><td style="padding:4px 0;font-size:14px;color:#666;">Sit type</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabel}</td></tr>`
+
+    // Per-recipient locale and date formatting
+    const isParentDE = parentProfile?.locale === 'de'
+    const isSitterDE = sitterProfile?.locale === 'de'
+    const startFmtParent = formatDate(booking.start_date, parentProfile?.locale)
+    const endFmtParent = formatDate(booking.end_date, parentProfile?.locale)
+    const startFmtSitter = formatDate(booking.start_date, sitterProfile?.locale)
+    const endFmtSitter = formatDate(booking.end_date, sitterProfile?.locale)
+
+    const sitTypeLabelParent = booking.sit_type === 'home_visit' ? (isParentDE ? 'Hausbesuch' : 'Home visit') : booking.sit_type === 'drop_off' ? (isParentDE ? 'Abgabe' : 'Drop-off') : null
+    const sitTypeRowParent = sitTypeLabelParent
+      ? `<tr><td style="padding:4px 0;font-size:14px;color:#666;">${isParentDE ? 'Art der Betreuung' : 'Sit type'}</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabelParent}</td></tr>`
       : ''
-    const sitTypeText = sitTypeLabel ? `\nSit type: ${sitTypeLabel}` : ''
+    const sitTypeTextParent = sitTypeLabelParent ? `\n${isParentDE ? 'Art der Betreuung' : 'Sit type'}: ${sitTypeLabelParent}` : ''
+
+    const sitTypeLabelSitter = booking.sit_type === 'home_visit' ? (isSitterDE ? 'Hausbesuch' : 'Home visit') : booking.sit_type === 'drop_off' ? (isSitterDE ? 'Abgabe' : 'Drop-off') : null
+    const sitTypeRowSitter = sitTypeLabelSitter
+      ? `<tr><td style="padding:4px 0;font-size:14px;color:#666;">${isSitterDE ? 'Art der Betreuung' : 'Sit type'}</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabelSitter}</td></tr>`
+      : ''
+    const sitTypeTextSitter = sitTypeLabelSitter ? `\n${isSitterDE ? 'Art der Betreuung' : 'Sit type'}: ${sitTypeLabelSitter}` : ''
 
     // 1. Mark booking as confirmed — atomic: only succeeds if still pending
     const respondedAt = new Date().toISOString()
@@ -213,7 +227,7 @@ export async function POST(request) {
       const affectedProfiles = await Promise.all(
         uniqueSitterIds.map(id =>
           serverClient.fetch(
-            `*[_type == "catSitter" && _id == $id][0]{ name, email }`,
+            `*[_type == "catSitter" && _id == $id][0]{ name, email, locale }`,
             { id }
           )
         )
@@ -226,15 +240,29 @@ export async function POST(request) {
         parentOverlap.map(async (b) => {
           const sitter = profileBySitterId[b.sitter_id]
           if (!sitter?.email) return
-          const bStart = formatDate(b.start_date)
-          const bEnd   = formatDate(b.end_date)
+          const isAffectedDE = sitter?.locale === 'de'
+          const bStart = formatDate(b.start_date, sitter?.locale)
+          const bEnd   = formatDate(b.end_date, sitter?.locale)
           await resend.emails.send({
             from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
             to:   [sitter.email],
-            subject: `Sit request #${b.booking_ref} — dates filled`,
+            subject: isAffectedDE
+              ? `Betreuungsanfrage #${b.booking_ref} — Zeitraum vergeben`
+              : `Sit request #${b.booking_ref} — dates filled`,
             html: brandedEmail({
-              heading: 'The sit has been filled',
-              body: `
+              isDE: isAffectedDE,
+              heading: isAffectedDE ? 'Der Zeitraum ist vergeben' : 'The sit has been filled',
+              body: isAffectedDE ? `
+                <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Hallo ${sitter.name?.split(' ')[0] || 'there'},</p>
+                <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">
+                  Vielen Dank, dass du bereit warst zu helfen — das bedeutet uns viel.
+                  Das Katzenelternteil hat einen Sitter für <strong>${bStart} – ${bEnd}</strong> gefunden, deine Anfrage <strong>#${b.booking_ref}</strong> wurde daher als vergeben markiert.
+                </p>
+                <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">
+                  Du musst nichts weiter tun. Halte deine Verfügbarkeit aktuell und du wirst beim nächsten Mal als Erstes kontaktiert.
+                </p>
+                ${ctaButton({ label: 'Buchungen ansehen', url: 'https://care.purrfectlove.org/bookings' })}
+              ` : `
                 <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">Hi ${sitter.name?.split(' ')[0] || 'there'},</p>
                 <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;">
                   Thanks so much for being willing to help — it means a lot to the community.
@@ -246,7 +274,9 @@ export async function POST(request) {
                 ${ctaButton({ label: 'View your bookings', url: 'https://care.purrfectlove.org/bookings' })}
               `,
             }),
-            text: `Hi ${sitter.name?.split(' ')[0] || 'there'},\n\nThanks for being willing to help. The cat parent found a sitter for ${bStart} – ${bEnd}, so request #${b.booking_ref} has been marked as filled.\n\nNo action needed from you. Keep your availability up to date and you'll hear from more families soon.\n\nhttps://care.purrfectlove.org/bookings\n\n– The Purrfect Love Community`,
+            text: isAffectedDE
+              ? `Hallo ${sitter.name?.split(' ')[0] || 'there'},\n\nVielen Dank, dass du bereit warst zu helfen. Das Katzenelternteil hat einen Sitter für ${bStart} – ${bEnd} gefunden, deine Anfrage #${b.booking_ref} wurde daher als vergeben markiert.\n\nDu musst nichts weiter tun. Halte deine Verfügbarkeit aktuell und du wirst beim nächsten Mal als Erstes kontaktiert.\n\nhttps://care.purrfectlove.org/bookings\n\n– Die Purrfect Love Community`
+              : `Hi ${sitter.name?.split(' ')[0] || 'there'},\n\nThanks for being willing to help. The cat parent found a sitter for ${bStart} – ${bEnd}, so request #${b.booking_ref} has been marked as filled.\n\nNo action needed from you. Keep your availability up to date and you'll hear from more families soon.\n\nhttps://care.purrfectlove.org/bookings\n\n– The Purrfect Love Community`,
           })
         })
       )
@@ -290,14 +320,25 @@ export async function POST(request) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
         to: [parentProfile.email],
-        subject: `Booking confirmed! #${ref}`,
+        subject: isParentDE ? `Buchung bestätigt! #${ref}` : `Booking confirmed! #${ref}`,
         html: brandedEmail({
-          heading: 'Your booking is confirmed!',
-          body: `
+          isDE: isParentDE,
+          heading: isParentDE ? 'Deine Buchung ist bestätigt!' : 'Your booking is confirmed!',
+          body: isParentDE ? `
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${sitterName}</strong> hat deine Buchung angenommen.</p>
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
+              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Zeitraum</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmtParent} – ${endFmtParent}</td></tr>
+              ${sitTypeRowParent}
+              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Buchungs-ID</td><td style="padding:4px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${ref}</td></tr>
+            </table>
+            <p style="font-size:14px;color:#555;margin:0 0 8px;">Ungefährer Standort von ${sitterName}:</p>
+            ${mapsUrl ? `<a href="${mapsUrl}" style="display:inline-block;color:#C85C3F;font-size:14px;font-weight:600;">Auf Google Maps ansehen →</a>` : '<p style="font-size:14px;color:#999;margin:0;">Standort nicht verfügbar.</p>'}
+            ${ctaButton({ label: 'Buchung ansehen', url: parentDeepLink })}
+          ` : `
             <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${sitterName}</strong> has accepted your booking.</p>
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
-              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Dates</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmt} – ${endFmt}</td></tr>
-              ${sitTypeRow}
+              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Dates</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmtParent} – ${endFmtParent}</td></tr>
+              ${sitTypeRowParent}
               <tr><td style="padding:4px 0;font-size:14px;color:#666;">Booking ID</td><td style="padding:4px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${ref}</td></tr>
             </table>
             <p style="font-size:14px;color:#555;margin:0 0 8px;">${sitterName}&apos;s approximate location:</p>
@@ -305,7 +346,9 @@ export async function POST(request) {
             ${ctaButton({ label: 'View booking', url: parentDeepLink })}
           `,
         }),
-        text: `Your booking is confirmed! #${ref}\n\n${sitterName} has accepted your booking.\n\nDates: ${startFmt} – ${endFmt}${sitTypeText}\nBooking ID: #${ref}${mapsUrl ? `\n\n${sitterName}'s approximate location:\n${mapsUrl}` : ''}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
+        text: isParentDE
+          ? `Buchung bestätigt! #${ref}\n\n${sitterName} hat deine Buchung angenommen.\n\nZeitraum: ${startFmtParent} – ${endFmtParent}${sitTypeTextParent}\nBuchungs-ID: #${ref}${mapsUrl ? `\n\nUngefährer Standort von ${sitterName}:\n${mapsUrl}` : ''}\n\nBuchung ansehen: ${parentDeepLink}\n\n– Die Purrfect Love Community`
+          : `Your booking is confirmed! #${ref}\n\n${sitterName} has accepted your booking.\n\nDates: ${startFmtParent} – ${endFmtParent}${sitTypeTextParent}\nBooking ID: #${ref}${mapsUrl ? `\n\n${sitterName}'s approximate location:\n${mapsUrl}` : ''}\n\nView booking: ${parentDeepLink}\n\n– The Purrfect Love Community`,
       })
     }
 
@@ -314,21 +357,33 @@ export async function POST(request) {
       await resend.emails.send({
         from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
         to: [sitterProfile.email],
-        subject: `Booking confirmed! #${ref}`,
+        subject: isSitterDE ? `Buchung bestätigt! #${ref}` : `Booking confirmed! #${ref}`,
         html: brandedEmail({
-          heading: 'Booking confirmed!',
-          body: `
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${parentName}</strong> has booked you from ${startFmt} – ${endFmt}.</p>
+          isDE: isSitterDE,
+          heading: isSitterDE ? 'Buchung bestätigt!' : 'Booking confirmed!',
+          body: isSitterDE ? `
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${parentName}</strong> hat dich für ${startFmtSitter} – ${endFmtSitter} gebucht.</p>
             <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
-              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Dates</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmt} – ${endFmt}</td></tr>
-              ${sitTypeRow}
+              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Zeitraum</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmtSitter} – ${endFmtSitter}</td></tr>
+              ${sitTypeRowSitter}
+              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Buchungs-ID</td><td style="padding:4px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${ref}</td></tr>
+            </table>
+            <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 8px;">Wir haben außerdem ${startFmtSitter}–${endFmtSitter} in deinem Verfügbarkeitskalender als nicht verfügbar markiert. Du kannst diese Daten auf deiner <a href="https://care.purrfectlove.org/profile" style="color:#C85C3F;text-decoration:none;font-weight:600;">Profilseite</a> anpassen.</p>
+            ${ctaButton({ label: 'Buchung ansehen', url: sitterDeepLink })}
+          ` : `
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 12px;"><strong>${parentName}</strong> has booked you from ${startFmtSitter} – ${endFmtSitter}.</p>
+            <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
+              <tr><td style="padding:4px 0;font-size:14px;color:#666;">Dates</td><td style="padding:4px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmtSitter} – ${endFmtSitter}</td></tr>
+              ${sitTypeRowSitter}
               <tr><td style="padding:4px 0;font-size:14px;color:#666;">Booking ID</td><td style="padding:4px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${ref}</td></tr>
             </table>
-            <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 8px;">We've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar. If you'd like to override any of those dates, you can do so from your <a href="https://care.purrfectlove.org/profile" style="color:#C85C3F;text-decoration:none;font-weight:600;">profile page</a>.</p>
+            <p style="font-size:14px;line-height:1.7;color:#555;margin:0 0 8px;">We've also marked ${startFmtSitter}–${endFmtSitter} as unavailable on your availability calendar. If you'd like to override any of those dates, you can do so from your <a href="https://care.purrfectlove.org/profile" style="color:#C85C3F;text-decoration:none;font-weight:600;">profile page</a>.</p>
             ${ctaButton({ label: 'View booking', url: sitterDeepLink })}
           `,
         }),
-        text: `Booking confirmed! #${ref}\n\n${parentName} has booked you from ${startFmt} – ${endFmt}.\n\nDates: ${startFmt} – ${endFmt}${sitTypeText}\nBooking ID: #${ref}\n\nWe've also marked ${startFmt}–${endFmt} as unavailable on your availability calendar.\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
+        text: isSitterDE
+          ? `Buchung bestätigt! #${ref}\n\n${parentName} hat dich für ${startFmtSitter} – ${endFmtSitter} gebucht.\n\nZeitraum: ${startFmtSitter} – ${endFmtSitter}${sitTypeTextSitter}\nBuchungs-ID: #${ref}\n\nWir haben außerdem ${startFmtSitter}–${endFmtSitter} in deinem Verfügbarkeitskalender als nicht verfügbar markiert.\n\nBuchung ansehen: ${sitterDeepLink}\n\n– Die Purrfect Love Community`
+          : `Booking confirmed! #${ref}\n\n${parentName} has booked you from ${startFmtSitter} – ${endFmtSitter}.\n\nDates: ${startFmtSitter} – ${endFmtSitter}${sitTypeTextSitter}\nBooking ID: #${ref}\n\nWe've also marked ${startFmtSitter}–${endFmtSitter} as unavailable on your availability calendar.\n\nView booking: ${sitterDeepLink}\n\n– The Purrfect Love Community`,
       })
     }
 

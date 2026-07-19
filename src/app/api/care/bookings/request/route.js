@@ -28,7 +28,8 @@ function generateBookingRef(startDate) {
 
 const resend = new Resend(process.env.RESEND_API_KEY)
 
-function brandedEmail({ heading, body }) {
+function brandedEmail({ heading, body, isDE = false }) {
+  const signoff = isDE ? '– Die Purrfect Love Community' : '– The Purrfect Love Community'
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -45,7 +46,7 @@ function brandedEmail({ heading, body }) {
           <td style="padding:40px 32px;">
             <h2 style="margin:0 0 20px;font-size:18px;color:#2C5F4F;font-family:'Trebuchet MS',sans-serif;">${heading}</h2>
             ${body}
-            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">– The Purrfect Love Community</p>
+            <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:24px 0 0;">${signoff}</p>
           </td>
         </tr>
         <tr>
@@ -71,10 +72,10 @@ function ctaButton({ label, url }) {
   </p>`
 }
 
-function formatDate(ymd) {
+function formatDate(ymd, locale = 'en') {
   if (!ymd) return ''
   const [y, m, d] = ymd.split('-').map(Number)
-  return new Date(y, m - 1, d).toLocaleDateString('en-US', { day: 'numeric', month: 'short', year: 'numeric' })
+  return new Date(y, m - 1, d).toLocaleDateString(locale === 'de' ? 'de-DE' : 'en-US', { day: 'numeric', month: 'short', year: 'numeric' })
 }
 
 function haversineKm(lat1, lng1, lat2, lng2) {
@@ -172,12 +173,13 @@ export async function POST(request) {
     // Send sit-request notification email + write notified_at for response-time tracking
     try {
       const sitter = await serverClient.fetch(
-        `*[_type == "catSitter" && _id == $id][0]{ name, email, notifEmailSitRequest, location }`,
+        `*[_type == "catSitter" && _id == $id][0]{ name, email, notifEmailSitRequest, location, locale }`,
         { id: sitterId }
       )
       if (sitter?.email && sitter?.notifEmailSitRequest !== false) {
-        const startFmt = formatDate(startDate)
-        const endFmt = formatDate(endDate)
+        const isDE = sitter?.locale === 'de'
+        const startFmt = formatDate(startDate, sitter?.locale)
+        const endFmt = formatDate(endDate, sitter?.locale)
         const sitterFirstName = (sitter.name || '').split(' ')[0] || 'there'
         const deepLink = `https://care.purrfectlove.org/bookings?booking=${bookingId}&role=sitter`
         const catList = catNames.join(', ') || 'not specified'
@@ -202,27 +204,47 @@ export async function POST(request) {
           }
         } catch { /* non-fatal */ }
 
+        const locationLabel = isDE ? 'Standort' : 'Location'
         const locationRow = parentNeighbourhood
-          ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">Location</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${parentNeighbourhood}${distanceStr ? ` <span style="color:#888;">(${distanceStr})</span>` : ''}</td></tr>`
+          ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">${locationLabel}</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${parentNeighbourhood}${distanceStr ? ` <span style="color:#888;">(${distanceStr})</span>` : ''}</td></tr>`
           : ''
         const locationText = parentNeighbourhood
-          ? `\nLocation: ${parentNeighbourhood}${distanceStr ? ` (${distanceStr})` : ''}`
+          ? `\n${locationLabel}: ${parentNeighbourhood}${distanceStr ? ` (${distanceStr})` : ''}`
           : ''
 
-        const sitTypeLabel = sitType === 'home_visit' ? 'Home visit' : sitType === 'drop_off' ? 'Drop-off' : null
+        const sitTypeLabel = sitType === 'home_visit'
+          ? (isDE ? 'Hausbesuch' : 'Home visit')
+          : sitType === 'drop_off'
+            ? (isDE ? 'Abgabe' : 'Drop-off')
+            : null
+        const sitTypeColLabel = isDE ? 'Art der Betreuung' : 'Sit type'
         const sitTypeRow = sitTypeLabel
-          ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">Sit type</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabel}</td></tr>`
+          ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">${sitTypeColLabel}</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${sitTypeLabel}</td></tr>`
           : ''
-        const sitTypeText = sitTypeLabel ? `\nSit type: ${sitTypeLabel}` : ''
+        const sitTypeText = sitTypeLabel ? `\n${sitTypeColLabel}: ${sitTypeLabel}` : ''
 
         const { error: resendError } = await resend.emails.send({
           from: 'Purrfect Love Community <no-reply@purrfectlove.org>',
           to: [sitter.email],
-          subject: `New sit request #${bookingRef}`,
+          subject: isDE ? `Neue Betreuungsanfrage #${bookingRef}` : `New sit request #${bookingRef}`,
           tags: [{ name: 'booking_id', value: bookingId }],
           html: brandedEmail({
-            heading: `New sit request from ${parentName}`,
-            body: `
+            isDE,
+            heading: isDE ? `Neue Betreuungsanfrage von ${parentName}` : `New sit request from ${parentName}`,
+            body: isDE ? `
+              <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">Hallo ${sitterFirstName},</p>
+              <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;"><strong>${parentName}</strong> hat dir eine Betreuungsanfrage geschickt. Hier sind die Details:</p>
+              <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
+                <tr><td style="padding:5px 0;font-size:14px;color:#666;width:100px;">Zeitraum</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-weight:600;">${startFmt} – ${endFmt}</td></tr>
+                ${sitTypeRow}
+                <tr><td style="padding:5px 0;font-size:14px;color:#666;">Katzen</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;">${catList}</td></tr>
+                ${locationRow}
+                ${message ? `<tr><td style="padding:5px 0;font-size:14px;color:#666;vertical-align:top;">Nachricht</td><td style="padding:5px 0;font-size:14px;color:#2D2D2D;font-style:italic;">"${message}"</td></tr>` : ''}
+                <tr><td style="padding:5px 0;font-size:14px;color:#666;">Buchungs-ID</td><td style="padding:5px 0;font-size:14px;color:#2C5F4F;font-weight:700;">#${bookingRef}</td></tr>
+              </table>
+              <p style="font-size:14px;color:#555;margin:0 0 8px;">Melde dich an, um die Anfrage anzunehmen oder abzulehnen:</p>
+              ${ctaButton({ label: 'Buchung ansehen', url: deepLink })}
+            ` : `
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">Hi ${sitterFirstName},</p>
               <p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;"><strong>${parentName}</strong> has sent you a sit request. Here are the details:</p>
               <table cellpadding="0" cellspacing="0" style="margin:0 0 20px;width:100%;">
@@ -237,7 +259,9 @@ export async function POST(request) {
               ${ctaButton({ label: 'View booking', url: deepLink })}
             `,
           }),
-          text: `Hi ${sitterFirstName},\n\n${parentName} has sent you a sit request.\n\nDates: ${startFmt} – ${endFmt}${sitTypeText}\nCats: ${catList}${locationText}${message ? `\nMessage: "${message}"` : ''}\nBooking ID: #${bookingRef}\n\nAccept or decline: ${deepLink}\n\n– The Purrfect Love Community`,
+          text: isDE
+            ? `Hallo ${sitterFirstName},\n\n${parentName} hat dir eine Betreuungsanfrage geschickt.\n\nZeitraum: ${startFmt} – ${endFmt}${sitTypeText}\nKatzen: ${catList}${locationText}${message ? `\nNachricht: "${message}"` : ''}\nBuchungs-ID: #${bookingRef}\n\nMelde dich an, um die Anfrage anzunehmen oder abzulehnen: ${deepLink}\n\n– Die Purrfect Love Community`
+            : `Hi ${sitterFirstName},\n\n${parentName} has sent you a sit request.\n\nDates: ${startFmt} – ${endFmt}${sitTypeText}\nCats: ${catList}${locationText}${message ? `\nMessage: "${message}"` : ''}\nBooking ID: #${bookingRef}\n\nAccept or decline: ${deepLink}\n\n– The Purrfect Love Community`,
         })
         if (!resendError) {
           await db.from('bookings').update({ notified_at: new Date().toISOString() }).eq('id', bookingId)
