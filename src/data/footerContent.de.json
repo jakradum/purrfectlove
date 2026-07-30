@@ -17,6 +17,7 @@
       { "href": "/de/guides/faqs", "label": "FAQ" },
       { "href": "/de/about", "label": "Über uns" },
       { "href": "/de/contact", "label": "Kontakt" },
+      { "href": "/de/spenden", "label": "Spenden" },
       { "href": "/de/impressum", "label": "Impressum" },
       { "href": "https://care.purrfectlove.org", "label": "Katzensitting" }
     ]

@@ -1,3 +1,4 @@
+import Link from 'next/link';
 import styles from './HomePage.module.css';
 import AboutSection from './AboutSection';
 import contentEN from '@/data/pageContent.en.json';
@@ -6,7 +7,6 @@ import AdoptionProcess from './AdoptionProcess';
 import HappyCats from './HappyCats';
 import FeaturedArticles from './FeaturedArticles';
 
-// HomePage.jsx
 export default function HomePage({ locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
 
@@ -33,6 +33,15 @@ export default function HomePage({ locale = 'en' }) {
         </div>
       </section>
         <AboutSection content={content.home.about} locale={locale} />
+        {locale === 'de' && (
+          <div className={styles.donateBubbleWrapper}>
+            <Link href="/de/spenden" className={styles.donateBubble}>
+              <span className={styles.donatePaw}>🐾</span>
+              <span className={styles.donateText}>Jetzt spenden &amp; Katzenleben retten</span>
+              <span className={styles.donateArrow}>→</span>
+            </Link>
+          </div>
+        )}
         <AdoptionProcess content={content.home.process} locale={locale} />
         <HappyCats content={content.home.happyCats} locale={locale} />
         <FeaturedArticles content={content.home.featuredArticles} locale={locale} />

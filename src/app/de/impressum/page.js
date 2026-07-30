@@ -47,6 +47,23 @@ export default function ImpressumRoute() {
           </section>
 
           <section className={styles.section}>
+            <h2 className={styles.sectionTitle}>Steuerliche Angaben</h2>
+            <p className={styles.text}>
+              Steuer-Nr.: 99059/35271
+            </p>
+            <p className={styles.text} style={{ marginTop: '0.75rem' }}>
+              Purrfect Love e.V. ist vom Finanzamt Stuttgart-Körperschaften gemäß § 60a Abs. 1 AO
+              als steuerbegünstigte Körperschaft anerkannt. Der Verein verfolgt ausschließlich und
+              unmittelbar gemeinnützige Zwecke, insbesondere die Förderung des Tierschutzes sowie
+              der Erziehung und Bildung.
+            </p>
+            <p className={styles.note} style={{ marginTop: '0.75rem' }}>
+              Spenden an Purrfect Love e.V. sind steuerlich absetzbar.{' '}
+              <a href="/de/spenden" className={styles.link}>Zur Spendenseite →</a>
+            </p>
+          </section>
+
+          <section className={styles.section}>
             <h2 className={styles.sectionTitle}>Kontakt</h2>
             <p className={styles.text}>
               Telefon: <a href="tel:+4915253432348" className={styles.link}>+49 (0) 15253432348</a><br />

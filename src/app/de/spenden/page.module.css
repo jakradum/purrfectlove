@@ -1,0 +1,166 @@
+.main {
+  min-height: calc(100vh - 80px);
+  background-color: var(--whisker-cream);
+}
+
+.container {
+  max-width: 720px;
+  margin: 0 auto;
+  padding: 3rem 2rem 5rem;
+}
+
+.heading {
+  font-family: var(--font-outfit);
+  font-size: clamp(2rem, 5vw, 2.75rem);
+  font-weight: 700;
+  color: var(--tabby-brown);
+  margin-bottom: 2.5rem;
+  line-height: 1.2;
+}
+
+.appeal {
+  background: rgba(200, 92, 63, 0.06);
+  border-left: 4px solid var(--tabby-brown);
+  border-radius: 0 8px 8px 0;
+  padding: 1.5rem 1.75rem;
+  margin-bottom: 2.5rem;
+}
+
+.appealText {
+  font-family: var(--font-lora);
+  font-size: 1.05rem;
+  line-height: 1.85;
+  color: var(--text-dark);
+  margin: 0 0 0.875rem;
+}
+
+.appealText:last-of-type {
+  margin-bottom: 0;
+}
+
+.appealHighlight {
+  font-family: var(--font-outfit);
+  font-size: 1.1rem;
+  font-weight: 600;
+  color: var(--tabby-brown);
+  margin: 1rem 0 0;
+}
+
+.section {
+  margin-bottom: 2.5rem;
+  padding-bottom: 2.5rem;
+  border-bottom: 1px solid rgba(200, 92, 63, 0.15);
+}
+
+.section:last-child {
+  border-bottom: none;
+}
+
+.sectionTitle {
+  font-family: var(--font-outfit);
+  font-size: 1.125rem;
+  font-weight: 600;
+  color: var(--hunter-green);
+  margin-bottom: 0.875rem;
+}
+
+.ibanBlock {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  border: 1px solid rgba(200, 92, 63, 0.2);
+  border-radius: 8px;
+  overflow: hidden;
+}
+
+.ibanRow {
+  display: flex;
+  align-items: baseline;
+  gap: 1rem;
+  padding: 0.75rem 1.25rem;
+  border-bottom: 1px solid rgba(200, 92, 63, 0.12);
+}
+
+.ibanRow:last-child {
+  border-bottom: none;
+}
+
+.ibanLabel {
+  font-family: var(--font-outfit);
+  font-size: 0.8rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  color: var(--text-light);
+  min-width: 130px;
+  flex-shrink: 0;
+}
+
+.ibanValue {
+  font-family: var(--font-lora);
+  font-size: 1rem;
+  color: var(--text-dark);
+  line-height: 1.5;
+}
+
+.ibanHighlight {
+  font-family: 'Courier New', monospace;
+  font-size: 1.05rem;
+  font-weight: 700;
+  color: var(--hunter-green);
+  letter-spacing: 0.04em;
+}
+
+.text {
+  font-family: var(--font-lora);
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-dark);
+  margin: 0;
+}
+
+.note {
+  font-family: var(--font-lora);
+  font-size: 0.875rem;
+  color: var(--text-light);
+  margin-top: 0.75rem;
+  font-style: italic;
+  line-height: 1.7;
+}
+
+.list {
+  font-family: var(--font-lora);
+  font-size: 1rem;
+  line-height: 1.8;
+  color: var(--text-dark);
+  padding-left: 1.25rem;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+}
+
+.link {
+  color: var(--tabby-brown);
+  text-decoration: none;
+}
+
+.link:hover {
+  text-decoration: underline;
+  text-underline-offset: 3px;
+}
+
+@media (max-width: 768px) {
+  .container {
+    padding: 2rem 1.25rem 4rem;
+  }
+
+  .ibanRow {
+    flex-direction: column;
+    gap: 0.2rem;
+  }
+
+  .ibanLabel {
+    min-width: unset;
+  }
+}
