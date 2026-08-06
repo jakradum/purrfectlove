@@ -43,7 +43,7 @@ export const structure = (S) =>
                                 .child(
                                   S.documentTypeList('cat')
                                     .title('Available Cats')
-                                    .filter('_type == "cat" && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0')
+                                    .filter('_type == "cat" && adoptedOverride != true && count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) == 0')
                                 ),
                               S.listItem()
                                 .title('Adopted Cats')
@@ -51,7 +51,7 @@ export const structure = (S) =>
                                 .child(
                                   S.documentTypeList('cat')
                                     .title('Adopted Cats')
-                                    .filter('_type == "cat" && (adoptedOverride == true || count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0)')
+                                    .filter('_type == "cat" && (adoptedOverride == true || count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) > 0)')
                                 ),
                               S.listItem()
                                 .title('All Cats')
