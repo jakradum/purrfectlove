@@ -23,7 +23,7 @@ export function CatAdoptedNotice(props) {
           _id,
           name
         },
-        "adoptedApplication": *[_type == "application" && cat._ref == $catId && status == "adopted"][0] {
+        "adoptedApplication": *[_type == "application" && ((!defined(reassignToCat) && cat._ref == $catId) || (defined(reassignToCat) && reassignToCat._ref == $catId)) && status == "adopted"][0] {
           _id,
           applicationId,
           applicantName

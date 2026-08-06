@@ -12,8 +12,10 @@ export default async function AdoptPage({ locale = 'en' }) {
 
   // Filter cats by locale and exclude adopted cats
   // A cat is adopted if: adoptedOverride is true OR an application has status "adopted"
+  // "effective cat" filter: if an application has reassignToCat set, that cat owns the adoption — not the original cat._ref
+  const adoptedFilter = `count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) == 0`
   const query = locale === 'de'
-    ? `*[_type == "cat" && defined(locationDe) && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+    ? `*[_type == "cat" && defined(locationDe) && adoptedOverride != true && ${adoptedFilter}] | order(_createdAt desc) {
         _id,
         name,
         slug,
@@ -21,7 +23,7 @@ export default async function AdoptPage({ locale = 'en' }) {
         ageMonths,
         "location": locationDe
       }`
-    : `*[_type == "cat" && defined(locationEn) && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+    : `*[_type == "cat" && defined(locationEn) && adoptedOverride != true && ${adoptedFilter}] | order(_createdAt desc) {
         _id,
         name,
         slug,

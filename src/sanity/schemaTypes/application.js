@@ -256,7 +256,7 @@ export default {
           // 2. Not the original cat this application was for
           const originalCatId = document?.cat?._ref || ''
           return {
-            filter: '_type == "cat" && _id != $originalCatId && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0',
+            filter: '_type == "cat" && _id != $originalCatId && adoptedOverride != true && count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) == 0',
             params: {
               originalCatId
             }

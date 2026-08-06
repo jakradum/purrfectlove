@@ -11,14 +11,15 @@ export default async function AdoptedCatsPage({ locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
   const c = content.adopt.adopted;
 
+  const adoptedFilter = `count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) > 0`
   const query = locale === 'de'
-    ? `*[_type == "cat" && defined(locationDe) && (adoptedOverride == true || count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0)] | order(_createdAt desc) {
+    ? `*[_type == "cat" && defined(locationDe) && (adoptedOverride == true || ${adoptedFilter})] | order(_createdAt desc) {
         _id, name, "slug": slug.current,
         "photoUrl": photos[0].asset->url,
         "location": locationDe,
         ageMonths, age
       }`
-    : `*[_type == "cat" && defined(locationEn) && (adoptedOverride == true || count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0)] | order(_createdAt desc) {
+    : `*[_type == "cat" && defined(locationEn) && (adoptedOverride == true || ${adoptedFilter})] | order(_createdAt desc) {
         _id, name, "slug": slug.current,
         "photoUrl": photos[0].asset->url,
         "location": locationEn,

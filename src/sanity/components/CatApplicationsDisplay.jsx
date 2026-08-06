@@ -21,7 +21,7 @@ export function CatApplicationsDisplay(props) {
     const cleanId = documentId.replace('drafts.', '')
 
     client.fetch(
-      `*[_type == "application" && cat._ref == $catId && !defined(isDuplicateOf)] | order(submittedAt desc) {
+      `*[_type == "application" && ((!defined(reassignToCat) && cat._ref == $catId) || (defined(reassignToCat) && reassignToCat._ref == $catId)) && !defined(isDuplicateOf)] | order(submittedAt desc) {
         _id,
         applicationId,
         applicantName,
