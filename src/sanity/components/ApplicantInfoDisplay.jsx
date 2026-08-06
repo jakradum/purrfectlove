@@ -39,6 +39,7 @@ function ShareButton({ doc, catName, reassignedCatName }) {
     if (doc.isOpenToAnyCat) {
       return reassignedCatName ? `Any Cat → ${reassignedCatName}` : 'Any Cat'
     }
+    if (reassignedCatName) return `${catName} → ${reassignedCatName}`
     return catName || '—'
   }
 
@@ -139,6 +140,7 @@ function ExportButton({ doc, catName, reassignedCatName, assignedToName, intervi
     if (doc.isOpenToAnyCat) {
       return reassignedCatName ? `Any Cat → ${reassignedCatName}` : 'Any Cat'
     }
+    if (reassignedCatName) return `${catName} → ${reassignedCatName}`
     return catName || '—'
   }
 
@@ -578,6 +580,12 @@ export function ApplicantInfoDisplay(props) {
             ) : (
               <span style={{ color: '#3b82f6', fontWeight: 600 }}>🐱 Any Cat</span>
             )
+          ) : reassignedCatName ? (
+            <span>
+              <span style={{ color: '#9ca3af', textDecoration: 'line-through', fontWeight: 400 }}>{catName}</span>
+              {' → '}
+              <span style={{ color: '#22c55e', fontWeight: 600 }}>{reassignedCatName}</span>
+            </span>
           ) : (
             catName || '—'
           )}
