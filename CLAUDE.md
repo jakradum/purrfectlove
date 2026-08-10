@@ -233,6 +233,28 @@ API routes use camelCase internally (`unavailableDatesV2`, `blockedByBooking`) w
 
 The adoption flow is for the **main purrfectlove.org site**, not the care portal. It is managed entirely in Sanity Studio.
 
+### reassignToCat — display only, does NOT update cat._ref (Critical)
+
+`application.reassignToCat` is a reference field that lets admins redirect an applicant to a different cat. **It does not change `application.cat._ref`** — the original cat reference is untouched. This means adoption status must always be derived using the *effective cat*: `reassignToCat` when set, otherwise `cat._ref`.
+
+**Every GROQ query that determines whether a cat is adopted must use this pattern:**
+```groq
+count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) > 0
+```
+
+This is applied consistently across all 7 locations that check adoption status:
+- `AdoptPage.jsx` — available cats listing
+- `AdoptedCatsPage.jsx` — adopted cats archive
+- `CatDetailPage.jsx` — detail page, adopted fallback, prev/next nav
+- `structure.js` — Studio Available/Adopted Cats folder filters
+- `application.js` — reassignToCat picker filter (excludes already-adopted cats)
+- `CatAdoptedNotice.jsx` — Studio "cat already adopted" warning
+- `submit-application/route.js` — gate that blocks submissions for adopted cats
+
+**Never use just `cat._ref == ^._id && status == "adopted"` alone** — this was the root cause of a bug where redirected adoptions marked the original cat as adopted on the website while the Studio showed it as available (Studio preview only checks `adoptedOverride`, not applications).
+
+**`ApplicantInfoDisplay.jsx`** handles the redirect display: when `reassignToCat` is set on a specific-cat application, the "Interested in" row shows "~~OriginalCat~~ → RedirectedCat". The Share/Export text formatters follow the same pattern.
+
 ### Sanity document structure
 
 **`cat` document** holds the contract:
