@@ -170,7 +170,7 @@ export async function POST(request) {
       const catStatus = await serverClient.fetch(
         `*[_type == "cat" && _id == $catId][0]{
           adoptedOverride,
-          "hasAdoptedApplication": count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0
+          "hasAdoptedApplication": count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) > 0
         }`,
         { catId: body.catId }
       )
