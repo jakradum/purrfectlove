@@ -55,10 +55,9 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
   const content = locale === 'de' ? contentDE : contentEN;
   const adoptContent = content.adopt;
 
-  // Only show cats that aren't adopted
-  // A cat is adopted if: adoptedOverride is true OR an application has status "adopted"
+  const effectiveAdoptedFilter = `count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) == 0`
   const query = locale === 'de'
-    ? `*[_type == "cat" && slug.current == $slug && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0][0] {
+    ? `*[_type == "cat" && slug.current == $slug && adoptedOverride != true && ${effectiveAdoptedFilter}][0] {
         _id,
         name,
         slug,
@@ -72,7 +71,7 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
         healthStatus,
         goodWith
       }`
-    : `*[_type == "cat" && slug.current == $slug && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0][0] {
+    : `*[_type == "cat" && slug.current == $slug && adoptedOverride != true && ${effectiveAdoptedFilter}][0] {
         _id,
         name,
         slug,
@@ -92,7 +91,7 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
   // If not in available pool, check if it exists but is adopted — show adopted view instead of 404
   if (!cat) {
     const adoptedCat = await client.fetch(
-      `*[_type == "cat" && slug.current == $slug && (adoptedOverride == true || count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) > 0)][0]{
+      `*[_type == "cat" && slug.current == $slug && (adoptedOverride == true || count(*[_type == "application" && ((!defined(reassignToCat) && cat._ref == ^._id) || (defined(reassignToCat) && reassignToCat._ref == ^._id)) && status == "adopted"]) > 0)][0]{
         name, "slug": slug.current,
         "photoUrl": photos[0].asset->url
       }`,
@@ -126,11 +125,11 @@ export default async function CatDetailPage({ slug, locale = 'en' }) {
 
   // Fetch all available cats for navigation
   const allCatsQuery = locale === 'de'
-    ? `*[_type == "cat" && defined(locationDe) && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+    ? `*[_type == "cat" && defined(locationDe) && adoptedOverride != true && ${effectiveAdoptedFilter}] | order(_createdAt desc) {
         name,
         "slug": slug.current
       }`
-    : `*[_type == "cat" && defined(locationEn) && adoptedOverride != true && count(*[_type == "application" && cat._ref == ^._id && status == "adopted"]) == 0] | order(_createdAt desc) {
+    : `*[_type == "cat" && defined(locationEn) && adoptedOverride != true && ${effectiveAdoptedFilter}] | order(_createdAt desc) {
         name,
         "slug": slug.current
       }`;
