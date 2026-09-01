@@ -106,7 +106,7 @@ export default function SuccessStoriesGrid({ stories, locale }) {
             <div className={styles.handle} />
             <button className={styles.closeBtn} onClick={closeModal} aria-label="Close">
               <svg viewBox="0 0 14 14" fill="none" width="14" height="14">
-                <path d="M2 2l10 10M12 2L2 12" stroke="#fff" strokeWidth="2" strokeLinecap="round" />
+                <path d="M2 2l10 10M12 2L2 12" stroke="#2C5F4F" strokeWidth="2.5" strokeLinecap="round" />
               </svg>
             </button>
             <div className={styles.modalInner}>
