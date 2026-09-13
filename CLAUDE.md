@@ -121,7 +121,7 @@ GitHub Actions was set up first but was failing. The `.github/workflows/cron-*.y
 | `/api/cron/calculate-scores` | — | Recalculates member scores |
 | `/api/cron/sit-prompts` | — | Post-sit confirmation prompts |
 | `/api/cron/message-reminders` | — | Unread message reminders (48-49h old) |
-| `/api/cron/adoption-feedback` | Daily | Sends 30-day post-adoption feedback email to adopters (locale-aware EN/DE) |
+| `/api/cron/adoption-feedback` | Daily | Sends post-adoption feedback email at 30/60/120/240/365 days since `adoptedAt` (locale-aware EN/DE), stopping once `feedbackSubmittedAt` is set |
 
 ### Vercel
 
@@ -286,12 +286,14 @@ This dual-query approach is needed because `catOverrideId` means the contract ma
 
 ### Post-adoption feedback
 
-- Feedback email sent 30 days after `adoptedAt` by `/api/cron/adoption-feedback`
+- Feedback email sent by `/api/cron/adoption-feedback`, driven by a `STAGES` table of `{ stage, days }` pairs: stage 1 at 30 days since `adoptedAt` (the original ask), then reminders at 60/120/240/365 days (stages 2-5, stage 5 says explicitly it's the last one). Each stage only fires once, gated by `feedbackReminderStage` (coalesced to `1` for pre-reminder-system adopters who only have `feedbackSentAt`) — stops firing entirely once `feedbackSubmittedAt` is set, no matter which stage an adopter was on.
+- Triggered by an external scheduler (cron-job.org), not a Vercel-native cron — `vercel.json`'s `crons` array is empty, so there's nothing to see in-repo about the schedule itself.
 - Locale-aware: reads `feedbackLocale` on the application (`'de'` → German, else English)
 - Public feedback form: `src/app/(en)/adopt/feedback/page.js` — authenticated by `feedbackToken` query param
 - Submit endpoint: `POST /api/feedback/submit` — token-based, no session required (in `PUBLIC_PREFIXES`)
 - Responses saved as a single plain-text field (`feedbackResponses`) on the application document
-- In Studio: feedback fields (`adoptedAt`, `feedbackSentAt`, `feedbackSubmittedAt`, `feedbackLocale`, `feedbackResponses`) are hidden as raw schema fields and rendered via `FeedbackDisplay.jsx` in a collapsible "Adoption Feedback" fieldset. This section is only visible when `status === 'adopted'`. `feedbackToken` stays hidden entirely (internal use only).
+- In Studio: feedback fields (`adoptedAt`, `feedbackSentAt`, `feedbackSubmittedAt`, `feedbackLocale`, `feedbackResponses`, `feedbackReminderStage`, `feedbackLastReminderAt`) are hidden as raw schema fields and rendered via `FeedbackDisplay.jsx` in a collapsible "Adoption Feedback" fieldset. This section is only visible when `status === 'adopted'`. `feedbackToken` stays hidden entirely (internal use only). `FeedbackDisplay.jsx` reads the document via `useFormValue([])`, not `props.document?.displayed` — that prop doesn't exist on field-level component props in Sanity v4, and using it silently renders nothing.
+- Ratings within `feedbackResponses` (lines matching `Label: N/5`) render as gold/grey stars in `FeedbackDisplay.jsx`, with half-star support.
 
 ### Blog Overview (AI-generated)
 
