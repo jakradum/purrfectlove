@@ -1,4 +1,8 @@
 import { useState } from 'react'
+import { useFormValue } from 'sanity'
+
+const GOLD = '#d4a017'
+const GREY = '#d1d5db'
 
 function CopyButton({ value }) {
   const [copied, setCopied] = useState(false)
@@ -21,8 +25,105 @@ function CopyButton({ value }) {
   )
 }
 
+// Read-only star rating, e.g. 4/5 -> ★★★★☆, 3.5/5 -> ★★★⯪☆ (half star rendered
+// as a gold star clipped to 50% width over a grey one).
+function Stars({ value, max = 5 }) {
+  const rounded = Math.round(value * 2) / 2
+  const stars = []
+  for (let i = 1; i <= max; i++) {
+    const diff = rounded - (i - 1)
+    stars.push(diff >= 1 ? 1 : diff >= 0.5 ? 0.5 : 0)
+  }
+
+  return (
+    <span aria-label={`${value} out of ${max} stars`} style={{ display: 'inline-flex', alignItems: 'center' }}>
+      {stars.map((fill, i) => (
+        <span key={i} style={{ position: 'relative', display: 'inline-block', width: '1em', fontSize: '1rem', lineHeight: 1 }}>
+          <span style={{ color: GREY }}>★</span>
+          {fill > 0 && (
+            <span
+              style={{
+                position: 'absolute', top: 0, left: 0,
+                width: fill === 1 ? '100%' : '50%',
+                overflow: 'hidden', color: GOLD
+              }}
+            >
+              ★
+            </span>
+          )}
+        </span>
+      ))}
+      <span style={{ marginLeft: '6px', fontSize: '0.8125rem', color: '#9ca3af' }}>{value}/{max}</span>
+    </span>
+  )
+}
+
+// Feedback responses are stored as one plain-text blob (see
+// /api/feedback/submit). Lines look like:
+//   "Overall experience"              <- section header (no colon)
+//   "  Overall satisfaction: 5/5"     <- rating line, rendered as stars
+//   "What they appreciated: ..."      <- free-text line, rendered as-is
+function parseFeedbackLine(line) {
+  const trimmed = line.trim()
+  if (!trimmed) return { type: 'blank' }
+
+  const colonIdx = trimmed.indexOf(':')
+  if (colonIdx === -1) return { type: 'header', text: trimmed }
+
+  const label = trimmed.slice(0, colonIdx).trim()
+  const value = trimmed.slice(colonIdx + 1).trim()
+  const ratingMatch = value.match(/^(\d+(?:\.\d+)?)\s*\/\s*5$/)
+  const indented = /^\s/.test(line)
+
+  if (ratingMatch) {
+    return { type: 'rating', label, value: parseFloat(ratingMatch[1]), indented }
+  }
+  return { type: 'text', label, value, indented }
+}
+
+function FeedbackResponses({ raw }) {
+  const lines = raw.split('\n').map(parseFeedbackLine)
+
+  return (
+    <div>
+      {lines.map((line, i) => {
+        if (line.type === 'blank') return <div key={i} style={{ height: '0.75rem' }} />
+
+        if (line.type === 'header') {
+          return (
+            <div key={i} style={{ fontWeight: 600, color: '#333', marginTop: '0.25rem', marginBottom: '0.375rem' }}>
+              {line.text}
+            </div>
+          )
+        }
+
+        const rowStyle = {
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: '0.375rem', paddingLeft: line.indented ? '1rem' : 0
+        }
+
+        if (line.type === 'rating') {
+          return (
+            <div key={i} style={rowStyle}>
+              <span style={{ color: '#666' }}>{line.label}</span>
+              <Stars value={line.value} />
+            </div>
+          )
+        }
+
+        return (
+          <div key={i} style={{ ...rowStyle, alignItems: 'flex-start' }}>
+            <span style={{ color: '#666', flexShrink: 0, marginRight: '1rem' }}>{line.label}:</span>
+            <span style={{ color: '#333', textAlign: 'right' }}>{line.value}</span>
+          </div>
+        )
+      })}
+    </div>
+  )
+}
+
 export function FeedbackDisplay(props) {
-  const doc = props.document?.displayed
+  const doc = useFormValue([])
   if (!doc || doc.status !== 'adopted') return null
 
   const formatDate = (dateStr) => {
@@ -67,8 +168,7 @@ export function FeedbackDisplay(props) {
       borderRadius: '4px',
       fontSize: '0.9375rem',
       lineHeight: 1.6,
-      color: '#333',
-      whiteSpace: 'pre-wrap'
+      color: '#333'
     },
     textLabel: {
       fontSize: '0.8125rem',
@@ -129,7 +229,7 @@ export function FeedbackDisplay(props) {
             <span>Responses</span>
             <CopyButton value={doc.feedbackResponses} />
           </div>
-          {doc.feedbackResponses}
+          <FeedbackResponses raw={doc.feedbackResponses} />
         </div>
       )}
     </div>
