@@ -428,6 +428,9 @@ export default {
     { name: 'feedbackSubmittedAt', title: 'Feedback Submitted', type: 'datetime', readOnly: true, hidden: true },
     { name: 'feedbackLocale', title: 'Feedback Locale', type: 'string', readOnly: true, hidden: true },
     { name: 'feedbackResponses', title: 'Feedback Responses', type: 'text', readOnly: true, hidden: true },
+    // Which reminder (1 = 30-day initial ... 5 = 365-day final) was last sent. Stops once feedbackSubmittedAt is set.
+    { name: 'feedbackReminderStage', title: 'Feedback Reminder Stage', type: 'number', readOnly: true, hidden: true },
+    { name: 'feedbackLastReminderAt', title: 'Feedback Last Reminder Sent', type: 'datetime', readOnly: true, hidden: true },
 
     // Display component — only visible when status is 'adopted'
     {
