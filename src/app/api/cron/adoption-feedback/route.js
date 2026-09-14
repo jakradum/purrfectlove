@@ -221,15 +221,9 @@ function buildEmail({ stage, applicantName, catName, feedbackToken, locale }) {
   return { subject, html: brandedEmail({ heading, body }) }
 }
 
-// ISO datetime for "N days ago". Used as an open-ended cutoff (adoptedAt <=
-// cutoff), not a one-day window - a stage fires for anyone who has reached it
-// and hasn't been sent it yet, regardless of how long ago that threshold was
-// crossed. A narrow one-day window would silently skip anyone whose window
-// closes during a missed cron run or a mid-cycle rollout of a new stage.
-function cutoffForDays(days) {
-  const now = new Date()
-  return new Date(now.getTime() - days * 24 * 60 * 60 * 1000).toISOString()
-}
+const DAY_MS = 24 * 60 * 60 * 1000
+const stageDays = Object.fromEntries(STAGES.map(({ stage, days }) => [stage, days]))
+const MAX_STAGE = STAGES[STAGES.length - 1].stage
 
 export async function GET(request) {
   const authHeader = request.headers.get('authorization') || ''
@@ -239,71 +233,77 @@ export async function GET(request) {
   }
 
   try {
+    // Single snapshot of every adopted application that hasn't submitted
+    // feedback yet. Each one advances AT MOST one stage per run, computed
+    // from this snapshot - not by re-querying live mid-loop. Re-querying per
+    // stage (the previous version of this cron) let an adopter who's crossed
+    // several thresholds at once (e.g. a backdated adoptedAt, or a long cron
+    // outage) get bumped through multiple stages - and multiple emails - in
+    // a single run, since each stage's query would see the previous stage's
+    // just-committed patch. Never send more than one reminder per run.
+    const now = Date.now()
+
+    const applications = await serverClient.fetch(
+      `*[_type == "application" && status == "adopted" && feedbackToken != null && feedbackSubmittedAt == null]{
+        _id, feedbackToken, feedbackLocale, applicantName, email, adoptedAt, feedbackSentAt, feedbackReminderStage,
+        "catName": cat->name
+      }`
+    )
+
     let checked = 0
     let sent = 0
     const errors = []
 
-    for (const { stage, days } of STAGES) {
-      const cutoff = cutoffForDays(days)
+    for (const app of applications) {
+      const { _id, feedbackToken, feedbackLocale, applicantName, email, adoptedAt, feedbackSentAt, feedbackReminderStage } = app
 
-      // Stage 1: never sent anything yet, and at least `days` since adoption.
-      // Stage 2-5: still hasn't submitted feedback, was last sent exactly the
-      // previous stage (coalescing to 1 for pre-reminder-system adopters who
-      // only ever got the original feedbackSentAt, no feedbackReminderStage),
-      // and at least `days` since adoption. Open-ended cutoff, not a one-day
-      // window, so a stage still fires even if its exact day was missed.
-      const query = stage === 1
-        ? `*[_type == "application" && status == "adopted" && feedbackToken != null && feedbackSentAt == null && adoptedAt <= $cutoff]`
-        : `*[_type == "application" && status == "adopted" && feedbackToken != null && feedbackSubmittedAt == null && defined(feedbackSentAt) && coalesce(feedbackReminderStage, 1) == $prevStage && adoptedAt <= $cutoff]`
+      // Never sent anything -> next stage is 1. Otherwise, the next stage is
+      // one past whatever was last sent (coalescing to 1 for pre-reminder-
+      // system adopters who only ever got the original feedbackSentAt).
+      const currentStage = feedbackSentAt ? (feedbackReminderStage ?? 1) : 0
+      const nextStage = currentStage + 1
+      if (nextStage > MAX_STAGE) continue // already had the final reminder
 
-      const params = stage === 1 ? { cutoff } : { cutoff, prevStage: stage - 1 }
+      const daysSinceAdoption = (now - new Date(adoptedAt).getTime()) / DAY_MS
+      if (daysSinceAdoption < stageDays[nextStage]) continue // not due yet
 
-      const applications = await serverClient.fetch(
-        `${query}{ _id, feedbackToken, feedbackLocale, applicantName, email, "catName": cat->name }`,
-        params
-      )
+      checked++
 
-      checked += applications.length
+      if (!email) {
+        console.warn(`adoption-feedback: skipping ${_id} (stage ${nextStage}), no email`)
+        continue
+      }
 
-      for (const app of applications) {
-        const { _id, feedbackToken, feedbackLocale, applicantName, email, catName } = app
+      const { subject, html } = buildEmail({
+        stage: nextStage,
+        applicantName: applicantName || 'there',
+        catName: app.catName || 'your cat',
+        feedbackToken,
+        locale: feedbackLocale || 'en',
+      })
 
-        if (!email) {
-          console.warn(`adoption-feedback: skipping ${_id} (stage ${stage}), no email`)
-          continue
-        }
+      const { error: resendError } = await resend.emails.send({
+        from: 'Purrfect Love <no-reply@purrfectlove.org>',
+        to: [email],
+        subject,
+        html,
+      })
 
-        const { subject, html } = buildEmail({
-          stage,
-          applicantName: applicantName || 'there',
-          catName: catName || 'your cat',
-          feedbackToken,
-          locale: feedbackLocale || 'en',
-        })
+      if (resendError) {
+        console.error(`adoption-feedback: Resend error for ${_id} (stage ${nextStage}):`, resendError)
+        errors.push({ id: _id, stage: nextStage, error: resendError.message })
+        continue
+      }
 
-        const { error: resendError } = await resend.emails.send({
-          from: 'Purrfect Love <no-reply@purrfectlove.org>',
-          to: [email],
-          subject,
-          html,
-        })
-
-        if (resendError) {
-          console.error(`adoption-feedback: Resend error for ${_id} (stage ${stage}):`, resendError)
-          errors.push({ id: _id, stage, error: resendError.message })
-          continue
-        }
-
-        try {
-          const now = new Date().toISOString()
-          const patch = serverClient.patch(_id).set({ feedbackReminderStage: stage, feedbackLastReminderAt: now })
-          if (stage === 1) patch.set({ feedbackSentAt: now })
-          await patch.commit()
-          sent++
-        } catch (patchError) {
-          console.error(`adoption-feedback: patch error for ${_id} (stage ${stage}):`, patchError)
-          errors.push({ id: _id, stage, error: patchError.message })
-        }
+      try {
+        const nowIso = new Date().toISOString()
+        const patch = serverClient.patch(_id).set({ feedbackReminderStage: nextStage, feedbackLastReminderAt: nowIso })
+        if (nextStage === 1) patch.set({ feedbackSentAt: nowIso })
+        await patch.commit()
+        sent++
+      } catch (patchError) {
+        console.error(`adoption-feedback: patch error for ${_id} (stage ${nextStage}):`, patchError)
+        errors.push({ id: _id, stage: nextStage, error: patchError.message })
       }
     }
 
