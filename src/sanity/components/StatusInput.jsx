@@ -6,6 +6,9 @@ import { useFormValue, useDocumentOperation, useClient, useCurrentUser } from 's
 // - auto-patches adoptedAt to now (if not already set)
 // - auto-patches feedbackToken to a new UUID v4 (if not already set)
 // - auto-patches feedbackLocale to 'de' or 'en' based on contractLanguage (if not already set)
+// When the value changes to 'evaluation':
+// - auto-patches evaluationStartedAt to now (if not already set) — anchor for
+//   the stale-application triage reminders in /api/cron/stale-applications
 // When the value changes to 'rejected':
 // - finds all applications where isDuplicateOf._ref == this doc and status is new/evaluation
 // - patches them all to rejected
@@ -19,6 +22,7 @@ export function StatusInput(props) {
   const feedbackToken = useFormValue(['feedbackToken'])
   const feedbackLocale = useFormValue(['feedbackLocale'])
   const contractLanguage = useFormValue(['contractLanguage'])
+  const evaluationStartedAt = useFormValue(['evaluationStartedAt'])
 
   const { patch } = useDocumentOperation(docId || '_placeholder', 'application')
   const client = useClient({ apiVersion: '2024-01-01' })
@@ -40,6 +44,10 @@ export function StatusInput(props) {
       if (patches.length > 0) patch.execute(patches)
     }
 
+    if (newStatus === 'evaluation' && docId && !evaluationStartedAt) {
+      patch.execute([{ set: { evaluationStartedAt: new Date().toISOString() } }])
+    }
+
     if (newStatus === 'rejected' && docId) {
       const rejectedAt = new Date().toISOString()
       const rejectedBy = currentUser?.name || currentUser?.email || 'Unknown'
@@ -56,7 +64,7 @@ export function StatusInput(props) {
         )
       }).catch(err => console.error('[StatusInput] failed to reject duplicates:', err))
     }
-  }, [onChange, patch, client, currentUser, adoptionDate, adoptedAt, feedbackToken, feedbackLocale, contractLanguage, docId])
+  }, [onChange, patch, client, currentUser, adoptionDate, adoptedAt, feedbackToken, feedbackLocale, contractLanguage, evaluationStartedAt, docId])
 
   return renderDefault({ ...props, onChange: handleChange })
 }

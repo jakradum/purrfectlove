@@ -122,6 +122,7 @@ GitHub Actions was set up first but was failing. The `.github/workflows/cron-*.y
 | `/api/cron/sit-prompts` | — | Post-sit confirmation prompts |
 | `/api/cron/message-reminders` | — | Unread message reminders (48-49h old) |
 | `/api/cron/adoption-feedback` | Daily | Sends post-adoption feedback email at 30/60/120/240/365 days since `adoptedAt` (locale-aware EN/DE), stopping once `feedbackSubmittedAt` is set |
+| `/api/cron/stale-applications` | Daily (not yet registered on cron-job.org — needs adding) | Internal digest to support@ nudging on `new`+unassigned or `evaluation` applications stuck 20/40/60 days |
 
 ### Vercel
 
@@ -287,6 +288,15 @@ This dual-query approach is needed because `catOverrideId` means the contract ma
 ### Post-adoption feedback
 
 - Feedback email sent by `/api/cron/adoption-feedback`, driven by a `STAGES` table of `{ stage, days }` pairs: stage 1 at 30 days since `adoptedAt` (the original ask), then reminders at 60/120/240/365 days (stages 2-5, stage 5 says explicitly it's the last one). Each run takes one snapshot of every unresponded adopted application and advances each **at most one stage** (next = `coalesce(feedbackReminderStage, 1) + 1`, gated on that one stage's day threshold) — deliberately not a live re-query per stage, since that previously let an adopter who'd crossed several thresholds at once (backdated `adoptedAt`, or a missed cron run) get bumped through multiple stages and multiple emails in a single run. Stops firing entirely once `feedbackSubmittedAt` is set, no matter which stage an adopter was on.
+
+### Stale application triage (internal)
+
+- `/api/cron/stale-applications` nudges the team, not applicants — one digest email to `support@purrfectlove.org` per run, not one email per application. Same single-snapshot, advance-at-most-one-level-per-run pattern as the adoption-feedback cron, for the same reason (avoid double-firing on a backlog).
+- Two independent tracks, same 20/40/60-day cadence, tracked separately since an application can pass through both over its lifetime:
+  - **New & unassigned**: `status == 'new' && !defined(assignedTo)`, clock from `submittedAt`. Tracked via `newStageReminderLevel` / `newStageLastReminderAt`. Stops once assigned or the status moves on.
+  - **In evaluation**: `status == 'evaluation'`, clock from `evaluationStartedAt` (patched once by `StatusInput.jsx` the first time status becomes `'evaluation'`, same pattern as `adoptedAt`). Tracked via `evaluationReminderLevel` / `evaluationLastReminderAt`. Assignment doesn't gate this track — by definition someone should already own it; the nudge is about closure, not pickup.
+- Tone escalates per item, not just per email — a single digest can mix a level-1 item and a level-3 item, each rendering its own escalating copy; the email's overall subject/subheading reflects the highest level present that run.
+- **Not yet registered with cron-job.org** — the endpoint exists and is auth-gated by `CRON_SECRET` like the others, but nothing calls it yet. Needs a cron-job.org job added pointing at it (daily, same as `adoption-feedback`).
 - Triggered by an external scheduler (cron-job.org), not a Vercel-native cron — `vercel.json`'s `crons` array is empty, so there's nothing to see in-repo about the schedule itself.
 - Locale-aware: reads `feedbackLocale` on the application (`'de'` → German, else English)
 - Public feedback form: `src/app/(en)/adopt/feedback/page.js` — authenticated by `feedbackToken` query param

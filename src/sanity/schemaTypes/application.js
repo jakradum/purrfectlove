@@ -432,6 +432,16 @@ export default {
     { name: 'feedbackReminderStage', title: 'Feedback Reminder Stage', type: 'number', readOnly: true, hidden: true },
     { name: 'feedbackLastReminderAt', title: 'Feedback Last Reminder Sent', type: 'datetime', readOnly: true, hidden: true },
 
+    // === STALE APPLICATION TRIAGE (internal ops reminders, see /api/cron/stale-applications) ===
+    // When status first becomes 'evaluation' (patched by StatusInput.jsx, same pattern as adoptedAt).
+    { name: 'evaluationStartedAt', title: 'Evaluation Started At', type: 'datetime', readOnly: true, hidden: true },
+    // Internal nudge levels (1/2/3 = 20/40/60 days), independent per stage since an
+    // application can pass through both over its lifetime. Stop once status moves on.
+    { name: 'newStageReminderLevel', title: 'New-Stage Reminder Level', type: 'number', readOnly: true, hidden: true },
+    { name: 'newStageLastReminderAt', title: 'New-Stage Last Reminder Sent', type: 'datetime', readOnly: true, hidden: true },
+    { name: 'evaluationReminderLevel', title: 'Evaluation Reminder Level', type: 'number', readOnly: true, hidden: true },
+    { name: 'evaluationLastReminderAt', title: 'Evaluation Last Reminder Sent', type: 'datetime', readOnly: true, hidden: true },
+
     // Display component — only visible when status is 'adopted'
     {
       name: 'feedbackDisplay',
