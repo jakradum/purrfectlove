@@ -21,6 +21,8 @@ import portalFeedback from './portalFeedback'
 import adminAuditLog from './adminAuditLog'
 import membershipRequest from './membershipRequest'
 import newsletterSubscriber from './newsletterSubscriber'
+import newsletterTheme from './newsletterTheme'
+import newsletterCycleState from './newsletterCycleState'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -51,5 +53,7 @@ export const schema = {
     adminAuditLog,
     membershipRequest,
     newsletterSubscriber,
+    newsletterTheme,
+    newsletterCycleState,
   ]
 }
