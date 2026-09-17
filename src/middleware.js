@@ -54,6 +54,7 @@ export async function middleware(request) {
     '/api/care/cron/expire-bookings',        // verified by CRON_SECRET, not session cookie
     '/api/care/cron/pending-booking-nudges', // verified by CRON_SECRET, not session cookie
     '/api/feedback/',                        // public — token is the auth
+    '/api/newsletter/unsubscribe',           // public — token is the auth
     '/api/cron/adoption-feedback',           // verified by CRON_SECRET, not session cookie
     '/api/cron/contact-message-responses',  // verified by CRON_SECRET, not session cookie
     '/api/cron/availability-reminder',      // verified by CRON_SECRET, not session cookie
