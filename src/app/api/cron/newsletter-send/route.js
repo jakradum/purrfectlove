@@ -110,7 +110,9 @@ Return JSON exactly in this shape:
   }
 }
 
-function brandedEmail({ heading, body }) {
+function brandedEmail({ heading, body, unsubscribeUrl, locale }) {
+  const isDE = locale === 'de'
+  const unsubscribeLabel = isDE ? 'Newsletter abbestellen' : 'Unsubscribe'
   return `<!DOCTYPE html>
 <html>
 <head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1.0"></head>
@@ -133,6 +135,7 @@ function brandedEmail({ heading, body }) {
           <td style="background:#F5F0E8;padding:20px 32px;text-align:center;border-top:1px solid #E8E4DC;">
             <p style="margin:0;font-size:13px;color:#6B6B6B;font-weight:600;">Purrfect Love · Cat Adoption &amp; Rescue</p>
             <p style="margin:4px 0 0;font-size:12px;color:#999;">purrfectlove.org</p>
+            <p style="margin:10px 0 0;font-size:11px;"><a href="${unsubscribeUrl}" style="color:#999;text-decoration:underline;">${unsubscribeLabel}</a></p>
           </td>
         </tr>
       </table>
@@ -142,7 +145,7 @@ function brandedEmail({ heading, body }) {
 </html>`
 }
 
-function buildEmailHtml({ content, matchedPosts, locale }) {
+function buildEmailHtml({ content, matchedPosts, locale, unsubscribeUrl }) {
   const isDE = locale === 'de'
   const p = (text) => `<p style="font-size:15px;line-height:1.7;color:#4A4A4A;margin:0 0 16px;">${text}</p>`
 
@@ -161,7 +164,7 @@ function buildEmailHtml({ content, matchedPosts, locale }) {
 
   body += p(content.closingParagraph)
 
-  return brandedEmail({ heading: content.subject, body })
+  return brandedEmail({ heading: content.subject, body, unsubscribeUrl, locale })
 }
 
 export async function GET(request) {
@@ -180,13 +183,13 @@ export async function GET(request) {
     const theme = await getNextTheme(serverClient)
 
     const subscribers = await serverClient.fetch(
-      `*[_type == "newsletterSubscriber"]{ email, locale }`
+      `*[_type == "newsletterSubscriber" && unsubscribed != true]{ email, locale, unsubscribeToken }`
     )
 
     const byLocale = { en: [], de: [] }
     for (const s of subscribers) {
       const locale = s.locale === 'de' ? 'de' : 'en'
-      byLocale[locale].push(s.email)
+      byLocale[locale].push({ email: s.email, unsubscribeToken: s.unsubscribeToken })
     }
 
     const results = {}
@@ -211,11 +214,15 @@ export async function GET(request) {
             url: locale === 'de' ? `${SITE_URL}/de/guides/blog/${p.slug}` : `${SITE_URL}/guides/blog/${p.slug}`,
           }))
 
-        const html = buildEmailHtml({ content, matchedPosts, locale })
-
         let sentCount = 0
         const errors = []
-        for (const email of recipients) {
+        for (const { email, unsubscribeToken } of recipients) {
+          const unsubscribeUrl = unsubscribeToken
+            ? `${SITE_URL}/api/newsletter/unsubscribe?token=${unsubscribeToken}`
+            : `${SITE_URL}/api/newsletter/unsubscribe` // no token on this record (shouldn't happen for new signups) - link will just 400, not crash the send
+
+          const html = buildEmailHtml({ content, matchedPosts, locale, unsubscribeUrl })
+
           const { error } = await resend.emails.send({
             from: 'Purrfect Love <no-reply@purrfectlove.org>',
             to: [email],

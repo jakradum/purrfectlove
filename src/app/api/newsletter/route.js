@@ -1,4 +1,5 @@
 import { createClient } from '@sanity/client'
+import crypto from 'crypto'
 
 const serverClient = createClient({
   projectId: process.env.NEXT_PUBLIC_SANITY_PROJECT_ID,
@@ -28,9 +29,10 @@ export async function POST(request) {
     const locale = (language || 'EN').toLowerCase() === 'de' ? 'de' : 'en'
 
     // Idempotent: a repeat signup with the same email is treated as success,
-    // not a duplicate document.
+    // not a duplicate document. If they'd previously unsubscribed, signing
+    // up again re-activates them rather than silently doing nothing.
     const existing = await serverClient.fetch(
-      `*[_type == "newsletterSubscriber" && email == $email][0]{ _id }`,
+      `*[_type == "newsletterSubscriber" && email == $email][0]{ _id, unsubscribed }`,
       { email: normalizedEmail }
     )
 
@@ -41,7 +43,11 @@ export async function POST(request) {
         locale,
         subscribedAt: new Date().toISOString(),
         source: 'footer_form',
+        unsubscribed: false,
+        unsubscribeToken: crypto.randomUUID(),
       })
+    } else if (existing.unsubscribed) {
+      await serverClient.patch(existing._id).set({ unsubscribed: false }).commit()
     }
 
     return Response.json({
