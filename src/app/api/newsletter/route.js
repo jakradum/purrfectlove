@@ -8,7 +8,9 @@ export async function POST(request) {
     const { email, language } = body;
 
     // Email validation
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    // See src/app/api/submit-application/route.js for why this is stricter
+    // than a bare "has an @ and a dot" check.
+    const emailRegex = /^(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/;
     if (!email || !emailRegex.test(email)) {
       return Response.json(
         { error: 'Please enter a valid email address' },
