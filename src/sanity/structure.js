@@ -163,6 +163,34 @@ export const structure = (S) =>
                     .defaultOrdering([{ field: 'subscribedAt', direction: 'desc' }])
                 ),
 
+              // Newsletter Themes + Cycle State
+              S.listItem()
+                .title('Newsletter Themes')
+                .icon(() => '🔄')
+                .child(
+                  S.list()
+                    .title('Newsletter Themes')
+                    .items([
+                      S.listItem()
+                        .title('Themes')
+                        .icon(() => '🔄')
+                        .child(
+                          S.documentTypeList('newsletterTheme')
+                            .title('Themes')
+                            .defaultOrdering([{ field: 'name', direction: 'asc' }])
+                        ),
+                      S.listItem()
+                        .title('Cycle State')
+                        .icon(() => '⏱️')
+                        .child(
+                          S.document()
+                            .schemaType('newsletterCycleState')
+                            .documentId('newsletterCycleState')
+                            .title('Cycle State')
+                        ),
+                    ])
+                ),
+
               // Site Settings
               S.listItem()
                 .title('Site Settings')
