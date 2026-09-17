@@ -153,6 +153,16 @@ export const structure = (S) =>
                     )
                 ),
 
+              // Newsletter Subscribers
+              S.listItem()
+                .title('Newsletter Subscribers')
+                .icon(() => '📧')
+                .child(
+                  S.documentTypeList('newsletterSubscriber')
+                    .title('Newsletter Subscribers')
+                    .defaultOrdering([{ field: 'subscribedAt', direction: 'desc' }])
+                ),
+
               // Site Settings
               S.listItem()
                 .title('Site Settings')
