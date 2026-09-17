@@ -133,7 +133,10 @@ export async function POST(request) {
     }
     
     // 5. EMAIL VALIDATION
-    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
+    // Stricter than a bare "has an @ and a dot" check: local-part and domain
+    // must each start/end with an alphanumeric (blocks leading/trailing dots
+    // like "www.name.@gmail.com"), and rejects consecutive dots anywhere.
+    const emailRegex = /^(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/
     if (!emailRegex.test(body.email)) {
       return Response.json(
         { error: 'Invalid email format' },

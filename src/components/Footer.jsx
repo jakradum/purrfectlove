@@ -33,7 +33,9 @@ export default function Footer({ locale = 'en', siteUrl = '' }) {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
 
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+  // See src/app/api/submit-application/route.js for why this is stricter
+  // than a bare "has an @ and a dot" check.
+  const emailRegex = /^(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/;
 
   const handleSubscribe = async (e) => {
     e.preventDefault();
