@@ -25,6 +25,7 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
   const [error, setError] = useState('');
   const turnstileRef = useRef();
   const modalRef = useRef();
+  const formLoadedAtRef = useRef(Date.now());
 
   // Close modal on escape key
   useEffect(() => {
@@ -74,7 +75,8 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
         ...formData,
         address: formData.address ? toTitleCase(formData.address) : formData.address,
         turnstileToken,
-        locale
+        locale,
+        formLoadedAt: formLoadedAtRef.current
       };
 
       // Add cat ID or isOpenToAnyCat flag
@@ -93,12 +95,14 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || content.form.errors.failed);
+        const err = new Error(data.error || content.form.errors.failed);
+        err.code = data.code;
+        throw err;
       }
 
       setSubmitted(true);
     } catch (err) {
-      setError(err.message);
+      setError(err.code ? `${err.message} (Error ${err.code})` : err.message);
       turnstileRef.current?.reset();
       setTurnstileToken('');
     } finally {
@@ -321,14 +325,10 @@ export default function AdoptionForm({ cat, content, onClose, isAnyCat = false, 
 
           {/* Honeypot field - hidden from users */}
           <input
-            type="text"
+            type="hidden"
             name="_pels"
             value={formData._pels}
             onChange={handleChange}
-            style={{ position: 'absolute', left: '-9999px', opacity: 0, height: 0 }}
-            tabIndex="-1"
-            autoComplete="nope"
-            aria-hidden="true"
           />
 
           {/* Turnstile verification */}
