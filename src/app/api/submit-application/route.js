@@ -53,9 +53,15 @@ export async function POST(request) {
     // 1. HONEYPOT CHECK
     if (body._pels) {
       console.log('Honeypot triggered - spam detected')
-      return Response.json({ error: 'Invalid submission' }, { status: 400 })
+      return Response.json({ error: 'Invalid submission', code: 101 }, { status: 400 })
     }
-    
+
+    // 1a. TIME-BASED BOT CHECK (submitted too fast to be a human)
+    if (typeof body.formLoadedAt === 'number' && Date.now() - body.formLoadedAt < 3000) {
+      console.log('Form submitted too fast - spam detected')
+      return Response.json({ error: 'Invalid submission', code: 114 }, { status: 400 })
+    }
+
     // 2. RATE LIMITING (5 minutes per IP)
     const ip = request.headers.get('x-forwarded-for') || 'unknown'
     const now = Date.now()
@@ -63,15 +69,15 @@ export async function POST(request) {
     
     if (lastSubmission && now - lastSubmission < 300000) {
       return Response.json(
-        { error: 'Please wait 5 minutes before submitting another application' },
+        { error: 'Please wait 5 minutes before submitting another application', code: 102 },
         { status: 429 }
       )
     }
-    
+
     // 3. TURNSTILE VERIFICATION
     if (!body.turnstileToken) {
       return Response.json(
-        { error: 'Verification required' },
+        { error: 'Verification required', code: 103 },
         { status: 400 }
       )
     }
@@ -94,15 +100,15 @@ export async function POST(request) {
     if (!turnstileResult.success) {
       console.log('Turnstile verification failed:', turnstileResult['error-codes'])
       return Response.json(
-        { error: 'Verification failed. Please try again.' },
+        { error: 'Verification failed. Please try again.', code: 104 },
         { status: 400 }
       )
     }
-    
+
     // 4. BASIC VALIDATION
     if (!body.applicantName || !body.email || !body.phone || !body.whyAdopt) {
       return Response.json(
-        { error: 'Missing required fields' },
+        { error: 'Missing required fields', code: 105 },
         { status: 400 }
       )
     }
@@ -111,13 +117,13 @@ export async function POST(request) {
     const applicantAge = parseInt(body.age, 10)
     if (!body.age || isNaN(applicantAge) || applicantAge < 10 || applicantAge > 90) {
       return Response.json(
-        { error: 'Applicant age must be between 10 and 90.' },
+        { error: 'Applicant age must be between 10 and 90.', code: 106 },
         { status: 400 }
       )
     }
     if (applicantAge < 18 && !body.parentApproved) {
       return Response.json(
-        { error: 'Parental approval is required for applicants under 18.' },
+        { error: 'Parental approval is required for applicants under 18.', code: 107 },
         { status: 400 }
       )
     }
@@ -127,7 +133,7 @@ export async function POST(request) {
 
     if (!body.catId && !isOpenToAnyCat) {
       return Response.json(
-        { error: 'Cat ID is required' },
+        { error: 'Cat ID is required', code: 108 },
         { status: 400 }
       )
     }
@@ -139,11 +145,11 @@ export async function POST(request) {
     const emailRegex = /^(?!.*\.\.)[a-zA-Z0-9](?:[a-zA-Z0-9._%+-]*[a-zA-Z0-9])?@[a-zA-Z0-9](?:[a-zA-Z0-9.-]*[a-zA-Z0-9])?\.[a-zA-Z]{2,}$/
     if (!emailRegex.test(body.email)) {
       return Response.json(
-        { error: 'Invalid email format' },
+        { error: 'Invalid email format', code: 109 },
         { status: 400 }
       )
     }
-    
+
     // Block disposable email services
     const disposableEmails = [
       'tempmail.com', '10minutemail.com', 'guerrillamail.com',
@@ -153,16 +159,16 @@ export async function POST(request) {
     const emailDomain = body.email.split('@')[1]
     if (disposableEmails.includes(emailDomain)) {
       return Response.json(
-        { error: 'Please use a permanent email address' },
+        { error: 'Please use a permanent email address', code: 110 },
         { status: 400 }
       )
     }
-    
+
     // 6. PHONE VALIDATION (Indian format)
     const phoneDigits = body.phone.replace(/\D/g, '')
     if (phoneDigits.length < 10 || phoneDigits.length > 12) {
       return Response.json(
-        { error: 'Invalid phone number. Please enter a 10-digit mobile number.' },
+        { error: 'Invalid phone number. Please enter a 10-digit mobile number.', code: 111 },
         { status: 400 }
       )
     }
@@ -179,7 +185,7 @@ export async function POST(request) {
       )
       if (catStatus?.adoptedOverride || catStatus?.hasAdoptedApplication) {
         return Response.json(
-          { error: 'This cat has already been adopted. Please consider applying for another cat.' },
+          { error: 'This cat has already been adopted. Please consider applying for another cat.', code: 112 },
           { status: 409 }
         )
       }
@@ -193,7 +199,7 @@ export async function POST(request) {
       )
       if (existingApplication) {
         return Response.json(
-          { error: `You already have an active application for this cat (Application #${existingApplication.applicationId}). Our team will be in touch soon.` },
+          { error: `You already have an active application for this cat (Application #${existingApplication.applicationId}). Our team will be in touch soon.`, code: 113 },
           { status: 409 }
         )
       }
@@ -409,7 +415,8 @@ export async function POST(request) {
     return Response.json(
       {
         error: 'Failed to submit application',
-        details: error.message
+        details: error.message,
+        code: 199
       },
       { status: 500 }
     )
