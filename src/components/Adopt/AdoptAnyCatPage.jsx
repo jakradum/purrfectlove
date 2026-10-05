@@ -12,6 +12,8 @@ export default function AdoptAnyCatPage({ locale = 'en' }) {
 
   const [formData, setFormData] = useState({
     applicantName: '',
+    age: '',
+    parentApproved: false,
     email: '',
     phone: '',
     address: '',
@@ -20,7 +22,7 @@ export default function AdoptAnyCatPage({ locale = 'en' }) {
     otherPetsDetails: '',
     whyAdopt: '',
     experience: '',
-    website: '' // Honeypot field
+    _pels: '' // Honeypot field
   });
 
   const [turnstileToken, setTurnstileToken] = useState('');
@@ -28,6 +30,7 @@ export default function AdoptAnyCatPage({ locale = 'en' }) {
   const [submitted, setSubmitted] = useState(false);
   const [error, setError] = useState('');
   const turnstileRef = useRef();
+  const formLoadedAtRef = useRef(Date.now());
 
   const breadcrumbItems = [
     { label: adoptContent.breadcrumb.home, href: locale === 'de' ? '/de' : '/' },
@@ -62,19 +65,22 @@ export default function AdoptAnyCatPage({ locale = 'en' }) {
           ...formData,
           isOpenToAnyCat: true,
           turnstileToken,
-          locale
+          locale,
+          formLoadedAt: formLoadedAtRef.current
         })
       });
 
       const data = await response.json();
 
       if (!response.ok) {
-        throw new Error(data.error || adoptContent.form.errors.failed);
+        const err = new Error(data.error || adoptContent.form.errors.failed);
+        err.code = data.code;
+        throw err;
       }
 
       setSubmitted(true);
     } catch (err) {
-      setError(err.message);
+      setError(err.code ? `${err.message} (Error ${err.code})` : err.message);
       turnstileRef.current?.reset();
       setTurnstileToken('');
     } finally {
@@ -164,7 +170,39 @@ export default function AdoptAnyCatPage({ locale = 'en' }) {
                   className={styles.input}
                 />
               </div>
+
+              <div className={styles.formGroup}>
+                <label className={styles.label}>
+                  {adoptContent.form.fields.age} *
+                </label>
+                <input
+                  type="number"
+                  name="age"
+                  value={formData.age}
+                  onChange={handleChange}
+                  required
+                  min="10"
+                  max="90"
+                  className={styles.input}
+                />
+              </div>
             </div>
+
+            {parseInt(formData.age, 10) < 18 && formData.age !== '' && (
+              <div className={styles.formGroup}>
+                <label className={styles.checkboxLabel}>
+                  <input
+                    type="checkbox"
+                    name="parentApproved"
+                    checked={formData.parentApproved}
+                    onChange={handleChange}
+                    className={styles.checkbox}
+                    required
+                  />
+                  <span>{adoptContent.form.fields.parentApproved} *</span>
+                </label>
+              </div>
+            )}
 
             <div className={styles.formGroup}>
               <label className={styles.label}>
@@ -257,14 +295,10 @@ export default function AdoptAnyCatPage({ locale = 'en' }) {
 
             {/* Honeypot field - hidden from users */}
             <input
-              type="text"
-              name="website"
-              value={formData.website}
+              type="hidden"
+              name="_pels"
+              value={formData._pels}
               onChange={handleChange}
-              style={{ position: 'absolute', left: '-9999px' }}
-              tabIndex="-1"
-              autoComplete="off"
-              aria-hidden="true"
             />
 
             {/* Turnstile verification */}
