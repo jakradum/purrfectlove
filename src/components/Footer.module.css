@@ -285,3 +285,28 @@
     justify-content: center;
   }
 }
+/* Donate button (German site only) */
+.donateHeart {
+  color: var(--tabby-brown);
+}
+
+.donatePill {
+  align-self: flex-start;
+  display: inline-flex;
+  align-items: center;
+  gap: 0.4rem;
+  padding: 0.55rem 1.3rem;
+  background: var(--paw-pink);
+  border-radius: 34px 16px 30px 14px / 14px 24px 12px 22px;
+  color: var(--hunter-green);
+  font-family: var(--font-outfit);
+  font-weight: 600;
+  font-size: 0.95rem;
+  text-decoration: none;
+  transition: border-radius 0.4s ease, transform 0.2s ease;
+}
+
+.donatePill:hover {
+  border-radius: 16px 32px 14px 30px / 24px 14px 22px 12px;
+  transform: scale(1.04);
+}
