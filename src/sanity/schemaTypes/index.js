@@ -23,6 +23,7 @@ import membershipRequest from './membershipRequest'
 import newsletterSubscriber from './newsletterSubscriber'
 import newsletterTheme from './newsletterTheme'
 import newsletterCycleState from './newsletterCycleState'
+import donor from './donor'
 import { localeString, localeText, localeBlock } from './localeFields'
 
 export const schema = {
@@ -55,5 +56,6 @@ export const schema = {
     newsletterSubscriber,
     newsletterTheme,
     newsletterCycleState,
+    donor,
   ]
 }
