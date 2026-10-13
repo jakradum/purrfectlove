@@ -18,6 +18,9 @@ export default function Navbar({ locale = 'en', siteUrl = '', onLocaleChange = n
   const [alternates, setAlternates] = useState({});
   const pathname = usePathname();
 
+  const showDonate = locale === 'de';
+  const donateHref = '/de/spenden';
+
   // Read hreflang alternate links injected by page-level generateMetadata
   useEffect(() => {
     const links = document.querySelectorAll('link[rel="alternate"][hreflang]');
@@ -189,6 +192,12 @@ export default function Navbar({ locale = 'en', siteUrl = '', onLocaleChange = n
               ))}
             </div>
 
+            {showDonate && (
+              <Link href={resolveHref(donateHref)} className={styles.donatePill}>
+                <span className={styles.donateHeart}>♥</span> Spenden
+              </Link>
+            )}
+
             <Link href={resolveHref(cta.href)} className={styles.cta}>
               {cta.label}
             </Link>
@@ -277,6 +286,17 @@ export default function Navbar({ locale = 'en', siteUrl = '', onLocaleChange = n
                 </Fragment>
               ))}
             </div>
+
+            {showDonate && (
+              <Link
+                href={resolveHref(donateHref)}
+                onClick={handleClose}
+                className={styles.mobileNavLink}
+                style={{ animationDelay: `${(navLinks.length + 1) * 0.05}s` }}
+              >
+                Spenden <span className={styles.donateHeart}>♥</span>
+              </Link>
+            )}
 
             <Link
               href={resolveHref(cta.href)}

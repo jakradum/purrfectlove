@@ -28,6 +28,9 @@ export default function Footer({ locale = 'en', siteUrl = '' }) {
     return siteUrl + href;
   };
 
+  const showDonate = locale === 'de';
+  const donateHref = resolveHref('/de/spenden');
+
   const [email, setEmail] = useState('');
   const [subscribed, setSubscribed] = useState(false);
   const [loading, setLoading] = useState(false);
@@ -94,6 +97,11 @@ export default function Footer({ locale = 'en', siteUrl = '' }) {
           <h3 className={styles.sectionTitle}>{content.about.title}</h3>
           <p className={styles.aboutText}>{content.about.description}</p>
           <p className={styles.location}>{content.location}</p>
+          {showDonate && (
+            <Link href={donateHref} className={styles.donatePill}>
+              <span className={styles.donateHeart}>♥</span> Spenden
+            </Link>
+          )}
         </div>
 
         {/* Quick Links */}
