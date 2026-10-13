@@ -163,6 +163,16 @@ export const structure = (S) =>
                     .defaultOrdering([{ field: 'subscribedAt', direction: 'desc' }])
                 ),
 
+              // Donors
+              S.listItem()
+                .title('Donors')
+                .icon(() => '❤️')
+                .child(
+                  S.documentTypeList('donor')
+                    .title('Donors')
+                    .defaultOrdering([{ field: 'name', direction: 'asc' }])
+                ),
+
               // Newsletter Themes + Cycle State
               S.listItem()
                 .title('Newsletter Themes')
